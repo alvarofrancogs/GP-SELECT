@@ -11,10 +11,6 @@ export const en: Dictionary = {
     left: 'Curated', right: 'Luxury',
     description: 'Curated European sports cars\nwith a focus on timeless design\nand bespoke sourcing.', cta: 'View collection',
   },
-  vehicle: {
-    left: 'German', right: 'Performance',
-    description: 'German precision. Unmistakable character.', cta: 'View vehicles',
-  },
   process: {
     eyebrow: 'THE GP SELECT STANDARD', title: 'Every detail. Every decision.',
     steps: [
@@ -29,7 +25,7 @@ export const en: Dictionary = {
     backHome: 'Back to home', prototype: 'Preview · Phase 3',
     menu: 'Open menu', close: 'Close menu', skipContent: 'Skip to content',
     missingAsset: 'Final image pending', heroAsset: 'Vehicle · side view',
-    vehicleAsset: 'BMW M3 · top view', backgroundAsset: 'Photographic background pending',
+    backgroundAsset: 'Photographic background pending',
   },
   comingSoon: {
     eyebrow: 'GP SELECT · PHASE 3', title: 'This page is planned for a later phase.',

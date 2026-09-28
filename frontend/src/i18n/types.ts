@@ -13,7 +13,6 @@ export interface Dictionary {
     admin: string;
   };
   hero: { left: string; right: string; description: string; cta: string };
-  vehicle: { left: string; right: string; description: string; cta: string };
   process: {
     eyebrow: string;
     title: string;
@@ -29,7 +28,6 @@ export interface Dictionary {
     skipContent: string;
     missingAsset: string;
     heroAsset: string;
-    vehicleAsset: string;
     backgroundAsset: string;
   };
   comingSoon: {

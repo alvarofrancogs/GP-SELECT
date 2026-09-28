@@ -79,7 +79,7 @@ export function useInventoryScene(vehicles: InventoryPreviewVehicle[], status: I
         if (!disposed) ScrollTrigger.refresh();
       });
     };
-    // API states, translated text, fonts and loaded images can move Europe.
+    // API states, translated text, fonts and loaded images can move the final CTA.
     const observer = new ResizeObserver(refresh);
     observer.observe(section);
     section.addEventListener('load', refresh, true);

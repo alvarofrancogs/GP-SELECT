@@ -25,8 +25,6 @@
   --header-nav-tracking: -.025em;
   --text-hero: clamp(5rem, 8.95vw, 12rem);
   --text-display: clamp(4rem, 7vw, 9.5rem);
-  --text-vehicle-left: var(--text-display);
-  --text-vehicle-right: var(--text-display);
   --text-h1: clamp(2.8rem, 5.2vw, 6.5rem);
   --text-h2: clamp(1.6rem, 2.4vw, 3rem);
   --text-body: clamp(1rem, 1.37vw, 1.65rem);
@@ -87,14 +85,6 @@
   :root { --page-gutter: 4.5vw; --text-nav: .875rem; }
 }
 
-/* English vehicle words need different optical sizes in the existing layout. */
-@media (min-width: 768px) {
-  :root:lang(en) {
-    --text-vehicle-left: clamp(4rem, 8vw, 11rem);
-    --text-vehicle-right: clamp(2.5rem, 5.45vw, 8rem);
-  }
-}
-
 @media (max-width: 767px) {
   :root {
     --hero-size: clamp(3rem, 13.9vw, 6.5rem);
@@ -105,8 +95,6 @@
     --header-height: 5rem;
     --text-hero: clamp(3rem, 15.2vw, 7rem);
     --text-display: clamp(2rem, 8.8vw, 4rem);
-    --text-vehicle-left: clamp(2.6rem, 12vw, 5rem);
-    --text-vehicle-right: var(--text-vehicle-left);
     --text-body: 1.0625rem;
     --button-height: 3.5rem;
   }

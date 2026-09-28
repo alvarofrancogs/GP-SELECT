@@ -12,11 +12,6 @@ export const es: Dictionary = {
     description: 'Deportivos europeos seleccionados\npor su diseño atemporal\ny una búsqueda a tu medida.',
     cta: 'Ver colección',
   },
-  vehicle: {
-    left: 'Ingeniería', right: 'Alemana',
-    description: 'Precisión alemana. Carácter inconfundible.',
-    cta: 'Ver vehículos',
-  },
   process: {
     eyebrow: 'EL CRITERIO GP SELECT',
     title: 'Cada detalle. Cada decisión.',
@@ -32,7 +27,7 @@ export const es: Dictionary = {
     backHome: 'Volver al inicio', prototype: 'Vista previa · Fase 3',
     menu: 'Abrir menú', close: 'Cerrar menú', skipContent: 'Saltar al contenido',
     missingAsset: 'Imagen definitiva pendiente', heroAsset: 'Vehículo · vista lateral',
-    vehicleAsset: 'BMW M3 · vista cenital', backgroundAsset: 'Fondo fotográfico pendiente',
+    backgroundAsset: 'Fondo fotográfico pendiente',
   },
   comingSoon: {
     eyebrow: 'GP SELECT · FASE 3', title: 'Esta página llegará en una próxima fase.',
