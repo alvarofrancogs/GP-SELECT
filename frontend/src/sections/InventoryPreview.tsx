@@ -3,6 +3,7 @@ import { Container } from '../components/Container';
 import { VehiclePreviewCard } from '../components/VehiclePreviewCard';
 import { inventoryCopy } from '../i18n/inventoryCopy';
 import { useLanguage } from '../i18n/useLanguage';
+import { useInventoryScene } from '../hooks/useInventoryScene';
 import { exampleInventory } from '../services/inventoryPreview';
 import type { InventoryPreviewStatus, InventoryPreviewVehicle } from '../types/inventory';
 import '../styles/inventory-preview.css';
@@ -15,20 +16,17 @@ interface InventoryPreviewProps {
 export function InventoryPreview({ vehicles = exampleInventory, status = 'ready' }: InventoryPreviewProps) {
   const { locale } = useLanguage();
   const copy = inventoryCopy[locale];
+  const sectionRef = useInventoryScene(vehicles, status, locale);
   const featured = vehicles[0];
   const remaining = vehicles.slice(1, 4);
   const hasExamples = vehicles.some((vehicle) => vehicle.source === 'example');
 
   return (
-    <section id="seleccion" className="inventory-preview" aria-labelledby="inventory-title" aria-busy={status === 'loading'}>
+    <section ref={sectionRef} id="seleccion" className="inventory-preview" aria-labelledby="inventory-title" aria-busy={status === 'loading'}>
       <Container>
         <div className="inventory-preview__intro">
-          <div>
-            <p className="eyebrow">{copy.eyebrow}</p>
-            <h2 id="inventory-title">{copy.title}<span>{copy.titleFine}</span></h2>
-          </div>
+          <h2 id="inventory-title"><span className="inventory-preview__title-main">{copy.title}</span><span>{copy.titleFine}</span></h2>
           <div className="inventory-preview__intro-aside">
-            <p>{copy.description}</p>
             <Button to="/vehiculos" variant="outline">{copy.allVehicles}</Button>
           </div>
         </div>

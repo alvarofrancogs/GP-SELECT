@@ -1,0 +1,12 @@
+node_modules/
+dist/
+bin/
+obj/
+.vs/
+.vite/
+.npm-cache/
+.playwright-cli/
+.playwright-mcp/
+.env
+.env.*
+*.user

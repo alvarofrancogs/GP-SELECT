@@ -18,8 +18,8 @@ export function EuropeSection() {
         <div className="europe-heading" data-europe-heading>
           <p className="europe-eyebrow eyebrow">{copy.eyebrow}</p>
           <h2 id="europe-title" className="europe-title">
-            <span>{copy.title}</span>
-            <span>{copy.subtitle}</span>
+            <span><span data-europe-line>{copy.title}</span></span>
+            <span><span data-europe-line>{copy.subtitle}</span></span>
           </h2>
           <p className="europe-description">
             {copy.description.map((line) => <span key={line}>{line}</span>)}

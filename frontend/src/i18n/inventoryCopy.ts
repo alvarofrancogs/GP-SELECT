@@ -1,10 +1,8 @@
 import type { Locale } from './types';
 
 interface InventoryCopy {
-  eyebrow: string;
   title: string;
   titleFine: string;
-  description: string;
   examplesNotice: string;
   exampleLabel: string;
   featuredLabel: string;
@@ -21,10 +19,8 @@ interface InventoryCopy {
 
 export const inventoryCopy: Record<Locale, InventoryCopy> = {
   es: {
-    eyebrow: 'LA SELECCIÓN',
     title: 'Vehículos',
     titleFine: 'excepcionales.',
-    description: 'Una selección para quienes buscan algo más.',
     examplesNotice: 'Modelos de ejemplo. No representan vehículos en venta.',
     exampleLabel: 'Modelo de ejemplo',
     featuredLabel: 'Destacado',
@@ -39,10 +35,8 @@ export const inventoryCopy: Record<Locale, InventoryCopy> = {
     error: 'No se ha podido cargar la selección. Puedes intentarlo de nuevo más tarde.',
   },
   en: {
-    eyebrow: 'THE SELECTION',
     title: 'Premium',
     titleFine: 'vehicles.',
-    description: 'A selection for those looking for something more.',
     examplesNotice: 'Example models. They do not represent vehicles for sale.',
     exampleLabel: 'Example model',
     featuredLabel: 'Featured',

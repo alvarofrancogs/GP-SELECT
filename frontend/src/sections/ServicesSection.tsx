@@ -16,7 +16,6 @@ export function ServicesSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
   const instanceId = useId();
-  const selectedService = copy.items.find((item) => item.id === activeService);
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
@@ -24,19 +23,56 @@ export function ServicesSection() {
     if (!section || !media) return;
 
     const matchMedia = gsap.matchMedia();
-    matchMedia.add('(prefers-reduced-motion: no-preference)', () => {
-      gsap.fromTo(media, { yPercent: -2 }, {
-        yPercent: 2,
-        ease: 'none',
+    matchMedia.add('(prefers-reduced-motion: no-preference) and (min-height: 600px)', () => {
+      const select = gsap.utils.selector(section);
+      // Natural flow is the curtain: no extra pin or fixed accordion height.
+      const entrance = gsap.timeline({
+        defaults: { ease: 'none' },
         scrollTrigger: {
-          id: 'services-media',
+          id: 'services-enter',
           trigger: section,
           start: 'top bottom',
-          end: 'bottom top',
-          scrub: true,
+          end: 'top top',
+          scrub: 0.4,
           invalidateOnRefresh: true,
         },
       });
+      entrance.to({}, { duration: 1 }, 0);
+      entrance.fromTo(select('.services-eyebrow'),
+        { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.3 }, 0.08);
+      entrance.fromTo(select('.services-title > span'),
+        { opacity: 0, y: 28, filter: 'blur(8px)' },
+        { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.32, stagger: 0.08 }, 0.22);
+      entrance.fromTo(select('.services-description, .service-item'),
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.24, stagger: 0.055 }, 0.4);
+      entrance.fromTo(select('.services-visual'),
+        { '--services-reveal': '-15%' },
+        { '--services-reveal': '115%', duration: 0.65 }, 0.1);
+
+      // One timeline owns the media transform throughout entry, reading and exit.
+      const travel = gsap.timeline({
+        defaults: { ease: 'none' },
+        scrollTrigger: {
+          id: 'services-travel', trigger: section,
+          start: 'top bottom', end: 'bottom top', scrub: 0.4,
+          invalidateOnRefresh: true,
+        },
+      });
+      travel.fromTo(media, { yPercent: -2 }, { yPercent: 2, duration: 1 }, 0);
+
+      const exit = gsap.timeline({
+        defaults: { ease: 'none' },
+        scrollTrigger: {
+          id: 'services-exit', trigger: section,
+          start: 'bottom 85%', end: 'bottom top', scrub: 0.4,
+          invalidateOnRefresh: true,
+        },
+      });
+      // Keep the paper opaque; only the departing composition recedes.
+      exit.fromTo(select('.services-grid'),
+        { opacity: 1 }, { opacity: 0.55, duration: 1 }, 0);
+      // Inventory owns its incoming heading; this timeline only owns Services.
     }, section);
 
     let frame = 0;
@@ -89,7 +125,15 @@ export function ServicesSection() {
         </div>
         <div className="services-visual">
           <div ref={mediaRef} className="services-media" data-service-asset={activeService ?? 'overview'}>
-            <AssetSlot asset={servicesAssets[activeService ?? 'overview']} label={selectedService?.image ?? copy.image} />
+            <div className="services-media__layer services-media__overview" aria-hidden={activeService !== null}>
+              <AssetSlot asset={servicesAssets.overview} label={copy.image} />
+            </div>
+            {copy.items.map((item) => (
+              <div key={item.id} className="services-media__layer" data-active={activeService === item.id}
+                aria-hidden={activeService !== item.id}>
+                <AssetSlot asset={servicesAssets[item.id]} label={item.image} />
+              </div>
+            ))}
           </div>
         </div>
         <div className="services-cta">

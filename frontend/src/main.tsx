@@ -1,8 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import '@fontsource-variable/inter-tight';
-import '@fontsource-variable/inter';
+import '@fontsource-variable/archivo/wdth.css';
 import { App } from './App';
 import { LanguageProvider } from './i18n/LanguageProvider';
 import './styles/tokens.css';

@@ -13,7 +13,7 @@ export function Button({ children, to, variant = 'dark', className = '', arrow =
   return (
     <Link to={to} className={`button button--${variant} ${className}`.trim()}>
       <span>{children}</span>
-      {arrow ? <span className="button-arrow" aria-hidden="true">↗</span> : null}
+      {arrow ? <span className="button-arrow" aria-hidden="true">→</span> : null}
     </Link>
   );
 }

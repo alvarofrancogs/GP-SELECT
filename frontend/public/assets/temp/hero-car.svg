@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 700" preserveAspectRatio="none">
+  <title>Temporary neutral coupe silhouette for composition and scroll testing</title>
+  <defs>
+    <linearGradient id="body" x2=".2" y2="1"><stop stop-color="#687177"/><stop offset=".18" stop-color="#242b30"/><stop offset=".5" stop-color="#101518"/><stop offset="1" stop-color="#343d42"/></linearGradient>
+    <linearGradient id="glass" x2=".7" y2="1"><stop stop-color="#141d23"/><stop offset=".6" stop-color="#47565e"/><stop offset="1" stop-color="#172127"/></linearGradient>
+    <linearGradient id="edge"><stop stop-color="#b1aea6"/><stop offset=".55" stop-color="#e5d7c1"/><stop offset="1" stop-color="#7d898f"/></linearGradient>
+  </defs>
+  <path d="M-70 620 700 167Q971 13 1300 17L1810 36 1860 720H-70Z" fill="url(#body)"/>
+  <path d="M-30 620 737 187Q1000 43 1300 47L1830 67" fill="none" stroke="url(#edge)" stroke-width="9"/>
+  <path d="M340 670 845 255Q1060 99 1360 102L1800 123 1800 700Z" fill="#080e12"/>
+  <path d="M418 668 875 274Q1080 132 1360 135L1770 153 1770 700Z" fill="url(#glass)"/>
+  <path d="M1450 144 1350 700M1680 154 1610 700" stroke="#10181d" stroke-width="35"/>
+  <path d="m460 650 447-342q179-123 435-143" fill="none" stroke="#aab6b8" stroke-opacity=".26" stroke-width="6"/>
+  <path d="M335 623q45-133 206-129 76 4 80 106l-53 51-164 37Z" fill="url(#body)" stroke="#747d80" stroke-width="3"/>
+</svg>

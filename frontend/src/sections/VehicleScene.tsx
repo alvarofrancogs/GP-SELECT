@@ -8,7 +8,7 @@ export function VehicleScene() {
   const { copy } = useLanguage();
 
   return (
-    <ScrollScene id="ingenieria" kind="vehicle" className="vehicle-scene" labelledBy="vehicle-title">
+    <ScrollScene id="ingenieria" kind="vehicle" className="vehicle-scene" labelledBy="vehicle-title" handoffTarget="process">
       <div className="scene-background" data-scene-background>
         <AssetSlot asset={sceneAssets.vehicleBackground} label={copy.common.backgroundAsset} background />
       </div>
@@ -19,6 +19,9 @@ export function VehicleScene() {
       <p className="scene-description vehicle-description" data-scene-ui>{copy.vehicle.description}</p>
       <div className="vehicle-media" data-scene-media>
         <AssetSlot asset={sceneAssets.vehicleCar} label={copy.common.vehicleAsset} />
+        <div className="vehicle-lights" data-vehicle-lights aria-hidden="true">
+          <AssetSlot asset={sceneAssets.vehicleCarLights} label="" />
+        </div>
       </div>
       <div className="scene-cta" data-scene-ui>
         <Button to="/vehiculos" variant="light">{copy.vehicle.cta}</Button>

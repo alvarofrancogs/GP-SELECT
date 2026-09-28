@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+﻿import { useLayoutEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -22,7 +22,6 @@ export function useEuropeScene() {
       });
     };
     const media = gsap.matchMedia();
-
     media.add({
       desktop: '(min-width: 1024px)',
       mobile: '(max-width: 1023px)',
@@ -35,53 +34,60 @@ export function useEuropeScene() {
       if (reduced || !enoughHeight) return;
 
       const select = gsap.utils.selector(section);
+      const vehicle = select('[data-europe-vehicle]');
+      const heading = select('[data-europe-heading]');
+      const map = select('[data-europe-map]');
+      const countries = select('[data-europe-country]');
+      const entrance = gsap.timeline({
+        defaults: { ease: 'none' },
+        scrollTrigger: {
+          id: 'europe-enter', trigger: section,
+          start: 'top bottom', end: 'top top', scrub: 0.5,
+          invalidateOnRefresh: true,
+        },
+      });
+      entrance.fromTo(section, { '--curtain-opacity': 0 }, { '--curtain-opacity': 1, duration: 1 }, 0);
+      entrance.fromTo(select('[data-europe-line]'),
+        { yPercent: 110, filter: 'blur(10px)' },
+        { yPercent: 0, filter: 'blur(0px)', duration: 0.5, stagger: 0.12 }, 0.2);
+      entrance.fromTo(select('.europe-eyebrow, .europe-description'),
+        { opacity: 0 }, { opacity: 1, duration: 0.45 }, 0.45);
+
       const timeline = gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: {
-          id: 'scene-europe',
-          trigger: section,
-          pin,
+          id: 'scene-europe', trigger: section, pin,
           start: 'top top',
-          end: () => `+=${window.innerHeight * (desktop ? 1.5 : 1)}`,
-          scrub: true,
-          pinSpacing: true,
-          anticipatePin: 1,
+          end: () => `+=${window.innerHeight * (desktop ? 2.5 : 2)}`,
+          scrub: 0.8, pinSpacing: true, anticipatePin: 1,
           invalidateOnRefresh: true,
-          onUpdate: (trigger) => {
-            section.dataset.progress = trigger.progress.toFixed(4);
-          },
+          onUpdate: (trigger) => { section.dataset.progress = trigger.progress.toFixed(4); },
         },
       });
-
-      timeline.to({ progress: 0 }, { progress: 1, duration: 1 }, 0);
-      timeline.fromTo(select('[data-europe-vehicle]'),
-        { yPercent: 12, scale: 0.98 },
-        { yPercent: 0, scale: 1, duration: 0.3 }, 0,
-      );
-      timeline.to(select('[data-europe-vehicle]'), { yPercent: -12, scale: 1.02, duration: 0.35 }, 0.65);
-      timeline.fromTo(select('[data-europe-map]'),
-        { yPercent: 4, clipPath: 'inset(0% 0% 12% 0%)' },
-        { yPercent: 0, clipPath: 'inset(0% 0% 0% 0%)', duration: 0.3 }, 0,
-      );
-      timeline.to(select('[data-europe-map]'), { yPercent: -3, duration: 0.35 }, 0.65);
-      timeline.fromTo(select('[data-europe-heading]'),
-        { y: 10, filter: 'blur(1px)' },
-        { y: 0, filter: 'blur(0px)', duration: 0.24 }, 0,
-      );
-      timeline.fromTo(select('[data-europe-country]'),
-        { opacity: 0.55 },
-        { opacity: 1, duration: 0.12, stagger: 0.07 }, 0.22,
-      );
+      // Media contract: --vehicle-progress is normalized 0–1, independent of the renderer.
+      timeline.fromTo(vehicle, { '--vehicle-progress': 0 }, { '--vehicle-progress': 1, duration: 1 }, 0);
+      timeline.fromTo(vehicle,
+        { yPercent: 72, scale: 0.9 },
+        { yPercent: -105, scale: 1.06, duration: 1 }, 0);
+      timeline.fromTo(map,
+        { yPercent: 9, scale: 1.06, '--map-reveal': '20%' },
+        { yPercent: -12, scale: 1, '--map-reveal': '120%', duration: 1 }, 0);
+      timeline.fromTo(heading, { y: 18 }, { y: -48, duration: 1 }, 0);
+      timeline.fromTo(countries,
+        { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.16, stagger: 0.045 }, 0.08);
+      timeline.to([...heading, ...select('.europe-countries, .europe-cta')],
+        { autoAlpha: 0, duration: 0.18 }, 0.58);
+      timeline.to(vehicle, { opacity: 0, duration: 0.2 }, 0.8);
+      timeline.to(map, { opacity: 0.15, duration: 0.28 }, 0.72);
+      // Services' paper curtain covers the last viewport (progress 0.6 on desktop):
+      // lettering is gone by then, and the car and map fade underneath it.
     }, section);
 
-    void document.fonts.ready.then(() => {
-      if (!disposed) refresh();
-    });
+    void document.fonts.ready.then(() => { if (!disposed) refresh(); });
     section.addEventListener('load', refresh, true);
     const observer = new MutationObserver(refresh);
     observer.observe(section, { characterData: true, subtree: true });
     refresh();
-
     return () => {
       disposed = true;
       cancelAnimationFrame(refreshFrame);

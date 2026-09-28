@@ -4,12 +4,12 @@ export const en: Dictionary = {
   brand: 'GP SELECT',
   languages: { label: 'Language', es: 'Español', en: 'English' },
   nav: {
-    home: 'Home', vehicles: 'Vehicles', import: 'Import',
-    services: 'Services', about: 'About us', contact: 'Contact', admin: 'Administration',
+    home: 'Home', vehicles: 'Stock', import: 'Import',
+    services: 'Services', about: 'About', contact: 'Contact', admin: 'Administration',
   },
   hero: {
     left: 'Curated', right: 'Luxury',
-    description: 'Exceptional vehicles. Carefully selected.', cta: 'View collection',
+    description: 'Curated European sports cars\nwith a focus on timeless design\nand bespoke sourcing.', cta: 'View collection',
   },
   vehicle: {
     left: 'German', right: 'Performance',
@@ -23,7 +23,6 @@ export const en: Dictionary = {
       { word: 'Select', title: 'Our standard', description: 'Only what meets our expectations.' },
       { word: 'Deliver', title: 'The next chapter', description: 'Your next car, with confidence.' },
     ],
-    footer: 'More than choosing a car. Choosing well.',
   },
   common: {
     scroll: 'Scroll to discover', temporaryAsset: 'Temporary asset',

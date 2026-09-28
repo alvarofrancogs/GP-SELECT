@@ -30,12 +30,12 @@ export function VehiclePreviewCard({ vehicle, featured = false }: VehiclePreview
     <article className={`vehicle-preview${featured ? ' vehicle-preview--featured' : ''}`}>
       <div className="vehicle-preview__media" data-inventory-media>
         <AssetSlot asset={vehicle.image} label={vehicle.image.temporary ? copy.pendingPhoto : vehicleName} />
-        {isExample || featured ? (
-          <span className="vehicle-preview__badge">{isExample ? copy.exampleLabel : copy.featuredLabel}</span>
-        ) : null}
       </div>
       <div className="vehicle-preview__content">
         <div className="vehicle-preview__identity">
+          {isExample || featured ? (
+            <p className="vehicle-preview__label">{isExample ? copy.exampleLabel : copy.featuredLabel}</p>
+          ) : null}
           <p className="vehicle-preview__make">{vehicle.make}</p>
           <h3>{vehicle.model}</h3>
           {vehicle.variant ? <p className="vehicle-preview__variant">{vehicle.variant}</p> : null}
@@ -54,7 +54,7 @@ export function VehiclePreviewCard({ vehicle, featured = false }: VehiclePreview
           ) : (
             <Link className="vehicle-preview__link" to={enquiryUrl}>
               <span>{enquiryLabel}<span className="sr-only"> · {vehicleName}</span></span>
-              <span aria-hidden="true">↗</span>
+              <span aria-hidden="true">→</span>
             </Link>
           )}
           {vehicle.source === 'published' ? (

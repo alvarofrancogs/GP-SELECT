@@ -7,10 +7,13 @@ gsap.registerPlugin(ScrollTrigger);
 export type SceneKind = 'hero' | 'process' | 'vehicle';
 
 const scrollDistance: Record<SceneKind, { desktop: number; mobile: number }> = {
-  hero: { desktop: 2, mobile: 1 },
-  process: { desktop: 3, mobile: 2 },
-  vehicle: { desktop: 2, mobile: 1 },
+  hero: { desktop: 2.5, mobile: 2 },
+  process: { desktop: 3, mobile: 2.5 },
+  vehicle: { desktop: 2.5, mobile: 2 },
 };
+
+// Scrub smoothing in seconds: car scenes carry more inertia than lettering.
+const scrubLag: Record<SceneKind, number> = { hero: 0.7, process: 0.5, vehicle: 0.8 };
 
 /** Each scene owns its trigger; only the children of its pinned frame move. */
 export function useGsapScene(kind: SceneKind, id: string) {
@@ -67,7 +70,7 @@ export function useGsapScene(kind: SceneKind, id: string) {
             pin,
             start: 'top top',
             end: () => `+=${window.innerHeight * distance}`,
-            scrub: true,
+            scrub: scrubLag[kind],
             pinSpacing: true,
             anticipatePin: 1,
             invalidateOnRefresh: true,
@@ -81,64 +84,91 @@ export function useGsapScene(kind: SceneKind, id: string) {
         timeline.to({ progress: 0 }, { progress: 1, duration: 1 }, 0);
 
         if (backgrounds.length && kind !== 'process') {
-          timeline.to(backgrounds, { yPercent: -2, duration: 1 }, 0);
+          timeline.to(backgrounds, { yPercent: kind === 'hero' ? -3 : -2, duration: 1 }, 0);
         }
 
         if (kind === 'hero') {
           if (media.length) {
-            timeline.to(media, { yPercent: -24, scale: 1.02, duration: 0.58 }, 0.08);
+            // Linear travel, with a separate zoom for the camera's approach.
+            timeline.to(media, { xPercent: -54, yPercent: -18, duration: 1 }, 0);
+            timeline.to(media, { scale: 1.65, duration: 1, ease: 'power1.in' }, 0);
+            timeline.to(media, { opacity: 0, filter: 'blur(9px)', duration: 0.22 }, 0.78);
           }
           titles.forEach((title, index) => {
             timeline.to(title, {
-              yPercent: index === 0 ? -32 : -18,
+              x: () => window.innerWidth * (index === 0 ? -0.18 : 0.12),
+              yPercent: index === 0 ? -65 : -38,
               opacity: 0,
-              filter: 'blur(3px)',
-              duration: 0.3,
-            }, 0.36 + index * 0.04);
+              filter: 'blur(12px)',
+              duration: 0.34,
+            }, 0.12 + index * 0.04);
           });
-          if (ui.length) timeline.to(ui, { autoAlpha: 0, y: -12, duration: 0.16 }, 0.58);
+          if (ui.length) timeline.to(ui, { autoAlpha: 0, y: -24, duration: 0.2 }, 0.15);
+          if (handoff.length) timeline.to(handoff, { opacity: 1, duration: 0.5 }, 0.5);
+
+          // Performance exposes this wrapper to Hero; its own timeline still owns the content.
+          const incoming = document.querySelector('[data-handoff-target="hero"]');
+          if (incoming) {
+            timeline.fromTo(incoming, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.7);
+          }
         }
 
         if (kind === 'process' && words.length) {
           gsap.set(words, { opacity: 0.26, filter: 'blur(0.4px)' });
           gsap.set(words[0], { opacity: 1, filter: 'blur(0px)' });
-          // The four-word composition is prescribed by the brief, not a PNG.
+          // Animate the whole row so its number, word and detail share one envelope.
+          // Equal dominant intervals: 0–18%, 18–36%, 36–54%, 54–72%.
+          // Each continuous crossfade is centred on the boundary between steps.
           words.forEach((word, index) => {
             if (index > 0) {
-              timeline.to(word, { opacity: 1, filter: 'blur(0px)', duration: 0.09 }, index * 0.19);
+              timeline.to(word, { opacity: 1, filter: 'blur(0px)', duration: 0.16 }, index * 0.18 - 0.08);
             }
             if (index < words.length - 1) {
-              timeline.to(word, { opacity: 0.26, filter: 'blur(0.4px)', duration: 0.09 }, (index + 1) * 0.19);
+              timeline.to(word, { opacity: 0.26, filter: 'blur(0.4px)', duration: 0.16 }, (index + 1) * 0.18 - 0.08);
             }
           });
-          timeline.to(words, { yPercent: -12, duration: 0.2 }, 0.8);
+          timeline.to(words, { y: -18, duration: 1 }, 0);
+
+          // CSS overlaps the pins by 75vh. Vehicle owns its motion; Process only
+          // reveals its frame, just as Hero reveals Process's separate frame.
+          const overlap = 0.75 / distance;
+          const incoming = document.querySelector('[data-handoff-target="process"]');
+          if (incoming) {
+            timeline.fromTo(incoming, { autoAlpha: 0 }, { autoAlpha: 1, duration: overlap }, 1 - overlap);
+          }
+          timeline.to([...words, ...ui], { opacity: 0, duration: 0.16 }, 0.72);
         }
 
         if (kind === 'vehicle') {
           if (media.length) {
             timeline.fromTo(media,
-              { yPercent: 30, scale: 0.98, filter: 'blur(2px)' },
-              { yPercent: 0, scale: 1, filter: 'blur(0px)', duration: 0.34 },
+              { yPercent: -115, scale: 0.9 },
+              { yPercent: -6, scale: 1, duration: 0.42 },
               0,
             );
-            timeline.to(media, { yPercent: -28, scale: 1.02, duration: 0.36 }, 0.64);
+            // A slow camera drift at arrival, never a stationary hold.
+            timeline.to(media, { yPercent: 9, scale: 1.025, duration: 0.26 }, 0.42);
+            timeline.to(media, { yPercent: 140, scale: 1.08, duration: 0.32 }, 0.68);
+            timeline.to(media, { opacity: 0, filter: 'blur(6px)', duration: 0.2 }, 0.8);
           }
+          timeline.fromTo(select('[data-vehicle-lights]'),
+            { opacity: 0 }, { opacity: 1, duration: 0.22 }, 0.38,
+          );
           titles.forEach((title, index) => {
             timeline.fromTo(title,
-              { yPercent: 12, filter: 'blur(2px)' },
-              { yPercent: 0, filter: 'blur(0px)', duration: 0.24 },
-              index * 0.05,
+              { x: 0, y: 16 },
+              { x: () => window.innerWidth * (index === 0 ? -0.025 : 0.025), y: -12, duration: 1 },
+              0,
             );
           });
-        }
-
-        if (handoff.length && kind !== 'vehicle') {
-          gsap.set(handoff, { opacity: 1, clipPath: 'inset(100% 0% 0% 0%)' });
-          timeline.to(handoff, {
-            clipPath: 'inset(0% 0% 0% 0%)',
-            duration: kind === 'hero' ? 0.24 : 0.16,
-            ease: 'power1.inOut',
-          }, kind === 'hero' ? 0.76 : 0.84);
+          // The sky and car arrive first. At 24% of Vehicle, Process text has
+          // finished fading on both desktop and mobile (88% of its own pin).
+          timeline.fromTo([...titles, ...ui],
+            { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.16 }, 0.24,
+          );
+          // Europe's dark curtain rises during the last viewport of this pin.
+          // Retire the lettering before the incoming title becomes dominant.
+          timeline.to([...titles, ...ui], { autoAlpha: 0, duration: 0.18 }, 0.6);
         }
       },
       section,

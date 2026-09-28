@@ -9,7 +9,7 @@ export const es: Dictionary = {
   },
   hero: {
     left: 'Selección', right: 'Exclusiva',
-    description: 'Vehículos excepcionales. Seleccionados con criterio.',
+    description: 'Deportivos europeos seleccionados\npor su diseño atemporal\ny una búsqueda a tu medida.',
     cta: 'Ver colección',
   },
   vehicle: {
@@ -26,7 +26,6 @@ export const es: Dictionary = {
       { word: 'Seleccionamos', title: 'Nuestro criterio', description: 'Sólo lo que cumple nuestras expectativas.' },
       { word: 'Entregamos', title: 'El siguiente capítulo', description: 'Tu próximo coche, con confianza.' },
     ],
-    footer: 'No es sólo elegir un coche. Es elegir bien.',
   },
   common: {
     scroll: 'Desliza para descubrir', temporaryAsset: 'Recurso provisional',

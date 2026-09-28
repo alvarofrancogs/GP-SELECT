@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 700">
+  <title>Temporary overhead vehicle blockout, front facing up</title>
+  <path d="M83 60Q190 10 297 60L320 180 325 570Q315 653 285 668H95Q65 653 55 570L60 180Z" fill="#262b30" stroke="#677078" stroke-width="3"/>
+  <path d="M93 175Q190 135 287 175L278 257H102Z" fill="#0b1117" stroke="#525b63" stroke-width="2"/>
+  <path d="M103 272H277V478H103Z" fill="#12191f" stroke="#424c55" stroke-width="2"/>
+  <path d="M103 491H277L294 565Q190 596 86 565Z" fill="#090e13"/>
+  <path d="M68 228H43V273H64M312 228H337V273H316" fill="#373f47"/>
+  <path d="M83 103 132 88M248 88 297 103" stroke="#d0d5d5" stroke-width="5"/>
+  <path d="M76 599 133 613M247 613 304 599" stroke="#b92832" stroke-width="8" fill="none"/>
+  <path d="M95 635H285" stroke="#505860" stroke-width="4"/>
+</svg>

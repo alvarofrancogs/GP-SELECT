@@ -7,9 +7,10 @@ type ScrollSceneProps = {
   className?: string;
   children: ReactNode;
   labelledBy?: string;
+  handoffTarget?: string;
 };
 
-export function ScrollScene({ id, kind, className = '', children, labelledBy }: ScrollSceneProps) {
+export function ScrollScene({ id, kind, className = '', children, labelledBy, handoffTarget }: ScrollSceneProps) {
   const { sectionRef, pinRef } = useGsapScene(kind, id);
 
   return (
@@ -20,7 +21,7 @@ export function ScrollScene({ id, kind, className = '', children, labelledBy }: 
       data-scene={kind}
       aria-labelledby={labelledBy}
     >
-      <div ref={pinRef} className="scroll-scene__pin" data-scene-pin>
+      <div ref={pinRef} className="scroll-scene__pin" data-scene-pin data-handoff-target={handoffTarget}>
         {children}
       </div>
     </section>

@@ -18,7 +18,6 @@ export interface Dictionary {
     eyebrow: string;
     title: string;
     steps: { word: string; title: string; description: string }[];
-    footer: string;
   };
   common: {
     scroll: string;

@@ -23,7 +23,7 @@ export function HeroScene() {
       <div className="scene-cta" data-scene-ui>
         <Button to="/vehiculos" variant="light">{copy.hero.cta}</Button>
       </div>
-      <div className="scene-handoff scene-handoff--dark" data-scene-handoff aria-hidden="true" />
+      <div className="scene-handoff hero-handoff" data-scene-handoff aria-hidden="true" />
     </ScrollScene>
   );
 }

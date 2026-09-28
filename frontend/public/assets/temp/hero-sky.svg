@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="none">
+  <title>Temporary sky colour study, replace with approved photography</title>
+  <defs>
+    <linearGradient id="sky" x2=".2" y2="1"><stop stop-color="#b4cbd8"/><stop offset=".58" stop-color="#dbe2e2"/><stop offset="1" stop-color="#eee3d5"/></linearGradient>
+    <radialGradient id="light"><stop stop-color="#fffaf2" stop-opacity=".8"/><stop offset="1" stop-color="#fffaf2" stop-opacity="0"/></radialGradient>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h1600v1000H0z"/>
+  <ellipse fill="url(#light)" cx="80" cy="220" rx="1100" ry="380"/>
+  <ellipse fill="url(#light)" cx="280" cy="780" rx="950" ry="350"/>
+</svg>
