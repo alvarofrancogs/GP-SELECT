@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "GpSelect.Application/1.0.0": {
+        "dependencies": {
+          "GpSelect.Domain": "1.0.0"
+        },
+        "runtime": {
+          "GpSelect.Application.dll": {}
+        }
+      },
+      "GpSelect.Domain/1.0.0": {
+        "runtime": {
+          "GpSelect.Domain.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "GpSelect.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "GpSelect.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

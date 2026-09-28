@@ -1,0 +1,14 @@
+using GpSelect.Domain;
+namespace GpSelect.Application;
+public sealed record CreateVehicleRequest(string Make,string Model,int FirstRegistrationYear,int? FirstRegistrationMonth,string? InternalReference);
+public sealed record UpdateVehicleRequest(string? Make,string? Model,int? FirstRegistrationYear,int? FirstRegistrationMonth,decimal? PriceEur,string? Description,string? InternalReference,int? MileageKm,string? Variant,string? FuelType,string? Transmission,string? BodyType,string? ExteriorColour,string? Interior,string? History,string? Provenance,string? EquipmentJson,string? CustomSpecificationsJson);
+public sealed record VehicleAdminListDto(Guid Id,string Slug,VehicleStatus Status,string Make,string Model,int Year,int? Month,decimal? PriceEur,string? InternalReference,IReadOnlyList<ImageAdminDto> Images);
+public sealed record VehicleAdminDto(Guid Id,string Slug,VehicleStatus Status,string Make,string Model,int Year,int? Month,decimal? PriceEur,string? InternalReference,string? Description,int? MileageKm,string? Variant,string? FuelType,string? Transmission,string? BodyType,string? ExteriorColour,string? Interior,string? History,string? Provenance,string? EquipmentJson,string? CustomSpecificationsJson,IReadOnlyList<ImageAdminDto> Images);
+public sealed record ImageAdminDto(Guid Id,ImageState State,string? CardUrl,string? DetailUrl,bool IsCover,int SortOrder,string? FailureReason);
+public sealed record VehiclePublicDto(string Slug,string Make,string Model,string? Variant,int Year,int? Month,decimal? PriceEur,string? FuelType,string? Transmission,string? BodyType,string? ExteriorColour,string? Interior,string? Description,IReadOnlyList<string> Images);
+public sealed record VehiclePublicCardDto(string Slug,string Make,string Model,string? Variant,int Year,int? Month,decimal? PriceEur,IReadOnlyList<string> Images);
+public interface ISlugGenerator { string Generate(string make,string model); }
+public static class PublicMapping {
+ public static VehiclePublicDto Map(VehicleUnit v,IEnumerable<VehicleImage> images)=>new(v.PublicSlug,v.Make,v.Model,v.Variant,v.FirstRegistrationYear,v.FirstRegistrationMonth,v.PriceEur,v.FuelType,v.Transmission,v.BodyType,v.ExteriorColour,v.Interior,v.Description,images.Where(x=>x.State==ImageState.Ready&&x.DetailKey is not null).OrderBy(x=>x.SortOrder).ThenBy(x=>x.Id).Select(x=>$"/api/public/vehicles/{Uri.EscapeDataString(v.PublicSlug)}/images/{x.Id}/detail").ToList());
+ public static VehiclePublicCardDto MapCard(VehicleUnit v,IEnumerable<VehicleImage> images)=>new(v.PublicSlug,v.Make,v.Model,v.Variant,v.FirstRegistrationYear,v.FirstRegistrationMonth,v.PriceEur,images.Where(x=>x.State==ImageState.Ready&&x.CardKey is not null).OrderByDescending(x=>x.IsCover).ThenBy(x=>x.SortOrder).ThenBy(x=>x.Id).Select(x=>$"/api/public/vehicles/{Uri.EscapeDataString(v.PublicSlug)}/images/{x.Id}/card").ToList());
+}

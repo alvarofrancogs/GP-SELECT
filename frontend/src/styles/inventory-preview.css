@@ -1,0 +1,65 @@
+.inventory-preview {
+  position: relative;
+  padding-block: var(--space-9);
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.inventory-preview__intro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-8);
+  margin-bottom: var(--space-7);
+}
+
+.inventory-preview__intro h2 {
+  margin-top: var(--space-6);
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-display);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-display);
+}
+
+.inventory-preview__intro h2 span { display: block; font-weight: var(--weight-fine); }
+.inventory-preview__intro-aside { max-width: 25ch; }
+.inventory-preview__intro-aside > p { margin-bottom: var(--space-6); font-size: var(--text-body); line-height: 1.4; }
+.inventory-preview__notice { margin-bottom: var(--space-5); color: var(--color-muted); font-size: var(--text-sm); }
+.inventory-preview__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6); margin-top: var(--space-8); }
+.inventory-preview__state { padding-block: var(--space-9); border-block: var(--border-width) solid var(--color-line); font-size: var(--text-body); }
+
+.vehicle-preview { min-width: 0; }
+.vehicle-preview__media { position: relative; aspect-ratio: 4 / 3; background: var(--color-placeholder); overflow: hidden; }
+.vehicle-preview--featured .vehicle-preview__media { aspect-ratio: 21 / 9; }
+.vehicle-preview__badge { position: absolute; left: var(--space-5); top: var(--space-5); padding: var(--space-2) var(--space-3); background: var(--color-paper); color: var(--color-ink); font-family: var(--font-label); font-size: var(--text-label); letter-spacing: var(--tracking-label); }
+.vehicle-preview__content { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-5); padding-block: var(--space-5); border-bottom: var(--border-width) solid var(--color-line); }
+.vehicle-preview--featured .vehicle-preview__content { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-6); padding-block: var(--space-6); }
+.vehicle-preview__make { font-family: var(--font-label); font-size: var(--text-nav); letter-spacing: var(--tracking-body); margin-bottom: var(--space-2); }
+.vehicle-preview h3 { font-family: var(--font-display); font-size: var(--text-h2); font-weight: var(--weight-display); letter-spacing: var(--tracking-display); line-height: 1; overflow-wrap: anywhere; }
+.vehicle-preview--featured h3 { font-size: var(--text-h1); }
+.vehicle-preview__variant { margin-top: var(--space-2); font-size: var(--text-nav); color: var(--color-muted); }
+.vehicle-preview__action { display: flex; flex-direction: column; gap: var(--space-3); }
+.vehicle-preview--featured .vehicle-preview__action { align-items: flex-end; }
+.vehicle-preview__facts { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-5); font-size: var(--text-nav); }
+.vehicle-preview__link { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); min-height: var(--button-height); font-size: var(--text-nav); border-top: var(--border-width) solid var(--color-line); }
+.vehicle-preview__link:hover, .vehicle-preview__detail:hover { text-decoration: underline; text-underline-offset: var(--space-1); }
+.vehicle-preview__detail { font-size: var(--text-nav); }
+.vehicle-preview__media .asset-slot__caption { max-width: calc(100% - var(--space-7)); }
+
+@media (max-width: 1199px) {
+  .inventory-preview__intro { gap: var(--space-6); }
+  .inventory-preview__intro-aside { max-width: 22ch; }
+  .inventory-preview__grid { gap: var(--space-5); }
+}
+
+@media (max-width: 767px) {
+  .inventory-preview { padding-block: var(--space-8); }
+  .inventory-preview__intro { align-items: flex-start; flex-direction: column; }
+  .inventory-preview__intro-aside { max-width: 30ch; }
+  .inventory-preview__grid { grid-template-columns: 1fr; margin-top: var(--space-7); gap: var(--space-7); }
+  .vehicle-preview--featured .vehicle-preview__media { aspect-ratio: 4 / 3; }
+  .vehicle-preview--featured .vehicle-preview__content { align-items: flex-start; flex-direction: column; }
+  .vehicle-preview--featured .vehicle-preview__action { align-items: flex-start; }
+  .vehicle-preview--featured .vehicle-preview__action .button { white-space: normal; }
+}

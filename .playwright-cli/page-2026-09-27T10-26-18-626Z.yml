@@ -1,0 +1,84 @@
+- generic [ref=e3]:
+  - link "Saltar al contenido" [ref=e4] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - navigation "Abrir menú" [ref=e7]:
+        - link "Vehículos" [ref=e8] [cursor=pointer]:
+          - /url: /vehiculos
+        - link "Importación" [ref=e9] [cursor=pointer]:
+          - /url: /importacion
+        - link "Servicios" [ref=e10] [cursor=pointer]:
+          - /url: /servicios
+        - link "Nosotros" [ref=e11] [cursor=pointer]:
+          - /url: /nosotros
+        - link "Contacto" [ref=e12] [cursor=pointer]:
+          - /url: /contacto
+      - link "GP SELECT · Inicio" [ref=e13] [cursor=pointer]:
+        - /url: /
+        - text: GP SELECT
+      - group "Idioma" [ref=e15]:
+        - button "Español" [pressed] [ref=e16] [cursor=pointer]: ES
+        - button "English" [ref=e17] [cursor=pointer]: EN
+  - main [ref=e18]:
+    - region [ref=e19]:
+      - generic [ref=e21]:
+        - generic [ref=e26]:
+          - text: Fondo fotográfico pendiente
+          - generic [ref=e27]: Recurso provisional
+        - heading "Selección Exclusiva" [level=1] [ref=e28]:
+          - generic [ref=e29]: Selección
+          - generic [ref=e30]: Exclusiva
+        - paragraph [ref=e31]: Vehículos excepcionales. Seleccionados con criterio.
+        - generic [ref=e36]:
+          - text: Vehículo · vista lateral
+          - generic [ref=e37]: Recurso provisional
+        - link "Ver colección" [ref=e39] [cursor=pointer]:
+          - /url: /vehiculos
+          - generic [aria-hidden] [ref=e41]: ↗
+    - region [ref=e42]:
+      - generic [ref=e44]:
+        - generic [ref=e46]:
+          - generic [ref=e47]: EL CRITERIO GP SELECT
+          - heading "Cada detalle. Cada decisión." [level=2] [ref=e48]
+        - list [ref=e49]:
+          - listitem [ref=e50]:
+            - generic [aria-hidden] [ref=e51]: "01"
+            - generic [ref=e52]: Buscamos
+            - generic [ref=e53]:
+              - strong [ref=e54]: El punto de partida
+              - generic [ref=e55]: Un vehículo que encaje contigo.
+          - listitem [ref=e56]:
+            - generic [aria-hidden] [ref=e57]: "02"
+            - generic [ref=e58]: Inspeccionamos
+            - generic [ref=e59]:
+              - strong [ref=e60]: La atención al detalle
+              - generic [ref=e61]: Cada detalle cuenta antes de elegir.
+          - listitem [ref=e62]:
+            - generic [aria-hidden] [ref=e63]: "03"
+            - generic [ref=e64]: Seleccionamos
+            - generic [ref=e65]:
+              - strong [ref=e66]: Nuestro criterio
+              - generic [ref=e67]: Sólo lo que cumple nuestras expectativas.
+          - listitem [ref=e68]:
+            - generic [aria-hidden] [ref=e69]: "04"
+            - generic [ref=e70]: Entregamos
+            - generic [ref=e71]:
+              - strong [ref=e72]: El siguiente capítulo
+              - generic [ref=e73]: Tu próximo coche, con confianza.
+        - paragraph [ref=e74]: No es sólo elegir un coche. Es elegir bien.
+    - region [ref=e75]:
+      - generic [ref=e77]:
+        - generic [ref=e82]:
+          - text: Fondo fotográfico pendiente
+          - generic [ref=e83]: Recurso provisional
+        - heading "Ingeniería Alemana" [level=2] [ref=e84]:
+          - generic [ref=e85]: Ingeniería
+          - generic [ref=e86]: Alemana
+        - paragraph [ref=e87]: Precisión alemana. Carácter inconfundible.
+        - generic [ref=e92]:
+          - text: BMW M3 · vista cenital
+          - generic [ref=e93]: Recurso provisional
+        - link "Ver vehículos" [ref=e95] [cursor=pointer]:
+          - /url: /vehiculos
+          - generic [aria-hidden] [ref=e97]: ↗

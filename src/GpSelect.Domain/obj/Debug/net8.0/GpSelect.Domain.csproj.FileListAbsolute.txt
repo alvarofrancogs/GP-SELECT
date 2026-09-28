@@ -1,0 +1,11 @@
+C:\Users\alvar\Desktop\gpselect\src\GpSelect.Domain\bin\Debug\net8.0\GpSelect.Domain.deps.json
+C:\Users\alvar\Desktop\gpselect\src\GpSelect.Domain\bin\Debug\net8.0\GpSelect.Domain.dll
+C:\Users\alvar\Desktop\gpselect\src\GpSelect.Domain\bin\Debug\net8.0\GpSelect.Domain.pdb
+C:\Users\alvar\Desktop\gpselect\src\GpSelect.Domain\obj\Debug\net8.0\GpSelect.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\alvar\Desktop\gpselect\src\GpSelect.Domain\obj\Debug\net8.0\GpSelect.Domain.AssemblyInfoInputs.cache
+C:\Users\alvar\Desktop\gpselect\src\GpSelect.Domain\obj\Debug\net8.0\GpSelect.Domain.AssemblyInfo.cs
+C:\Users\alvar\Desktop\gpselect\src\GpSelect.Domain\obj\Debug\net8.0\GpSelect.Domain.csproj.CoreCompileInputs.cache
+C:\Users\alvar\Desktop\gpselect\src\GpSelect.Domain\obj\Debug\net8.0\GpSelect.Domain.dll
+C:\Users\alvar\Desktop\gpselect\src\GpSelect.Domain\obj\Debug\net8.0\refint\GpSelect.Domain.dll
+C:\Users\alvar\Desktop\gpselect\src\GpSelect.Domain\obj\Debug\net8.0\GpSelect.Domain.pdb
+C:\Users\alvar\Desktop\gpselect\src\GpSelect.Domain\obj\Debug\net8.0\ref\GpSelect.Domain.dll

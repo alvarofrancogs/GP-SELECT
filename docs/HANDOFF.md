@@ -1,0 +1,33 @@
+# GP SELECT — handoff para Claude Code / Opus 5.5
+
+## Producto y objetivo
+
+GP SELECT es una web de selección e importación de vehículos premium europeos. La experiencia pública debe presentar la marca, el proceso y el inventario con una narrativa visual cinematográfica, y convertir el interés en un cuestionario de cualificación contextual. No hay pagos, reservas de pago, carrito ni CRM. El administrador futuro gestionará inventario. Claude Code / Opus 5.5 orquesta y revisa; Codex / GPT-6 Astra tiene autoridad sobre diseño visual, frontend, motion e implementación.
+
+## Stack y mapa rápido
+
+`frontend/` es una aplicación React 19 + TypeScript + Vite 7, React Router, CSS por tokens, GSAP + ScrollTrigger e i18n ES/EN. Español es el idioma inicial; la selección persiste en localStorage. `src/` contiene el backend existente .NET 8 / ASP.NET Core, EF Core y PostgreSQL, distribuido en Api, Application, Domain e Infrastructure. El backend no fue modificado en las fases 2 y 3. La autenticación administrativa existente usa email/contraseña, cookie HttpOnly y rol Admin. La API dispone de catálogo público, detalle por slug y operaciones administrativas de vehículos e imágenes. Límites reales: EUR, 30 imágenes activas, 20 MiB por imagen.
+
+`frontend/src/App.tsx` registra `/`, `/vehiculos`, `/vehiculos/:slug`, `/importacion`, `/servicios`, `/nosotros`, `/contacto` y `/admin`. Solo HOME está construida; las otras rutas muestran `PlannedPage`. `pages/Home.tsx` ordena las seis secciones; `layouts/SiteLayout.tsx` añade header y footer. `styles/tokens.css` centraliza tipografía, color, gutters y easing. `i18n/` contiene diccionarios y proveedor de idioma. Los componentes reutilizables están en `components/`; las escenas en `sections/`; los manifiestos de medios en `assets/`; la integración futura en `services/` y `types/`.
+
+## Estado y aprobaciones
+
+Fase 2 fue aprobada por el usuario: hero, escena tipográfica de proceso y BMW M3 cenital. Sus componentes son `HeroScene`, `PerformanceScene` y `VehicleScene`; `ScrollScene` y `hooks/useGsapScene.ts` controlan sus timelines. La aprobación conserva su arquitectura, secuencia y sistema de scroll; no significa que la imagen final ya coincida fotográficamente con los PNG.
+
+Fase 3 fue solicitada e implementada como base: `ServicesSection` («Más que un coche», fondo crema, división 52/48, cuatro acordeones), `InventoryPreview` (destacado y tres tarjetas de ejemplo), `EuropeSection` (cierre oscuro con coche/mapa provisionales) y `Footer`. Los ejemplos de inventario están rotulados y no inventan precios ni disponibilidad. `services/inventoryPreview.ts` adapta el DTO público existente, pero HOME aún no consume la API. `types/qualification.ts` y `lib/qualification.ts` preparan el contexto de los CTA; `/contacto` todavía no es un formulario y la API no tiene endpoint de leads. Fase 4 no se ha iniciado. Los tres PNG del 28 de septiembre añaden referencias de catálogo, importación y cuestionario/footer; esas páginas no están implementadas.
+
+La tipografía y composición actuales **todavía no reproducen fielmente los mockups**. Parte de HOME es scaffolding/base con slots estructurales; Inter Tight/Inter, logotipo tipográfico, fotografías y mapa siguen siendo provisionales. Hace falta una **pasada de calibración visual antes del motion final**. Las comprobaciones funcionales previas fueron correctas y hubo capturas a 1440 y 1920 px, pero no equivalen a aprobación de fidelidad visual de fase 3. La preview no se pudo contrastar con el mockup específico «Premium vehicles», que no figura entre los PNG disponibles; el PNG nuevo de catálogo corresponde a otra página.
+
+## Decisiones visuales y de movimiento
+
+Los mockups aprobados son la fuente de verdad **visual**: composición, escala, gutters, tipografía bold/black junto a texto extremadamente fino, espacios negativos, capas y contraste. El BMW M3 claro fija el lenguaje tipográfico general. No colocar PNG completos como fondo ni extraer coches, fondos o mapas de las composiciones. Usar recursos individuales reales cuando lleguen y cambiar sus rutas en `assets/sceneAssets.ts`, `servicesAssets.ts`, `inventoryAssets.ts` y `europeAssets.ts`; mientras tanto, `public/assets/temp/` contiene solo placeholders estructurales.
+
+Jesko Jets es referencia exclusiva de **motion**: ritmo, pinning, masks, blur, zoom, easing y handoffs, nunca identidad visual. Se usa scroll nativo. Cada escena tiene sección estable, contenedor fijado y capas independientes; un timeline GSAP/ScrollTrigger reversible responde al progreso del scroll. Hero y proceso conservan solapes de 50svh; sus rangos actuales son 2, 3 y 2 alturas de viewport en escritorio, respectivamente. Europa usa `hooks/useEuropeScene.ts` y 1,5 alturas. Hay parallax moderado, revelados de texto/máscara, blur → foco, entrada/salida de medios e iluminación secuencial de los cuatro verbos. `prefers-reduced-motion` y ventanas de altura menor de 600 px muestran composiciones sin pin prolongado. Tras calibrar los estados visuales, afinar transiciones continuas entre escenas, zoom, recortes y handoffs sin alterar arbitrariamente las secciones aprobadas.
+
+## Referencias, problemas y siguiente paso
+
+PNG en la raíz: `16_51_51` (hero), `16_52_05` (BMW), `16_59_27` (servicios), `17_00_01` (Europa), `17_08_23` (admin), `17_08_27` (detalle); los `28 sept 15_41_28`, `15_41_46` y `15_42_09` muestran catálogo, importación y cuestionario/footer. El vídeo `2026-09-26 15-54-09.mp4` y Jesko Jets orientan el movimiento. `bmw_m4_faros_*.png` también están en raíz; no están incorporados a HOME. `frontend/docs/PHASE-2.md`, `VALIDACION.md` y `PHASE-3.md` guardan decisiones y capturas (`frontend/docs/qa/`, `qa-phase3/`). La auditoría antigua `AUDITORIA-GP-SELECT.md` describe el backend, pero sus propuestas de frontend previas a las fases 2/3 no son estado actual.
+
+Faltan fotografías/capas limpias de hero, BMW, servicios e inventario; coche GLC cenital, mapa europeo, fuente exacta y el mockup particular de «Premium vehicles». Sin ellos no es honesto cerrar la semejanza visual. También falta el cuestionario funcional y su endpoint mínimo; no simular un envío exitoso. Antes de alterar Domain o ampliar API, documentar la carencia concreta.
+
+**Siguiente tarea lógica:** realizar una revisión visual de HOME frente a cada mockup en 1440 y 1920 px, corregir primero tipografía/composición/escala, incorporar los assets individuales aprobados cuando existan y después afinar el motion de las escenas. Preservar el comportamiento de scroll de fase 2 y verificarlo en navegador. Resolver la referencia «Premium vehicles» antes de declarar cerrada su preview. No comenzar fase 4 por inercia.
