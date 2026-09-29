@@ -1,6 +1,62 @@
 import type { Dictionary } from './types';
 
 export const es: Dictionary = {
+  interiors: {
+    about: {
+      eyebrow: 'GP SELECT · QUIÉNES SOMOS', title: 'Nosotros',
+      lede: 'El coche adecuado empieza con una forma de elegir.',
+      manifesto: ['Selección.', 'Transparencia.', 'Criterio.'],
+      introduction: {
+        title: 'Una mirada propia.',
+        body: 'GP SELECT nace de una idea sencilla: elegir bien importa. Buscamos vehículos europeos con carácter, por su diseño, su ingeniería y la experiencia que ofrecen al volante. Y te ayudamos a entender qué hace especial a cada uno.',
+      },
+      selection: {
+        title: 'Más allá del emblema.',
+        body: 'Una configuración interesante es sólo el principio. Valoramos el historial disponible, el estado, el mantenimiento y la coherencia entre el vehículo y lo que buscas. Deportivos, berlinas y SUV: el criterio es el mismo, aunque la forma de conducirlos cambie.',
+      },
+      principlesLabel: 'Nuestra forma de trabajar',
+      principles: [
+        { title: 'Selección experta', body: 'Comparamos opciones y estudiamos cada unidad. La elección responde a tus prioridades, no sólo a una ficha técnica.' },
+        { title: 'Importación integral', body: 'Coordinamos búsqueda, verificación, trámites y entrega. Un mismo interlocutor para entender cada paso.' },
+        { title: 'Atención personal', body: 'Escuchamos antes de proponer. Te acompañamos desde la primera conversación hasta después de la entrega.' },
+      ],
+      europe: {
+        label: 'Una búsqueda sin fronteras', title: 'Europa como punto de partida.',
+        body: 'El mercado europeo amplía las posibilidades. Nuestro trabajo es darles sentido: localizar, inspeccionar y poner la información sobre la mesa antes de decidir.',
+        detail: 'Historial, documentación, estado y costes previstos. Con claridad sobre lo que sabemos y lo que falta por verificar. Y una persona al otro lado durante todo el recorrido.',
+      },
+      cta: 'Hablar con nosotros',
+      images: { selection: 'La selección GP SELECT', detail: 'El criterio está en los detalles' },
+    },
+    import: {
+      eyebrow: 'GP SELECT · SERVICIO INTEGRAL', title: 'Importación',
+      lede: 'Todo el proceso, de Europa a tu garaje.',
+      steps: [
+        { id: 'search', title: 'Buscar', body: 'Primero, entender qué quieres conducir. Modelo, configuración, uso y presupuesto definen una búsqueda a tu medida en el mercado europeo.', detail: 'Tus prioridades marcan la selección.' },
+        { id: 'verify', title: 'Verificar', body: 'Estudiamos el historial y la documentación disponible, contrastamos el kilometraje y revisamos el estado del vehículo. Coordinamos la inspección antes de avanzar.', detail: 'La información, antes que la decisión.' },
+        { id: 'manage', title: 'Gestionar', body: 'Negociamos las condiciones y coordinamos la operación, los documentos y los interlocutores. Conoces los siguientes pasos y los costes previstos.', detail: 'Una operación clara de principio a fin.' },
+        { id: 'import', title: 'Importar', body: 'Coordinamos el transporte y la documentación para traer el vehículo. Gestionamos los trámites, los impuestos y tasas aplicables y la matriculación según cada operación.', detail: 'Cada trámite, en su momento.' },
+        { id: 'deliver', title: 'Entregar', body: 'Preparamos la entrega, repasamos contigo el vehículo y su documentación y resolvemos tus dudas. El acompañamiento continúa con la atención posventa.', detail: 'El siguiente capítulo empieza al volante.' },
+      ],
+      images: { search: 'La búsqueda en el mercado europeo', inspection: 'Verificación de cada unidad', delivery: 'De origen a destino' },
+      closing: 'Tu próximo coche empieza aquí.', cta: 'Encontrar mi coche', secondary: 'Solicitar asesoramiento',
+    },
+    contact: {
+      eyebrow: 'GP SELECT · CONTACTO', title: 'Contacto', lede: 'Hablemos sobre tu próximo vehículo.',
+      pathsLabel: '¿Cómo empezamos?', vehiclePath: 'Sé qué coche quiero', searchPath: 'Quiero que GP SELECT me ayude a encontrarlo',
+      vehicleIntro: 'Dinos qué vehículo te interesa y qué te gustaría saber. Empezamos por ahí.',
+      searchIntro: 'Cuéntanos qué buscas: cómo conduces, qué modelos te gustan y qué presupuesto tienes en mente. No necesitas haber elegido un vehículo.',
+      formTitle: 'Tu consulta', fields: { name: 'Nombre', phone: 'Teléfono', email: 'Email', vehicle: 'Vehículo de interés', message: 'Mensaje' },
+      optional: 'opcional', requiredHint: 'Todos los campos son obligatorios salvo los indicados como opcionales.',
+      vehicleMessage: '¿Qué te gustaría saber de este vehículo?', searchMessage: '¿Qué coche estás buscando? Cuéntanos tus preferencias.',
+      submit: 'Enviar consulta', submitting: 'Preparando consulta…',
+      preview: 'Vista previa: puedes preparar tu consulta, pero todavía no se envía ni se guarda.',
+      successTitle: 'Consulta preparada.', successBody: 'Tu consulta está preparada, pero el envío todavía no está disponible. GP SELECT no la ha recibido. Puedes volver al formulario para revisarla.',
+      edit: 'Volver a la consulta', failure: 'No hemos podido preparar la consulta. Tus datos siguen en el formulario; inténtalo de nuevo.',
+      errors: { name: 'Escribe tu nombre (al menos 2 caracteres).', phone: 'Introduce un teléfono válido, con entre 7 y 15 dígitos.', email: 'Introduce un email válido.', vehicle: 'Indica el vehículo que te interesa.', message: 'Cuéntanos un poco más (al menos 10 caracteres).' },
+      directLabel: 'Contacto directo', whatsappTitle: 'Hablemos por WhatsApp', whatsappBody: 'Una conversación directa para resolver tus dudas y empezar a buscar.', whatsappCta: 'Abrir WhatsApp', phoneLabel: 'Teléfono', emailLabel: 'Email',
+    },
+  },
   brand: 'GP SELECT',
   languages: { label: 'Idioma', es: 'Español', en: 'English' },
   nav: {

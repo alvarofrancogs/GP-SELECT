@@ -13,7 +13,6 @@ export function Header() {
     { to: '/nosotros', label: copy.nav.about },
     { to: '/vehiculos', label: copy.nav.vehicles },
     { to: '/importacion', label: copy.nav.import },
-    { to: '/servicios', label: copy.nav.services },
     { to: '/contacto', label: copy.nav.contact },
   ];
 

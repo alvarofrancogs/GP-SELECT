@@ -16,6 +16,7 @@
 }
 
 .footer-brand {
+  font-stretch: var(--type-lede-width);
   font-size: var(--text-brand);
   font-weight: 400;
   letter-spacing: .16em;
@@ -26,11 +27,17 @@
   margin-top: var(--space-5);
   max-width: 28ch;
   font-size: var(--text-nav);
-  font-weight: var(--weight-fine);
-  line-height: 1.5;
+  font-stretch: var(--type-body-width);
+  font-weight: var(--type-body-weight);
+  letter-spacing: var(--type-body-tracking);
+  line-height: var(--type-body-leading);
 }
 
 .footer-nav {
+  font-stretch: var(--type-ui-width);
+  font-weight: var(--type-ui-weight);
+  letter-spacing: var(--type-ui-tracking);
+  line-height: var(--type-ui-leading);
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--space-5) var(--space-6);
@@ -40,6 +47,8 @@
 .footer-nav a:hover { text-decoration: underline; text-underline-offset: .3em; }
 
 .footer-bottom {
+  font-stretch: var(--type-ui-width);
+  font-variant-numeric: tabular-nums;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -51,6 +60,9 @@
 }
 
 .footer-bottom button {
+  font-stretch: var(--type-ui-width);
+  font-weight: var(--type-ui-weight);
+  letter-spacing: var(--type-ui-tracking);
   display: inline-flex;
   align-items: center;
   gap: var(--space-4);

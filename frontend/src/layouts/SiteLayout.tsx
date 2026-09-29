@@ -17,7 +17,7 @@ export function SiteLayout() {
       <a className="skip-link" href="#main-content">{copy.common.skipContent}</a>
       <Header key={pathname} />
       <main id="main-content" tabIndex={-1}><Outlet /></main>
-      {pathname === '/' ? <Footer /> : null}
+      <Footer />
     </div>
   );
 }

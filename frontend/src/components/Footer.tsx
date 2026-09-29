@@ -24,7 +24,6 @@ export function Footer() {
         <nav className="footer-nav" aria-label={text.navigation}>
           <Link to="/vehiculos">{copy.nav.vehicles}</Link>
           <Link to="/importacion">{copy.nav.import}</Link>
-          <Link to="/servicios">{copy.nav.services}</Link>
           <Link to="/nosotros">{copy.nav.about}</Link>
           <Link to={qualificationUrl({ intent: 'information', source: 'home-footer' })}>{copy.nav.contact}</Link>
         </nav>

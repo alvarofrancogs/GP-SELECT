@@ -12,6 +12,21 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 **1F — PASS.** Un solo pin (4,5 vh; 3,5 en móvil). Timeline de escena (cielo, sombreado, noche desde arriba, mapa, titulares y CTA) y timeline de coches con scrub más pesado. Ambos coches comparten caja, ancla y origen de transformación: un único avance continuo con crossfade BMW → Audi en la misma caja. Titulares con la receta del hero y tamaño ajustado por palabra; «Visión / Global» no invade el coche. Services entra como telón de papel sobre el último viewport. El header lee el tono publicado por la escena (`data-header-tone`) sin hit-test por frame. Reduced-motion y alturas < 600 px: dos frames estáticos. QA a 1440, 1920 y 390 (descenso, ascenso, reduced-motion), build, lint y consola OK.
 
+**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B (Vehículos + detalle) pendiente.
+
+**2F-A — PASS.** Sistema tipográfico global y páginas interiores.
+- **ADN tipográfico:** «Curated / Luxury» (hero) es la referencia absoluta: Archivo Variable, `font-stretch: 125%`, 800, −0,055em, interlineado 0,94, caja mixta.
+- **Recetas `--type-*` (tokens.css) y clases `.type-*` (global.css):** display, section, heading, fine, lede y label a 125 %; body a 108 %; UI a 115 %. Cifras con `tabular-nums`. `.button` en una sola regla con la receta UI.
+- **HOME migrada solo en tipografía:** Process, Services, Inventory, CTA final (ahora en caja mixta), botones, nav, eyebrows y footer. Tamaños recalibrados para conservar las cajas; motion, hooks y JSX intactos.
+- **Navegación de cuatro enlaces:** Nosotros · Vehículos · Importación · Contacto. `/importacion` es la página integral (Servicios + Importación); `/servicios` redirige ahí. Footer en todas las páginas.
+- **`/nosotros`:** manifiesto «Selección. / Transparencia. / Criterio.», bloques asimétricos, tres principios sin números, banda oscura Europa, cierre «Hablar con nosotros →».
+- **`/importacion`:** pasos 01–05 en filas editoriales con tres espacios de imagen; 04–05 en banda oscura.
+- **`/contacto`:** dos caminos (vehículo concreto / ayúdame a encontrarlo) con `?intent=search` y `?vehiculo=`. Formulario con `submitLead()` local sin red (endpoint de leads sin definir). Canales en `src/config/contact.ts`, todos `null`: en DEV se ve el panel de WhatsApp como preview sin datos; en producción se ocultan los canales sin configurar.
+- **Componentes:** `InteriorPageHeader`, `EditorialMedia`, `ProcessStep`, `ContactForm`, `DirectContact`.
+- **QA:** 1920, 1440 y 390 en ES/EN sin desbordamiento; reduced-motion OK; build, lint y consola OK.
+- **Pendiente P2:** copy «Tu próximo coche empieza aquí.»; peso del nav (400 → 500) frente al mockup; datos reales de contacto y endpoint de leads.
+- **MEDIA PROVISIONAL:** `about-selection`, `about-detail`, `import-search`, `import-inspection` e `import-delivery` (SVG en `public/assets/temp/`).
+
 ## DONE
 
 - Backend .NET 8 / EF Core / PostgreSQL existente; catálogo público y administración de vehículos e imágenes.
