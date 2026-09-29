@@ -13,6 +13,13 @@ export interface Dictionary {
     admin: string;
   };
   hero: { left: string; right: string; description: string; cta: string };
+  carHandoff: {
+    states: { left: string; right: string; description: string }[];
+    cta: string;
+    carA: string;
+    carB: string;
+    map: string;
+  };
   process: {
     eyebrow: string;
     title: string;

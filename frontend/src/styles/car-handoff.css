@@ -1,0 +1,69 @@
+/* Layers, bottom to top: sky → shade → first lettering → night (falls from the top) with map → car A → car B
+   → later lettering → CTA. Panels only group the two static frames; they set no stacking context. */
+.car-handoff {
+  --handoff-ink: var(--color-ink);
+  --handoff-side: none;
+  --car-top: 14%;
+  --car-height: 70%;
+  position: relative;
+  z-index: 0;
+}
+/* Services rises over the last viewport as an opaque paper curtain. */
+.car-handoff[data-motion='scroll'] { margin-bottom: -100svh; }
+
+.car-handoff__pin { position: relative; height: 100svh; overflow: hidden; isolation: isolate; background: var(--color-paper); }
+.car-handoff__panel { position: absolute; inset: 0; }
+/* The sky darkens from the top first, ahead of the night layer. */
+.car-handoff__shade { position: absolute; inset: 0; z-index: 2; background: linear-gradient(to bottom, var(--color-dark), transparent 85%); opacity: 0; }
+[data-text='a'] { z-index: 3; }
+.car-handoff__night { z-index: 4; }
+[data-car='a'] { z-index: 5; }
+[data-car='b'] { z-index: 6; }
+[data-text='b'], [data-text='c'] { z-index: 7; }
+
+/* Both cars share one box, anchor and transform origin; assets never adjust the motion. */
+.car-handoff__car {
+  position: absolute;
+  top: var(--car-top);
+  left: 0;
+  right: 0;
+  height: var(--car-height);
+  aspect-ratio: 1 / 2;
+  margin-inline: auto;
+  transform-origin: 50% 0;
+}
+.car-handoff__car .asset-slot img { object-fit: contain; }
+.car-handoff .asset-slot__caption { display: none; }
+
+.car-handoff__night {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 120%;
+  background: var(--color-dark);
+  mask-image: linear-gradient(to top, transparent, #000 16%);
+}
+.car-handoff__map { position: absolute; inset: 6% 4% 24%; opacity: .9; }
+.car-handoff__map .asset-slot img { object-fit: contain; }
+
+.car-handoff__text { position: absolute; inset: 0; color: var(--handoff-ink); pointer-events: none; }
+.car-handoff .hero-title { top: 38%; }
+.car-handoff .hero-title > span:last-child { font-size: var(--hero-size); }
+.car-handoff .hero-title > span > span { display: inline-block; }
+.car-handoff .hero-description { top: 51%; max-width: var(--handoff-side); }
+.car-handoff__cta { position: absolute; left: 50%; bottom: 6%; z-index: 8; transform: translateX(-50%); white-space: nowrap; }
+
+@media (max-width: 1023px) {
+  .car-handoff { --car-top: 46%; --car-height: 38%; }
+  .car-handoff .hero-title { top: 16%; flex-direction: column; gap: var(--space-2); }
+  .car-handoff .hero-title > span:last-child { align-self: flex-end; }
+  .car-handoff .hero-description { top: 35%; }
+  .car-handoff__cta { bottom: 5%; }
+}
+
+/* Reduced motion and short screens: two readable frames, state A (light) and state C (dark). */
+.car-handoff[data-motion='static'] .car-handoff__pin { height: auto; }
+.car-handoff[data-motion='static'] .car-handoff__panel { position: relative; height: 100svh; min-height: 640px; overflow: hidden; }
+.car-handoff[data-motion='static'] .car-handoff__panel--dark { --handoff-ink: var(--color-white); background: var(--color-dark); }
+.car-handoff[data-motion='static'] .car-handoff__night { inset: 0; height: 100%; mask-image: none; }
+.car-handoff[data-motion='static'] [data-text='b'] { display: none; }
+.car-handoff[data-motion='static'] .car-handoff__cta { bottom: 3%; }

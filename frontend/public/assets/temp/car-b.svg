@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1200">
+  <title>Temporary car B (Audi RS Q3 slot)</title>
+  <!-- Temporary top-view silhouette, nose up. Same canvas, centre and scale as its pair. -->
+  <rect x="96" y="250" width="34" height="150" rx="14" fill="#0b0c0d"/>
+  <rect x="470" y="250" width="34" height="150" rx="14" fill="#0b0c0d"/>
+  <rect x="96" y="820" width="34" height="160" rx="14" fill="#0b0c0d"/>
+  <rect x="470" y="820" width="34" height="160" rx="14" fill="#0b0c0d"/>
+  <path d="M300 70 C215 70 150 110 135 190 L118 330 L112 520 L116 900 L126 1060 C136 1115 190 1140 300 1140 C410 1140 464 1115 474 1060 L484 900 L488 520 L482 330 L465 190 C450 110 385 70 300 70 Z" fill="#141619"/>
+  <path d="M170 450 L96 430 C84 427 80 444 92 450 L168 488 Z" fill="#141619"/>
+  <path d="M430 450 L504 430 C516 427 520 444 508 450 L432 488 Z" fill="#141619"/>
+  <path d="M178 455 C220 420 380 420 422 455 L440 560 C380 540 220 540 160 560 Z" fill="#2b3035"/>
+  <path d="M168 575 C230 556 370 556 432 575 L430 800 C370 812 230 812 170 800 Z" fill="#2b3035" opacity=".55"/>
+  <path d="M172 822 C230 836 370 836 428 822 L412 930 C360 948 240 948 188 930 Z" fill="#2b3035"/>
+  <path d="M190 120 C240 96 360 96 410 120" fill="none" stroke="#f2f4f5" stroke-width="6" stroke-linecap="round"/>
+  <path d="M150 1100 C220 1122 380 1122 450 1100" fill="none" stroke="#b3262d" stroke-width="10" stroke-linecap="round"/>
+</svg>

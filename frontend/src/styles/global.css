@@ -16,6 +16,8 @@ img { display: block; max-width: 100%; }
 .skip-link { position: fixed; top: var(--space-4); left: var(--page-gutter); z-index: var(--z-skip); background: var(--color-white); color: var(--color-ink); padding: var(--space-4); transform: translateY(-200%); }
 .skip-link:focus { transform: translateY(0); }
 .site-header { position: fixed; inset: 0 0 auto; z-index: var(--z-header); color: var(--color-white); mix-blend-mode: difference; }
+.site-header[data-tone='light'] { color: var(--color-ink); mix-blend-mode: normal; }
+.site-header[data-tone='dark'] { color: var(--color-white); mix-blend-mode: normal; }
 .site-header[data-hero-handoff] { color: var(--color-ink); background: var(--color-header-scrim); mix-blend-mode: normal; }
 .header-inner { height: var(--header-height); margin-inline: var(--page-gutter); display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
 .header-nav, .header-actions { display: flex; align-items: center; gap: clamp(1rem, 2.9vw, 3.5rem); }

@@ -12,6 +12,17 @@ export const es: Dictionary = {
     description: 'Deportivos europeos seleccionados\npor su diseño atemporal\ny una búsqueda a tu medida.',
     cta: 'Ver colección',
   },
+  carHandoff: {
+    states: [
+      { left: 'Ingeniería', right: 'Alemana', description: 'Precisión alemana.\nCarácter inconfundible.' },
+      { left: 'Potencia', right: 'Control', description: 'Toda la potencia,\nsiempre bajo control.' },
+      { left: 'Visión', right: 'Global', description: 'Vehículos premium,\nseleccionados en toda Europa.' },
+    ],
+    cta: 'Ver vehículos',
+    carA: 'BMW M4 · vista cenital',
+    carB: 'Audi RS Q3 · vista cenital',
+    map: 'Mapa de Europa',
+  },
   process: {
     eyebrow: 'EL CRITERIO GP SELECT',
     title: 'Cada detalle. Cada decisión.',

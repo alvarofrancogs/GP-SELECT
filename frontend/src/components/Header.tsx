@@ -21,6 +21,7 @@ export function Header() {
     const header = headerRef.current;
     if (!header) return;
     const hero = document.getElementById('hero');
+    const handoff = document.getElementById('coches');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     function updateContrast() {
@@ -28,6 +29,10 @@ export function Header() {
       const progress = Number(hero?.dataset.progress ?? 0);
       // A solid scrim avoids difference blending against the handoff's mid-grey.
       header.toggleAttribute('data-hero-handoff', progress >= 0.35 && progress < 1);
+      // The car handoff darkens progressively and publishes the tone under the header.
+      const tone = handoff?.dataset.headerTone;
+      if (tone) header.dataset.tone = tone;
+      else delete header.dataset.tone;
     }
     function onScroll() {
       cancelAnimationFrame(frame);
@@ -43,6 +48,7 @@ export function Header() {
       window.removeEventListener('resize', onScroll);
       reducedMotion.removeEventListener('change', onScroll);
       header.removeAttribute('data-hero-handoff');
+      delete header.dataset.tone;
     };
   }, [pathname]);
 

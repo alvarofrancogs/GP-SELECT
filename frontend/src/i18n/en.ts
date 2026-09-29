@@ -11,6 +11,17 @@ export const en: Dictionary = {
     left: 'Curated', right: 'Luxury',
     description: 'Curated European sports cars\nwith a focus on timeless design\nand bespoke sourcing.', cta: 'View collection',
   },
+  carHandoff: {
+    states: [
+      { left: 'German', right: 'Performance', description: 'German precision.\nUnmistakable character.' },
+      { left: 'Power', right: 'Control', description: 'All the power,\nalways under control.' },
+      { left: 'Global', right: 'Vision', description: 'Premium vehicles,\nsourced across Europe.' },
+    ],
+    cta: 'View vehicles',
+    carA: 'BMW M4 · top view',
+    carB: 'Audi RS Q3 · top view',
+    map: 'Map of Europe',
+  },
   process: {
     eyebrow: 'THE GP SELECT STANDARD', title: 'Every detail. Every decision.',
     steps: [
