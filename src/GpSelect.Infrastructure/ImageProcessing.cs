@@ -40,6 +40,9 @@ public sealed class ImageProcessingWorker(IServiceScopeFactory scopes, IObjectSt
             cardStream.Position = detailStream.Position = 0; var prefix = $"vehicles/{image.VehicleUnitId}/{image.Id}";
             await storage.PutAsync(prefix + "/card.jpg", cardStream, "image/jpeg", ct); await storage.PutAsync(prefix + "/detail.jpg", detailStream, "image/jpeg", ct);
             image.Ready(prefix + "/card.jpg", prefix + "/detail.jpg"); job.Complete(); await db.SaveChangesAsync(ct);
+            // The first ready image becomes the cover when the vehicle has none.
+            var siblings = await db.Images.Where(x => x.VehicleUnitId == image.VehicleUnitId && x.State != ImageState.Deleted).ToListAsync(ct);
+            if (VehicleGallery.EnsureCover(siblings) is not null) await db.SaveChangesAsync(ct);
          } catch (Exception ex) { logger.LogError(ex, "Image processing failed for {ImageId}", image.Id); image.Fail(ex.Message[..Math.Min(500, ex.Message.Length)]); job.Retry(ex.Message); await db.SaveChangesAsync(ct); }
     }
     private static async Task<bool> IsSupported(Stream s, string claimed, CancellationToken ct)

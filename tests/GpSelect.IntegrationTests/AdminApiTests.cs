@@ -1,0 +1,263 @@
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+using GpSelect.Domain;
+using GpSelect.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using Xunit;
+
+namespace GpSelect.IntegrationTests;
+
+public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
+{
+    private HttpClient admin => api.Admin;
+
+    // --- Helpers --------------------------------------------------------------------------------
+
+    private static async Task<JsonElement> Json(HttpResponseMessage response)
+    {
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.True(response.IsSuccessStatusCode, $"{(int)response.StatusCode}: {body}");
+        return JsonDocument.Parse(body).RootElement;
+    }
+
+    private static async Task<JsonElement> Problem(HttpResponseMessage response, HttpStatusCode expected)
+    {
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.True(response.StatusCode == expected, $"expected {expected}, got {(int)response.StatusCode}: {body}");
+        return JsonDocument.Parse(body).RootElement;
+    }
+
+    private async Task<(Guid Id, string Slug)> CreateVehicle(string reference = "REF-INTERNAL")
+    {
+        var created = await Json(await admin.PostAsJsonAsync("/api/admin/vehicles",
+            new { make = "BMW", model = "M4", firstRegistrationYear = 2023, firstRegistrationMonth = 6, internalReference = reference }));
+        return (created.GetProperty("id").GetGuid(), created.GetProperty("slug").GetString()!);
+    }
+
+    private Task<HttpResponseMessage> Patch(Guid id, object body) => admin.PatchAsync($"/api/admin/vehicles/{id}", JsonContent.Create(body));
+    private Task<HttpResponseMessage> SetStatus(Guid id, string status) => admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/status", new { status });
+
+    private static byte[] Png()
+    {
+        using var image = new Image<Rgba32>(8, 6, new Rgba32(40, 40, 40));
+        using var stream = new MemoryStream();
+        image.SaveAsPng(stream);
+        return stream.ToArray();
+    }
+
+    /// <summary>The real upload flow: intent, PUT to the returned URL, complete, then wait for the worker.</summary>
+    private async Task<Guid> UploadImage(Guid vehicleId)
+    {
+        var bytes = Png();
+        var intent = new HttpRequestMessage(HttpMethod.Post, $"/api/admin/vehicles/{vehicleId}/images/intent") { Content = JsonContent.Create(new { mimeType = "image/png", sizeBytes = bytes.Length }) };
+        intent.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
+        var ticket = await Json(await admin.SendAsync(intent));
+        var imageId = ticket.GetProperty("imageId").GetGuid();
+
+        var content = new ByteArrayContent(bytes);
+        content.Headers.ContentType = new("image/png");
+        var upload = await admin.PutAsync(ticket.GetProperty("uploadUrl").GetString(), content);
+        Assert.Equal(HttpStatusCode.NoContent, upload.StatusCode);
+
+        var complete = new HttpRequestMessage(HttpMethod.Post, $"/api/admin/vehicles/{vehicleId}/images/{imageId}/complete");
+        complete.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
+        await Json(await admin.SendAsync(complete));
+
+        for (var i = 0; i < 60; i++)
+        {
+            var state = (await Json(await admin.GetAsync($"/api/admin/vehicles/{vehicleId}/images/{imageId}/status"))).GetProperty("state").GetString();
+            if (state == "Ready") return imageId;
+            Assert.NotEqual("Failed", state);
+            await Task.Delay(500);
+        }
+        throw new TimeoutException("Image processing did not finish");
+    }
+
+    private async Task<bool> IsListed(string slug)
+    {
+        var list = await Json(await api.Anonymous().GetAsync("/api/public/vehicles"));
+        return list.EnumerateArray().Any(x => x.GetProperty("slug").GetString() == slug);
+    }
+
+    // --- Auth -----------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Login_issues_a_secure_http_only_cookie_and_admin_routes_require_it()
+    {
+        using var client = api.Anonymous();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/admin/vehicles")).StatusCode);
+        await Problem(await client.PostAsJsonAsync("/api/admin/auth/login", new { email = ApiFactory.AdminEmail, password = "wrong" }), HttpStatusCode.Unauthorized);
+
+        var login = await client.PostAsJsonAsync("/api/admin/auth/login", new { email = ApiFactory.AdminEmail, password = ApiFactory.AdminPassword });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var cookie = Assert.Single(login.Headers.GetValues("Set-Cookie")).ToLowerInvariant();
+        Assert.Contains("httponly", cookie);
+        Assert.Contains("secure", cookie);
+        Assert.Contains("samesite=strict", cookie);
+
+        var me = await Json(await client.GetAsync("/api/admin/auth/me"));
+        Assert.Equal(("Admin", ApiFactory.AdminEmail), (me.GetProperty("role").GetString(), me.GetProperty("email").GetString()));
+    }
+
+    [Fact]
+    public async Task Csrf_accepts_the_configured_origin_and_rejects_others()
+    {
+        var body = new { make = "Audi", model = "RS 6", firstRegistrationYear = 2023 };
+
+        var foreign = new HttpRequestMessage(HttpMethod.Post, "/api/admin/vehicles") { Content = JsonContent.Create(body) };
+        foreign.Headers.Remove("Origin");
+        foreign.Headers.Add("Origin", "https://evil.example");
+        var rejected = await Problem(await admin.SendAsync(foreign), HttpStatusCode.Forbidden);
+        Assert.Equal("csrf_failed", rejected.GetProperty("code").GetString());
+
+        using var noOrigin = api.Anonymous();
+        (await noOrigin.PostAsJsonAsync("/api/admin/auth/login", new { email = ApiFactory.AdminEmail, password = ApiFactory.AdminPassword })).EnsureSuccessStatusCode();
+        await Problem(await noOrigin.PostAsJsonAsync("/api/admin/vehicles", body), HttpStatusCode.Forbidden);
+
+        Assert.Equal(HttpStatusCode.Created, (await admin.PostAsJsonAsync("/api/admin/vehicles", body)).StatusCode);
+    }
+
+    // --- Contracts ------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Create_persists_internal_reference_and_enums_are_names()
+    {
+        var (id, _) = await CreateVehicle("REF-0042");
+        var detail = await Json(await admin.GetAsync($"/api/admin/vehicles/{id}"));
+        Assert.Equal("REF-0042", detail.GetProperty("internalReference").GetString());
+        Assert.Equal("Draft", detail.GetProperty("status").GetString());
+
+        var row = (await Json(await admin.GetAsync("/api/admin/vehicles"))).EnumerateArray().Single(x => x.GetProperty("id").GetGuid() == id);
+        Assert.Equal("Draft", row.GetProperty("status").GetString());
+
+        await Problem(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/status", new { status = 2 }), HttpStatusCode.BadRequest);
+        await Problem(await SetStatus(id, "Flying"), HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Patch_distinguishes_absent_null_and_value_and_persists()
+    {
+        var (id, _) = await CreateVehicle();
+        await Json(await Patch(id, new
+        {
+            variant = "Competition", powerHp = 510, mileageKm = 28400, drivetrain = "Trasera", priceEur = 86900,
+            equipment = new[] { " Head-Up Display ", "head-up display", "Harman Kardon" },
+            customSpecifications = new[] { new { label = "Par máximo", value = "650 Nm" } },
+        }));
+
+        // Absent properties keep their value.
+        await Json(await Patch(id, new { description = "Coupé de ejemplo." }));
+        var kept = await Json(await admin.GetAsync($"/api/admin/vehicles/{id}"));
+        Assert.Equal(("Competition", 510, "Coupé de ejemplo."), (kept.GetProperty("variant").GetString(), kept.GetProperty("powerHp").GetInt32(), kept.GetProperty("description").GetString()));
+        Assert.Equal(new[] { "Head-Up Display", "Harman Kardon" }, kept.GetProperty("equipment").EnumerateArray().Select(x => x.GetString()));
+        Assert.Equal("650 Nm", kept.GetProperty("customSpecifications")[0].GetProperty("value").GetString());
+
+        // Explicit null or blank clears a clearable field.
+        await Json(await admin.PatchAsync($"/api/admin/vehicles/{id}", new StringContent("""{"variant":null,"drivetrain":"  ","equipment":[]}""", System.Text.Encoding.UTF8, "application/json")));
+        var cleared = await Json(await admin.GetAsync($"/api/admin/vehicles/{id}"));
+        Assert.Equal(JsonValueKind.Null, cleared.GetProperty("variant").ValueKind);
+        Assert.Equal(JsonValueKind.Null, cleared.GetProperty("drivetrain").ValueKind);
+        Assert.Equal(0, cleared.GetProperty("equipment").GetArrayLength());
+        Assert.Equal(510, cleared.GetProperty("powerHp").GetInt32());
+
+        // Required fields cannot be cleared; errors name the field.
+        var problem = await Problem(await admin.PatchAsync($"/api/admin/vehicles/{id}", new StringContent("""{"make":null}""", System.Text.Encoding.UTF8, "application/json")), HttpStatusCode.BadRequest);
+        Assert.Equal(("required", "make"), (problem.GetProperty("code").GetString(), problem.GetProperty("field").GetString()));
+        var range = await Problem(await Patch(id, new { powerHp = 2001 }), HttpStatusCode.BadRequest);
+        Assert.Equal("powerHp", range.GetProperty("field").GetString());
+    }
+
+    [Fact]
+    public async Task Status_cover_and_public_visibility_follow_the_rules()
+    {
+        var (id, slug) = await CreateVehicle();
+        await Json(await Patch(id, new { priceEur = 86900, powerHp = 510 }));
+
+        // No ready cover: cannot be listed.
+        var blocked = await Problem(await SetStatus(id, "Available"), HttpStatusCode.UnprocessableEntity);
+        Assert.Equal("images_required", blocked.GetProperty("code").GetString());
+
+        // The first ready image becomes the cover automatically.
+        var first = await UploadImage(id);
+        var second = await UploadImage(id);
+        var images = (await Json(await admin.GetAsync($"/api/admin/vehicles/{id}"))).GetProperty("images").EnumerateArray().ToList();
+        Assert.True(images.Single(x => x.GetProperty("id").GetGuid() == first).GetProperty("isCover").GetBoolean());
+        Assert.False(images.Single(x => x.GetProperty("id").GetGuid() == second).GetProperty("isCover").GetBoolean());
+
+        var available = await Json(await SetStatus(id, "Available"));
+        Assert.Equal("Available", available.GetProperty("status").GetString());
+        var publishedAt = available.GetProperty("publishedAt").GetDateTimeOffset();
+        Assert.True(await IsListed(slug));
+
+        // Public detail: cover first, structured fields, no internal data.
+        using var visitor = api.Anonymous();
+        var publicBody = await (await visitor.GetAsync($"/api/public/vehicles/{slug}")).Content.ReadAsStringAsync();
+        var publicDetail = JsonDocument.Parse(publicBody).RootElement;
+        Assert.Contains(first.ToString(), publicDetail.GetProperty("images")[0].GetString());
+        Assert.Equal((510, "Available"), (publicDetail.GetProperty("powerHp").GetInt32(), publicDetail.GetProperty("status").GetString()));
+        Assert.DoesNotContain("REF-INTERNAL", publicBody);
+        Assert.DoesNotContain("internalReference", publicBody);
+        var cardBody = await (await visitor.GetAsync("/api/public/vehicles")).Content.ReadAsStringAsync();
+        Assert.DoesNotContain("REF-INTERNAL", cardBody);
+
+        // Reserved stays public; Sold leaves the list but keeps its detail URL; Draft withdraws it.
+        await Json(await SetStatus(id, "Reserved"));
+        Assert.True(await IsListed(slug));
+        await Json(await SetStatus(id, "Sold"));
+        Assert.False(await IsListed(slug));
+        Assert.Equal("Sold", (await Json(await visitor.GetAsync($"/api/public/vehicles/{slug}"))).GetProperty("status").GetString());
+        await Json(await SetStatus(id, "Draft"));
+        Assert.False(await IsListed(slug));
+        Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync($"/api/public/vehicles/{slug}")).StatusCode);
+
+        // Publishing again keeps the first publication date.
+        var republished = await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/publish", new { target = "ComingSoon" }));
+        Assert.Equal("ComingSoon", republished.GetProperty("status").GetString());
+        // PostgreSQL stores microseconds; the first response still held .NET's 100 ns ticks.
+        Assert.True((republished.GetProperty("publishedAt").GetDateTimeOffset() - publishedAt).Duration() < TimeSpan.FromMilliseconds(1));
+
+        // Removing the cover promotes the next ready image; the last ready image of a listed vehicle stays.
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/admin/vehicles/{id}/images/{first}/remove", null)).StatusCode);
+        var remaining = Assert.Single((await Json(await admin.GetAsync($"/api/admin/vehicles/{id}"))).GetProperty("images").EnumerateArray());
+        Assert.True(remaining.GetProperty("isCover").GetBoolean());
+        var last = await Problem(await admin.PostAsync($"/api/admin/vehicles/{id}/images/{second}/remove", null), HttpStatusCode.Conflict);
+        Assert.Equal("last_public_image", last.GetProperty("code").GetString());
+
+        // Archived is terminal and never public.
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/admin/vehicles/{id}/archive", null)).StatusCode);
+        Assert.Equal("archived", (await Problem(await SetStatus(id, "Available"), HttpStatusCode.Conflict)).GetProperty("code").GetString());
+        Assert.Equal(HttpStatusCode.Conflict, (await Patch(id, new { variant = "x" })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync($"/api/public/vehicles/{slug}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Admin_list_uses_the_same_queries_for_any_number_of_vehicles()
+    {
+        for (var i = 0; i < 3; i++) await CreateVehicle();
+        await WaitForImageJobs();
+
+        api.Sql.Clear();
+        var rows = await Json(await admin.GetAsync("/api/admin/vehicles"));
+        var imageQueries = api.Sql.Commands.Count(x => x.Contains("FROM \"Images\""));
+        var vehicleQueries = api.Sql.Commands.Count(x => x.Contains("FROM \"Vehicles\""));
+
+        Assert.True(rows.GetArrayLength() >= 3);
+        Assert.Equal((1, 1), (vehicleQueries, imageQueries));
+    }
+
+    /// <summary>The image worker shares the database; wait until it is idle before counting queries.</summary>
+    private async Task WaitForImageJobs()
+    {
+        for (var i = 0; i < 60; i++)
+        {
+            using var scope = api.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
+            if (!await db.ImageJobs.AnyAsync(x => x.State == ImageJobState.Queued || x.State == ImageJobState.Processing)) return;
+            await Task.Delay(500);
+        }
+    }
+}

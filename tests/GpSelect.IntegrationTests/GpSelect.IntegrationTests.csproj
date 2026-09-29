@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net8.0</TargetFramework><IsPackable>false</IsPackable></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.20" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.7.0" />
+    <!-- Align with the API: Npgsql pulls 8.0.8, the API resolves 8.0.20. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.20" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/GpSelect.Api/GpSelect.Api.csproj" />
+  </ItemGroup>
+</Project>

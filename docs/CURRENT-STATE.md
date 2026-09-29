@@ -12,7 +12,25 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 **1F — PASS.** Un solo pin (4,5 vh; 3,5 en móvil). Timeline de escena (cielo, sombreado, noche desde arriba, mapa, titulares y CTA) y timeline de coches con scrub más pesado. Ambos coches comparten caja, ancla y origen de transformación: un único avance continuo con crossfade BMW → Audi en la misma caja. Titulares con la receta del hero y tamaño ajustado por palabra; «Visión / Global» no invade el coche. Services entra como telón de papel sobre el último viewport. El header lee el tono publicado por la escena (`data-header-tone`) sin hit-test por frame. Reduced-motion y alturas < 600 px: dos frames estáticos. QA a 1440, 1920 y 390 (descenso, ascenso, reduced-motion), build, lint y consola OK.
 
-**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · **siguiente: 2F-C — ADMIN PANEL (registrada, NO iniciada).**
+**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · **siguiente: 2F-C.2 — Admin (NO iniciada).**
+
+**2F-C.1 — PASS (backend contract hardening).** Detalle y puesta en marcha en `docs/BACKEND-SETUP.md`.
+- **Merge-patch en `PATCH /api/admin/vehicles/{id}`** (`Optional<T>`): ausente conserva, `null` o vacío borra, un valor se valida. Marca, modelo y año no se pueden borrar.
+- **Enums como texto** en todo el API; los números se rechazan.
+- **`PowerHp` y `Drivetrain`** en dominio, DTOs y validación (migración `AddPowerHpAndDrivetrain`).
+- **`POST …/status`:** Draft (retirar), ComingSoon, Available, Reserved y Sold; Archived sigue siendo terminal y solo se llega por `…/archive`.
+- **Visibilidad pública:** el catálogo lista ComingSoon, Available y Reserved; el detalle sirve además los Sold que llegaron a publicarse.
+- **DTOs públicos ampliados**, sin datos internos (lo protege un test).
+- **Equipamiento y especificaciones** tipados y validados.
+- **Portada = imagen principal:** va primero; la primera imagen Ready pasa a portada; al borrar la portada se promueve la siguiente; un vehículo listado no puede perder su última imagen Ready.
+- **Listado del Admin** en 2 consultas, sin N+1.
+- **`InternalReference`** se guarda al crear.
+- **Límites de validación** aprobados; errores con `code` y `field`.
+- **Verificación:**
+  - 54 tests unitarios y 6 de integración (WebApplicationFactory + PostgreSQL con Testcontainers), todos en verde;
+  - migraciones aplicadas sobre Postgres limpio;
+  - prueba de humo completa con la API a través del proxy de Vite;
+  - frontend intacto.
 
 **2F-A — PASS.** Sistema tipográfico global y páginas interiores.
 - **ADN tipográfico:** «Curated / Luxury» (hero) es la referencia absoluta: Archivo Variable, `font-stretch: 125%`, 800, −0,055em, interlineado 0,94, caja mixta.
@@ -109,7 +127,13 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 ## NEXT
 
-**2F-C — ADMIN PANEL. Registrada, NO iniciada:** sin orquestación, sin Astra y sin cambios de backend.
+**Orden aprobado:**
+1. 2F-C.1 backend (**PASS**);
+2. **2F-C.2 Admin** (siguiente, NO iniciada);
+3. 2F-C.3 catálogo real con facetas dependientes y rangos derivados del inventario;
+4. 2G interiores, escala tipográfica y densidad: Nosotros e Importación sin afirmar capacidades comerciales no confirmadas y H1 por debajo del hero.
+
+**2F-C — ADMIN PANEL** (la clasificación de campos A/B/C/D ya se hizo y los gaps aprobados están resueltos en 2F-C.1):
 - **Objetivo:** panel administrativo muy sencillo para gestionar el inventario real.
 - **Estilo:** mismo ADN de GP SELECT (Archivo Variable, `--type-*`, off-white / charcoal, filetes, jerarquía editorial, botones existentes), pero más funcional, compacto y menos cinematográfico. No es un dashboard SaaS: sin KPIs, gráficas, analytics, sidebar extensa, CRM, clientes, ventas, facturación, reservas ni pagos.
 - **Flujo ideal:** login → listado → añadir → datos → fotografías → guardar borrador → vista previa → publicar → listado, y listado → eliminar (con confirmación y copy fiel al tipo de borrado real). Solo se implementa lo que el backend soporte de verdad.
@@ -127,6 +151,8 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 - **Responsive:** 1920 / 1440 / 390; en 390, listado apilado, una columna, fotos en 2 columnas y sin tabla horizontal.
 - **Skills:** Opus con frontend-design, impeccable, Playwright MCP y verification-before-completion. Astra con design-taste-frontend, vercel:react-best-practices y playwright-cli si existe. Sin GSAP.
 
+- **Observación de 2F-C.1, no corregida porque está fuera de su alcance:** el limitador del login responde 503, no 429, y agrupa por IP más la cabecera `X-Login-Email` que envía el cliente. Variando esa cabecera se esquiva el límite. Pendiente de decisión.
+- `docs/HANDOFF.md` describe las fases 2 y 3 y está desfasado; la referencia vigente es este archivo.
 - FINAL VISUAL POLISH PASS: continúa tras 2F-C.
 - Catálogo, detalle, importación y cuestionario en su fase correspondiente; definir el endpoint mínimo de leads antes de implementarlo.
 
