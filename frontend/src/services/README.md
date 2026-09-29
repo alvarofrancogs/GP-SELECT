@@ -1,6 +1,6 @@
 # Integración pendiente
 
-La Fase 2 no realiza llamadas a la API ni implementa autenticación adicional. El backend .NET existente sigue siendo la fuente de inventario y autenticación mediante cookie HttpOnly.
+La web pública todavía usa datos mock (`vehicles.ts`); el catálogo real llega en 2F-C.3. El Admin (2F-C.2) ya usa la API real mediante `adminApi.ts`, con la autenticación existente por cookie HttpOnly.
 
 El proxy de desarrollo conserva las rutas `/api` bajo el origen de Vite. Su destino provisional es `http://localhost:5000`; debe ajustarse al puerto real al conectar el backend. En producción se prevé servir frontend y API bajo el mismo origen.
 

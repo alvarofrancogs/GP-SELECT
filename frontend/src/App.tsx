@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { SiteLayout } from './layouts/SiteLayout';
 import { Home } from './pages/Home';
@@ -7,6 +8,8 @@ import { Import } from './pages/Import';
 import { Contact } from './pages/Contact';
 import { Vehicles } from './pages/Vehicles';
 import { VehicleDetail } from './pages/VehicleDetail';
+
+const AdminApp = lazy(() => import('./pages/admin/AdminApp'));
 
 export function App() {
   return (
@@ -19,9 +22,9 @@ export function App() {
         <Route path="servicios" element={<Navigate to="/importacion" replace />} />
         <Route path="nosotros" element={<About />} />
         <Route path="contacto" element={<Contact />} />
-        <Route path="admin" element={<PlannedPage page="admin" />} />
         <Route path="*" element={<PlannedPage />} />
       </Route>
+      <Route path="admin/*" element={<Suspense fallback={null}><AdminApp /></Suspense>} />
     </Routes>
   );
 }

@@ -68,6 +68,8 @@ Admin__Email="admin@gpselect.local" Admin__PasswordHash='<hash>' \
 cd frontend && npm run dev
 ```
 
+El Admin está en `http://127.0.0.1:5173/admin`. Hay que abrirlo con la misma dirección que `Security__AllowedOrigin`: desde `http://localhost:5173` el login funciona, pero cualquier cambio devuelve 403, y el Admin avisa de que el origen no coincide.
+
 ## Producción
 
 - Frontend y API bajo el **mismo origen**; `Security__AllowedOrigin` = ese origen exacto (esquema + host + puerto, sin barra final).

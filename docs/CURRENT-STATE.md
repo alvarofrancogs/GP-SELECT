@@ -12,7 +12,67 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 **1F — PASS.** Un solo pin (4,5 vh; 3,5 en móvil). Timeline de escena (cielo, sombreado, noche desde arriba, mapa, titulares y CTA) y timeline de coches con scrub más pesado. Ambos coches comparten caja, ancla y origen de transformación: un único avance continuo con crossfade BMW → Audi en la misma caja. Titulares con la receta del hero y tamaño ajustado por palabra; «Visión / Global» no invade el coche. Services entra como telón de papel sobre el último viewport. El header lee el tono publicado por la escena (`data-header-tone`) sin hit-test por frame. Reduced-motion y alturas < 600 px: dos frames estáticos. QA a 1440, 1920 y 390 (descenso, ascenso, reduced-motion), build, lint y consola OK.
 
-**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · **siguiente: 2F-C.2 — Admin (NO iniciada).**
+**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · 2F-C.2 PASS (30-09-2026) · **siguiente: 2F-C.3 — catálogo real (NO iniciada).**
+
+**2F-C.2 — PASS (Admin frontend).** Implementado por Opus contra el contrato real de 2F-C.1; backend sin cambios.
+- **Rutas** (chunk lazy `pages/admin/AdminApp.tsx`, fuera del `SiteLayout` público):
+  - `/admin/login`;
+  - `/admin` (listado);
+  - `/admin/nuevo` (alta mínima: marca, modelo, año; mes y referencia opcionales; después abre la ficha);
+  - `/admin/vehiculos/:id` (editor);
+  - `/admin/vehiculos/:id/vista-previa`.
+  - Cualquier otra ruta bajo `/admin` vuelve a `/admin`.
+- **Router:** `main.tsx` usa `createBrowserRouter` + `RouterProvider` (data router) para poder usar `useBlocker`. `App.tsx` y las rutas públicas no cambian. Coste: +58 kB min / +19 kB gzip en el bundle público, que ahora supera el aviso de 500 kB de Vite.
+- **Auth:**
+  - `AdminAuthProvider` + `RequireAdmin` con `/me`, login y logout, todo con `credentials: 'include'`.
+  - La sesión solo vive en la cookie; el cliente guarda en memoria lo que responde `/me`.
+  - Cualquier 401 durante la sesión limpia el estado y lleva al login con «Tu sesión ha terminado». Tras entrar, vuelve a la ruta de origen.
+  - «Cerrar sesión» navega por el router, así que una ficha con cambios pide confirmación antes de salir.
+- **Cliente:**
+  - `services/adminApi.ts`: `ApiError` tipado con `status`, `code`, `field`, `correlationId` y errores de binding, y un handler de 401.
+  - La subida del archivo usa XHR para tener progreso. Una URL relativa (`File`) va con cookie; una presignada absoluta (S3) va sin ella.
+  - Tipos en `types/admin.ts`. Mensajes humanos en `lib/adminErrors.ts`, sin códigos crudos.
+- **Copy:** `i18n/adminCopy.ts`, solo en español.
+- **Listado:**
+  - filas operativas con miniatura, identidad, año, km, CV, precio, estado y acciones (editar, vista previa, archivar);
+  - búsqueda local por marca, modelo o versión, sin tildes ni mayúsculas;
+  - archivados ocultos, con casilla para mostrarlos;
+  - estado vacío con «Añadir vehículo →».
+- **Editor:**
+  - secciones Vehículo, Apariencia y procedencia, Información, Equipamiento, Especificaciones adicionales y Fotografías, con el título a la izquierda (mismo ritmo que el detalle público);
+  - PATCH solo con lo que cambia (`lib/vehicleForm.ts`: ausente conserva, vacío → `null`, marca, modelo y año obligatorios);
+  - errores de campo junto al campo, usando el `field` del servidor, y foco al primer error;
+  - barra de guardado sticky solo cuando hay cambios;
+  - `useBlocker` + `beforeunload`, también mientras hay subidas en curso;
+  - sugerencias (`datalist`) para combustible, cambio, carrocería y tracción, para que las futuras facetas reciban valores coherentes.
+- **Estado:** estado actual en texto, con un cuadrado relleno si está en el catálogo o vacío si no, más su efecto público. «Cambiar estado» abre las demás opciones con su significado. No deja cambiar el estado con cambios sin guardar. Los 422 del servidor se muestran como mensajes humanos.
+- **Archivar:** `<dialog>` nativo que explica que es una acción definitiva. Un vehículo archivado queda en solo lectura.
+- **Fotografías:**
+  - intent → PUT → complete → polling de la ficha hasta Ready o Failed;
+  - arrastrar y soltar o selector, varios archivos, preview local, progreso y error por imagen, reintentar y descartar;
+  - validación previa de tipo, 20 MB y hueco hasta 30, contador `n / 30`;
+  - portada y quitar;
+  - reordenar arrastrando o con botones ← → (el foco vuelve a la foto movida);
+  - la protección de la última foto publicada viene del servidor (409 traducido).
+- **Vista previa:** `VehicleDetailView` extraído de `pages/VehicleDetail.tsx` (el detalle público no cambia) y un adaptador mínimo del DTO de preview bajo una banda privada.
+- **Componentes:** `AdminLayout`, `AdminAuthProvider`, `ConfirmDialog`, `ArchiveVehicleDialog`, `StatusMark`, `StatusControl`, `FormField`, `MonthSelect`, `ListEditor`, `KeyValueEditor` e `ImageUploader`. Estilos en `styles/admin.css` (escala fija en rem, filetes, sin cards).
+- **QA:**
+  - Playwright contra la API real (Postgres + proxy de Vite): login erróneo y correcto, refresco, logout, guard, 401 en plena sesión, 403 CSRF desde un origen no permitido;
+  - crear; editar; limpiar un opcional (`{"exteriorColour":null}`); marca vacía bloqueada; persistencia tras recargar;
+  - Draft → ComingSoon → Available → Reserved → Sold → Draft → Available, comprobando listado y detalle públicos;
+  - 422 sin fotos y por precio 0;
+  - JPEG, PNG y WebP; TXT y 21 MB rechazados sin red; imagen corrupta → Failed;
+  - portada, orden (botones, arrastre y teclado), quitar y 409 de la última foto;
+  - equipamiento (con duplicado) y especificaciones (fila incompleta);
+  - vista previa; archivar cancelando y confirmando; cambios sin guardar (diálogo, Escape y aviso nativo);
+  - 1920, 1440 y 390 sin desbordamiento horizontal;
+  - regresión pública pixel a pixel frente a `2f-c1-pass` (HOME, catálogo, detalle, interiores, `/servicios`, 1440 y 390): idéntica;
+  - detector de impeccable limpio; lint y build OK. El proyecto no tiene tests de frontend.
+- **Deuda:**
+  - el bundle público pasa el umbral de 500 kB (data router);
+  - en consola solo aparecen los logs de red del navegador para respuestas esperadas (401 de `/me` sin sesión, 404, 409 y 422); no hay errores de JS;
+  - al caducar la sesión se pierden los cambios no guardados;
+  - el mapeo público completo y el mensaje de «Vendido» son de 2F-C.3.
 
 **2F-C.1 — PASS (backend contract hardening).** Detalle y puesta en marcha en `docs/BACKEND-SETUP.md`.
 - **Merge-patch en `PATCH /api/admin/vehicles/{id}`** (`Optional<T>`): ausente conserva, `null` o vacío borra, un valor se valida. Marca, modelo y año no se pueden borrar.
@@ -129,8 +189,8 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 **Orden aprobado:**
 1. 2F-C.1 backend (**PASS**);
-2. **2F-C.2 Admin** (siguiente, NO iniciada);
-3. 2F-C.3 catálogo real con facetas dependientes y rangos derivados del inventario;
+2. 2F-C.2 Admin (**PASS**);
+3. **2F-C.3 catálogo real** (siguiente, NO iniciada) con facetas dependientes y rangos derivados del inventario;
 4. 2G interiores, escala tipográfica y densidad: Nosotros e Importación sin afirmar capacidades comerciales no confirmadas y H1 por debajo del hero.
 
 **2F-C — ADMIN PANEL** (la clasificación de campos A/B/C/D ya se hizo y los gaps aprobados están resueltos en 2F-C.1):
@@ -151,7 +211,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 - **Responsive:** 1920 / 1440 / 390; en 390, listado apilado, una columna, fotos en 2 columnas y sin tabla horizontal.
 - **Skills:** Opus con frontend-design, impeccable, Playwright MCP y verification-before-completion. Astra con design-taste-frontend, vercel:react-best-practices y playwright-cli si existe. Sin GSAP.
 
-- **Observación de 2F-C.1, no corregida porque está fuera de su alcance:** el limitador del login responde 503, no 429, y agrupa por IP más la cabecera `X-Login-Email` que envía el cliente. Variando esa cabecera se esquiva el límite. Pendiente de decisión.
+- **Deuda de seguridad preproducción (desde 2F-C.1, sin corregir en 2F-C.2):** el limitador del login responde 503, no 429, y agrupa por IP más la cabecera `X-Login-Email` que envía el cliente. Variando esa cabecera se esquiva el límite. El Admin trata el 503 como «Demasiados intentos». Resolver antes de producción.
 - `docs/HANDOFF.md` describe las fases 2 y 3 y está desfasado; la referencia vigente es este archivo.
 - FINAL VISUAL POLISH PASS: continúa tras 2F-C.
 - Catálogo, detalle, importación y cuestionario en su fase correspondiente; definir el endpoint mínimo de leads antes de implementarlo.

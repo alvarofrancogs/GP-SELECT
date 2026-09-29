@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { EditorialMedia } from '../components/EditorialMedia';
@@ -37,6 +37,13 @@ function VehicleDetailContent({ slug }: { slug: string }) {
   if (status !== 'ready') return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state" role={status === 'error' ? 'alert' : 'status'}><p className="type-lede">{status === 'error' ? text.error : text.loading}</p>{status === 'error' ? <button className="editorial-link type-ui" onClick={() => { setStatus('loading'); setAttempt(attempt + 1); }}>{text.retry}</button> : null}</div></article>;
   if (!vehicle) return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state"><h1 className="type-display">{text.notFound}</h1><Link className="editorial-link type-ui" to={qualificationUrl({ intent: 'import', source: 'vehicle-not-found' })}>{text.search}<span aria-hidden="true">→</span></Link></div></article>;
 
+  return <VehicleDetailView vehicle={vehicle} back={back} showMockNote={VEHICLE_DATA_SOURCE === 'mock'} />;
+}
+
+/** Presentational detail, shared with the private admin preview. */
+export function VehicleDetailView({ vehicle, back, showMockNote, className = '' }: { vehicle: Vehicle; back: ReactNode; showMockNote: boolean; className?: string }) {
+  const { copy, locale } = useLanguage();
+  const text = copy.vehicles;
   const translate = (value: string | null) => value ? text.values[value] ?? value : null;
   const name = `${vehicle.make} ${vehicle.model}`;
   const contactUrl = `/contacto?${new URLSearchParams({ vehiculo: vehicle.slug, intent: 'vehicle' })}`;
@@ -55,10 +62,10 @@ function VehicleDetailContent({ slug }: { slug: string }) {
     ...(vehicle.customSpecifications ?? []),
   ];
   const extraImages = vehicle.images?.slice(1) ?? [];
-  return <article className="interior-page vehicle-detail">
+  return <article className={`interior-page vehicle-detail ${className}`.trim()}>
     <header className="vehicle-detail__header">{back}
       <h1 className="vehicle-detail__title"><span className="type-display">{name}</span>{vehicle.variant ? <span className="type-fine">{vehicle.variant}</span> : null}</h1>
-      {VEHICLE_DATA_SOURCE === 'mock' ? <p className="vehicle-mock-note type-ui">{text.mock}</p> : null}
+      {showMockNote ? <p className="vehicle-mock-note type-ui">{text.mock}</p> : null}
     </header>
     <div className="vehicle-detail__opening">
       <VehicleGallery images={vehicle.images ?? []} name={name} />
