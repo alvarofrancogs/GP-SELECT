@@ -2,13 +2,15 @@
 
 ## PHASE
 
-**MOTION / SCROLL ARCHITECTURE PASS.** Objetivo: HOME completa de principio a fin con scroll, pinning, handoffs y vehículos en movimiento ligados al scroll y reversibles. Se aceptan aproximaciones visuales y media provisional. Después vendrá el FINAL VISUAL POLISH PASS.
+**PHASE COMPLETED: MOTION / SCROLL ARCHITECTURE PASS (29-09-2026).** Objetivo cumplido: HOME completa de principio a fin con scroll, pinning, handoffs y vehículos en movimiento ligados al scroll y reversibles. Siguiente fase (sin abrir todavía): FINAL VISUAL POLISH PASS.
 
-Unidades: 1A Header + Hero ✅ · 1B Process + BMW ✅ · 1C Services + handoffs ✅ · 1D Inventory ✅ · 1E Europe + CTA + footer ✅.
+Unidades: 1A PASS · 1B PASS · 1C PASS · 1D PASS · 1E PASS · 1F PASS.
 
-**MOTION / SCROLL ARCHITECTURE PASS: TERMINADO (28-09-2026).** Siguiente fase (sin abrir todavía): FINAL VISUAL POLISH PASS.
+**Sustituido por `CarHandoffScene` (1F):** la antigua escena BMW de 1B (`PerformanceScene` conserva solo Process) y la antigua escena Europe de 1E fueron eliminadas (commit `fd8336a`). Ahora un único frame fijado hace BMW → noche/mapa → Audi RS Q3 (`useCarHandoffScene.ts`, `CarHandoffScene.tsx`, `car-handoff.css`). Los apartados BMW y Europe de más abajo son historial: su motion y sus deudas ya no aplican al código actual, salvo donde se indique lo contrario.
 
-Secuencia de la HOME (alternancia claro/oscuro): Hero (claro) → Process (oscuro) → BMW (claro) → **Europe (oscuro)** → Services (crema) → Inventory (crema) → CTA final (oscuro) → Footer (oscuro).
+Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (claro) → noche/mapa → Audi RS Q3 (oscuro)** → Services (crema) → Inventory (crema) → CTA final (oscuro) → Footer (oscuro).
+
+**1F — PASS.** Un solo pin (4,5 vh; 3,5 en móvil). Timeline de escena (cielo, sombreado, noche desde arriba, mapa, titulares y CTA) y timeline de coches con scrub más pesado. Ambos coches comparten caja, ancla y origen de transformación: un único avance continuo con crossfade BMW → Audi en la misma caja. Titulares con la receta del hero y tamaño ajustado por palabra; «Visión / Global» no invade el coche. Services entra como telón de papel sobre el último viewport. El header lee el tono publicado por la escena (`data-header-tone`) sin hit-test por frame. Reduced-motion y alturas < 600 px: dos frames estáticos. QA a 1440, 1920 y 390 (descenso, ascenso, reduced-motion), build, lint y consola OK.
 
 ## DONE
 
@@ -43,6 +45,8 @@ Secuencia de la HOME (alternancia claro/oscuro): Hero (claro) → Process (oscur
 
 ## FINAL POLISH — deuda registrada
 
+- 1F · Car handoff: `.scene-cta` no se reutilizó (añade `min-width` al botón); z-index locales sin simplificar; assets `car-a/car-b/europe-map` provisionales, con contrato PNG/WebP RGBA alineados en un mismo lienzo.
+
 - P1 · Header: eliminar la banda sólida crema que aparece durante el handoff del hero (progreso 0,35–1). Resolver el contraste sin banda.
 - P2 · Hero: más profundidad o parallax del cielo (hoy solo −3 %).
 - P2 · `frontend/package.json`: revertir `--configLoader runner` (solo hace falta dentro del sandbox de Codex).
@@ -69,7 +73,7 @@ Secuencia de la HOME (alternancia claro/oscuro): Hero (claro) → Process (oscur
 
 ## NEXT
 
-- Terminar las unidades 1B–1E del motion pass y, después, el FINAL VISUAL POLISH PASS.
+- FINAL VISUAL POLISH PASS (por abrir).
 - Catálogo, detalle, importación y cuestionario en su fase correspondiente; definir el endpoint mínimo de leads antes de implementarlo.
 
 ## DO NOT TOUCH
