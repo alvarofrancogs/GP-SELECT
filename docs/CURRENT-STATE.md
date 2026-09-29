@@ -12,7 +12,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 **1F — PASS.** Un solo pin (4,5 vh; 3,5 en móvil). Timeline de escena (cielo, sombreado, noche desde arriba, mapa, titulares y CTA) y timeline de coches con scrub más pesado. Ambos coches comparten caja, ancla y origen de transformación: un único avance continuo con crossfade BMW → Audi en la misma caja. Titulares con la receta del hero y tamaño ajustado por palabra; «Visión / Global» no invade el coche. Services entra como telón de papel sobre el último viewport. El header lee el tono publicado por la escena (`data-header-tone`) sin hit-test por frame. Reduced-motion y alturas < 600 px: dos frames estáticos. QA a 1440, 1920 y 390 (descenso, ascenso, reduced-motion), build, lint y consola OK.
 
-**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B (Vehículos + detalle) pendiente.
+**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · **siguiente: 2F-C — ADMIN PANEL (registrada, NO iniciada).**
 
 **2F-A — PASS.** Sistema tipográfico global y páginas interiores.
 - **ADN tipográfico:** «Curated / Luxury» (hero) es la referencia absoluta: Archivo Variable, `font-stretch: 125%`, 800, −0,055em, interlineado 0,94, caja mixta.
@@ -26,6 +26,27 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 - **QA:** 1920, 1440 y 390 en ES/EN sin desbordamiento; reduced-motion OK; build, lint y consola OK.
 - **Pendiente P2:** copy «Tu próximo coche empieza aquí.»; peso del nav (400 → 500) frente al mockup; datos reales de contacto y endpoint de leads.
 - **MEDIA PROVISIONAL:** `about-selection`, `about-detail`, `import-search`, `import-inspection` e `import-delivery` (SVG en `public/assets/temp/`).
+
+**2F-B — PASS.** `/vehiculos` y `/vehiculos/:slug`, frontend con datos mock y preparado para el backend.
+- **Catálogo homogéneo:** 3 columnas iguales en escritorio, 2 en tablet y 1 en móvil. Todas las fichas son iguales: imagen 4:3 y `subgrid` para alinear identidad, datos, precio y CTA por fila. Sin destacados ni piezas anchas; la última fila queda alineada a la izquierda.
+- **Ficha:** marca y modelo en heavy (`.type-heading`) y versión en fine (`.type-fine`); año · km; CV · combustible · transmisión; precio (o «Precio bajo consulta»); estado solo si aplica; «Ver vehículo →».
+- **Filtros:** Marca, Carrocería, Combustible, Precio, Año y Kilometraje, más Orden. Estado en la URL. Son capability-driven: un filtro sin datos no se muestra. Transmisión no es filtro, solo dato.
+- **Detalle:**
+  - titular partido heavy/fine;
+  - galería sin librería (miniaturas, teclado, contador, `scroll-snap` en móvil y `<dialog>` para ampliar);
+  - columna sticky con datos principales y «Solicitar información →» hacia `/contacto?vehiculo=`;
+  - Especificaciones solo con datos complementarios;
+  - Equipamiento, Estado e inspección, Procedencia, banda de importación y estado propio para un slug desconocido.
+- **Datos:**
+  - view-model objetivo en `types/vehicle.ts`, con `VehicleImage.fit` (`cover` | `contain`) como dato;
+  - `services/vehicles.ts` con fuente mock (`VEHICLE_DATA_SOURCE`) y adaptadores `fromPublicCard` / `fromPublicDetail` sobre los DTO reales;
+  - 8 mocks en ES y EN;
+  - `Intl` con `useGrouping: 'always'` («9.800 km»); potencia en CV (ES) y hp (EN);
+  - `tsconfig.app.json` añade `ES2023.Intl` a `lib` para tipar `useGrouping`.
+- **BACKEND INTEGRATION GAP** (constante `BACKEND_INTEGRATION_GAP`): el DTO público no expone km, potencia, tracción, color interior, estado, país de procedencia, propietarios, historial, equipamiento, especificaciones adicionales ni metadatos de imagen. El listado tampoco trae combustible, transmisión ni carrocería. `powerHp` no existe en el dominio. El API no filtra, ordena ni pagina (máximo 100). No se ha tocado el backend.
+- **Ejecución:** Astra hizo la unidad y la mayor parte del ajuste final. Se quedó sin cuota de Codex a mitad del `--resume`, y Opus cerró el error de tipos y la QA.
+- **QA:** 1920, 1440 y 390 en ES/EN con 8, 7, 5, 4, 3, 2 y 1 resultados, sin huecos ni desbordamiento. Detalle, galería, CTA y slug desconocido OK. Build, lint y consola OK.
+- **MEDIA PROVISIONAL:** `vehicle-silver`, `vehicle-stone`, `vehicle-slate`, `vehicle-detail` y `vehicle-interior` (SVG en `public/assets/temp/`). Real: solo `public/assets/vehicles/bmw-m4-off.png` (recorte cenital, `fit: contain`).
 
 ## DONE
 
@@ -88,7 +109,25 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 ## NEXT
 
-- FINAL VISUAL POLISH PASS (por abrir).
+**2F-C — ADMIN PANEL. Registrada, NO iniciada:** sin orquestación, sin Astra y sin cambios de backend.
+- **Objetivo:** panel administrativo muy sencillo para gestionar el inventario real.
+- **Estilo:** mismo ADN de GP SELECT (Archivo Variable, `--type-*`, off-white / charcoal, filetes, jerarquía editorial, botones existentes), pero más funcional, compacto y menos cinematográfico. No es un dashboard SaaS: sin KPIs, gráficas, analytics, sidebar extensa, CRM, clientes, ventas, facturación, reservas ni pagos.
+- **Flujo ideal:** login → listado → añadir → datos → fotografías → guardar borrador → vista previa → publicar → listado, y listado → eliminar (con confirmación y copy fiel al tipo de borrado real). Solo se implementa lo que el backend soporte de verdad.
+- **Antes de Astra:** Opus inspecciona el backend de administración real y clasifica cada campo del formulario objetivo como:
+  - **A:** soportado hoy;
+  - **B:** existe en el dominio pero no en el DTO;
+  - **C:** no existe;
+  - **D:** flexible (`CustomSpecifications`).
+  
+  Sin tocar el backend sin aprobación.
+- **Rutas previstas:** `/admin` (eyebrow «GP SELECT · ADMIN», H1 «Vehículos», «Añadir vehículo →», filas editoriales con filetes, sin cards) y `/admin/nuevo` (formulario por secciones: Vehículo · Acabado y procedencia · Información · Equipamiento · Especificaciones adicionales).
+- **Formulario:** equipamiento y especificaciones con interfaz humana, nunca JSON.
+- **Imágenes:** según lo que soporte el backend, arrastrar y soltar, selección múltiple, preview, eliminar y reordenar; contador «12 / 30»; portada identificada; errores por imagen sin `alert()`.
+- **Auth:** reutilizar la existente (cookie, CSRF, rol Admin), sin `localStorage`.
+- **Responsive:** 1920 / 1440 / 390; en 390, listado apilado, una columna, fotos en 2 columnas y sin tabla horizontal.
+- **Skills:** Opus con frontend-design, impeccable, Playwright MCP y verification-before-completion. Astra con design-taste-frontend, vercel:react-best-practices y playwright-cli si existe. Sin GSAP.
+
+- FINAL VISUAL POLISH PASS: continúa tras 2F-C.
 - Catálogo, detalle, importación y cuestionario en su fase correspondiente; definir el endpoint mínimo de leads antes de implementarlo.
 
 ## DO NOT TOUCH

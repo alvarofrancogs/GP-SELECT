@@ -49,7 +49,71 @@ export interface InteriorCopy {
   };
 }
 
+export interface VehicleCopy extends InteriorHeaderCopy {
+  mock: string;
+  singular: string;
+  plural: string;
+  filters: string;
+  all: string;
+  clear: string;
+  make: string;
+  bodyType: string;
+  fuelType: string;
+  price: string;
+  year: string;
+  mileage: string;
+  transmission: string;
+  sort: string;
+  recent: string;
+  priceAsc: string;
+  priceDesc: string;
+  yearSort: string;
+  kmSort: string;
+  under: string;
+  from: string;
+  view: string;
+  onRequest: string;
+  comingSoon: string;
+  reserved: string;
+  empty: string;
+  search: string;
+  closing: string;
+  find: string;
+  loading: string;
+  error: string;
+  retry: string;
+  back: string;
+  notFound: string;
+  request: string;
+  whatsapp: string;
+  registration: string;
+  power: string;
+  description: string;
+  specifications: string;
+  equipment: string;
+  inspection: string;
+  provenance: string;
+  drivetrain: string;
+  exteriorColour: string;
+  interiorColour: string;
+  owners: string;
+  history: string;
+  verification: string;
+  importTitle: string;
+  importBody: string;
+  importLink: string;
+  gallery: string;
+  previous: string;
+  next: string;
+  enlarge: string;
+  close: string;
+  image: string;
+  noImage: string;
+  values: Record<string, string>;
+}
+
 export interface Dictionary {
+  vehicles: VehicleCopy;
   interiors: InteriorCopy;
   brand: string;
   languages: { label: string; es: string; en: string };

@@ -5,14 +5,16 @@ import { PlannedPage } from './pages/PlannedPage';
 import { About } from './pages/About';
 import { Import } from './pages/Import';
 import { Contact } from './pages/Contact';
+import { Vehicles } from './pages/Vehicles';
+import { VehicleDetail } from './pages/VehicleDetail';
 
 export function App() {
   return (
     <Routes>
       <Route element={<SiteLayout />}>
         <Route index element={<Home />} />
-        <Route path="vehiculos" element={<PlannedPage page="vehicles" />} />
-        <Route path="vehiculos/:slug" element={<PlannedPage page="vehicles" />} />
+        <Route path="vehiculos" element={<Vehicles />} />
+        <Route path="vehiculos/:slug" element={<VehicleDetail />} />
         <Route path="importacion" element={<Import />} />
         <Route path="servicios" element={<Navigate to="/importacion" replace />} />
         <Route path="nosotros" element={<About />} />
