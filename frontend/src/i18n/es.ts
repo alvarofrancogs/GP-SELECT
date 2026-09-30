@@ -87,43 +87,77 @@ export const es: Dictionary = {
   },
   interiors: {
     about: {
-      eyebrow: 'GP SELECT · QUIÉNES SOMOS', title: 'Nosotros',
-      lede: 'El coche adecuado empieza con una forma de elegir.',
-      manifesto: ['Selección.', 'Transparencia.', 'Criterio.'],
-      introduction: {
-        title: 'Una mirada propia.',
-        body: 'GP SELECT nace de una idea sencilla: elegir bien importa. Buscamos vehículos europeos con carácter, por su diseño, su ingeniería y la experiencia que ofrecen al volante. Y te ayudamos a entender qué hace especial a cada uno.',
+      eyebrow: 'GP SELECT · QUIÉNES SOMOS',
+      title: 'Nosotros',
+      lede: 'GP SELECT selecciona vehículos premium europeos para cada cliente. Trabajamos a partir de una conversación: qué quieres conducir, cómo lo vas a usar y qué es importante para ti.',
+      why: {
+        label: 'Por qué GP SELECT',
+        title: 'Comprar bien un coche no debería ser una búsqueda a solas.',
+        body: 'Encontrar un vehículo premium en Europa suele empezar con cientos de anuncios y poca información contrastada. GP SELECT existe para cambiar ese punto de partida: alguien que entiende lo que buscas, compara por ti y te explica con claridad lo que tienes delante antes de que decidas. Nuestro trabajo es ayudarte a elegir mejor, no más rápido.',
       },
-      selection: {
-        title: 'Más allá del emblema.',
-        body: 'Una configuración interesante es sólo el principio. Valoramos el historial disponible, el estado, el mantenimiento y la coherencia entre el vehículo y lo que buscas. Deportivos, berlinas y SUV: el criterio es el mismo, aunque la forma de conducirlos cambie.',
+      audience: {
+        title: 'Con quién trabajamos',
+        intro: 'Personas que valoran su tiempo y prefieren decidir con información, no con prisa. No hace falta saber de coches; basta con saber qué esperas de uno.',
+        rows: [
+          { title: 'Si ya sabes qué coche quieres', body: 'Te ayudamos a encontrar la unidad adecuada y a valorar si de verdad lo es.' },
+          { title: 'Si todavía no lo tienes claro', body: 'Lo definimos contigo a partir de cómo conduces, de tu presupuesto y de lo que te importa.' },
+        ],
       },
-      principlesLabel: 'Nuestra forma de trabajar',
-      principles: [
-        { title: 'Selección experta', body: 'Comparamos opciones y estudiamos cada unidad. La elección responde a tus prioridades, no sólo a una ficha técnica.' },
-        { title: 'Importación integral', body: 'Coordinamos búsqueda, verificación, trámites y entrega. Un mismo interlocutor para entender cada paso.' },
-        { title: 'Atención personal', body: 'Escuchamos antes de proponer. Te acompañamos desde la primera conversación hasta después de la entrega.' },
-      ],
-      europe: {
-        label: 'Una búsqueda sin fronteras', title: 'Europa como punto de partida.',
-        body: 'El mercado europeo amplía las posibilidades. Nuestro trabajo es darles sentido: localizar, inspeccionar y poner la información sobre la mesa antes de decidir.',
-        detail: 'Historial, documentación, estado y costes previstos. Con claridad sobre lo que sabemos y lo que falta por verificar. Y una persona al otro lado durante todo el recorrido.',
+      approach: {
+        label: 'Cómo trabajamos',
+        title: 'Preferimos proponerte pocos coches, bien elegidos, que muchos sin criterio.',
+        body: 'Nuestro objetivo no es que compres cualquier coche, sino el adecuado. Si una unidad no convence, te lo diremos, aunque eso signifique seguir buscando.',
+        rows: [
+          { title: 'Escuchamos antes de proponer.', body: 'La búsqueda empieza por ti, no por lo que haya disponible.' },
+          { title: 'Decimos lo que sabemos, y lo que no.', body: 'Si falta información sobre un coche, lo sabrás antes de decidir.' },
+          { title: 'Hablamos claro.', body: 'Sin tecnicismos innecesarios: si algo importa, te explicamos por qué.' },
+          { title: 'La decisión es tuya.', body: 'Te damos criterio y contexto, sin prisas ni presión.' },
+        ],
       },
-      cta: 'Hablar con nosotros',
-      images: { selection: 'La selección GP SELECT', detail: 'El criterio está en los detalles' },
+      closing: 'Cuéntanos qué buscas.',
+      closingNote: 'Son unas pocas preguntas sobre lo que buscas y no te comprometen a nada.',
+      cta: 'Empezar cuestionario',
+      secondary: 'Cómo funciona la importación',
+      images: { opening: 'Vehículo en contexto · fotografía pendiente', detail: 'Detalle · fotografía pendiente' },
     },
     import: {
-      eyebrow: 'GP SELECT · SERVICIO INTEGRAL', title: 'Importación',
-      lede: 'Todo el proceso, de Europa a tu garaje.',
-      steps: [
-        { id: 'search', title: 'Buscar', body: 'Primero, entender qué quieres conducir. Modelo, configuración, uso y presupuesto definen una búsqueda a tu medida en el mercado europeo.', detail: 'Tus prioridades marcan la selección.' },
-        { id: 'verify', title: 'Verificar', body: 'Estudiamos el historial y la documentación disponible, contrastamos el kilometraje y revisamos el estado del vehículo. Coordinamos la inspección antes de avanzar.', detail: 'La información, antes que la decisión.' },
-        { id: 'manage', title: 'Gestionar', body: 'Negociamos las condiciones y coordinamos la operación, los documentos y los interlocutores. Conoces los siguientes pasos y los costes previstos.', detail: 'Una operación clara de principio a fin.' },
-        { id: 'import', title: 'Importar', body: 'Coordinamos el transporte y la documentación para traer el vehículo. Gestionamos los trámites, los impuestos y tasas aplicables y la matriculación según cada operación.', detail: 'Cada trámite, en su momento.' },
-        { id: 'deliver', title: 'Entregar', body: 'Preparamos la entrega, repasamos contigo el vehículo y su documentación y resolvemos tus dudas. El acompañamiento continúa con la atención posventa.', detail: 'El siguiente capítulo empieza al volante.' },
-      ],
-      images: { search: 'La búsqueda en el mercado europeo', inspection: 'Verificación de cada unidad', delivery: 'De origen a destino' },
-      closing: 'Tu próximo coche empieza aquí.', cta: 'Encontrar mi coche', secondary: 'Solicitar asesoramiento',
+      "eyebrow": "GP SELECT · IMPORTACIÓN",
+      "title": "Importación",
+      "lede": "Te ayudamos a encontrar en el mercado europeo el coche que buscas: definimos contigo qué necesitas, comparamos opciones, analizamos la información disponible y te acompañamos durante el proceso de compra e importación.",
+      "define": {
+        "title": "Primero, qué buscas.",
+        "body": "Una buena búsqueda empieza por definirla bien. Antes de mirar anuncios, concretamos contigo:",
+        "items": [
+          "Modelo y motorización",
+          "Configuración y equipamiento imprescindible",
+          "Presupuesto",
+          "Kilometraje y antigüedad aceptables",
+          "Uso previsto y prioridades"
+        ],
+        "detail": "Con eso, la búsqueda deja de ser una lista de anuncios y pasa a ser una comparación con criterio."
+      },
+      "search": {
+        "title": "Buscar y descartar.",
+        "body": "Buscamos en el mercado europeo unidades que respondan a esa definición y descartamos las que no encajan: una especificación distinta, un precio que no se sostiene frente a opciones comparables o información insuficiente para valorarla. Lo que llega a ti es una selección corta, no un listado."
+      },
+      "analysis": {
+        "title": "Leer cada opción.",
+        "body": "Antes de avanzar con una unidad revisamos la información disponible: especificación, fotografías, el historial y la documentación que aporte el vendedor, la procedencia y el precio frente al mercado. Te explicamos lo que sabemos, lo que no y qué convendría confirmar antes de decidir."
+      },
+      "support": {
+        "title": "Contigo hasta el cierre.",
+        "body": "Cuando eliges una unidad, coordinamos contigo los siguientes pasos de la compra y la importación: qué se necesita en cada momento, con quién hay que hablar y qué queda pendiente. Cada operación es distinta, así que los detalles se concretan caso por caso, antes de que te comprometas.",
+        "detail": "Nuestro papel es que tomes cada decisión con la información delante."
+      },
+      "images": {
+        "search": "Búsqueda en el mercado europeo · fotografía pendiente",
+        "inspection": "Información disponible · fotografía pendiente",
+        "delivery": "Acompañamiento · fotografía pendiente"
+      },
+      "closing": "Empieza por contarnos qué buscas.",
+      "closingBody": "No necesitas haber elegido un modelo. Con tus preferencias y tu presupuesto, empezamos a definir la búsqueda.",
+      "cta": "Empezar cuestionario",
+      "secondary": "Tengo un coche concreto en mente"
     },
     contact: {
       eyebrow: 'GP SELECT · CONTACTO', title: 'Contacto', lede: 'Hablemos sobre tu próximo vehículo.',

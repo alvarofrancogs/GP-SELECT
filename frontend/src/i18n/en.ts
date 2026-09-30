@@ -87,41 +87,77 @@ export const en: Dictionary = {
   },
   interiors: {
     about: {
-      eyebrow: 'GP SELECT · ABOUT US', title: 'About us',
-      lede: 'The right car begins with a considered choice.',
-      manifesto: ['Selection.', 'Transparency.', 'Judgement.'],
-      introduction: {
-        title: 'A considered eye.',
-        body: 'GP SELECT starts with a simple idea: choosing well matters. We seek out European vehicles with character, for their design, engineering and the experience behind the wheel. And we help you understand what makes each one special.',
+      eyebrow: 'GP SELECT · ABOUT US',
+      title: 'About us',
+      lede: 'GP SELECT selects premium European vehicles for each client. We work from a conversation: what you want to drive, how you will use it and what matters to you.',
+      why: {
+        label: 'Why GP SELECT',
+        title: 'Buying the right car shouldn’t be a search on your own.',
+        body: 'Finding a premium car in Europe usually starts with hundreds of listings and little reliable information. GP SELECT exists to change that starting point: someone who understands what you are looking for, compares options for you and clearly explains what is in front of you before you decide. Our job is to help you choose better, not faster.',
       },
-      selection: {
-        title: 'Beyond the badge.',
-        body: 'An interesting specification is just the beginning. We assess the available history, condition, maintenance and how well the vehicle fits your needs. Sports cars, saloons and SUVs: the same care in selection, each with its own way of driving.',
+      audience: {
+        title: 'Who we work with',
+        intro: 'People who value their time and would rather decide with information than in a hurry. You don’t need to know about cars, just what you expect from one.',
+        rows: [
+          { title: 'If you already know which car you want', body: 'We help you find the right example and judge whether it really is the right one.' },
+          { title: 'If you are not sure yet', body: 'We define it with you, based on how you drive, your budget and what matters to you.' },
+        ],
       },
-      principlesLabel: 'How we work',
-      principles: [
-        { title: 'Expert selection', body: 'We compare options and examine each vehicle. Your priorities guide the choice, beyond the specification sheet.' },
-        { title: 'Complete import service', body: 'We coordinate sourcing, verification, paperwork and delivery. One point of contact to make sense of every step.' },
-        { title: 'Personal attention', body: 'We listen before we suggest. From the first conversation to support after delivery, we stay by your side.' },
-      ],
-      europe: {
-        label: 'A search without borders', title: 'Europe is the starting point.',
-        body: 'The European market opens up more possibilities. Our job is to make sense of them: source, inspect and put the information in front of you before you decide.',
-        detail: 'History, documents, condition and expected costs. Clear about what we know and what still needs checking. With a person at your side throughout the process.',
+      approach: {
+        label: 'How we work',
+        title: 'We would rather suggest a few well-chosen cars than many without judgement.',
+        body: 'Our aim is not for you to buy any car, but the right one. If a car doesn’t convince us, we will tell you, even if that means searching further.',
+        rows: [
+          { title: 'We listen before we suggest.', body: 'The search starts with you, not with whatever happens to be available.' },
+          { title: 'We say what we know, and what we don’t.', body: 'If information about a car is missing, you will know before you decide.' },
+          { title: 'We speak plainly.', body: 'No needless jargon: if something matters, we explain why.' },
+          { title: 'The decision is yours.', body: 'We give you judgement and context, without rush or pressure.' },
+        ],
       },
-      cta: 'Talk to us', images: { selection: 'The GP SELECT selection', detail: 'A closer look at the details' },
+      closing: 'Tell us what you’re looking for.',
+      closingNote: 'It’s a few questions about what you’re looking for, and it commits you to nothing.',
+      cta: 'Start questionnaire',
+      secondary: 'How import works',
+      images: { opening: 'Vehicle in context · photography pending', detail: 'Detail · photography pending' },
     },
     import: {
-      eyebrow: 'GP SELECT · COMPLETE SERVICE', title: 'Import', lede: 'The whole journey, from Europe to your garage.',
-      steps: [
-        { id: 'search', title: 'Search', body: 'First, we understand what you want to drive. Model, specification, use and budget shape a personal search across the European market.', detail: 'Your priorities guide the selection.' },
-        { id: 'verify', title: 'Verify', body: 'We study the available history and documents, cross-check mileage and review the vehicle’s condition. We coordinate an inspection before moving forward.', detail: 'Information before a decision.' },
-        { id: 'manage', title: 'Manage', body: 'We negotiate terms and coordinate the transaction, paperwork and everyone involved. You know the next steps and the expected costs.', detail: 'A clear process from start to finish.' },
-        { id: 'import', title: 'Import', body: 'We coordinate transport and the documents needed to bring your vehicle home. We manage the paperwork, applicable taxes and fees, and registration for each transaction.', detail: 'Every detail, at the right time.' },
-        { id: 'deliver', title: 'Deliver', body: 'We prepare the handover, walk you through your vehicle and documents, and answer your questions. Our support continues with after-sales care.', detail: 'The next chapter starts behind the wheel.' },
-      ],
-      images: { search: 'Sourcing across the European market', inspection: 'Checking every vehicle', delivery: 'From origin to destination' },
-      closing: 'Your next car starts here.', cta: 'Find my car', secondary: 'Ask for advice',
+      "eyebrow": "GP SELECT · IMPORT",
+      "title": "Import",
+      "lede": "We help you find the car you are looking for in the European market: we define what you need with you, compare options, review the information available and support you through the purchase and import process.",
+      "define": {
+        "title": "First, what you're looking for.",
+        "body": "A good search starts with a clear brief. Before looking at any listing, we agree with you on:",
+        "items": [
+          "Model and engine",
+          "Specification and must-have equipment",
+          "Budget",
+          "Acceptable mileage and age",
+          "Intended use and priorities"
+        ],
+        "detail": "With that, the search stops being a list of adverts and becomes a comparison with clear criteria."
+      },
+      "search": {
+        "title": "Search, then narrow down.",
+        "body": "We look for cars in the European market that match that brief and rule out those that don't: a different specification, a price that doesn't hold up against comparable options, or too little information to judge them. What reaches you is a short selection, not a list."
+      },
+      "analysis": {
+        "title": "Read every option.",
+        "body": "Before moving forward with a car, we review the information available: specification, photographs, any history and documents the seller provides, where it comes from and its price against the market. We explain what we know, what we don't, and what would be worth confirming before you decide."
+      },
+      "support": {
+        "title": "With you until completion.",
+        "body": "When you choose a car, we coordinate the next steps of the purchase and import with you: what is needed at each stage, who needs to be involved and what is still pending. Every transaction is different, so the details are agreed case by case, before you commit.",
+        "detail": "Our role is to make sure you take every decision with the information in front of you."
+      },
+      "images": {
+        "search": "Searching the European market · photography pending",
+        "inspection": "Available information · photography pending",
+        "delivery": "Support · photography pending"
+      },
+      "closing": "Start by telling us what you're looking for.",
+      "closingBody": "You don't need to have chosen a model. With your preferences and budget, we start defining the search.",
+      "cta": "Start questionnaire",
+      "secondary": "I have a specific car in mind"
     },
     contact: {
       eyebrow: 'GP SELECT · CONTACT', title: 'Contact', lede: 'Let’s talk about your next vehicle.',

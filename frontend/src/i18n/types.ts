@@ -4,19 +4,23 @@ export interface InteriorHeaderCopy { eyebrow: string; title: string; lede: stri
 export interface EditorialCopy { title: string; body: string }
 export interface InteriorCopy {
   about: InteriorHeaderCopy & {
-    manifesto: string[];
-    introduction: EditorialCopy;
-    selection: EditorialCopy;
-    principlesLabel: string;
-    principles: EditorialCopy[];
-    europe: EditorialCopy & { label: string; detail: string };
+    why: EditorialCopy & { label: string };
+    audience: { title: string; intro: string; rows: EditorialCopy[] };
+    approach: { label: string; title: string; body: string; rows: EditorialCopy[] };
+    closing: string;
+    closingNote: string;
     cta: string;
-    images: { selection: string; detail: string };
+    secondary: string;
+    images: { opening: string; detail: string };
   };
   import: InteriorHeaderCopy & {
-    steps: (EditorialCopy & { id: string; detail: string })[];
+    define: EditorialCopy & { items: string[]; detail: string };
+    search: EditorialCopy;
+    analysis: EditorialCopy;
+    support: EditorialCopy & { detail: string };
     images: { search: string; inspection: string; delivery: string };
     closing: string;
+    closingBody: string;
     cta: string;
     secondary: string;
   };

@@ -12,7 +12,23 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 **1F — PASS.** Un solo pin (4,5 vh; 3,5 en móvil). Timeline de escena (cielo, sombreado, noche desde arriba, mapa, titulares y CTA) y timeline de coches con scrub más pesado. Ambos coches comparten caja, ancla y origen de transformación: un único avance continuo con crossfade BMW → Audi en la misma caja. Titulares con la receta del hero y tamaño ajustado por palabra; «Visión / Global» no invade el coche. Services entra como telón de papel sobre el último viewport. El header lee el tono publicado por la escena (`data-header-tone`) sin hit-test por frame. Reduced-motion y alturas < 600 px: dos frames estáticos. QA a 1440, 1920 y 390 (descenso, ascenso, reduced-motion), build, lint y consola OK.
 
-**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · 2F-C.2 PASS (30-09-2026) · HOME HANDOFF FIX PASS (30-09-2026) · 2F-C.3 PASS (30-09-2026) · **NEXT: 2G — interiores, escala tipográfica y densidad (NO iniciada).**
+**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · 2F-C.2 PASS (30-09-2026) · HOME HANDOFF FIX PASS (30-09-2026) · 2F-C.3 PASS (30-09-2026) · 2G PASS (30-09-2026) · **NEXT: por definir (ver NEXT).**
+
+**2G — PASS (30-09-2026).** Interiores: escala tipográfica y densidad editorial de `/nosotros`, `/importacion` y `/contacto`. HOME, catálogo, detalle, Admin y backend sin cambios.
+- **Escala:** H1 interior 96 / 76 / 40 px (1920 / 1440 / 390), igual en las tres páginas y en ES/EN; antes 192 / 151 / 55, por encima del hero de la HOME (120 / 90 / 46). Titulares de sección ≤ 56 / 44 / 30 px, body 16–18 px. Todo scopeado a `:is(.about-page, .import-page, .contact-page)` en `interiors.css`; las reglas compartidas con catálogo, detalle y Admin no cambian. Eliminado el hack `.import-page:lang(es)`.
+- **Importación:** capítulos editoriales (Primero, qué buscas · Buscar y descartar · Leer cada opción · Contigo hasta el cierre) con wording prudente: búsqueda, comparación, análisis de la información disponible y acompañamiento. Sin inspección propia, negociación, transporte, impuestos, tasas, matriculación, garantía, posventa ni «de principio a fin». `ProcessStep.tsx` eliminado.
+- **Nosotros:** página «quiénes somos» sin repetir Importación: por qué GP SELECT, con quién trabajamos (dos caminos, como Contacto), cómo trabajamos (banda oscura, cuatro compromisos de trato) y cierre al cuestionario + enlace a Importación. ~3,2 viewports a 1440. Sin cifras, años, sede ni fundadores.
+- **Contacto:** solo cabecera compacta; formulario intacto.
+- **Ejecución:** Astra implementó; Opus revisó y rehízo Nosotros tras feedback; una pasada de Impeccable (critique 18/24; detector limpio salvo tracking y paleta de la marca, falsos positivos).
+- **QA:** Gemini (18 combinaciones de las tres páginas + regresión HOME y `/vehiculos`; después 10 checks de `/nosotros` en 6 combinaciones), todo PASS. Reduced-motion verificado por Opus. Build y lint OK.
+- **Deuda 2G (no resuelta):**
+  - ASSET NEED: 5 fotografías reales (2 Nosotros, 3 Importación); hoy placeholders `about-*` / `import-*`;
+  - claims de la HOME sin confirmar: «Inspeccionamos», «Inspección del vehículo», «Importación y matriculación», «Nos ocupamos de todo…», «Nosotros nos encargamos del resto»;
+  - `/vehiculos` conserva el H1 antiguo (151 px a 1440), distinto del resto de interiores;
+  - el menú no marca la página activa (Header es HOME);
+  - panel WhatsApp de Contacto (solo en desarrollo): titular ~49 px y microtexto pequeño;
+  - Nosotros sin datos reales de empresa (sede, quién está detrás, desde cuándo), pendientes de confirmar;
+  - cabecera interior ~370–395 px a 1440, algo por encima del objetivo orientativo de ~300 px.
 
 **2F-C.3 — PASS (30-09-2026).** Catálogo y detalle reales. Implementado por Opus; backend, HOME y Admin sin cambios (salvo `AdminPreview.toDetail`).
 - **Datos:** `services/vehicles.ts` lee `/api/public/vehicles` (una sola petición) y `/{slug}`; 404 → estado editorial, otro fallo → error con reintento. `vehicles.mock.ts` y `vehicleAssets.ts` eliminados; sin fallback a datos ficticios. Precio nulo o ≤ 0 → «Precio bajo consulta».
@@ -234,7 +250,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 ## CHECKPOINTS (tags de git)
 
-`pre-car-handoff` · `2f-a-pass` · `2f-b-pass` · `2f-c1-pass` · `2f-c2-pass` · `home-handoff-fix-pass` · **`home-closed-pass`** (HOME cerrada, 30-09-2026) · **`2f-c3-pass`** (último checkpoint). Cada unidad aprobada se cierra con un tag `<unidad>-pass`.
+`pre-car-handoff` · `2f-a-pass` · `2f-b-pass` · `2f-c1-pass` · `2f-c2-pass` · `home-handoff-fix-pass` · **`home-closed-pass`** (HOME cerrada, 30-09-2026) · `2f-c3-pass` · **`2g-pass`** (último checkpoint). Cada unidad aprobada se cierra con un tag `<unidad>-pass`.
 
 ## NEXT
 
@@ -242,7 +258,8 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 1. 2F-C.1 backend (**PASS**);
 2. 2F-C.2 Admin (**PASS**);
 3. **2F-C.3 — catálogo real + detalle real + facetas dependientes + rangos derivados del inventario** (**PASS**);
-4. **2G (siguiente, NO iniciada)** interiores, escala tipográfica y densidad: Nosotros e Importación sin afirmar capacidades comerciales no confirmadas y H1 por debajo del hero.
+4. **2G** interiores, escala tipográfica y densidad (**PASS**);
+5. **Siguiente unidad: por definir por el usuario (NO iniciada).** Candidatas registradas como deuda: media production (ASSET NEED de interiores y placeholders de HOME), revisión de copy/claims de la HOME, deuda de seguridad preproducción del login y endpoint de leads. Pendiente aparte: reconciliar `main` local con `origin/main` (divergen; sin push desde 2G).
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 - **Objetivo:** panel administrativo muy sencillo para gestionar el inventario real.

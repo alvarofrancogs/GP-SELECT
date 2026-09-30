@@ -15,7 +15,6 @@
 .interior-header__line { display: grid; grid-template-columns: minmax(0, 2.15fr) minmax(0, 1fr); align-items: end; align-items: last baseline; gap: 3vw; }
 .interior-header h1 { font-size: clamp(4rem, 10.5vw, 12rem); white-space: nowrap; }
 .interior-header__line > p { max-width: 24ch; }
-.import-page:lang(es) .interior-header h1 { font-size: clamp(3.5rem, 8.2vw, 10rem); }
 
 @media (prefers-reduced-motion: no-preference) {
   .interior-header h1 { animation: interior-title-focus 650ms var(--ease-cinematic) both; }
@@ -40,41 +39,6 @@
 .interior-closing h2 { max-width: 17ch; font-size: clamp(2.25rem, 5.5vw, 7rem); }
 .interior-closing__links { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2rem 4rem; margin-top: 2.5rem; }
 .interior-closing > .editorial-link { font-size: clamp(1.75rem, 4vw, 5rem); }
-
-/* About: photography, manifesto and the selection criteria have distinct scales. */
-.about-introduction { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 7vw; align-items: end; }
-.about-introduction__copy { padding-bottom: 2rem; }
-.about-introduction__copy h2 { margin-bottom: 1.5rem; }
-.about-manifesto { margin-block: var(--interior-space); padding-block: 2vw; font-size: clamp(3rem, 7.25vw, 9rem); }
-.about-manifesto span { display: block; width: fit-content; }
-.about-manifesto span + span { margin-top: .13em; }
-.about-manifesto span:nth-child(2) { margin-left: 9%; }
-.about-manifesto span:nth-child(3) { margin-left: 38%; }
-.about-selection { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 12vw; align-items: center; }
-.about-selection h2 { font-size: clamp(2.75rem, 4.4vw, 5.5rem); margin-bottom: 2rem; max-width: 11ch; }
-.about-selection .type-body { max-width: 39ch; }
-.about-principles { padding-block: var(--interior-space); }
-.about-principles__columns { display: grid; grid-template-columns: 1.05fr 1.15fr 1fr; margin-top: 2rem; border-top: 1px solid var(--interior-rule); }
-.about-principles__columns > div { min-width: 0; padding: 2rem 2.5vw; }
-.about-principles__columns > div:first-child { padding-left: 0; }
-.about-principles__columns > div:last-child { padding-right: 0; }
-.about-principles__columns > div + div { border-left: 1px solid var(--interior-rule); }
-.about-principles h3 { font-size: clamp(1.25rem, 1.8vw, 2.25rem); max-width: 15ch; margin-bottom: 1.5rem; }
-.about-europe h2 { font-size: clamp(2.75rem, 6.8vw, 8.5rem); max-width: 16ch; margin-block: 3rem 4rem; }
-.about-europe__copy { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 8vw; margin-left: 24%; }
-
-/* A real sequence, grouped around three independent photographic spaces. */
-.import-stage { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; gap: 7vw; padding-bottom: var(--interior-space); }
-.import-steps { list-style: none; margin: 0; padding: 0; }
-.import-step { display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: 2vw; border-top: 1px solid var(--interior-rule); padding-block: 2.5rem 3.5rem; }
-.import-step__number { padding-top: .4rem; font-size: .875rem; }
-.import-step h2 { font-size: clamp(2.75rem, 4.7vw, 6rem); margin-bottom: 1.5rem; }
-.import-step .type-body { max-width: 43ch; }
-.import-step__detail { margin-top: 1.5rem; font-size: .8rem; }
-.import-stage--reverse { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; }
-.import-stage--reverse .editorial-media { grid-column: 1; grid-row: 1; }
-.import-stage--reverse .import-steps { grid-column: 2; }
-.import-stage--dark { padding-bottom: var(--interior-space); }
 
 /* Contact paths are choices in the document, not floating panels. */
 .contact-paths { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 5vw; border: 0; margin: 0; padding: 0; min-width: 0; }
@@ -126,8 +90,6 @@
 @media (min-width: 768px) and (max-width: 1199px) {
   .interior-header__line { grid-template-columns: minmax(0, 1fr) minmax(0, .6fr); }
   .interior-header h1 { font-size: 9vw; }
-  .import-page:lang(es) .interior-header h1 { font-size: 7vw; }
-  .about-introduction, .about-selection { gap: 5vw; }
   .contact-content--channels { gap: 4vw; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
   .contact-content--channels .contact-fields { grid-template-columns: 1fr; }
 }
@@ -138,31 +100,8 @@
   .interior-header > .type-label { font-size: .6rem; margin-bottom: 2rem; }
   .interior-header__line { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
   .interior-header h1 { font-size: clamp(2.75rem, 14vw, 6.5rem); }
-  .import-page:lang(es) .interior-header h1 { font-size: clamp(2rem, 10.8vw, 5rem); }
   .interior-header__line > p { max-width: 24ch; margin-left: 17%; font-size: 1.15rem; }
   .editorial-media figcaption { flex-direction: column; gap: .25rem; font-size: .625rem; }
-  .about-introduction, .about-selection { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
-  .about-introduction__copy { padding: 0; margin-left: 12%; }
-  .about-introduction__copy h2 { font-size: 1.75rem; }
-  .about-manifesto { font-size: 8.35vw; }
-  .about-manifesto span:nth-child(2) { margin-left: 3%; }
-  .about-manifesto span:nth-child(3) { margin-left: 32%; }
-  .about-manifesto span + span { margin-top: .3em; }
-  .about-selection h2 { font-size: 2.6rem; }
-  .about-selection .editorial-media { margin-left: 15%; }
-  .about-principles__columns { grid-template-columns: minmax(0, 1fr); }
-  .about-principles__columns > div { padding: 1.75rem 0; }
-  .about-principles__columns > div + div { border-left: 0; border-top: 1px solid var(--interior-rule); }
-  .about-principles h3 { font-size: 1.5rem; max-width: none; margin-bottom: 1rem; }
-  .about-europe h2 { font-size: 10vw; margin-block: 2rem; }
-  .about-europe__copy { grid-template-columns: minmax(0, 1fr); margin-left: 10%; gap: 2rem; }
-  .import-stage, .import-stage--reverse { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
-  .import-stage--reverse .import-steps, .import-stage--reverse .editorial-media { grid-column: auto; grid-row: auto; }
-  .import-stage .editorial-media { margin-left: 12%; }
-  .import-stage .editorial-media img { aspect-ratio: 4 / 3; }
-  .import-step { grid-template-columns: 1.5rem minmax(0, 1fr); gap: 1rem; padding-block: 1.75rem 2.5rem; }
-  .import-step h2 { font-size: 9.6vw; }
-  .import-step__number { padding-top: .2rem; }
   .interior-closing h2 { font-size: 2.5rem; }
   .interior-closing__links { flex-direction: column; gap: 1.5rem; }
   .interior-closing > .editorial-link { font-size: 1.6rem; }
@@ -176,4 +115,166 @@
   .contact-fields { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
   .direct-contact { margin-inline: calc(-1 * var(--page-gutter)); padding: 3rem var(--page-gutter); }
   .direct-contact h2 { max-width: 13ch; font-size: 2.5rem; }
+}
+
+/* Compact editorial headers. Catalogue and vehicle detail keep the shared recipes. */
+:is(.about-page, .import-page, .contact-page) .interior-header {
+  padding-top: calc(var(--header-height) + clamp(1.5rem, 2.2vw, 2.75rem));
+  padding-bottom: clamp(2.5rem, 3.3vw, 4rem);
+}
+:is(.about-page, .import-page, .contact-page) .interior-header > .type-label {
+  font-size: clamp(.78125rem, .9vw, .875rem);
+  margin-bottom: 1.5rem;
+}
+:is(.about-page, .import-page, .contact-page) .interior-header__line {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 5vw;
+}
+:is(.about-page, .import-page, .contact-page) .interior-header h1 {
+  font-size: clamp(3.75rem, calc(1rem + 4.166667vw), 6rem);
+  white-space: normal;
+}
+:is(.about-page, .import-page, .contact-page) .interior-header__line > p {
+  max-width: 44ch;
+  margin-left: 0;
+  font-size: clamp(1.375rem, calc(.625rem + .833333vw), 1.625rem);
+  line-height: 1.35;
+}
+
+/* Sizes stay local to the two editorial pages, including their closing sections. */
+:is(.about-page, .import-page) .type-section {
+  font-size: clamp(2.5rem, calc(.5rem + 2.5vw), 3.5rem);
+  text-wrap: balance;
+}
+:is(.about-page, .import-page) .type-heading {
+  font-size: clamp(1.375rem, calc(.625rem + .833333vw), 1.625rem);
+}
+:is(.about-page, .import-page) .type-lede {
+  font-size: clamp(1.375rem, calc(.625rem + .833333vw), 1.625rem);
+  line-height: 1.35;
+}
+:is(.about-page, .import-page) .type-body {
+  max-width: 62ch;
+  font-size: clamp(1rem, calc(.96875rem + .13vw), 1.125rem);
+}
+:is(.about-page, .import-page) .type-label,
+:is(.about-page, .import-page) .editorial-media figcaption {
+  font-size: clamp(.78125rem, .9vw, .875rem);
+}
+:is(.about-page, .import-page) .editorial-media figcaption { flex-wrap: wrap; }
+:is(.about-page, .import-page) .editorial-media figcaption span { flex-shrink: 1; }
+:is(.about-page, .import-page) .interior-closing {
+  padding-block: clamp(4rem, 6vw, 7rem);
+}
+:is(.about-page, .import-page) .interior-closing h2 { max-width: 23ch; }
+:is(.about-page, .import-page) .interior-closing__links { margin-top: 2rem; gap: 1.5rem 3rem; }
+
+.about-opening-media img { aspect-ratio: 4 / 1; }
+.about-why {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr);
+  align-items: end;
+  gap: 10vw;
+  padding-block: clamp(3.5rem, 6vw, 7rem);
+}
+.about-why h2 { max-width: 18ch; margin-block: 1.5rem 2rem; }
+.about-why .editorial-media img { aspect-ratio: 1 / 1; }
+.about-audience {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 5vw;
+  padding-bottom: clamp(4rem, 6vw, 7rem);
+}
+.about-audience__intro { padding-top: 1.75rem; }
+.about-audience__intro h2 { margin-bottom: 1.25rem; }
+.about-audience__rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5vw; list-style: none; margin: 0; padding: 0; }
+.about-audience__rows li { padding-top: 1.5rem; border-top: 1px solid var(--interior-rule); }
+.about-audience__rows h3 { max-width: 22ch; margin-bottom: 1rem; text-wrap: balance; }
+.about-approach {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8vw;
+  padding-block: clamp(4rem, 6vw, 7rem);
+}
+.about-approach h2 { max-width: 20ch; margin-block: 1.5rem 2rem; }
+.about-approach > div > .type-body { max-width: 44ch; }
+.about-closing__note { margin-top: 1.5rem; color: var(--color-muted); }
+.about-approach__rows { list-style: none; margin: 0; padding: 0; }
+.about-approach__rows li { padding-block: 1.5rem; border-top: 1px solid var(--interior-rule); }
+.about-approach__rows li:last-child { padding-bottom: 0; }
+.about-approach__rows h3 { margin-bottom: .75rem; }
+
+.import-brief {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 1.5rem 5vw;
+  border-top: 1px solid var(--interior-rule);
+  padding-block: clamp(2rem, 3vw, 3.5rem) clamp(3.5rem, 5vw, 6rem);
+}
+.import-brief h2 { max-width: 18ch; margin-bottom: 1.5rem; }
+.import-brief__copy .type-body { max-width: 45ch; }
+.import-brief__list { list-style: none; padding: 0; margin: 0; }
+.import-brief__list li { padding-block: .875rem; border-bottom: 1px solid var(--interior-rule); }
+.import-brief__list li:first-child { padding-top: 0; }
+.import-brief__detail { grid-column: 2; }
+.import-chapter {
+  display: grid;
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+  align-items: center;
+  gap: 7vw;
+  padding-bottom: clamp(4rem, 6vw, 7rem);
+}
+.import-chapter__copy h2 { max-width: 19ch; margin-bottom: 1.75rem; }
+.import-chapter--search .editorial-media img { aspect-ratio: 4 / 3; }
+.import-chapter--analysis { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); }
+/* Copy leads in the DOM; on desktop the photograph takes the left column. */
+.import-chapter--analysis .editorial-media { grid-column: 1; grid-row: 1; }
+.import-chapter--analysis .import-chapter__copy { grid-column: 2; }
+.import-chapter--analysis .editorial-media img { aspect-ratio: 3 / 2; }
+.import-chapter--support {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr);
+  gap: 10vw;
+  padding-block: clamp(4rem, 6vw, 7rem);
+}
+.import-chapter--support .editorial-media img { aspect-ratio: 4 / 3; }
+.import-chapter__detail { max-width: 36ch; margin-top: 2rem; }
+.import-closing > .type-body { margin-top: 1.5rem; }
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  :is(.about-page, .import-page, .contact-page) .interior-header__line {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.75rem;
+  }
+  :is(.about-page, .import-page, .contact-page) .interior-header__line > p {
+    margin-left: 24%;
+    max-width: 44ch;
+  }
+  .about-why, .about-approach, .import-chapter, .import-chapter--support { gap: 5vw; }
+}
+
+@media (max-width: 767px) {
+  :is(.about-page, .import-page, .contact-page) .interior-header { padding-top: calc(var(--header-height) + 1.75rem); padding-bottom: 2.5rem; }
+  :is(.about-page, .import-page, .contact-page) .interior-header__line { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+  :is(.about-page, .import-page, .contact-page) .interior-header h1 { font-size: clamp(2.375rem, calc(1.21rem + 5.29vw), 3.75rem); }
+  :is(.about-page, .import-page, .contact-page) .interior-header__line > p { font-size: 1.1875rem; max-width: 44ch; }
+  :is(.about-page, .import-page) .type-section { font-size: clamp(1.875rem, calc(1.23rem + 2.645vw), 2.5rem); }
+  :is(.about-page, .import-page) .type-heading { font-size: 1.25rem; }
+  :is(.about-page, .import-page) .type-lede { font-size: 1.1875rem; }
+  :is(.about-page, .import-page) .type-body { font-size: 1rem; }
+  :is(.about-page, .import-page) .editorial-media figcaption { gap: .35rem; }
+  .about-opening-media img { aspect-ratio: 16 / 9; }
+  .about-why { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+  .about-why h2 { margin-block: 1.25rem 1.5rem; }
+  .about-why .editorial-media { margin-left: 16%; }
+  .about-audience, .about-audience__rows, .about-approach { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+  .about-audience__intro { padding-top: 0; }
+  .about-audience__rows h3 { margin-bottom: .75rem; }
+  .import-brief { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }
+  .import-brief__detail { grid-column: auto; }
+  .import-chapter, .import-chapter--analysis, .import-chapter--support { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+  .import-chapter__copy h2 { margin-bottom: 1.5rem; }
+  .import-chapter--analysis :is(.editorial-media, .import-chapter__copy) { grid-column: auto; grid-row: auto; }
+  .import-chapter--analysis .editorial-media img { aspect-ratio: 4 / 3; }
+  .import-chapter--support .editorial-media img { aspect-ratio: 4 / 5; }
 }
