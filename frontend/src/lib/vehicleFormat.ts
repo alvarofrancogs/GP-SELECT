@@ -1,4 +1,5 @@
 import type { Locale } from '../i18n/types';
+import { normalise } from './vehicleFacets';
 
 const locales = { es: 'es-ES', en: 'en-GB' };
 export function formatPrice(value: number | null, locale: Locale, fallback: string): string {
@@ -17,4 +18,10 @@ export function formatRegistration(year: number | null, month: number | null, lo
   if (month === null || month < 1 || month > 12) return String(year);
   return new Intl.DateTimeFormat(locales[locale], { month: '2-digit', year: 'numeric', timeZone: 'UTC' })
     .format(new Date(Date.UTC(year, month - 1, 1)));
+}
+/** Translates a free-text catalogue value when the dictionary knows it (ignoring case and accents); otherwise shows it as written. */
+export function translateValue(values: Record<string, string>, value: string | null): string | null {
+  if (!value) return null;
+  const key = Object.keys(values).find((candidate) => normalise(candidate) === normalise(value));
+  return key ? values[key] : value;
 }

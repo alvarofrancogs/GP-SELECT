@@ -50,7 +50,6 @@ export interface InteriorCopy {
 }
 
 export interface VehicleCopy extends InteriorHeaderCopy {
-  mock: string;
   singular: string;
   plural: string;
   filters: string;
@@ -84,6 +83,9 @@ export interface VehicleCopy extends InteriorHeaderCopy {
   retry: string;
   back: string;
   notFound: string;
+  emptyCatalogue: string;
+  soldNotice: string;
+  soldAlternative: string;
   request: string;
   whatsapp: string;
   registration: string;
@@ -91,14 +93,11 @@ export interface VehicleCopy extends InteriorHeaderCopy {
   description: string;
   specifications: string;
   equipment: string;
-  inspection: string;
   provenance: string;
   drivetrain: string;
   exteriorColour: string;
   interiorColour: string;
-  owners: string;
   history: string;
-  verification: string;
   importTitle: string;
   importBody: string;
   importLink: string;

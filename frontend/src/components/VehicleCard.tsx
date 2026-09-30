@@ -1,14 +1,16 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { VehicleSummary } from '../types/vehicle';
 import { useLanguage } from '../i18n/useLanguage';
-import { formatKm, formatPower, formatPrice } from '../lib/vehicleFormat';
+import { formatKm, formatPower, formatPrice, translateValue } from '../lib/vehicleFormat';
 
 export function VehicleCard({ vehicle }: { vehicle: VehicleSummary }) {
   const { copy, locale } = useLanguage();
   const text = copy.vehicles;
-  const image = vehicle.images?.[0];
+  const [failed, setFailed] = useState(false);
+  const image = failed ? undefined : vehicle.images?.[0];
   const name = `${vehicle.make} ${vehicle.model}`;
-  const translate = (value: string | null) => value ? text.values[value] ?? value : null;
+  const translate = (value: string | null) => translateValue(text.values, value);
   const facts = [vehicle.firstRegistrationYear, formatKm(vehicle.mileageKm, locale)].filter((v) => v !== null).join(' · ');
   const mechanical = [formatPower(vehicle.powerHp, locale), translate(vehicle.fuelType), translate(vehicle.transmission)].filter(Boolean).join(' · ');
   return (
@@ -17,7 +19,7 @@ export function VehicleCard({ vehicle }: { vehicle: VehicleSummary }) {
         {image ? <img src={image.src} alt={image.temporary ? '' : image.alt ?? name}
           style={{ objectFit: image.fit }} data-fit={image.fit}
           width={image.width ?? 1200} height={image.height ?? 900} loading="lazy"
-          decoding="async" /> : <div className="vehicle-media-empty type-ui">{text.noImage}</div>}
+          decoding="async" onError={() => setFailed(true)} /> : <div className="vehicle-media-empty type-ui">{text.noImage}</div>}
         {image?.temporary ? <figcaption className="type-ui">{name}<span>{copy.common.temporaryAsset}</span></figcaption> : null}
       </figure>
       <div className="vehicle-card__identity">

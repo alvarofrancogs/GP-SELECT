@@ -15,10 +15,10 @@ function toDetail(dto: VehiclePreview): VehicleDetail {
     slug: dto.slug, make: dto.make, model: dto.model, variant: dto.variant,
     firstRegistrationYear: dto.year, firstRegistrationMonth: dto.month, mileageKm: dto.mileageKm, priceEur: dto.priceEur,
     powerHp: dto.powerHp, fuelType: dto.fuelType, transmission: dto.transmission, bodyType: dto.bodyType,
-    availability: dto.status === 'Available' ? 'available' : dto.status === 'Reserved' ? 'reserved' : dto.status === 'ComingSoon' ? 'coming-soon' : null,
+    availability: dto.status === 'Available' ? 'available' : dto.status === 'Reserved' ? 'reserved' : dto.status === 'ComingSoon' ? 'coming-soon' : dto.status === 'Sold' ? 'sold' : null,
     images: dto.images.map((src) => ({ src, fit: 'cover', alt: null, temporary: false, width: null, height: null })),
     drivetrain: dto.drivetrain, exteriorColour: dto.exteriorColour, interiorColour: dto.interior,
-    provenanceCountry: dto.provenance, ownersCount: null, historyStatus: dto.history, description: dto.description,
+    provenance: dto.provenance, history: dto.history, description: dto.description,
     equipment: dto.equipment, customSpecifications: dto.customSpecifications,
   };
 }
@@ -45,6 +45,6 @@ export function AdminPreview() {
       <p>{text.notice}</p>
       <p><StatusMark status={preview.status} />{isListed(preview.status) ? null : <span className="admin-field__hint"> {text.hidden}</span>}</p>
     </div>
-    <VehicleDetailView vehicle={toDetail(preview)} back={back} showMockNote={false} className="vehicle-detail--preview" />
+    <VehicleDetailView vehicle={toDetail(preview)} back={back} className="vehicle-detail--preview" />
   </div>;
 }

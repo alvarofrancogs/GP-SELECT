@@ -22,7 +22,7 @@ export interface VehicleSummary {
   fuelType: string | null;
   transmission: string | null;
   bodyType: string | null;
-  availability: 'available' | 'coming-soon' | 'reserved' | null;
+  availability: 'available' | 'coming-soon' | 'reserved' | 'sold' | null;
   images: VehicleImage[] | null;
 }
 
@@ -30,9 +30,8 @@ export interface VehicleDetail extends VehicleSummary {
   drivetrain: string | null;
   exteriorColour: string | null;
   interiorColour: string | null;
-  provenanceCountry: string | null;
-  ownersCount: number | null;
-  historyStatus: string | null;
+  provenance: string | null;
+  history: string | null;
   description: string | null;
   equipment: string[] | null;
   customSpecifications: { label: string; value: string }[] | null;
@@ -40,10 +39,12 @@ export interface VehicleDetail extends VehicleSummary {
 
 /** Mirrors VehiclePublicDto in GpSelect.Application/Contracts.cs. Free text stays free text. */
 export interface VehiclePublicDto extends VehiclePublicCardDto {
-  fuelType: string | null;
-  transmission: string | null;
-  bodyType: string | null;
+  drivetrain: string | null;
   exteriorColour: string | null;
   interior: string | null;
   description: string | null;
+  history: string | null;
+  provenance: string | null;
+  equipment: string[];
+  customSpecifications: { label: string; value: string }[];
 }

@@ -12,7 +12,21 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 **1F — PASS.** Un solo pin (4,5 vh; 3,5 en móvil). Timeline de escena (cielo, sombreado, noche desde arriba, mapa, titulares y CTA) y timeline de coches con scrub más pesado. Ambos coches comparten caja, ancla y origen de transformación: un único avance continuo con crossfade BMW → Audi en la misma caja. Titulares con la receta del hero y tamaño ajustado por palabra; «Visión / Global» no invade el coche. Services entra como telón de papel sobre el último viewport. El header lee el tono publicado por la escena (`data-header-tone`) sin hit-test por frame. Reduced-motion y alturas < 600 px: dos frames estáticos. QA a 1440, 1920 y 390 (descenso, ascenso, reduced-motion), build, lint y consola OK.
 
-**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · 2F-C.2 PASS (30-09-2026) · HOME HANDOFF FIX PASS (30-09-2026) · **NEXT: 2F-C.3 — catálogo real + detalle real + facetas dependientes + rangos derivados del inventario (NO iniciada).**
+**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · 2F-C.2 PASS (30-09-2026) · HOME HANDOFF FIX PASS (30-09-2026) · 2F-C.3 PASS (30-09-2026) · **NEXT: 2G — interiores, escala tipográfica y densidad (NO iniciada).**
+
+**2F-C.3 — PASS (30-09-2026).** Catálogo y detalle reales. Implementado por Opus; backend, HOME y Admin sin cambios (salvo `AdminPreview.toDetail`).
+- **Datos:** `services/vehicles.ts` lee `/api/public/vehicles` (una sola petición) y `/{slug}`; 404 → estado editorial, otro fallo → error con reintento. `vehicles.mock.ts` y `vehicleAssets.ts` eliminados; sin fallback a datos ficticios. Precio nulo o ≤ 0 → «Precio bajo consulta».
+- **Orden:** el API lista por `CreatedAt` ascendente; el cliente lo invierte («Últimas incorporaciones»).
+- **Facetas** (`lib/vehicleFacets.ts`, todo en cliente): una selección por categoría, AND entre categorías. Cada faceta se recalcula con los demás filtros activos y oculta lo imposible; una faceta con menos de 2 opciones se oculta. Marca, carrocería y combustible agrupan variantes de escritura sin distinguir mayúsculas ni tildes. Precio y km usan bandas 1-2-2,5-5 sobre el mín–máx real del inventario; el año son los años presentes. Las selecciones inválidas (URL editada o combinación imposible) se eliminan con `replace`; el filtro que acaba de cambiar el usuario prevalece. Los vehículos sin precio o km quedan fuera de un filtro numérico activo.
+- **Detalle:** historial solo si existe `history` (sin párrafo de verificación ni propietarios); equipamiento y especificaciones solo si hay datos. `Sold`: aviso «Este vehículo ya no está disponible», sin precio y CTA «Buscar una alternativa» (`/contacto?intent=search`). Draft, Archived y desconocido: «Este vehículo no está en el catálogo».
+- **Imágenes:** la portada es la primera (contrato del API); un error de carga muestra el hueco «Fotografías pendientes» sin romper el layout.
+- **QA:** Playwright contra la API real (Postgres + proxy de Vite, 10 vehículos sembrados en los seis estados) y QA de solo lectura de Gemini (17 comprobaciones: 1920, 1440 y 390, ES y EN, consola, red, teclado y overflow), todo en PASS. Regresión de HOME frente a `home-closed-pass`: estado computado de todos los elementos visibles en 18 posiciones de scroll a 1440 y 17 a 390; 390 idéntico y 1440 idéntico salvo 1 px de redondeo subpíxel en una posición. Build y lint OK. No hay tests de frontend.
+- **Deuda:**
+  - el API trunca a 100 vehículos sin paginar, y las facetas y los rangos se calculan solo sobre esos 100;
+  - los valores libres (combustible, carrocería, color, procedencia…) sin entrada en `values` se muestran tal cual, sin traducir, en ambos idiomas;
+  - un vehículo con precio o kilometraje nulo queda fuera de un filtro numérico activo (y no cuenta para sus bandas);
+  - el bundle público supera los 500 kB (desde 2F-C.2);
+  - en desarrollo, StrictMode duplica la petición de la lista (la primera se cancela); en producción es una sola.
 
 **HOME HANDOFF FIX — PASS (30-09-2026).** Auditoría motion de la HOME (Opus + QA mecánica de Gemini) y corrección del principio de la página. Defectos presentes desde 1A, sin regresiones. Todo en `useGsapScene.ts` y `Header.tsx`.
 - **Hero → Process:** Process sube como telón opaco sobre el hero oscurecido. Se elimina el fundido que se sumaba al deslizamiento y que, con scroll rápido, dejaba ver un panel gris.
@@ -79,8 +93,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
   - el bundle público pasa el umbral de 500 kB (data router);
   - en consola solo aparecen los logs de red del navegador para respuestas esperadas (401 de `/me` sin sesión, 404, 409 y 422); no hay errores de JS;
   - al caducar la sesión se pierden los cambios no guardados;
-  - el mapeo público completo y el mensaje de «Vendido» son de 2F-C.3.
-
+  
 **2F-C.1 — PASS (backend contract hardening).** Detalle y puesta en marcha en `docs/BACKEND-SETUP.md`.
 - **Merge-patch en `PATCH /api/admin/vehicles/{id}`** (`Optional<T>`): ausente conserva, `null` o vacío borra, un valor se valida. Marca, modelo y año no se pueden borrar.
 - **Enums como texto** en todo el API; los números se rechazan.
@@ -221,15 +234,15 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 ## CHECKPOINTS (tags de git)
 
-`pre-car-handoff` · `2f-a-pass` · `2f-b-pass` · `2f-c1-pass` · `2f-c2-pass` · `home-handoff-fix-pass` · **`home-closed-pass`** (HOME cerrada, 30-09-2026; último checkpoint). Cada unidad aprobada se cierra con un tag `<unidad>-pass`.
+`pre-car-handoff` · `2f-a-pass` · `2f-b-pass` · `2f-c1-pass` · `2f-c2-pass` · `home-handoff-fix-pass` · **`home-closed-pass`** (HOME cerrada, 30-09-2026) · **`2f-c3-pass`** (último checkpoint). Cada unidad aprobada se cierra con un tag `<unidad>-pass`.
 
 ## NEXT
 
 **Orden aprobado:**
 1. 2F-C.1 backend (**PASS**);
 2. 2F-C.2 Admin (**PASS**);
-3. **2F-C.3 — catálogo real + detalle real + facetas dependientes + rangos derivados del inventario** (siguiente, NO iniciada);
-4. 2G interiores, escala tipográfica y densidad: Nosotros e Importación sin afirmar capacidades comerciales no confirmadas y H1 por debajo del hero.
+3. **2F-C.3 — catálogo real + detalle real + facetas dependientes + rangos derivados del inventario** (**PASS**);
+4. **2G (siguiente, NO iniciada)** interiores, escala tipográfica y densidad: Nosotros e Importación sin afirmar capacidades comerciales no confirmadas y H1 por debajo del hero.
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 - **Objetivo:** panel administrativo muy sencillo para gestionar el inventario real.
