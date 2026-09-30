@@ -5,7 +5,7 @@ export function PerformanceScene() {
   const { copy } = useLanguage();
 
   return (
-    <ScrollScene id="criterio" kind="process" className="process-scene" labelledBy="process-title" handoffTarget="hero">
+    <ScrollScene id="criterio" kind="process" className="process-scene" labelledBy="process-title">
       <div className="scene-background process-background" data-scene-background />
       <div className="process-intro" data-scene-ui>
         <span className="eyebrow">{copy.process.eyebrow}</span>

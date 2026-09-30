@@ -19,17 +19,15 @@ export function Header() {
   useEffect(() => {
     const header = headerRef.current;
     if (!header) return;
-    const hero = document.getElementById('hero');
-    const handoff = document.getElementById('coches');
+    // Scenes that change colour under the header publish the tone it needs.
+    const scenes = ['hero', 'coches']
+      .map((id) => document.getElementById(id))
+      .filter((scene): scene is HTMLElement => scene !== null);
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     function updateContrast() {
       if (!header) return;
-      const progress = Number(hero?.dataset.progress ?? 0);
-      // A solid scrim avoids difference blending against the handoff's mid-grey.
-      header.toggleAttribute('data-hero-handoff', progress >= 0.35 && progress < 1);
-      // The car handoff darkens progressively and publishes the tone under the header.
-      const tone = handoff?.dataset.headerTone;
+      const tone = scenes.map((scene) => scene.dataset.headerTone).find(Boolean);
       if (tone) header.dataset.tone = tone;
       else delete header.dataset.tone;
     }
@@ -38,15 +36,18 @@ export function Header() {
       frame = requestAnimationFrame(updateContrast);
     }
     updateContrast();
+    // Scrubbed scenes keep moving after the scroll stops, so follow their tone directly.
+    const observer = new MutationObserver(onScroll);
+    scenes.forEach((scene) => observer.observe(scene, { attributeFilter: ['data-header-tone'] }));
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     reducedMotion.addEventListener('change', onScroll);
     return () => {
       cancelAnimationFrame(frame);
+      observer.disconnect();
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
       reducedMotion.removeEventListener('change', onScroll);
-      header.removeAttribute('data-hero-handoff');
       delete header.dataset.tone;
     };
   }, [pathname]);

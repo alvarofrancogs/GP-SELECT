@@ -12,7 +12,14 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 **1F — PASS.** Un solo pin (4,5 vh; 3,5 en móvil). Timeline de escena (cielo, sombreado, noche desde arriba, mapa, titulares y CTA) y timeline de coches con scrub más pesado. Ambos coches comparten caja, ancla y origen de transformación: un único avance continuo con crossfade BMW → Audi en la misma caja. Titulares con la receta del hero y tamaño ajustado por palabra; «Visión / Global» no invade el coche. Services entra como telón de papel sobre el último viewport. El header lee el tono publicado por la escena (`data-header-tone`) sin hit-test por frame. Reduced-motion y alturas < 600 px: dos frames estáticos. QA a 1440, 1920 y 390 (descenso, ascenso, reduced-motion), build, lint y consola OK.
 
-**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · 2F-C.2 PASS (30-09-2026) · **siguiente: 2F-C.3 — catálogo real (NO iniciada).**
+**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · 2F-C.2 PASS (30-09-2026) · HOME HANDOFF FIX PASS (30-09-2026) · **NEXT: 2F-C.3 — catálogo real + detalle real + facetas dependientes + rangos derivados del inventario (NO iniciada).**
+
+**HOME HANDOFF FIX — PASS (30-09-2026).** Auditoría motion de la HOME (Opus + QA mecánica de Gemini) y corrección del principio de la página. Defectos presentes desde 1A, sin regresiones. Todo en `useGsapScene.ts` y `Header.tsx`.
+- **Hero → Process:** Process sube como telón opaco sobre el hero oscurecido. Se elimina el fundido que se sumaba al deslizamiento y que, con scroll rápido, dejaba ver un panel gris.
+- **Header:** sin banda crema. El hero publica `data-header-tone` según su estado visible (timeline con scrub, igual que `#coches`): difference sobre el cielo, tinta desde 0,45 y blanco desde 0,72. El header lo sigue con un `MutationObserver`. El peor contraste transitorio medido es de unos 4,3:1, en el cruce tinta/blanco.
+- **Porsche:** el recorrido a la izquierda se calcula en cada refresh (`heroCarTravel`) para que el borde difuminado del coche (88 % de su caja) nunca entre en pantalla. Se conservan la dirección, el zoom 1,65 `power1.in` y los tiempos. El recorrido baja de 949 a ~250 px a 1440; para recuperarlo harían falta un asset más ancho o más zoom.
+- **Process → BMW:** las palabras salen (0,72–0,82) antes de que entre el frame del BMW (0,82–1). Este tramo va sin retraso (`scrub: true`), así que el BMW siempre es opaco cuando Process se suelta.
+- **QA:** 1920, 1440 y 390; scroll lento, medio, rápido y hacia arriba, frame a frame, sin fallos; reversibilidad exacta; consola limpia; build y lint OK. Reduced-motion idéntico a HEAD. Desde CarHandoff (fuera del fundido de entrada) hasta el Footer, idéntico pixel a pixel a HEAD, salvo el antialiasing del texto del CTA de CarHandoff al 70 %, con el mismo estado computado.
 
 **2F-C.2 — PASS (Admin frontend).** Implementado por Opus contra el contrato real de 2F-C.1; backend sin cambios.
 - **Rutas** (chunk lazy `pages/admin/AdminApp.tsx`, fuera del `SiteLayout` público):
@@ -161,7 +168,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 - 1F · Car handoff: `.scene-cta` no se reutilizó (añade `min-width` al botón); z-index locales sin simplificar; assets `car-a/car-b/europe-map` provisionales, con contrato PNG/WebP RGBA alineados en un mismo lienzo.
 
-- P1 · Header: eliminar la banda sólida crema que aparece durante el handoff del hero (progreso 0,35–1). Resolver el contraste sin banda.
+- ~~P1 · Header: banda sólida crema durante el handoff del hero~~ — resuelto en HOME HANDOFF FIX.
 - P2 · Hero: más profundidad o parallax del cielo (hoy solo −3 %).
 - P2 · `frontend/package.json`: revertir `--configLoader runner` (solo hace falta dentro del sandbox de Codex).
 - P2 · Desinstalar `@fontsource-variable/inter` e `inter-tight`: ya no se usan.
@@ -185,15 +192,41 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 - El vídeo `2026-09-26 15-54-09.mp4` es una grabación de Jesko Jets, no de GP SELECT.
 - El PNG `28 sept 15_41_46` (importación) está borrado en el árbol de trabajo y se recupera con `git restore`.
 
+## WORKFLOW — Antigravity / Gemini Flash (desde 30-09-2026)
+
+**`ANTIGRAVITY_WORKER_READY` para QA mecánica y exploración del repo, siempre READ-ONLY.** Modificar código todavía es **NOT READY**: primero tiene que superar un piloto aislado en un worktree.
+
+- **Jerarquía:**
+  - **Opus** orquesta, decide y es el gate final (PASS/FAIL).
+  - **Astra** implementa lo visual complejo.
+  - **Gemini** es un worker subordinado para lo mecánico y verificable. Su `PASS` significa «mis comprobaciones pasaron», nunca «unidad aprobada».
+- **Herramienta:** CLI `agy` 1.2.14 en headless (`agy -p … --output-format json --json-schema <schema>`).
+  - Modelo obligatorio: `--model gemini-3.8-flash-high`.
+  - Nunca `--dangerously-skip-permissions`.
+- **Regla del worker:** `.agents/rules/gemini-worker.md`, siempre activa. Aclara que la autoridad de Astra en `AGENTS.md` no le aplica.
+- **Límites:**
+  - no hace commit, tag ni push;
+  - no toma decisiones de arquitectura, diseño, tipografía, motion, seguridad, auth/CSRF ni semántica de dominio (puede inspeccionarlas, no decidirlas);
+  - no amplía el alcance; si algo es ambiguo, devuelve `BLOCKED`.
+- **READ-ONLY por defecto:** Antigravity deja escribir en el workspace sin pedir permiso, así que la protección es la regla más el prompt. **Después de cada ejecución, Opus comprueba `git status --short`**; un cambio inesperado invalida el resultado.
+- **Permisos** (`~/.gemini/antigravity-cli/settings.json`):
+  - Solo las herramientas de inspección de Playwright, una a una con `mcp(playwright/<tool>)`: navigate, resize, evaluate, console_messages, take_screenshot, snapshot, wait_for, close y tabs.
+  - El CLI no trae navegador; usa el MCP de Playwright aislado, con salida en el scratchpad.
+  - Una herramienta denegada anula toda la ejecución sin salida. El prompt debe limitar las herramientas que puede usar.
+- **Salida:** JSON con esquema (`status`, `checks`/`findings` con severidad P0–P2 y evidencia, `commands_run`, `files_modified`, `summary`). Opus solo incorpora a su contexto el resultado resumido, nunca logs, DOMs ni trazas completas.
+- **Playwright exhaustivo** (matrices responsive, consola, rutas, regresión) se delega preferentemente a Gemini. Opus usa Playwright solo para confirmar un P0/P1 o una conclusión dudosa.
+- **Métricas:** durante las próximas 2–3 unidades se anota de forma ligera el uso de cada ejecución (tokens de entrada, salida y razonamiento, caché, duración y estado) para medir el ahorro real de Opus y Astra.
+  - Piloto: QA de 4 casos (`/vehiculos` y detalle, 1440 y 390) en 125 s, ~239k tokens de Gemini (507k de caché) y PASS. Las 12 cifras coinciden con la verificación de Opus.
+
 ## NEXT
 
 **Orden aprobado:**
 1. 2F-C.1 backend (**PASS**);
 2. 2F-C.2 Admin (**PASS**);
-3. **2F-C.3 catálogo real** (siguiente, NO iniciada) con facetas dependientes y rangos derivados del inventario;
+3. **2F-C.3 — catálogo real + detalle real + facetas dependientes + rangos derivados del inventario** (siguiente, NO iniciada);
 4. 2G interiores, escala tipográfica y densidad: Nosotros e Importación sin afirmar capacidades comerciales no confirmadas y H1 por debajo del hero.
 
-**2F-C — ADMIN PANEL** (la clasificación de campos A/B/C/D ya se hizo y los gaps aprobados están resueltos en 2F-C.1):
+**2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 - **Objetivo:** panel administrativo muy sencillo para gestionar el inventario real.
 - **Estilo:** mismo ADN de GP SELECT (Archivo Variable, `--type-*`, off-white / charcoal, filetes, jerarquía editorial, botones existentes), pero más funcional, compacto y menos cinematográfico. No es un dashboard SaaS: sin KPIs, gráficas, analytics, sidebar extensa, CRM, clientes, ventas, facturación, reservas ni pagos.
 - **Flujo ideal:** login → listado → añadir → datos → fotografías → guardar borrador → vista previa → publicar → listado, y listado → eliminar (con confirmación y copy fiel al tipo de borrado real). Solo se implementa lo que el backend soporte de verdad.

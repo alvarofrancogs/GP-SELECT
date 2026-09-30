@@ -27,7 +27,6 @@ img { display: block; max-width: 100%; }
 .site-header { position: fixed; inset: 0 0 auto; z-index: var(--z-header); color: var(--color-white); mix-blend-mode: difference; }
 .site-header[data-tone='light'] { color: var(--color-ink); mix-blend-mode: normal; }
 .site-header[data-tone='dark'] { color: var(--color-white); mix-blend-mode: normal; }
-.site-header[data-hero-handoff] { color: var(--color-ink); background: var(--color-header-scrim); mix-blend-mode: normal; }
 .header-inner { height: var(--header-height); margin-inline: var(--page-gutter); display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
 .header-nav, .header-actions { display: flex; align-items: center; gap: clamp(1rem, 2.9vw, 3.5rem); }
 .header-nav { font-family: var(--font-family); font-stretch: var(--width-nav); font-size: var(--header-nav-size); font-weight: var(--weight-extended-copy); letter-spacing: var(--header-nav-tracking); }
