@@ -182,7 +182,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 ## MEDIA PROVISIONAL
 
 - Hero: `hero-car.svg` y `hero-sky.svg`, pendientes de la foto real del Porsche y del cielo.
-- BMW: `bmw_m4_faros_apagados/encendidos.png` (recortes RGBA) se usan como prototipo del encendido de faros.
+- BMW: los prototipos `bmw_m4_faros_apagados/encendidos.png` se retiraron de la raíz el 30-09-2026 (ya no se usaban; siguen en el historial de git).
 - GLC cenital, mapa de Europa, fotos de servicios e inventario: placeholders.
 - Todo el media de los vehículos puede sustituirse por vídeo, secuencia de frames, render o Canvas en la fase de media production.
 
@@ -190,7 +190,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 - «Premium vehicles» (inventario) no tiene mockup específico.
 - El vídeo `2026-09-26 15-54-09.mp4` es una grabación de Jesko Jets, no de GP SELECT.
-- El PNG `28 sept 15_41_46` (importación) está borrado en el árbol de trabajo y se recupera con `git restore`.
+- **Mockups aprobados** en `docs/mockups/` (nombres «Imagen de ChatGPT … .png»): `26 sept 16_51_51` hero · `16_52_05` BMW · `16_59_27` servicios · `17_00_01` Europa · `17_08_23` admin · `17_08_27` detalle · `28 sept 15_41_28` catálogo · `15_41_46` importación · `15_42_09` cuestionario/footer.
 
 ## WORKFLOW — Antigravity / Gemini Flash (desde 30-09-2026)
 

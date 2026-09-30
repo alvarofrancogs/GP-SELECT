@@ -13,7 +13,7 @@ Astra es la autoridad de diseño visual, frontend, UI/UX, composición, tipograf
 
 ## Referencias y alcance
 
-- Los mockups aprobados de GP SELECT son la fuente de verdad visual. No reinterpretarlos ni rediseñar secciones aprobadas.
+- Los mockups aprobados de GP SELECT (`docs/mockups/`, índice en `docs/CURRENT-STATE.md`) son la fuente de verdad visual. No reinterpretarlos ni rediseñar secciones aprobadas.
 - Jesko Jets sirve para estudiar movimiento, ritmo, pinning, máscaras, blur y transiciones entre escenas; nunca para copiar su diseño visual.
 - Mantener la implementación existente y proteger las secciones fuera del alcance de cada tarea. Evitar cambios innecesarios.
 - Las animaciones importantes deben responder al progreso real del scroll. Conservar el scroll nativo, la reversibilidad y `prefers-reduced-motion`.
