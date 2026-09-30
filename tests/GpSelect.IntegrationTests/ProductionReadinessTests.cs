@@ -52,6 +52,37 @@ public sealed class ProductionReadinessTests
         => Assert.Equal(valid, SecurityConfig.TryParseTrustedProxies(value, out _));
 
     [Fact]
+    public async Task Rejected_request_bodies_keep_their_4xx_status()
+    {
+        var context = new Microsoft.AspNetCore.Http.DefaultHttpContext { TraceIdentifier = "trace-1" };
+        context.Response.Body = new MemoryStream();
+        var handled = await new BadRequestExceptionHandler().TryHandleAsync(context,
+            new Microsoft.AspNetCore.Http.BadHttpRequestException("Request body too large.", 413), CancellationToken.None);
+        Assert.True(handled);
+        Assert.Equal(413, context.Response.StatusCode);
+        context.Response.Body.Position = 0;
+        var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
+        Assert.Contains("\"code\":\"request_rejected\"", body);
+        Assert.DoesNotContain("Kestrel", body);
+
+        Assert.False(await new BadRequestExceptionHandler().TryHandleAsync(new Microsoft.AspNetCore.Http.DefaultHttpContext(), new InvalidOperationException(), CancellationToken.None));
+    }
+
+    /// <summary>Development validates every DI registration at startup (the test host does not by default).</summary>
+    [Fact]
+    public void Development_host_builds_with_validated_services()
+    {
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Development");
+            builder.UseSetting("ConnectionStrings:Default", "Host=127.0.0.1;Port=1;Database=none;Username=none;Password=none");
+            builder.UseSetting("Security:AllowedOrigin", "http://127.0.0.1:5173");
+            builder.UseSetting("Storage:Root", Path.Combine(Path.GetTempPath(), "gpselect-dev-" + Guid.NewGuid().ToString("N")));
+        });
+        Assert.NotNull(factory.Services); // building the host is the assertion
+    }
+
+    [Fact]
     public void Production_refuses_to_start_with_a_localhost_origin()
     {
         using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>

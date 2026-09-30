@@ -6,6 +6,8 @@ public sealed record CreateVehicleRequest(string Make, string Model, int FirstRe
 public sealed record UpdateVehicleRequest : VehicleChanges;
 public sealed record StatusChangeRequest(VehicleStatus Status);
 public interface ISlugGenerator { string Generate(string make, string model); }
+/// <summary>Public contact form. Exactly the form's fields; all nullable so the domain answers with a per-field problem.</summary>
+public sealed record CreateEnquiryRequest(EnquiryIntent? Intent, string? Name, string? Email, string? Phone, string? Vehicle, string? Message);
 
 public sealed record VehicleAdminListDto(Guid Id, string Slug, VehicleStatus Status, string Make, string Model, string? Variant, int Year, int? Month,
     int? MileageKm, int? PowerHp, decimal? PriceEur, string? InternalReference, string? CoverCardUrl, int ImageCount, int ReadyImageCount,

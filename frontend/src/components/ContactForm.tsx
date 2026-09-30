@@ -1,4 +1,5 @@
 import { useId, useRef, useState, type FormEvent } from 'react';
+import { enquiriesEnabled } from '../config/contact';
 import { useLanguage } from '../i18n/useLanguage';
 import { submitLead, validateLead, type LeadDraft, type LeadField, type LeadIntent } from '../lib/submitLead';
 
@@ -10,6 +11,8 @@ export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: 
   const successRef = useRef<HTMLDivElement>(null);
   const [errors, setErrors] = useState<LeadField[]>([]);
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'failure'>('idle');
+  const [sent, setSent] = useState(false);
+  const [rateLimited, setRateLimited] = useState(false);
   const search = intent === 'search';
   const fields = ['name', 'phone', 'email', 'vehicle', 'message'] as const;
 
@@ -33,16 +36,29 @@ export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: 
       return;
     }
     setStatus('submitting');
+    setRateLimited(false);
     try {
-      const result = await submitLead(lead);
-      setStatus(result.ok ? 'success' : 'failure');
-      if (result.ok) requestAnimationFrame(() => successRef.current?.focus());
+      const result = await submitLead(lead, enquiriesEnabled);
+      if (result.ok) {
+        setSent(result.mode === 'sent');
+        setStatus('success');
+        requestAnimationFrame(() => successRef.current?.focus());
+      } else if (result.reason === 'invalid') {
+        setErrors(result.fields);
+        setStatus('idle');
+        formRef.current?.querySelector<HTMLElement>(`[name="${result.fields[0]}"]`)?.focus();
+      } else {
+        setRateLimited(result.reason === 'rate_limited');
+        setStatus('failure');
+      }
     } catch {
       setStatus('failure');
     }
   }
 
   function edit() {
+    // A sent enquiry starts a fresh form, so the same one is not sent twice by accident.
+    if (sent) formRef.current?.reset();
     setStatus('idle');
     requestAnimationFrame(() => formRef.current?.querySelector<HTMLInputElement>('input')?.focus());
   }
@@ -51,9 +67,9 @@ export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: 
     <section className="contact-form-section" aria-labelledby={`${id}-title`}>
       <h2 id={`${id}-title`} className="type-heading">{text.formTitle}</h2>
       <div ref={successRef} className="contact-success" hidden={status !== 'success'} tabIndex={-1} role="status">
-        <h3 className="type-section">{text.successTitle}</h3>
-        <p className="type-body">{text.successBody}</p>
-        <button className="editorial-link type-ui" type="button" onClick={edit}>{text.edit}<span aria-hidden="true">→</span></button>
+        <h3 className="type-section">{sent ? text.sentTitle : text.successTitle}</h3>
+        <p className="type-body">{sent ? text.sentBody : text.successBody}</p>
+        <button className="editorial-link type-ui" type="button" onClick={edit}>{sent ? text.another : text.edit}<span aria-hidden="true">→</span></button>
       </div>
       <form ref={formRef} noValidate onSubmit={handleSubmit} hidden={status === 'success'} aria-busy={status === 'submitting'}>
         <p className="contact-form__hint type-body">{text.requiredHint}</p>
@@ -85,10 +101,11 @@ export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: 
             );
           })}
         </div>
-        {import.meta.env.DEV ? <p className="contact-preview type-body" id={`${id}-preview`}>{text.preview}</p> : null}
-        {status === 'failure' ? <p className="contact-failure type-body" role="alert">{text.failure}</p> : null}
-        <button className="button button--dark contact-submit" type="submit" disabled={status === 'submitting'} aria-describedby={import.meta.env.DEV ? `${id}-preview` : undefined}>
-          <span>{status === 'submitting' ? text.submitting : text.submit}</span><span className="button-arrow" aria-hidden="true">→</span>
+        {/* While sending is off (production until the privacy texts exist) the form says so before it is filled in. */}
+        {enquiriesEnabled ? null : <p className="contact-preview type-body" id={`${id}-preview`}>{text.preview}</p>}
+        {status === 'failure' ? <p className="contact-failure type-body" role="alert">{rateLimited ? text.rateLimited : enquiriesEnabled ? text.sendFailure : text.failure}</p> : null}
+        <button className="button button--dark contact-submit" type="submit" disabled={status === 'submitting'} aria-describedby={enquiriesEnabled ? undefined : `${id}-preview`}>
+          <span>{status === 'submitting' ? (enquiriesEnabled ? text.sending : text.submitting) : text.submit}</span><span className="button-arrow" aria-hidden="true">→</span>
         </button>
       </form>
     </section>

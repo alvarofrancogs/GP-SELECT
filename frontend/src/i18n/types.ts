@@ -43,6 +43,12 @@ export interface InteriorCopy {
     successBody: string;
     edit: string;
     failure: string;
+    sending: string;
+    sentTitle: string;
+    sentBody: string;
+    another: string;
+    sendFailure: string;
+    rateLimited: string;
     errors: { name: string; phone: string; email: string; vehicle: string; message: string };
     directLabel: string;
     whatsappTitle: string;

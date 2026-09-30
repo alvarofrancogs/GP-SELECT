@@ -91,6 +91,7 @@ public static class DomainProblems
     {
         "archived" or "last_public_image" => StatusCodes.Status409Conflict,
         "incomplete" or "images_required" or "price_zero" => StatusCodes.Status422UnprocessableEntity,
+        "enquiries_unavailable" => StatusCodes.Status503ServiceUnavailable,
         _ => StatusCodes.Status400BadRequest,
     };
 

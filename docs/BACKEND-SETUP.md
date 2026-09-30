@@ -13,6 +13,8 @@ Backend .NET 8 (`src/`), EF Core y PostgreSQL. No hay `appsettings*.json` en `Gp
 | `Security__TrustedProxies` | vacío | IP del proxy inverso, si lo hay (lista separada por comas) |
 | `Admin__Email` | cualquier email | **obligatoria**: el del administrador |
 | `Admin__PasswordHash` | hash generado (ver abajo) | **obligatoria**: hash generado |
+| `Enquiries__Enabled` | `true` para probar el formulario | `false` (o vacío) **hasta tener los textos legales**; después `true` |
+| `Enquiries__NotificationEmail` | opcional | buzón que recibe el aviso de cada consulta (pendiente de definir) |
 | `Storage__Provider` | vacío → `File` automático en Development | `S3` (obligatorio) |
 | `Storage__Root` | opcional (por defecto `uploads/` junto al binario) | — |
 | `Storage__Endpoint`, `__AccessKey`, `__SecretKey`, `__Bucket` | — | obligatorias con S3 |
@@ -34,6 +36,17 @@ El middleware CSRF de `Program.cs` rechaza con **403 `csrf_failed`** cualquier `
 - Sin proxy, la IP es la de la conexión y `X-Forwarded-For` se ignora.
 - **Con proxy inverso** (nginx, Caddy, balanceador…), la conexión llega desde el proxy y todos los clientes compartirían un único cupo: alguien podría bloquear el login del administrador. Hay que poner la IP del proxy en `Security__TrustedProxies`. Solo entonces se usa `X-Forwarded-For` (la última entrada, la que añade el proxy), y nunca si llega de otra dirección. Solo direcciones literales; los rangos CIDR no se aceptan.
 - Estado en memoria: con varias instancias de la API, cada una tiene su propio cupo. Con una sola instancia, que es el caso previsto, es suficiente.
+
+### Consultas del formulario de Contacto (enquiries)
+
+Flujo: formulario → `POST /api/public/enquiries` → la consulta se guarda en PostgreSQL (tabla `Enquiries`, **fuente de verdad**) → **202** `{"received":true}` → un worker intenta avisar por email después. Un fallo del email nunca hace perder la consulta.
+
+- **Campos:** exactamente los del formulario: `intent` (`Vehicle` | `Search`), `name` (2–200), `email` (≤ 200), `phone` (opcional, 7–15 dígitos, ≤ 30), `vehicle` (obligatorio con `Vehicle`, ≤ 200) y `message` (10–5000). Se rechazan los caracteres de control. No se guardan IP ni otros datos. Además: `CreatedAt` (indexado, para aplicar una retención) y el estado técnico del aviso (`NotificationStatus` `Pending`/`Sent`/`Failed`, intentos, próximo intento y `NotifiedAt`). No hay estado comercial ni CRM.
+- **Errores:** 400 con `code` y `field`; 413 si el cuerpo pasa de 32 KB; 415 si no es JSON; **503 `enquiries_unavailable`** si `Enquiries__Enabled` no es `true`; 429 `rate_limited` al pasar de 5 envíos por 10 minutos por cliente (misma clave que el login, con `Security__TrustedProxies`).
+- **Email desacoplado:** el puerto es `IEnquiryNotifier` (Infrastructure). **No hay ningún adaptador implementado: el proveedor está por decidir.** Sin adaptador, las consultas quedan `Pending` y la API avisa al arrancar; en cuanto se registre uno, el worker envía también las pendientes. Reintentos a 1 min, 5 min, 30 min, 2 h y 12 h; al sexto intento, `Failed` (la consulta sigue guardada). Los logs solo llevan el id de la consulta y el tipo de error. Supone una sola instancia de la API.
+- **Leer las consultas hoy** (sin pantalla en el Admin): `SELECT "CreatedAt","Intent","Name","Email","Phone","Vehicle","Message" FROM "Enquiries" ORDER BY "CreatedAt" DESC;`
+- **Frontend:** envía solo si se ha compilado con `VITE_ENQUIRIES_ENABLED=true`. Por defecto no: el build de producción ni siquiera incluye la llamada, y el formulario avisa de que la consulta no se envía. En desarrollo siempre envía.
+- **LEGAL/PRIVACY DECISION REQUIRED BEFORE PUBLIC RELEASE:** responsable del tratamiento, base jurídica, texto informativo o de consentimiento junto al formulario y plazo de conservación. Nada de esto está definido ni inventado. Hasta entonces, `Enquiries__Enabled` y `VITE_ENQUIRIES_ENABLED` deben quedarse sin activar en producción. La retención se podrá aplicar con un borrado por `CreatedAt`, sin rehacer nada.
 
 `X-Correlation-ID` del cliente solo se reutiliza si tiene como máximo 64 caracteres `[A-Za-z0-9._-]`; si no, se genera uno nuevo.
 
@@ -74,6 +87,7 @@ ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:5000 \
 ConnectionStrings__Default="Host=localhost;Port=55432;Database=gpselect;Username=postgres;Password=postgres" \
 Security__AllowedOrigin="http://127.0.0.1:5173" \
 Admin__Email="admin@gpselect.local" Admin__PasswordHash='<hash>' \
+Enquiries__Enabled=true \
   dotnet run --project src/GpSelect.Api --no-launch-profile
 
 # 4. Frontend (otra terminal) y abrir http://127.0.0.1:5173
@@ -99,7 +113,7 @@ dotnet test tests/GpSelect.Tests               # unitarios: dominio y contratos,
 dotnet test tests/GpSelect.IntegrationTests    # API real + PostgreSQL con Testcontainers: requiere Docker en marcha
 ```
 
-Los tests de integración levantan Postgres 16 efímero, aplican las migraciones sobre base limpia y cubren login, logout y cookie, CSRF (Origin y Referer), límite del login (429, bypass por cabecera, IPv6 /64, proxy de confianza), arranque en Production con configuración insegura, enums como texto, PATCH, estados, visibilidad pública, portada con subida real de imágenes y ausencia de N+1 en el listado del Admin.
+Los tests de integración levantan Postgres 16 efímero, aplican las migraciones sobre base limpia y cubren login, logout y cookie, CSRF (Origin y Referer), límite del login (429, bypass por cabecera, IPv6 /64, proxy de confianza), arranque en Production con configuración insegura, consultas (202 y persistencia, 400 por campo, 503 desactivado, 429, CORS, reintentos del aviso con un notificador falso), 413 en lugar de 500, validación del contenedor de dependencias en Development, enums como texto, PATCH, estados, visibilidad pública, portada con subida real de imágenes y ausencia de N+1 en el listado del Admin.
 
 ## Contrato (2F-C.1)
 

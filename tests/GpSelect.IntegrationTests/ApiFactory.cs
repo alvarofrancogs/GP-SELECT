@@ -39,6 +39,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Storage:Provider", "File");
         builder.UseSetting("Storage:Root", storageRoot);
         builder.UseSetting("Security:TrustedProxies", TrustedProxy);
+        builder.UseSetting("Enquiries:Enabled", "true");
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<DbContextOptions<GpSelectDbContext>>();
