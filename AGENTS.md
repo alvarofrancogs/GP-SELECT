@@ -4,6 +4,13 @@
 
 Astra es la autoridad de diseño visual, frontend, UI/UX, composición, tipografía, responsive, GSAP, ScrollTrigger, motion, implementación visual y browser QA. Claude Code con Claude Opus 5.5 coordina el trabajo como orquestador, tech lead y QA.
 
+## Al empezar una sesión
+
+- El estado vivo del proyecto está en `docs/CURRENT-STATE.md`: fase, unidades en PASS, siguiente paso (NEXT), deuda registrada y DO NOT TOUCH. Leerlo antes de tocar nada.
+- Si la tarea toca motion, leer también `docs/REFERENCE-MOTION.md`.
+- `docs/HANDOFF.md` y `AUDITORIA-GP-SELECT.md` son históricos: no describen el estado actual.
+- Trabajar solo la unidad que encargue Claude Code (Opus), que es el gate final. No empezar la siguiente unidad por iniciativa propia.
+
 ## Referencias y alcance
 
 - Los mockups aprobados de GP SELECT son la fuente de verdad visual. No reinterpretarlos ni rediseñar secciones aprobadas.
