@@ -14,9 +14,9 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 **FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · 2F-C.2 PASS (30-09-2026) · HOME HANDOFF FIX PASS (30-09-2026) · 2F-C.3 PASS (30-09-2026) · 2G PASS (30-09-2026).
 
-**FINAL CLOSURE PASS (desde 30-09-2026):** 3A production readiness (**PASS técnico**, pendiente de revisión del usuario) → 3B copy truth → 3C final visual / asset polish → 3D final release QA. Una fase cada vez; cada una con su tag `<fase>-pass`.
+**FINAL CLOSURE PASS (desde 30-09-2026):** 3A production readiness (**PASS técnico**, aceptado por el usuario) → Final Technical / UX QA → 3B copy truth → 3C final visual / asset polish → 3D final release QA. Una fase cada vez; cada una con su tag `<fase>-pass`.
 
-**3A — PASS técnico (30-09-2026), con decisiones externas pendientes (ver RELEASE BLOCKERS).** Dos partes: hardening de seguridad (aprobado por el usuario) y consultas reales del formulario de Contacto. Detalle operativo en `docs/BACKEND-SETUP.md`. Cookie auth, CSRF, rol y modelo de un solo administrador sin cambios.
+**3A — PASS técnico (30-09-2026), aceptado por el usuario.** Dos partes, ambas PASS: hardening de seguridad y consultas reales del formulario de Contacto, guardadas en PostgreSQL. El formulario queda desactivado en producción hasta resolver legal, email y dominio: son RELEASE BLOCKERS externos (ver abajo), no defectos técnicos de 3A. Detalle operativo en `docs/BACKEND-SETUP.md`. Cookie auth, CSRF, rol y modelo de un solo administrador sin cambios.
 
 **3A.1 — Security hardening (PASS, aprobado por el usuario).**
 - **Login (bug corregido):** el limitador agrupaba por IP más la cabecera `X-Login-Email`, que el cliente nunca enviaba y cualquiera podía variar para estrenar cupo. Reproducido antes de corregir: el sexto intento con la contraseña buena y una cabecera nueva devolvía 200. Ahora el cupo es por IP (en IPv6, el /64), 5 por minuto, y el rechazo es **429** `rate_limited` con `Retry-After`, sin cookie (antes, 503 sin cuerpo). El Admin muestra «Demasiados intentos» solo con 429.
@@ -27,7 +27,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 - **Tests:** 54 unitarios y 37 de integración (6 anteriores + 31 nuevos: 429 y bypass por cabecera, IPv6 /64, proxy de confianza, CSRF por Referer, logout, correlation id, reglas de origen y arranque en Production). Build y lint del frontend OK.
 - **QA:** Opus contra la API real con Postgres (login, `/me`, logout, CSRF con Origin correcto, ajeno, `localhost` y ausente, Referer, 429, bypass, `X-Forwarded-For` falso) y arranque real en Production con 6 configuraciones. Gemini (UI del Admin: login, error, sesión HttpOnly, logout, 429 con mensaje; Contacto a 1440 y 390, ES y EN: 0 peticiones, estado honesto, validación): los 10 checks PASS. Su FAIL se debió solo a un cambio de docs de Opus durante la ejecución.
 
-**3A.2 — Consultas / leads (PASS técnico).** Decisión del usuario: PostgreSQL + aviso por email. Flujo: formulario → `POST /api/public/enquiries` → la consulta se guarda (fuente de verdad) → 202 → un worker intenta el email después.
+**3A.2 — Consultas / leads (PASS técnico, aceptado por el usuario).** Decisión del usuario: PostgreSQL + aviso por email. Flujo: formulario → `POST /api/public/enquiries` → la consulta se guarda (fuente de verdad) → 202 → un worker intenta el email después.
 - **Modelo `Enquiry`:** solo los campos del formulario (intent, nombre, email, teléfono opcional, vehículo, mensaje) más `CreatedAt` (indexado, para una retención futura) y el estado técnico del aviso (`Pending`/`Sent`/`Failed`, intentos, próximo intento y `NotifiedAt`). Sin IP, sin estado comercial y sin CRM. Migración `AddEnquiries` (solo crea la tabla).
 - **Validación en Domain** (mismas reglas que el formulario, límites de longitud, sin caracteres de control); 400 con `code` y `field`, 413 con más de 32 KB, 415 sin JSON, 429 al pasar de 5 envíos por 10 minutos por cliente, 503 `enquiries_unavailable` si `Enquiries__Enabled` no es `true`.
 - **Email desacoplado:** puerto `IEnquiryNotifier` y outbox con reintentos (1 min, 5 min, 30 min, 2 h, 12 h; `Failed` al sexto intento, sin perder la consulta). **Sin adaptador:** proveedor sin decidir. Hasta entonces, las consultas quedan `Pending` y se leen por SQL; el worker enviará las pendientes cuando haya adaptador. Destinatario: `Enquiries__NotificationEmail`, sin valor en el código.
@@ -37,7 +37,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 - **Tests:** 78 unitarios (54 + 24 de `Enquiry`) y 52 de integración (37 + 15: 202 y persistencia, 400 por campo, intent desconocido o numérico, 503, 429, CORS de otro origen, reintentos del aviso con un notificador falso, 413, host de Development). Build y lint del frontend OK.
 - **QA:** Opus contra la API real con Postgres (202 y fila guardada `Pending`, 400, cuerpo no JSON, `text/plain` → 415, 40 KB → 413, 503 en una instancia desactivada, 429 con `Retry-After`, logs sin datos personales) y comprobación del bundle (con el flag desactivado no incluye el endpoint; con `VITE_ENQUIRIES_ENABLED=true` sí). Gemini en el navegador (dev y build de producción, 1440 y 390, ES y EN): envío real 202, «Enviar otra consulta», vehículo precargado, validación vacía, 429 con los datos conservados, producción sin peticiones y con aviso; 9/9 PASS, sin archivos modificados. Las 5 consultas de Gemini quedaron en PostgreSQL; la sexta (429) no. Datos de QA borrados.
 
-**RELEASE BLOCKERS de 3A (decisiones externas, no técnicas):**
+**RELEASE BLOCKERS de 3A (decisiones externas, no técnicas; bloquean la publicación, no el PASS técnico):**
 - **LEGAL/PRIVACY DECISION REQUIRED BEFORE PUBLIC RELEASE:** responsable del tratamiento, base jurídica, texto informativo o de consentimiento en el formulario y plazo de conservación. No se ha inventado nada. Hasta entonces, `Enquiries__Enabled` y `VITE_ENQUIRIES_ENABLED` quedan desactivados en producción.
 - **Proveedor de email** sin elegir, y por tanto sin adaptador de `IEnquiryNotifier`. Alternativas mínimas: SMTP genérico (sin paquete nuevo; vale cualquier buzón con envío SMTP autenticado) o un adaptador HTTP para un proveedor concreto.
 - **Buzón destinatario** (`Enquiries__NotificationEmail`) sin definir.
@@ -290,8 +290,8 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 2. 2F-C.2 Admin (**PASS**);
 3. **2F-C.3 — catálogo real + detalle real + facetas dependientes + rangos derivados del inventario** (**PASS**);
 4. **2G** interiores, escala tipográfica y densidad (**PASS**);
-5. **3A** production readiness (**PASS técnico**: hardening y consultas reales; quedan los RELEASE BLOCKERS legales y de email);
-6. **Siguiente: 3B copy truth — NO iniciada**, a la espera de que el usuario revise el cierre de 3A. Después, 3C y 3D.
+5. **3A** production readiness (**PASS técnico, aceptado**: hardening y consultas reales; quedan los RELEASE BLOCKERS externos de legal, email y dominio);
+6. **Siguiente: Final Technical / UX QA** (rama `feat/final-technical-qa`, sin SEO, dominio, deploy ni analytics). Después, 3B copy truth, 3C y 3D.
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 - **Objetivo:** panel administrativo muy sencillo para gestionar el inventario real.
