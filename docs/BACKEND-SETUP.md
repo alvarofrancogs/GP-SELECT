@@ -9,9 +9,10 @@ Backend .NET 8 (`src/`), EF Core y PostgreSQL. No hay `appsettings*.json` en `Gp
 | `ASPNETCORE_ENVIRONMENT` | `Development` | `Production` |
 | `ASPNETCORE_URLS` | `http://localhost:5000` (destino del proxy de Vite) | según despliegue |
 | `ConnectionStrings__Default` | `Host=localhost;Port=55432;Database=gpselect;Username=postgres;Password=postgres` | obligatoria |
-| `Security__AllowedOrigin` | `http://127.0.0.1:5173` | el origen público exacto, p. ej. `https://gpselect.es` |
-| `Admin__Email` | cualquier email | el del administrador |
-| `Admin__PasswordHash` | hash generado (ver abajo) | hash generado |
+| `Security__AllowedOrigin` | `http://127.0.0.1:5173` | **obligatoria**: el origen público exacto, `https://<dominio>` (dominio final pendiente de definir) |
+| `Security__TrustedProxies` | vacío | IP del proxy inverso, si lo hay (lista separada por comas) |
+| `Admin__Email` | cualquier email | **obligatoria**: el del administrador |
+| `Admin__PasswordHash` | hash generado (ver abajo) | **obligatoria**: hash generado |
 | `Storage__Provider` | vacío → `File` automático en Development | `S3` (obligatorio) |
 | `Storage__Root` | opcional (por defecto `uploads/` junto al binario) | — |
 | `Storage__Endpoint`, `__AccessKey`, `__SecretKey`, `__Bucket` | — | obligatorias con S3 |
@@ -24,6 +25,17 @@ El middleware CSRF de `Program.cs` rechaza con **403 `csrf_failed`** cualquier `
 - En desarrollo el navegador habla con Vite (`http://127.0.0.1:5173`) y Vite reenvía `/api` a `http://localhost:5000` con `changeOrigin: false`: el `Origin` que llega a la API es `http://127.0.0.1:5173`. Abrir el frontend como `http://localhost:5173` cambia el origen y provoca 403: usar siempre `127.0.0.1` o ajustar la variable.
 - Sin `Origin` ni `Referer` también es 403 (clientes de línea de comandos: añadir `-H "Origin: http://127.0.0.1:5173"`).
 - La misma clave configura CORS con credenciales para ese único origen.
+- Formato exacto: esquema + host + puerto opcional, sin ruta, sin barra final y sin comodines. En Production la API **no arranca** si falta, si no es `https` o si apunta a `localhost` o a una IP de loopback. Tampoco arranca sin `Admin__Email` y `Admin__PasswordHash`.
+
+### Límite del login y proxy inverso
+
+`POST /api/admin/auth/login` admite 5 intentos por minuto **por cliente** (ventana fija). La clave es la dirección IP; en IPv6, el prefijo /64. Ningún valor que envíe el cliente cambia la clave. Al superarlo, **429** `rate_limited` (problem+json con `correlationId`) y `Retry-After` en segundos, sin cookie. El Admin muestra «Demasiados intentos».
+
+- Sin proxy, la IP es la de la conexión y `X-Forwarded-For` se ignora.
+- **Con proxy inverso** (nginx, Caddy, balanceador…), la conexión llega desde el proxy y todos los clientes compartirían un único cupo: alguien podría bloquear el login del administrador. Hay que poner la IP del proxy en `Security__TrustedProxies`. Solo entonces se usa `X-Forwarded-For` (la última entrada, la que añade el proxy), y nunca si llega de otra dirección. Solo direcciones literales; los rangos CIDR no se aceptan.
+- Estado en memoria: con varias instancias de la API, cada una tiene su propio cupo. Con una sola instancia, que es el caso previsto, es suficiente.
+
+`X-Correlation-ID` del cliente solo se reutiliza si tiene como máximo 64 caracteres `[A-Za-z0-9._-]`; si no, se genera uno nuevo.
 
 ### Cookie de sesión
 
@@ -75,6 +87,10 @@ El Admin está en `http://127.0.0.1:5173/admin`. Hay que abrirlo con la misma di
 - Frontend y API bajo el **mismo origen**; `Security__AllowedOrigin` = ese origen exacto (esquema + host + puerto, sin barra final).
 - `Storage__Provider=S3`. La subida es un `PUT` firmado desde el navegador: el bucket necesita CORS que permita `PUT` con `Content-Type` desde `AllowedOrigin`.
 - Las migraciones se aplican al arrancar en Production.
+- HTTPS: la API no redirige ni envía HSTS. TLS, la redirección de HTTP a HTTPS y HSTS corresponden al proxy o al hosting. La cookie ya lleva `Secure` fuera de Development.
+- Sin Swagger expuesto; los errores 500 son problem details sin traza (la página de excepción detallada solo existe en Development).
+- `DesignTimeDbContextFactory` tiene un fallback a `localhost` que solo usa `dotnet ef` en desarrollo; la API en ejecución exige `ConnectionStrings__Default`.
+- No hay usuarios ni credenciales sembrados: el administrador sale solo de `Admin__Email` y `Admin__PasswordHash`.
 
 ## Tests
 
@@ -83,7 +99,7 @@ dotnet test tests/GpSelect.Tests               # unitarios: dominio y contratos,
 dotnet test tests/GpSelect.IntegrationTests    # API real + PostgreSQL con Testcontainers: requiere Docker en marcha
 ```
 
-Los tests de integración levantan Postgres 16 efímero, aplican las migraciones sobre base limpia y cubren login y cookie, CSRF, enums como texto, PATCH, estados, visibilidad pública, portada con subida real de imágenes y ausencia de N+1 en el listado del Admin.
+Los tests de integración levantan Postgres 16 efímero, aplican las migraciones sobre base limpia y cubren login, logout y cookie, CSRF (Origin y Referer), límite del login (429, bypass por cabecera, IPv6 /64, proxy de confianza), arranque en Production con configuración insegura, enums como texto, PATCH, estados, visibilidad pública, portada con subida real de imágenes y ausencia de N+1 en el listado del Admin.
 
 ## Contrato (2F-C.1)
 
@@ -100,4 +116,4 @@ Los tests de integración levantan Postgres 16 efímero, aplican las migraciones
 ## Notas de verificación
 
 - En Windows, `curl.exe` desde Git Bash puede enviar los argumentos `-d` en la página de códigos ANSI: los JSON con acentos o «–» llegan como UTF-8 inválido (400). Para probar a mano, usar `--data-binary @archivo.json` con el archivo en UTF-8.
-- El limitador del login (5 por minuto) responde **503** al rechazar, no 429, y agrupa por IP más la cabecera `X-Login-Email` que envía el cliente. No se ha modificado (fuera del alcance de 2F-C.1).
+- Hasta 3A el limitador del login respondía 503 y agrupaba por IP más la cabecera `X-Login-Email` que enviaba el cliente, así que se podía esquivar. Corregido en 3A (ver «Límite del login y proxy inverso»).

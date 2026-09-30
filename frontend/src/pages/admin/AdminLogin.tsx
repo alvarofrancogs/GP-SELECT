@@ -36,7 +36,7 @@ export function AdminLogin() {
       await signIn(email.trim(), password);
     } catch (failure) {
       const status = failure instanceof ApiError ? failure.status : -1;
-      setError(status === 401 ? text.invalid : status === 503 || status === 429 ? text.rateLimited : describeError(failure));
+      setError(status === 401 ? text.invalid : status === 429 ? text.rateLimited : describeError(failure));
       setPassword('');
     } finally {
       setSubmitting(false);

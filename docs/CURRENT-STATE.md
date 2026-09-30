@@ -12,7 +12,20 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 **1F — PASS.** Un solo pin (4,5 vh; 3,5 en móvil). Timeline de escena (cielo, sombreado, noche desde arriba, mapa, titulares y CTA) y timeline de coches con scrub más pesado. Ambos coches comparten caja, ancla y origen de transformación: un único avance continuo con crossfade BMW → Audi en la misma caja. Titulares con la receta del hero y tamaño ajustado por palabra; «Visión / Global» no invade el coche. Services entra como telón de papel sobre el último viewport. El header lee el tono publicado por la escena (`data-header-tone`) sin hit-test por frame. Reduced-motion y alturas < 600 px: dos frames estáticos. QA a 1440, 1920 y 390 (descenso, ascenso, reduced-motion), build, lint y consola OK.
 
-**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · 2F-C.2 PASS (30-09-2026) · HOME HANDOFF FIX PASS (30-09-2026) · 2F-C.3 PASS (30-09-2026) · 2G PASS (30-09-2026) · **NEXT: por definir (ver NEXT).**
+**FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · 2F-C.2 PASS (30-09-2026) · HOME HANDOFF FIX PASS (30-09-2026) · 2F-C.3 PASS (30-09-2026) · 2G PASS (30-09-2026).
+
+**FINAL CLOSURE PASS (desde 30-09-2026):** 3A production readiness (**PASS**, pendiente de revisión del usuario) → 3B copy truth → 3C final visual / asset polish → 3D final release QA. Una fase cada vez; cada una con su tag `<fase>-pass`.
+
+**3A — PASS (30-09-2026).** Seguridad y configuración de producción. Detalle operativo en `docs/BACKEND-SETUP.md`. Cookie auth, CSRF, rol y modelo de un solo administrador sin cambios.
+- **Login (bug corregido):** el limitador agrupaba por IP más la cabecera `X-Login-Email`, que el cliente nunca enviaba y cualquiera podía variar para estrenar cupo. Reproducido antes de corregir: el sexto intento con la contraseña buena y una cabecera nueva devolvía 200. Ahora el cupo es por IP (en IPv6, el /64), 5 por minuto, y el rechazo es **429** `rate_limited` con `Retry-After`, sin cookie (antes, 503 sin cuerpo). El Admin muestra «Demasiados intentos» solo con 429.
+- **Proxy inverso:** `Security__TrustedProxies` opcional (`ForwardedHeaders` nativo); `X-Forwarded-For` solo se acepta si llega de esas IP. Sin ella, detrás de un proxy todos compartirían cupo.
+- **Production no arranca** sin `Security__AllowedOrigin`, con un origen que no sea `https`, que sea `localhost` o loopback, o con ruta, barra final o comodín, ni sin `Admin__Email` / `Admin__PasswordHash`. Development sin cambios.
+- **`X-Correlation-ID`** del cliente solo se reutiliza si tiene como máximo 64 caracteres `[A-Za-z0-9._-]`.
+- **Auditado sin cambios:** todas las rutas del Admin con `Authorize(Roles="Admin")`; errores sin traza fuera de Development; sin Swagger expuesto; sin credenciales sembradas; logs sin datos personales; frontend con `/api` relativo (mismo origen en producción).
+- **Tests:** 54 unitarios y 37 de integración (6 anteriores + 31 nuevos: 429 y bypass por cabecera, IPv6 /64, proxy de confianza, CSRF por Referer, logout, correlation id, reglas de origen y arranque en Production). Build y lint del frontend OK.
+- **QA:** Opus contra la API real con Postgres (login, `/me`, logout, CSRF con Origin correcto, ajeno, `localhost` y ausente, Referer, 429, bypass, `X-Forwarded-For` falso) y arranque real en Production con 6 configuraciones. Gemini (UI del Admin: login, error, sesión HttpOnly, logout, 429 con mensaje; Contacto a 1440 y 390, ES y EN: 0 peticiones, estado honesto, validación): los 10 checks PASS. Su FAIL se debió solo a un cambio de docs de Opus durante la ejecución.
+- **BLOQUEADO — decisión de negocio (leads):** el formulario de Contacto no envía nada y lo dice («GP SELECT no la ha recibido»). Falta decidir: (1) destino: base de datos, email o ambos (en el Admin no hay pantalla de leads); (2) buzón destinatario, si hay email; (3) conservación y texto de privacidad o consentimiento (no hay textos legales). Recomendación de Opus: ambos (persistir y avisar por email). Hasta entonces es un bloqueante de release, salvo que se configuren canales reales en `src/config/contact.ts`.
+- **Deuda 3A (no bloqueante):** el cupo del login está en memoria (por instancia; suficiente con una sola instancia); sin límite global entre IP, para no permitir bloquear el login del administrador; la sesión dura lo predeterminado de ASP.NET (14 días deslizantes); dominio final sin definir; `Swashbuckle` referenciado sin usar.
 
 **2G — PASS (30-09-2026).** Interiores: escala tipográfica y densidad editorial de `/nosotros`, `/importacion` y `/contacto`. HOME, catálogo, detalle, Admin y backend sin cambios.
 - **Escala:** H1 interior 96 / 76 / 40 px (1920 / 1440 / 390), igual en las tres páginas y en ES/EN; antes 192 / 151 / 55, por encima del hero de la HOME (120 / 90 / 46). Titulares de sección ≤ 56 / 44 / 30 px, body 16–18 px. Todo scopeado a `:is(.about-page, .import-page, .contact-page)` en `interiors.css`; las reglas compartidas con catálogo, detalle y Admin no cambian. Eliminado el hack `.import-page:lang(es)`.
@@ -250,7 +263,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 ## CHECKPOINTS (tags de git)
 
-`pre-car-handoff` · `2f-a-pass` · `2f-b-pass` · `2f-c1-pass` · `2f-c2-pass` · `home-handoff-fix-pass` · **`home-closed-pass`** (HOME cerrada, 30-09-2026) · `2f-c3-pass` · **`2g-pass`** (último checkpoint). Cada unidad aprobada se cierra con un tag `<unidad>-pass`.
+`pre-car-handoff` · `2f-a-pass` · `2f-b-pass` · `2f-c1-pass` · `2f-c2-pass` · `home-handoff-fix-pass` · **`home-closed-pass`** (HOME cerrada, 30-09-2026) · `2f-c3-pass` · `2g-pass` · **`3a-production-ready-pass`** (último checkpoint). Cada unidad aprobada se cierra con un tag `<unidad>-pass`.
 
 ## NEXT
 
@@ -259,7 +272,8 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 2. 2F-C.2 Admin (**PASS**);
 3. **2F-C.3 — catálogo real + detalle real + facetas dependientes + rangos derivados del inventario** (**PASS**);
 4. **2G** interiores, escala tipográfica y densidad (**PASS**);
-5. **Siguiente unidad: por definir por el usuario (NO iniciada).** Candidatas registradas como deuda: media production (ASSET NEED de interiores y placeholders de HOME), revisión de copy/claims de la HOME, deuda de seguridad preproducción del login y endpoint de leads. Pendiente aparte: reconciliar `main` local con `origin/main` (divergen; sin push desde 2G).
+5. **3A** production readiness (**PASS**; leads bloqueados por decisión de negocio);
+6. **Siguiente: 3B copy truth — NO iniciada**, a la espera de que el usuario revise el cierre de 3A. Después, 3C y 3D.
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 - **Objetivo:** panel administrativo muy sencillo para gestionar el inventario real.
@@ -279,7 +293,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 - **Responsive:** 1920 / 1440 / 390; en 390, listado apilado, una columna, fotos en 2 columnas y sin tabla horizontal.
 - **Skills:** Opus con frontend-design, impeccable, Playwright MCP y verification-before-completion. Astra con design-taste-frontend, vercel:react-best-practices y playwright-cli si existe. Sin GSAP.
 
-- **Deuda de seguridad preproducción (desde 2F-C.1, sin corregir en 2F-C.2):** el limitador del login responde 503, no 429, y agrupa por IP más la cabecera `X-Login-Email` que envía el cliente. Variando esa cabecera se esquiva el límite. El Admin trata el 503 como «Demasiados intentos». Resolver antes de producción.
+- ~~Deuda de seguridad preproducción del limitador del login~~: resuelta en 3A.
 - `docs/HANDOFF.md` describe las fases 2 y 3 y está desfasado; la referencia vigente es este archivo.
 - FINAL VISUAL POLISH PASS: continúa tras 2F-C.
 - Catálogo, detalle, importación y cuestionario en su fase correspondiente; definir el endpoint mínimo de leads antes de implementarlo.

@@ -121,6 +121,114 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Equal(HttpStatusCode.Created, (await admin.PostAsJsonAsync("/api/admin/vehicles", body)).StatusCode);
     }
 
+    [Fact]
+    public async Task Csrf_falls_back_to_the_referer_and_rejects_a_foreign_one()
+    {
+        using var client = await SignedIn("198.51.100.40");
+        var body = new { make = "Porsche", model = "911", firstRegistrationYear = 2022 };
+
+        var foreign = new HttpRequestMessage(HttpMethod.Post, "/api/admin/vehicles") { Content = JsonContent.Create(body) };
+        foreign.Headers.Referrer = new Uri("https://evil.example/admin");
+        Assert.Equal("csrf_failed", (await Problem(await client.SendAsync(foreign), HttpStatusCode.Forbidden)).GetProperty("code").GetString());
+
+        var own = new HttpRequestMessage(HttpMethod.Post, "/api/admin/vehicles") { Content = JsonContent.Create(body) };
+        own.Headers.Referrer = new Uri(ApiFactory.AllowedOrigin + "/admin/nuevo");
+        Assert.Equal(HttpStatusCode.Created, (await client.SendAsync(own)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Logout_needs_the_allowed_origin_and_ends_the_session()
+    {
+        using var client = await SignedIn("198.51.100.41");
+        await Problem(await client.PostAsync("/api/admin/auth/logout", null), HttpStatusCode.Forbidden);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/admin/auth/me")).StatusCode);
+
+        client.DefaultRequestHeaders.Add("Origin", ApiFactory.AllowedOrigin);
+        Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsync("/api/admin/auth/logout", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/admin/auth/me")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/admin/vehicles")).StatusCode);
+    }
+
+    // --- Login rate limit -----------------------------------------------------------------------
+
+    private static HttpRequestMessage Login(string password, string peer, string? forwardedFor = null, string? loginEmail = null)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/admin/auth/login") { Content = JsonContent.Create(new { email = ApiFactory.AdminEmail, password }) };
+        request.Headers.Add("X-Test-Peer", peer);
+        if (forwardedFor is not null) request.Headers.Add("X-Forwarded-For", forwardedFor);
+        if (loginEmail is not null) request.Headers.Add("X-Login-Email", loginEmail);
+        return request;
+    }
+
+    private async Task<HttpClient> SignedIn(string peer)
+    {
+        var client = api.Anonymous();
+        (await client.SendAsync(Login(ApiFactory.AdminPassword, peer))).EnsureSuccessStatusCode();
+        return client;
+    }
+
+    [Fact]
+    public async Task Login_limit_answers_429_and_a_client_header_cannot_reset_it()
+    {
+        using var client = api.Anonymous();
+        const string peer = "198.51.100.7";
+        for (var i = 0; i < 5; i++)
+            Assert.Equal(HttpStatusCode.Unauthorized, (await client.SendAsync(Login("wrong", peer, loginEmail: $"attempt-{i}@evil.example"))).StatusCode);
+
+        // The sixth attempt is refused even with the right password and a fresh X-Login-Email.
+        var refused = await client.SendAsync(Login(ApiFactory.AdminPassword, peer, loginEmail: "fresh@evil.example"));
+        var problem = await Problem(refused, HttpStatusCode.TooManyRequests);
+        Assert.Equal("rate_limited", problem.GetProperty("code").GetString());
+        Assert.True(problem.TryGetProperty("correlationId", out _));
+        Assert.InRange(refused.Headers.RetryAfter?.Delta?.TotalSeconds ?? 0, 1, 60);
+        Assert.False(refused.Headers.Contains("Set-Cookie"));
+
+        // Another client is not affected.
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(Login(ApiFactory.AdminPassword, "198.51.100.8"))).StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_limit_groups_an_ipv6_client_by_its_64_prefix()
+    {
+        using var client = api.Anonymous();
+        for (var i = 1; i <= 5; i++)
+            Assert.Equal(HttpStatusCode.Unauthorized, (await client.SendAsync(Login("wrong", $"2001:db8:0:7::{i}"))).StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await client.SendAsync(Login("wrong", "2001:db8:0:7::ffff"))).StatusCode);
+    }
+
+    [Fact]
+    public async Task Forwarded_for_is_only_trusted_from_a_configured_proxy()
+    {
+        using var client = api.Anonymous();
+
+        // A direct client cannot pick a new address per request.
+        for (var i = 0; i < 5; i++)
+            Assert.Equal(HttpStatusCode.Unauthorized, (await client.SendAsync(Login("wrong", "203.0.113.5", forwardedFor: $"192.0.2.{i + 10}"))).StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await client.SendAsync(Login("wrong", "203.0.113.5", forwardedFor: "192.0.2.99"))).StatusCode);
+
+        // Behind the trusted proxy each real client has its own bucket.
+        for (var i = 0; i < 5; i++)
+            Assert.Equal(HttpStatusCode.Unauthorized, (await client.SendAsync(Login("wrong", ApiFactory.TrustedProxy, forwardedFor: "192.0.2.1"))).StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await client.SendAsync(Login("wrong", ApiFactory.TrustedProxy, forwardedFor: "192.0.2.1"))).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.SendAsync(Login("wrong", ApiFactory.TrustedProxy, forwardedFor: "192.0.2.2"))).StatusCode);
+    }
+
+    [Fact]
+    public async Task Correlation_id_is_echoed_only_when_it_is_short_and_plain()
+    {
+        using var client = api.Anonymous();
+        var plain = new HttpRequestMessage(HttpMethod.Get, "/api/public/vehicles");
+        plain.Headers.Add("X-Correlation-ID", "req-42.abc_DEF");
+        Assert.Equal("req-42.abc_DEF", (await client.SendAsync(plain)).Headers.GetValues("X-Correlation-ID").Single());
+
+        foreach (var hostile in new[] { new string('a', 65), "<script>", "a b" })
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, "/api/public/vehicles");
+            request.Headers.TryAddWithoutValidation("X-Correlation-ID", hostile);
+            Assert.Matches("^[0-9a-f]{32}$", (await client.SendAsync(request)).Headers.GetValues("X-Correlation-ID").Single());
+        }
+    }
+
     // --- Contracts ------------------------------------------------------------------------------
 
     [Fact]

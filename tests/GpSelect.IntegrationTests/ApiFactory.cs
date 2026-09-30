@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
 using System.Data.Common;
+using System.Net;
 using System.Net.Http.Json;
 using GpSelect.Infrastructure;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -36,11 +38,30 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Admin:PasswordHash", new PasswordHasher<object>().HashPassword(null!, AdminPassword));
         builder.UseSetting("Storage:Provider", "File");
         builder.UseSetting("Storage:Root", storageRoot);
+        builder.UseSetting("Security:TrustedProxies", TrustedProxy);
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<DbContextOptions<GpSelectDbContext>>();
             services.AddDbContext<GpSelectDbContext>(o => o.UseNpgsql(database.GetConnectionString()).AddInterceptors(Sql));
+            services.AddSingleton<IStartupFilter, TestPeerAddress>();
         });
+    }
+
+    public const string TrustedProxy = "10.0.0.1";
+
+    /// <summary>TestServer has no socket: a request can choose its peer address with X-Test-Peer.
+    /// Without it the peer is null, as before, so the shared admin login keeps its own bucket.</summary>
+    private sealed class TestPeerAddress : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+        {
+            app.Use((context, nextMiddleware) =>
+            {
+                if (IPAddress.TryParse(context.Request.Headers["X-Test-Peer"].ToString(), out var peer)) context.Connection.RemoteIpAddress = peer;
+                return nextMiddleware(context);
+            });
+            next(app);
+        };
     }
 
     /// <summary>Signed in once for the whole run: the login endpoint allows 5 attempts per minute.
