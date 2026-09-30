@@ -219,6 +219,10 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 - **Métricas:** durante las próximas 2–3 unidades se anota de forma ligera el uso de cada ejecución (tokens de entrada, salida y razonamiento, caché, duración y estado) para medir el ahorro real de Opus y Astra.
   - Piloto: QA de 4 casos (`/vehiculos` y detalle, 1440 y 390) en 125 s, ~239k tokens de Gemini (507k de caché) y PASS. Las 12 cifras coinciden con la verificación de Opus.
 
+## CHECKPOINTS (tags de git)
+
+`pre-car-handoff` · `2f-a-pass` · `2f-b-pass` · `2f-c1-pass` · `2f-c2-pass` · `home-handoff-fix-pass` · **`home-closed-pass`** (HOME cerrada, 30-09-2026; último checkpoint). Cada unidad aprobada se cierra con un tag `<unidad>-pass`.
+
 ## NEXT
 
 **Orden aprobado:**
