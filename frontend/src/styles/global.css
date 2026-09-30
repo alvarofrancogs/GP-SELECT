@@ -27,6 +27,11 @@ img { display: block; max-width: 100%; }
 .site-header { position: fixed; inset: 0 0 auto; z-index: var(--z-header); color: var(--color-white); mix-blend-mode: difference; }
 .site-header[data-tone='light'] { color: var(--color-ink); mix-blend-mode: normal; }
 .site-header[data-tone='dark'] { color: var(--color-white); mix-blend-mode: normal; }
+/* The hero's sky reaches mid-grey around the tone switch: pure black ink before it and a
+   tight halo after it keep AA contrast. */
+.site-header[data-tone-scene='hero'][data-tone='light'] { color: #000; }
+.site-header[data-tone-scene='hero'][data-tone='dark'] { text-shadow: 0 0 1px rgb(9 10 12 / .8), 0 0 3px rgb(9 10 12 / .5), 0 0 .5em rgb(9 10 12 / .3); }
+.site-header[data-tone-scene='hero'][data-tone='dark'] button { text-shadow: inherit; }
 .header-inner { height: var(--header-height); margin-inline: var(--page-gutter); display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
 .header-nav, .header-actions { display: flex; align-items: center; gap: clamp(1rem, 2.9vw, 3.5rem); }
 .header-nav { font-family: var(--font-family); font-stretch: var(--width-nav); font-size: var(--header-nav-size); font-weight: var(--weight-extended-copy); letter-spacing: var(--header-nav-tracking); }

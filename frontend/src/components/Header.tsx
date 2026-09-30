@@ -27,9 +27,14 @@ export function Header() {
     let frame = 0;
     function updateContrast() {
       if (!header) return;
-      const tone = scenes.map((scene) => scene.dataset.headerTone).find(Boolean);
-      if (tone) header.dataset.tone = tone;
-      else delete header.dataset.tone;
+      const source = scenes.find((scene) => scene.dataset.headerTone);
+      if (source) {
+        header.dataset.tone = source.dataset.headerTone;
+        header.dataset.toneScene = source.id;
+      } else {
+        delete header.dataset.tone;
+        delete header.dataset.toneScene;
+      }
     }
     function onScroll() {
       cancelAnimationFrame(frame);
@@ -49,6 +54,7 @@ export function Header() {
       window.removeEventListener('resize', onScroll);
       reducedMotion.removeEventListener('change', onScroll);
       delete header.dataset.tone;
+      delete header.dataset.toneScene;
     };
   }, [pathname]);
 
