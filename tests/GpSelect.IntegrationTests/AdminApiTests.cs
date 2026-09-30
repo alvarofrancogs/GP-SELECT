@@ -219,7 +219,9 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         using var client = api.Anonymous();
         var plain = new HttpRequestMessage(HttpMethod.Get, "/api/public/vehicles");
         plain.Headers.Add("X-Correlation-ID", "req-42.abc_DEF");
-        Assert.Equal("req-42.abc_DEF", (await client.SendAsync(plain)).Headers.GetValues("X-Correlation-ID").Single());
+        var response = await client.SendAsync(plain);
+        Assert.Equal("req-42.abc_DEF", response.Headers.GetValues("X-Correlation-ID").Single());
+        Assert.Equal("nosniff", response.Headers.GetValues("X-Content-Type-Options").Single());
 
         foreach (var hostile in new[] { new string('a', 65), "<script>", "a b" })
         {

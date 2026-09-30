@@ -60,7 +60,7 @@ img { display: block; max-width: 100%; }
 .planned-page { min-height: 100svh; display: flex; align-items: center; padding-block: calc(var(--header-height) + var(--space-7)); }
 .planned-page h1 { max-width: 15ch; margin-block: var(--space-6); font: var(--weight-display) var(--text-h1)/1 var(--font-family); letter-spacing: var(--tracking-display); }
 .planned-page p { max-width: 46ch; margin-block: var(--space-5); font-size: var(--text-body); line-height: 1.5; }
-.planned-page .button { margin-top: var(--space-5); }
+.planned-page__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-5) var(--space-6); margin-top: var(--space-6); }
 
 @media (max-width: 1199px) {
   .header-nav { display: none; }

@@ -214,10 +214,9 @@ export const en: Dictionary = {
     missingAsset: 'Final image pending', heroAsset: 'Vehicle · side view',
     backgroundAsset: 'Photographic background pending',
   },
-  comingSoon: {
-    eyebrow: 'GP SELECT · PHASE 3', title: 'This page is planned for a later phase.',
-    description: 'This release focuses on the home page. This route is prepared, but its content has not been implemented yet.',
-    qualification: 'The qualification questionnaire and its backend connection are planned for a later phase. This preview does not collect or send any personal data.',
-    unknown: 'Page not found',
+  notFound: {
+    eyebrow: 'Error 404', title: 'Page not found',
+    description: 'This address does not exist or has changed.',
+    vehicles: 'View vehicles',
   },
 };

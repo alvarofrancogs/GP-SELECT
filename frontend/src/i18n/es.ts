@@ -217,10 +217,9 @@ export const es: Dictionary = {
     missingAsset: 'Imagen definitiva pendiente', heroAsset: 'Vehículo · vista lateral',
     backgroundAsset: 'Fondo fotográfico pendiente',
   },
-  comingSoon: {
-    eyebrow: 'GP SELECT · FASE 3', title: 'Esta página llegará en una próxima fase.',
-    description: 'Esta entrega se centra en la página de inicio. Esta ruta está preparada, pero su contenido todavía no está implementado.',
-    qualification: 'El cuestionario de cualificación está pendiente de una próxima fase y de su conexión con el backend. Todavía no recogemos ni enviamos datos desde esta vista previa.',
-    unknown: 'Página no encontrada',
+  notFound: {
+    eyebrow: 'Error 404', title: 'Página no encontrada',
+    description: 'Esta dirección no existe o ha cambiado.',
+    vehicles: 'Ver vehículos',
   },
 };

@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { SiteLayout } from './layouts/SiteLayout';
 import { Home } from './pages/Home';
-import { PlannedPage } from './pages/PlannedPage';
+import { NotFound } from './pages/NotFound';
 import { About } from './pages/About';
 import { Import } from './pages/Import';
 import { Contact } from './pages/Contact';
@@ -22,7 +22,7 @@ export function App() {
         <Route path="servicios" element={<Navigate to="/importacion" replace />} />
         <Route path="nosotros" element={<About />} />
         <Route path="contacto" element={<Contact />} />
-        <Route path="*" element={<PlannedPage />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
       <Route path="admin/*" element={<Suspense fallback={null}><AdminApp /></Suspense>} />
     </Routes>

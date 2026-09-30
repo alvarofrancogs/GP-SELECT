@@ -160,11 +160,10 @@ export interface Dictionary {
     heroAsset: string;
     backgroundAsset: string;
   };
-  comingSoon: {
+  notFound: {
     eyebrow: string;
     title: string;
     description: string;
-    qualification: string;
-    unknown: string;
+    vehicles: string;
   };
 }
