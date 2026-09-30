@@ -211,6 +211,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 - **READ-ONLY por defecto:** Antigravity deja escribir en el workspace sin pedir permiso, así que la protección es la regla más el prompt. **Después de cada ejecución, Opus comprueba `git status --short`**; un cambio inesperado invalida el resultado.
 - **Permisos** (`~/.gemini/antigravity-cli/settings.json`):
   - Solo las herramientas de inspección de Playwright, una a una con `mcp(playwright/<tool>)`: navigate, resize, evaluate, console_messages, take_screenshot, snapshot, wait_for, close y tabs.
+  - Una sola orden de shell: `command(git status --short)`, para su comprobación del workspace (probado en headless el 30-09-2026). Copia previa en `settings.json.bak-before-git-status`.
   - El CLI no trae navegador; usa el MCP de Playwright aislado, con salida en el scratchpad.
   - Una herramienta denegada anula toda la ejecución sin salida. El prompt debe limitar las herramientas que puede usar.
 - **Salida:** JSON con esquema (`status`, `checks`/`findings` con severidad P0–P2 y evidencia, `commands_run`, `files_modified`, `summary`). Opus solo incorpora a su contexto el resultado resumido, nunca logs, DOMs ni trazas completas.
