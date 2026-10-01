@@ -9,6 +9,8 @@ export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: 
   const id = useId();
   const formRef = useRef<HTMLFormElement>(null);
   const successRef = useRef<HTMLDivElement>(null);
+  // `status` is stale for a second submit fired in the same tick (double click, key repeat): a ref is not.
+  const inFlight = useRef(false);
   const [errors, setErrors] = useState<LeadField[]>([]);
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'failure'>('idle');
   const [sent, setSent] = useState(false);
@@ -18,7 +20,7 @@ export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: 
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (status === 'submitting') return;
+    if (inFlight.current) return;
     const data = new FormData(event.currentTarget);
     const lead: LeadDraft = {
       name: String(data.get('name') ?? '').trim(),
@@ -35,6 +37,7 @@ export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: 
       formRef.current?.querySelector<HTMLElement>(`[name="${invalid[0]}"]`)?.focus();
       return;
     }
+    inFlight.current = true;
     setStatus('submitting');
     setRateLimited(false);
     try {
@@ -53,6 +56,8 @@ export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: 
       }
     } catch {
       setStatus('failure');
+    } finally {
+      inFlight.current = false;
     }
   }
 

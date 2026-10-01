@@ -3,9 +3,9 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { servicesAssets } from '../assets/servicesAssets';
 import { AssetSlot } from '../components/AssetSlot';
-import { Button } from '../components/Button';
 import { servicesCopy, type ServiceId } from '../i18n/servicesCopy';
 import { useLanguage } from '../i18n/useLanguage';
+import { observeResize } from '../lib/scrollRefresh';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -38,8 +38,6 @@ export function ServicesSection() {
         },
       });
       entrance.to({}, { duration: 1 }, 0);
-      entrance.fromTo(select('.services-eyebrow'),
-        { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.3 }, 0.08);
       entrance.fromTo(select('.services-title > span'),
         { opacity: 0, y: 28, filter: 'blur(8px)' },
         { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.32, stagger: 0.08 }, 0.22);
@@ -75,17 +73,11 @@ export function ServicesSection() {
       // Inventory owns its incoming heading; this timeline only owns Services.
     }, section);
 
-    let frame = 0;
     // An expanded answer changes section height and all following trigger offsets.
-    const observer = new ResizeObserver(() => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => ScrollTrigger.refresh());
-    });
-    observer.observe(section);
+    const observer = observeResize(section);
 
     return () => {
       observer.disconnect();
-      cancelAnimationFrame(frame);
       matchMedia.revert();
     };
   }, []);
@@ -94,7 +86,6 @@ export function ServicesSection() {
     <section id="servicios" ref={sectionRef} className="services-section" aria-labelledby={`${instanceId}-title`}>
       <div className="services-grid">
         <div className="services-content">
-          <p className="services-eyebrow">{copy.eyebrow}<span aria-hidden="true" /></p>
           <h2 id={`${instanceId}-title`} className="services-title">
             <span>{copy.title}</span>
             <span className="services-title__fine">{copy.titleFine}</span>
@@ -135,9 +126,6 @@ export function ServicesSection() {
               </div>
             ))}
           </div>
-        </div>
-        <div className="services-cta">
-          <Button to="/vehiculos" variant="light">{copy.cta}</Button>
         </div>
       </div>
     </section>

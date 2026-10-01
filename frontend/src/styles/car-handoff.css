@@ -1,5 +1,5 @@
-/* Layers, bottom to top: bright world → overcast world → first headline → car box (cutaway, photograph, captions)
-   → shared light → lettering → CTA. Panels only group the two static frames; they set no stacking context. */
+/* Layers, bottom to top: bright world → overcast world → first headline → car box (cutaway, photograph)
+   → shared light → lettering. Panels only group the two static frames; they set no stacking context. */
 .car-handoff {
   --handoff-ink: var(--color-ink);
   --handoff-side: none;
@@ -35,29 +35,10 @@
    with a long soft edge, and uncovers the cutaway underneath. */
 .car-handoff__photo {
   mask-image: linear-gradient(to bottom, #000 40%, rgb(0 0 0 / .6) 70%, transparent);
-  mask-size: 100% 240%;
+  mask-size: 100% var(--curtain, 240%);
   mask-position: 50% 0;
   mask-repeat: no-repeat;
 }
-
-/* Editorial captions travel with the car, outside its silhouette. */
-.car-handoff__caption {
-  position: absolute;
-  left: calc(87.5% + clamp(1rem, 2vw, 2.5rem));
-  bottom: 22%;
-  display: grid;
-  gap: .35rem;
-  margin: 0;
-  width: max-content;
-  color: var(--handoff-ink);
-  font-size: var(--text-nav);
-  letter-spacing: .02em;
-  white-space: nowrap;
-}
-.car-handoff__caption::before { content: ''; width: 2rem; height: var(--border-width); margin-bottom: .4rem; background: currentColor; }
-.car-handoff__caption small { font-size: .75em; opacity: .7; }
-.car-handoff__caption[data-caption='b'] { left: auto; right: calc(87.5% + clamp(1rem, 2vw, 2.5rem)); bottom: auto; top: 18%; justify-items: end; text-align: right; }
-.car-handoff__caption[data-caption='b']::before { justify-self: end; }
 
 .car-handoff__grade { position: absolute; inset: 0; z-index: 7; background: #fff; mix-blend-mode: multiply; pointer-events: none; }
 .car-handoff__text, .car-handoff__interlude { z-index: 8; }
@@ -93,7 +74,6 @@
 }
 .car-handoff__interlude > span { display: inline-block; }
 
-.car-handoff__cta { position: absolute; left: 50%; bottom: 6%; z-index: 9; transform: translateX(-50%); white-space: nowrap; }
 
 @media (max-width: 1023px) {
   .car-handoff { --car-top: 46%; --car-height: 38%; }
@@ -104,16 +84,13 @@
   .car-handoff .hero-description, .car-handoff [data-layout] .hero-description { top: 35%; bottom: auto; }
   .car-handoff [data-layout='right'] .hero-description { left: auto; right: var(--page-gutter); text-align: right; }
   .car-handoff__interlude { top: 16%; bottom: auto; left: var(--page-gutter); right: var(--page-gutter); max-width: none; text-align: left; font-size: 1.375rem; }
-  .car-handoff__caption { display: none; }
-  .car-handoff__cta { bottom: 5%; }
 }
 
 /* Reduced motion and short screens: two readable frames, the bright photograph and the overcast cutaway. */
 .car-handoff[data-motion='static'] .car-handoff__pin { height: auto; }
 .car-handoff[data-motion='static'] .car-handoff__panel { position: relative; height: 100svh; min-height: 640px; overflow: hidden; }
-.car-handoff[data-motion='static'] :is([data-handoff-grade], .car-handoff__interlude, [data-text='b'], [data-caption='b']) { display: none; }
+.car-handoff[data-motion='static'] :is([data-handoff-grade], .car-handoff__interlude, [data-text='b']) { display: none; }
 .car-handoff[data-motion='static'] .car-handoff__panel--overcast { --handoff-ink: var(--color-white); }
 .car-handoff[data-motion='static'] .car-handoff__photo { mask: none; }
 /* The overcast frame takes the scroll's final light, so white lettering keeps its contrast. */
 .car-handoff[data-motion='static'] .car-handoff__panel--overcast::after { content: ''; position: absolute; inset: 0; z-index: 7; background: #b9bfc9; mix-blend-mode: multiply; pointer-events: none; }
-.car-handoff[data-motion='static'] .car-handoff__cta { bottom: 3%; }

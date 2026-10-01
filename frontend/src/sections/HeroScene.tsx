@@ -1,6 +1,5 @@
 import { sceneAssets } from '../assets/sceneAssets';
 import { AssetSlot } from '../components/AssetSlot';
-import { Button } from '../components/Button';
 import { ScrollScene } from '../components/ScrollScene';
 import { useLanguage } from '../i18n/useLanguage';
 
@@ -19,9 +18,6 @@ export function HeroScene() {
       <p className="scene-description hero-description" data-scene-ui>{copy.hero.description}</p>
       <div className="hero-media" data-scene-media>
         <AssetSlot asset={sceneAssets.heroCar} label={copy.common.heroAsset} />
-      </div>
-      <div className="scene-cta" data-scene-ui>
-        <Button to="/vehiculos" variant="light">{copy.hero.cta}</Button>
       </div>
       <div className="scene-handoff hero-handoff" data-scene-handoff aria-hidden="true" />
     </ScrollScene>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useDocumentTitle } from '../lib/useDocumentTitle';
 import type { CSSProperties, ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '../components/Button';
@@ -32,6 +33,7 @@ function VehicleDetailContent({ slug }: { slug: string }) {
       () => { if (!request.signal.aborted) setStatus('error'); });
     return () => request.abort();
   }, [slug, attempt]);
+  useDocumentTitle(status === 'ready' && !vehicle ? `${text.notFound} · GP SELECT` : null);
   const back = <Link className="editorial-link type-ui" to="/vehiculos"><span aria-hidden="true">←</span>{text.back}</Link>;
   if (status !== 'ready') return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state" role={status === 'error' ? 'alert' : 'status'}>{status === 'error' ? <h1 className="type-lede">{text.detailError}</h1> : <p className="type-lede">{text.loading}</p>}{status === 'error' ? <button className="editorial-link type-ui" onClick={() => { setStatus('loading'); setAttempt(attempt + 1); }}>{text.retry}</button> : null}</div></article>;
   if (!vehicle) return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state"><h1 className="type-display">{text.notFound}</h1><Link className="editorial-link type-ui" to={qualificationUrl({ intent: 'import', source: 'vehicle-not-found' })}>{text.search}<span aria-hidden="true">→</span></Link></div></article>;
@@ -45,6 +47,7 @@ export function VehicleDetailView({ vehicle, back, className = '' }: { vehicle: 
   const text = copy.vehicles;
   const translate = (value: string | null) => translateValue(text.values, value);
   const name = `${vehicle.make} ${vehicle.model}`;
+  useDocumentTitle(`${name} · GP SELECT`);
   const sold = vehicle.availability === 'sold';
   // A sold vehicle cannot be requested: the call to action looks for an alternative.
   const contactUrl = sold ? qualificationUrl({ intent: 'search', source: 'vehicle-sold' }) : `/contacto?${new URLSearchParams({ vehiculo: vehicle.slug, intent: 'vehicle' })}`;

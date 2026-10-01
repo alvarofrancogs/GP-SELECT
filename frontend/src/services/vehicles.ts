@@ -30,11 +30,31 @@ export function fromPublicDetail(dto: VehiclePublicDto): VehicleDetail {
   };
 }
 
-/** The API lists by creation date ascending (max 100, no filter or pagination): newest first here. */
-export async function listVehicles(signal?: AbortSignal): Promise<VehicleSummary[]> {
+// The start-up screen asks for the list while it loads; the first reader within a few seconds reuses it.
+let prefetched: { at: number; list: Promise<VehicleSummary[]> } | null = null;
+const PREFETCH_TTL = 8000;
+
+async function fetchVehicles(signal?: AbortSignal): Promise<VehicleSummary[]> {
   const response = await fetch(API, { signal });
   if (!response.ok) throw new Error(`Vehicle list failed (${response.status})`);
-  return ((await response.json()) as VehiclePublicCardDto[]).map(fromPublicCard).reverse();
+  return ((await response.json()) as VehiclePublicCardDto[]).map(fromPublicCard);
+}
+
+/** Starts loading the list ahead of time (errors are left to the first real reader). */
+export function prefetchVehicles(): Promise<unknown> {
+  const list = fetchVehicles();
+  prefetched = { at: Date.now(), list };
+  return list.catch(() => { prefetched = null; });
+}
+
+/** The API lists newest first by creation date (max 100, no filter or pagination). */
+export function listVehicles(signal?: AbortSignal): Promise<VehicleSummary[]> {
+  if (prefetched && Date.now() - prefetched.at < PREFETCH_TTL) {
+    const { list } = prefetched;
+    prefetched = null; // single use: later visits always ask the API again
+    return list;
+  }
+  return fetchVehicles(signal);
 }
 
 /** Resolves to null when the vehicle is not public (404); any other failure throws. */

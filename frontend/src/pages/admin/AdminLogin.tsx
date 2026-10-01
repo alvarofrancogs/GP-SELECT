@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../components/admin/adminAuth';
 import { adminCopy } from '../../i18n/adminCopy';
@@ -16,6 +16,8 @@ export function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // State is stale for a second submit in the same tick (double click, key repeat); a ref is not.
+  const inFlight = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const signingOut = routeState.signOut === true;
 
@@ -29,7 +31,9 @@ export function AdminLogin() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    if (inFlight.current) return;
     if (!email.trim() || !password) { setError(text.required); return; }
+    inFlight.current = true;
     setSubmitting(true);
     setError(null);
     try {
@@ -39,6 +43,7 @@ export function AdminLogin() {
       setError(status === 401 ? text.invalid : status === 429 ? text.rateLimited : describeError(failure));
       setPassword('');
     } finally {
+      inFlight.current = false;
       setSubmitting(false);
     }
   }

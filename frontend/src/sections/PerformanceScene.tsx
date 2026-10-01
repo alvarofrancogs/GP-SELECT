@@ -8,7 +8,6 @@ export function PerformanceScene() {
     <ScrollScene id="criterio" kind="process" className="process-scene" labelledBy="process-title">
       <div className="scene-background process-background" data-scene-background />
       <div className="process-intro" data-scene-ui>
-        <span className="eyebrow">{copy.process.eyebrow}</span>
         <h2 id="process-title">{copy.process.title}</h2>
       </div>
       <ol className="process-words">

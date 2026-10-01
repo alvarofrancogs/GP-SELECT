@@ -3,6 +3,8 @@
 /* The incoming process reaches the top exactly at the end of the hero pin. */
 .scroll-scene.hero-scene[data-motion='scroll'] { margin-block-end: -100svh; }
 .hero-scene[data-motion='scroll'] + .process-scene { background: transparent; }
+/* The curtain arrives with a soft, tall edge instead of a hard line: a gradient above the section, over the darkened hero. */
+.scroll-scene.process-scene[data-motion='scroll']::before { content: ''; position: absolute; z-index: 1; left: 0; right: 0; bottom: 100%; height: 32svh; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--color-dark)); }
 .scroll-scene__pin { position: relative; height: 100svh; overflow: hidden; isolation: isolate; }
 .scene-background { position: absolute; inset: 0; z-index: var(--z-background); }
 .hero-scene .scene-background { bottom: -3%; }
@@ -17,17 +19,13 @@
 .hero-title > span { white-space: nowrap; }
 .hero-title > span:last-child { font-size: var(--hero-size-right); }
 .scene-description { position: absolute; z-index: var(--z-content); left: calc(var(--page-gutter) + var(--space-2)); max-width: 25ch; font-size: var(--text-body); font-weight: var(--weight-body); letter-spacing: var(--tracking-body); line-height: var(--leading-body); }
-.scene-description::before { content: ''; display: block; width: 2.75rem; height: var(--border-width); margin-bottom: var(--space-5); background: currentColor; }
 .hero-description { top: 52%; max-width: none; white-space: pre-line; font-family: var(--font-family); font-stretch: var(--width-extended); font-size: var(--hero-copy-size); font-weight: var(--weight-extended-copy); line-height: var(--hero-copy-leading); letter-spacing: var(--hero-copy-tracking); }
-.hero-description::before { width: 2.6vw; margin-bottom: 2.2vh; }
-.hero-media { position: absolute; z-index: var(--z-media); left: -2%; width: 106%; top: 47%; aspect-ratio: 2023 / 777; transform-origin: 70% 70%; mask-image: linear-gradient(to right, #000 0%, #000 88%, transparent 100%); }
+/* The asset is the original 2023 px crop plus a long motion smear on its tail (fading out at the far end), so the
+   car still fills the frame after it has driven left. The first 106% is exactly the approved framing. */
+.hero-media { position: absolute; z-index: var(--z-media); left: -2%; width: 146.9%; top: 47%; aspect-ratio: 2803 / 777; transform-origin: 50.5% 70%; }
 .hero-media .asset-slot img { object-fit: cover; object-position: left bottom; }
 .hero-media .asset-slot__caption { left: auto; right: 22%; bottom: 34%; color: #d5d8d8; }
 .hero-scene .asset-slot--background .asset-slot__caption { display: none; }
-.scene-cta { position: absolute; left: 50%; transform: translateX(-50%); bottom: 6%; z-index: var(--z-ui); white-space: nowrap; }
-.scene-cta .button { min-width: clamp(13rem, 14vw, 17rem); }
-.hero-scene .scene-cta { bottom: 7.4%; }
-.hero-scene .scene-cta .button { width: var(--hero-cta-width); height: var(--hero-cta-height); min-width: 0; min-height: 0; gap: 1.1em; padding: .6em 1.2em; font-family: var(--font-family); font-stretch: var(--width-nav); font-size: var(--header-nav-size); }
 .scene-handoff { position: absolute; inset: 0; z-index: var(--z-handoff); opacity: 0; pointer-events: none; }
 .scene-handoff--dark { background: var(--color-dark); }
 .scene-handoff--light { background: var(--color-placeholder); }
@@ -52,7 +50,7 @@
 @media (min-width: 768px) and (max-width: 1199px) {
   .hero-title { top: 33%; }
   .hero-description { top: 47%; max-width: calc(100% - var(--page-gutter) * 2); }
-  .hero-media { left: -15%; width: 155%; top: 59%; }
+  .hero-media { left: -15%; width: 214.8%; top: 59%; }
   .process-detail { max-width: 18ch; }
 }
 @media (max-width: 767px) {
@@ -60,11 +58,8 @@
   .hero-title > span:last-child { align-self: flex-end; }
   .hero-description { top: 49%; max-width: calc(100% - var(--page-gutter) * 2); }
   .scene-description { left: var(--page-gutter); }
-  .scene-description::before { margin-bottom: var(--space-3); }
-  .hero-media { left: -55%; width: 210%; top: 65%; }
+  .hero-media { left: -55%; width: 291%; top: 65%; }
   .hero-media .asset-slot__caption { right: 37%; bottom: 30%; font-size: .5rem; }
-  .hero-description::before { width: 2rem; }
-  .scene-cta { bottom: 5%; }
   .asset-slot--background .asset-slot__caption { top: calc(var(--header-height) + var(--space-4)); }
   .process-intro { top: 19%; flex-direction: column; gap: var(--space-4); }
   .process-intro h2 { font-size: .8333rem; }

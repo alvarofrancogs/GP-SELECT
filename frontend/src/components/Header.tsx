@@ -36,9 +36,11 @@ export function Header() {
         delete header.dataset.toneScene;
       }
     }
+    // Never cancel a pending frame: while a scrubbed scene keeps publishing its tone, that would
+    // starve the update and leave the previous contrast on screen.
     function onScroll() {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(updateContrast);
+      if (frame) return;
+      frame = requestAnimationFrame(() => { frame = 0; updateContrast(); });
     }
     updateContrast();
     // Scrubbed scenes keep moving after the scroll stops, so follow their tone directly.
@@ -66,14 +68,21 @@ export function Header() {
         menuButton.current?.focus();
       }
     }
+    // The menu only exists below 1200 px: crossing to the desktop nav closes it.
+    const desktop = window.matchMedia('(min-width: 1200px)');
+    function handleDesktop() { if (desktop.matches) setMenuOpen(false); }
     window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
+    desktop.addEventListener('change', handleDesktop);
+    return () => {
+      window.removeEventListener('keydown', handleEscape);
+      desktop.removeEventListener('change', handleDesktop);
+    };
   }, [menuOpen]);
 
   return (
     <header ref={headerRef} className={`site-header${menuOpen ? ' site-header--open' : ''}`}>
       <div className="header-inner">
-        <nav className="header-nav" aria-label={copy.common.menu}>
+        <nav className="header-nav" aria-label={copy.nav.label}>
           {links.map((link) => <NavLink key={link.to} className="nav-link" to={link.to}>{link.label}</NavLink>)}
         </nav>
         <Link to="/" className="header-brand" aria-label={`${copy.brand} · ${copy.nav.home}`} onClick={() => setMenuOpen(false)}>
@@ -82,14 +91,14 @@ export function Header() {
         <div className="header-actions">
           <LanguageSwitcher />
           <button className="menu-toggle" ref={menuButton} type="button" aria-expanded={menuOpen}
-            aria-controls="mobile-navigation" aria-label={menuOpen ? copy.common.close : copy.common.menu}
+            aria-controls={menuOpen ? 'mobile-navigation' : undefined} aria-label={menuOpen ? copy.common.close : copy.common.menu}
             onClick={() => setMenuOpen((open) => !open)}>
             <span aria-hidden="true">{menuOpen ? '−' : '+'}</span>
           </button>
         </div>
       </div>
       {menuOpen ? (
-        <nav id="mobile-navigation" className="mobile-nav" aria-label={copy.common.menu}>
+        <nav id="mobile-navigation" className="mobile-nav" aria-label={copy.nav.label}>
           {links.map((link) => <NavLink key={link.to} to={link.to} onClick={() => setMenuOpen(false)}>{link.label}</NavLink>)}
         </nav>
       ) : null}

@@ -1,12 +1,12 @@
 export type Locale = 'es' | 'en';
 
-export interface InteriorHeaderCopy { eyebrow: string; title: string; lede: string }
+export interface InteriorHeaderCopy { title: string; lede: string }
 export interface EditorialCopy { title: string; body: string }
 export interface InteriorCopy {
   about: InteriorHeaderCopy & {
-    why: EditorialCopy & { label: string };
+    why: EditorialCopy;
     audience: { title: string; intro: string; rows: EditorialCopy[] };
-    approach: { label: string; title: string; body: string; rows: EditorialCopy[] };
+    approach: { title: string; body: string; rows: EditorialCopy[] };
     closing: string;
     closingNote: string;
     cta: string;
@@ -128,6 +128,7 @@ export interface Dictionary {
   brand: string;
   languages: { label: string; es: string; en: string };
   nav: {
+    label: string;
     home: string;
     vehicles: string;
     import: string;
@@ -136,19 +137,15 @@ export interface Dictionary {
     contact: string;
     admin: string;
   };
-  hero: { left: string; right: string; description: string; cta: string };
+  hero: { left: string; right: string; description: string };
   carHandoff: {
     states: { left: string; right: string; description: string }[];
-    cta: string;
     carA: string;
     carCutaway: string;
     /** Line shown while the scan reveals the car's insides. */
     interlude: string;
-    /** Small captions beside the car: the photograph, then the X-ray view. */
-    captions: [{ name: string; note: string }, { name: string; note: string }];
   };
   process: {
-    eyebrow: string;
     title: string;
     steps: { word: string; title: string; description: string }[];
   };
@@ -163,6 +160,8 @@ export interface Dictionary {
     missingAsset: string;
     heroAsset: string;
     backgroundAsset: string;
+    catalogue: string;
+    loading: string;
   };
   notFound: {
     eyebrow: string;

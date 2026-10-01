@@ -20,7 +20,7 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<VehiclePublicCardDto>>> List(CancellationToken ct)
     {
-        var vehicles = await db.Vehicles.AsNoTracking().Where(Listed).OrderBy(x => x.CreatedAt).ThenBy(x => x.Id).Take(100).ToListAsync(ct);
+        var vehicles = await db.Vehicles.AsNoTracking().Where(Listed).OrderByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id).Take(100).ToListAsync(ct);
         var ids = vehicles.Select(x => x.Id).ToList();
         var images = (await db.Images.AsNoTracking().Where(x => ids.Contains(x.VehicleUnitId)).ToListAsync(ct)).ToLookup(x => x.VehicleUnitId);
         return Ok(vehicles.Select(v => PublicMapping.MapCard(v, images[v.Id])).ToList());

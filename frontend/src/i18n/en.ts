@@ -2,7 +2,6 @@ import type { Dictionary } from './types';
 
 export const en: Dictionary = {
   vehicles: {
-    "eyebrow": "GP SELECT · STOCK",
     "title": "Vehicles",
     "lede": "A selection with character. A different way to find your next car.",
     "singular": "vehicle",
@@ -88,11 +87,9 @@ export const en: Dictionary = {
   },
   interiors: {
     about: {
-      eyebrow: 'GP SELECT · ABOUT US',
       title: 'About us',
       lede: 'GP SELECT selects premium European vehicles for each client. We work from a conversation: what you want to drive, how you will use it and what matters to you.',
       why: {
-        label: 'Why GP SELECT',
         title: 'Buying the right car shouldn’t be a search on your own.',
         body: 'Finding a premium car in Europe usually starts with hundreds of listings and little reliable information. GP SELECT exists to change that starting point: someone who understands what you are looking for, compares options for you and clearly explains what is in front of you before you decide. Our job is to help you choose better, not faster.',
       },
@@ -105,7 +102,6 @@ export const en: Dictionary = {
         ],
       },
       approach: {
-        label: 'How we work',
         title: 'We would rather suggest a few well-chosen cars than many without judgement.',
         body: 'Our aim is not for you to buy any car, but the right one. If a car doesn’t convince us, we will tell you, even if that means searching further.',
         rows: [
@@ -122,7 +118,6 @@ export const en: Dictionary = {
       images: { opening: 'Vehicle in context · photography pending', detail: 'Detail · photography pending' },
     },
     import: {
-      "eyebrow": "GP SELECT · IMPORT",
       "title": "Import",
       "lede": "We help you find the car you are looking for in the European market: we define what you need with you, compare options, review the information available and support you through the purchase and import process.",
       "define": {
@@ -161,7 +156,7 @@ export const en: Dictionary = {
       "secondary": "I have a specific car in mind"
     },
     contact: {
-      eyebrow: 'GP SELECT · CONTACT', title: 'Contact', lede: 'Let’s talk about your next vehicle.',
+      title: 'Contact', lede: 'Let’s talk about your next vehicle.',
       pathsLabel: 'Where shall we start?', vehiclePath: 'I know which car I want', searchPath: 'I want GP SELECT to help me find it',
       vehicleIntro: 'Tell us which vehicle interests you and what you would like to know. We will start there.',
       searchIntro: 'Tell us what you are looking for: how you drive, the models you like and the budget you have in mind. You do not need to have chosen a vehicle.',
@@ -181,12 +176,12 @@ export const en: Dictionary = {
   brand: 'GP SELECT',
   languages: { label: 'Language', es: 'Español', en: 'English' },
   nav: {
-    home: 'Home', vehicles: 'Stock', import: 'Import',
+    label: 'Main navigation', home: 'Home', vehicles: 'Stock', import: 'Import',
     services: 'Services', about: 'About', contact: 'Contact', admin: 'Administration',
   },
   hero: {
     left: 'Curated', right: 'Luxury',
-    description: 'Curated European sports cars\nwith a focus on timeless design\nand bespoke sourcing.', cta: 'View collection',
+    description: 'Curated European sports cars\nwith a focus on timeless design\nand bespoke sourcing.',
   },
   carHandoff: {
     states: [
@@ -194,17 +189,12 @@ export const en: Dictionary = {
       { left: 'Power', right: 'Control', description: 'All the power,\nalways under control.' },
       { left: 'Global', right: 'Vision', description: 'Premium vehicles,\nsourced across Europe.' },
     ],
-    cta: 'View vehicles',
     carA: 'BMW M4 · top view',
     carCutaway: 'BMW M4 · technical cutaway',
     interlude: 'Engineering,\ninside and out.',
-    captions: [
-      { name: 'BMW M4 Coupé', note: 'Example model' },
-      { name: 'Technical view', note: 'Illustration' },
-    ],
   },
   process: {
-    eyebrow: 'THE GP SELECT STANDARD', title: 'Every detail. Every decision.',
+    title: 'Every detail. Every decision.',
     steps: [
       { word: 'Search', title: 'The starting point', description: 'A vehicle that is right for you.' },
       { word: 'Analyse', title: 'Attention to detail', description: 'Every detail matters before choosing.' },
@@ -217,7 +207,7 @@ export const en: Dictionary = {
     backHome: 'Back to home', prototype: 'Preview · Phase 3',
     menu: 'Open menu', close: 'Close menu', skipContent: 'Skip to content',
     missingAsset: 'Final image pending', heroAsset: 'Vehicle · side view',
-    backgroundAsset: 'Photographic background pending',
+    backgroundAsset: 'Photographic background pending', catalogue: 'View catalogue', loading: 'Loading',
   },
   notFound: {
     eyebrow: 'Error 404', title: 'Page not found',

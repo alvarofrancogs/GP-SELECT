@@ -5,7 +5,8 @@
   z-index: 2;
   background: var(--color-dark);
   color: var(--color-paper);
-  padding: var(--space-8) var(--page-gutter) var(--space-6);
+  /* Room at the bottom so the fixed catalogue pill never covers the last line. */
+  padding: var(--space-8) var(--page-gutter) calc(var(--space-6) + 4.5rem);
 }
 
 .footer-main {
@@ -27,21 +28,13 @@
 }
 
 .footer-identity p {
+  margin-top: 1.25rem;
   max-width: 30ch;
   font-size: clamp(.875rem, 1vw, 1.0625rem);
   font-stretch: var(--type-body-width);
   font-weight: var(--type-body-weight);
   letter-spacing: .03em;
   line-height: 1.55;
-}
-.footer-identity p::before {
-  content: '';
-  display: block;
-  width: 1.75rem;
-  height: var(--border-width);
-  margin-block: 1.25rem 1.1rem;
-  background: currentColor;
-  opacity: .7;
 }
 
 .footer-nav {

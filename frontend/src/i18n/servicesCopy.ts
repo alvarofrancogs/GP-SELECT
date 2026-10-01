@@ -3,22 +3,18 @@ import type { Locale } from './types';
 export type ServiceId = 'sourcing' | 'inspection' | 'import' | 'transparency';
 
 interface ServicesCopy {
-  eyebrow: string;
   title: string;
   titleFine: string;
   description: string;
-  cta: string;
   image: string;
   items: { id: ServiceId; title: string; description: string; image: string }[];
 }
 
 export const servicesCopy: Record<Locale, ServicesCopy> = {
   es: {
-    eyebrow: 'OTRA FORMA DE CONDUCIR',
     title: 'Más que',
     titleFine: 'un coche.',
     description: 'Te acompañamos desde la búsqueda hasta la compra, para que disfrutes de tu vehículo sin fronteras.',
-    cta: 'Explorar vehículos',
     image: 'Fotografía de servicios pendiente',
     items: [
       { id: 'sourcing', title: 'Búsqueda en toda Europa', description: 'Definimos contigo el vehículo que buscas y localizamos opciones en el mercado europeo según tus preferencias y presupuesto.', image: 'Fotografía de búsqueda en Europa pendiente' },
@@ -28,11 +24,9 @@ export const servicesCopy: Record<Locale, ServicesCopy> = {
     ],
   },
   en: {
-    eyebrow: 'A BETTER WAY TO DRIVE',
     title: 'More than',
     titleFine: 'a car.',
     description: 'We guide you from the search to the purchase, so you can enjoy your vehicle without borders.',
-    cta: 'Explore our stock',
     image: 'Services photography pending',
     items: [
       { id: 'sourcing', title: 'Sourcing across Europe', description: 'We define what you are looking for together and source options across the European market to suit your preferences and budget.', image: 'European sourcing photography pending' },

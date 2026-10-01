@@ -1,0 +1,81 @@
+.featured {
+  position: relative;
+  padding-block: var(--space-9);
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.featured__title {
+  margin-bottom: var(--space-8);
+  font-family: var(--font-family);
+  font-stretch: var(--type-section-width);
+  font-size: clamp(3.333rem, 5.833vw, 7.917rem);
+  font-weight: var(--type-title-weight);
+  letter-spacing: var(--type-section-tracking);
+  line-height: var(--type-section-leading);
+}
+.featured__title > span { display: block; }
+
+.featured__state { padding-block: var(--space-8); border-block: var(--border-width) solid var(--color-line); font-size: var(--text-body); }
+
+/* One editorial piece: the photograph leads, the data sits beside it between hairlines. */
+/* The photograph sets the row height from its own ratio (align-self: start); stretching it made the ratio
+   derive a width from the data column's height and push the page wider than the viewport at 768-1199 px. */
+.featured__piece { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-8); align-items: start; }
+.featured__media {
+  order: 2;
+  min-width: 0;
+  width: 100%;
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--color-placeholder);
+}
+.featured__image, .featured__image img, .featured__empty { width: 100%; height: 100%; }
+.featured__image img { object-fit: cover; transition: transform 700ms var(--ease-cinematic); }
+.featured__empty { background: linear-gradient(150deg, #dcdcd7, var(--color-placeholder) 55%, #cfd0cb); }
+
+.featured__data { order: 1; align-self: stretch; display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-7); min-width: 0; }
+.featured__make { font-stretch: var(--type-ui-width); font-size: var(--text-nav); font-weight: var(--type-ui-weight); letter-spacing: var(--type-ui-tracking); overflow-wrap: anywhere; }
+.featured__identity h3 {
+  margin-top: var(--space-2);
+  font-family: var(--font-family);
+  font-stretch: var(--type-heading-width);
+  font-size: clamp(2rem, 3.6vw, 4.5rem);
+  font-weight: var(--type-title-weight);
+  letter-spacing: var(--type-heading-tracking);
+  line-height: var(--type-heading-leading);
+  overflow-wrap: anywhere;
+}
+.featured__variant { margin-top: var(--space-2); font-stretch: var(--type-body-width); font-size: var(--text-nav); color: var(--color-muted); overflow-wrap: anywhere; }
+
+.featured__specs { margin: 0; border-top: var(--border-width) solid var(--color-line); font-stretch: var(--type-ui-width); font-size: var(--text-nav); font-weight: var(--type-ui-weight); letter-spacing: var(--type-ui-tracking); font-variant-numeric: tabular-nums; }
+.featured__specs > div { display: flex; justify-content: space-between; gap: var(--space-5); padding-block: var(--space-3); border-bottom: var(--border-width) solid var(--color-line); }
+.featured__specs dt { color: var(--color-muted); }
+.featured__specs dd { min-width: 0; margin: 0; text-align: right; overflow-wrap: anywhere; }
+
+.featured__link { display: flex; align-items: center; gap: var(--space-3); font-stretch: var(--type-ui-width); font-size: var(--text-nav); font-weight: var(--type-ui-weight); letter-spacing: var(--type-ui-tracking); }
+.featured__arrow { transition: transform var(--duration-ui) var(--ease-out); }
+
+/* Two quiet gestures on hover: the photograph settles a hair closer, and the arrow follows. */
+@media (hover: hover) and (pointer: fine) {
+  .featured__piece:hover .featured__image img { transform: scale(1.015); }
+  .featured__piece:hover .featured__arrow { transform: translateX(var(--space-1)); }
+}
+
+@media (max-width: 1199px) {
+  .featured__piece { gap: var(--space-6); }
+}
+
+@media (max-width: 767px) {
+  .featured { padding-block: var(--space-8); }
+  /* No rem floor: «excepcionales.» must still fit a 320 px screen. */
+  .featured__title { font-size: min(10.833vw, 5rem); margin-bottom: var(--space-7); }
+  .featured__piece { grid-template-columns: minmax(0, 1fr); }
+  .featured__media { order: 0; aspect-ratio: 4 / 3; }
+  .featured__data { order: 1; gap: var(--space-6); }
+}
+
+@media (min-width: 1920px) {
+  .featured__title { font-size: min(5.833vw, 9.792rem); }
+}

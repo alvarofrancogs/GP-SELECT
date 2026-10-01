@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { refreshAfterFonts, scheduleScrollRefresh } from '../lib/scrollRefresh';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -14,38 +15,25 @@ const scrollDistance: Record<SceneKind, { desktop: number; mobile: number }> = {
 // Scrub smoothing in seconds: the car scene carries more inertia than lettering.
 const scrubLag: Record<SceneKind, number> = { hero: 0.7, process: 0.5 };
 
-// Hero car approach. The mask in scenes.css fades the car from 88% of its box.
-const HERO_ZOOM = 1.65;
-const HERO_MASK_START = 0.88;
-
-/**
- * Largest leftward travel (px) that keeps the faded right edge of the hero car
- * outside the viewport for the whole approach (zoom grows with power1.in).
- */
-function heroCarTravel(media: HTMLElement) {
-  const left = media.offsetLeft;
-  const width = media.offsetWidth;
-  const originX = left + parseFloat(getComputedStyle(media).transformOrigin);
-  let travel = Infinity;
-  for (let step = 1; step <= 20; step++) {
-    const progress = step / 20;
-    const scale = 1 + (HERO_ZOOM - 1) * progress * progress;
-    const edge = originX + scale * (left + width * HERO_MASK_START - originX);
-    travel = Math.min(travel, (edge - window.innerWidth) / progress);
-  }
-  return Math.max(0, travel);
-}
+// Hero car: the side-on Porsche drives off to the left. Travel is the whole story; the scale
+// only adds a touch of depth and must never read as a camera zoom.
+const HERO_TRAVEL = { desktop: 0.34, mobile: 0.3 }; // of the viewport width
+const HERO_DEPTH = 1.06;
 
 // Over the sky the default (difference) header reads well; ink takes over before the
 // dark handoff turns the sky mid-grey, and white once that dark layer dominates.
-const HERO_TONE = { light: 0.45, dark: 0.72 };
+// `dark` is the handoff layer's opacity at which the sky has turned mid-grey (it used to be reached at 0.72 of the pin).
+const HERO_TONE = { light: 0.45, dark: 0.44 };
+// The hero is fully darkened by the time Process starts to rise over it (scroll distance, in viewports).
+const HERO_DARKEN_BY = 1.45;
 
-/** Header tone over the hero, from the visible (scrubbed) state of its layers. */
-function heroHeaderTone(visual: number, processTop: number, headerHalf: number) {
+/** Header tone over the hero, from the visible (scrubbed) state of its layers:
+    `progress` of the car/titles timeline and `darkness` (opacity) of the dark handoff layer. */
+function heroHeaderTone(progress: number, darkness: number, processTop: number, headerHalf: number) {
   // The opaque Process curtain already sits under the header.
   if (processTop <= headerHalf) return '';
-  if (visual < HERO_TONE.light) return '';
-  return visual < HERO_TONE.dark ? 'light' : 'dark';
+  if (darkness >= HERO_TONE.dark) return 'dark';
+  return progress >= HERO_TONE.light ? 'light' : '';
 }
 
 /** Each scene owns its trigger; only the children of its pinned frame move. */
@@ -57,15 +45,6 @@ export function useGsapScene(kind: SceneKind, id: string) {
     const section = sectionRef.current;
     const pin = pinRef.current;
     if (!section || !pin) return;
-
-    let disposed = false;
-    let refreshFrame = 0;
-    const refresh = () => {
-      cancelAnimationFrame(refreshFrame);
-      refreshFrame = requestAnimationFrame(() => {
-        if (!disposed) ScrollTrigger.refresh();
-      });
-    };
 
     const matchMedia = gsap.matchMedia();
     matchMedia.add(
@@ -105,7 +84,8 @@ export function useGsapScene(kind: SceneKind, id: string) {
             end: () => `+=${window.innerHeight * distance}`,
             scrub: scrubLag[kind],
             pinSpacing: true,
-            anticipatePin: 1,
+            // Process starts with its words already placed: pre-pinning would make them jump.
+            anticipatePin: kind === 'process' ? 0 : 1,
             invalidateOnRefresh: true,
             onUpdate: (trigger) => {
               section.dataset.progress = trigger.progress.toFixed(4);
@@ -123,10 +103,10 @@ export function useGsapScene(kind: SceneKind, id: string) {
         if (kind === 'hero') {
           if (media.length) {
             // Linear travel, with a separate zoom for the camera's approach.
-            const car = media[0] as HTMLElement;
-            timeline.to(media, { x: () => -heroCarTravel(car), yPercent: -18, duration: 1 }, 0);
-            timeline.to(media, { scale: HERO_ZOOM, duration: 1, ease: 'power1.in' }, 0);
-            timeline.to(media, { opacity: 0, filter: 'blur(9px)', duration: 0.22 }, 0.78);
+            const travel = HERO_TRAVEL[desktop ? 'desktop' : 'mobile'];
+            timeline.to(media, { x: () => -window.innerWidth * travel, duration: 1 }, 0);
+            timeline.to(media, { scale: HERO_DEPTH, duration: 1 }, 0);
+            // The car stays in frame to the end; the Process curtain covers it.
           }
           titles.forEach((title, index) => {
             timeline.to(title, {
@@ -138,7 +118,18 @@ export function useGsapScene(kind: SceneKind, id: string) {
             }, 0.12 + index * 0.04);
           });
           if (ui.length) timeline.to(ui, { autoAlpha: 0, y: -24, duration: 0.2 }, 0.15);
-          if (handoff.length) timeline.to(handoff, { opacity: 1, duration: 0.5 }, 0.5);
+          if (handoff.length) {
+            // The sky is almost dark before the Process curtain reaches it: no bright photo under a dark page.
+            const darken = gsap.timeline({
+              defaults: { ease: 'none' },
+              scrollTrigger: {
+                trigger: section, start: 'top top', scrub: true, invalidateOnRefresh: true,
+                end: () => `+=${window.innerHeight * HERO_DARKEN_BY}`,
+              },
+            });
+            darken.fromTo(handoff, { opacity: 0 }, { opacity: 0.88, duration: 1, delay: 0.5 }, 0);
+            timeline.fromTo(handoff, { opacity: 0.88 }, { opacity: 1, duration: 0.4, immediateRender: false }, 0.6);
+          }
 
           // Process rises over the last viewport as an opaque curtain (scenes.css), so the
           // hero only darkens underneath it. The header follows what is actually visible:
@@ -148,7 +139,8 @@ export function useGsapScene(kind: SceneKind, id: string) {
           const publishTone = () => {
             const processTop = process?.getBoundingClientRect().top ?? Infinity;
             const headerHalf = (header?.clientHeight ?? 0) / 2;
-            section.dataset.headerTone = heroHeaderTone(timeline.progress(), processTop, headerHalf);
+            const tone = heroHeaderTone(timeline.progress(), Number(gsap.getProperty(handoff[0] ?? section, 'opacity')), processTop, headerHalf);
+            if (section.dataset.headerTone !== tone) section.dataset.headerTone = tone;
           };
           timeline.eventCallback('onUpdate', publishTone);
           publishTone();
@@ -199,20 +191,16 @@ export function useGsapScene(kind: SceneKind, id: string) {
     );
 
     // Fonts, replacement assets and translations may change the layout.
-    void document.fonts.ready.then(() => {
-      if (!disposed) refresh();
-    });
-    section.addEventListener('load', refresh, true);
-    const observer = new MutationObserver(refresh);
+    refreshAfterFonts();
+    section.addEventListener('load', scheduleScrollRefresh, true);
+    const observer = new MutationObserver(scheduleScrollRefresh);
     // Ignore child-list changes: ScrollTrigger temporarily reparents the pin on refresh.
     observer.observe(section, { characterData: true, subtree: true });
-    refresh();
+    scheduleScrollRefresh();
 
     return () => {
-      disposed = true;
-      cancelAnimationFrame(refreshFrame);
       observer.disconnect();
-      section.removeEventListener('load', refresh, true);
+      section.removeEventListener('load', scheduleScrollRefresh, true);
       matchMedia.revert();
       delete section.dataset.motion;
       delete section.dataset.progress;

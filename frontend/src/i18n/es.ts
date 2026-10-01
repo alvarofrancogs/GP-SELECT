@@ -2,7 +2,6 @@ import type { Dictionary } from './types';
 
 export const es: Dictionary = {
   vehicles: {
-    "eyebrow": "GP SELECT · STOCK",
     "title": "Vehículos",
     "lede": "Una selección con carácter. Otra forma de encontrar tu próximo coche.",
     "singular": "vehículo",
@@ -88,11 +87,9 @@ export const es: Dictionary = {
   },
   interiors: {
     about: {
-      eyebrow: 'GP SELECT · QUIÉNES SOMOS',
       title: 'Nosotros',
       lede: 'GP SELECT selecciona vehículos premium europeos para cada cliente. Trabajamos a partir de una conversación: qué quieres conducir, cómo lo vas a usar y qué es importante para ti.',
       why: {
-        label: 'Por qué GP SELECT',
         title: 'Comprar bien un coche no debería ser una búsqueda a solas.',
         body: 'Encontrar un vehículo premium en Europa suele empezar con cientos de anuncios y poca información contrastada. GP SELECT existe para cambiar ese punto de partida: alguien que entiende lo que buscas, compara por ti y te explica con claridad lo que tienes delante antes de que decidas. Nuestro trabajo es ayudarte a elegir mejor, no más rápido.',
       },
@@ -105,12 +102,11 @@ export const es: Dictionary = {
         ],
       },
       approach: {
-        label: 'Cómo trabajamos',
         title: 'Preferimos proponerte pocos coches, bien elegidos, que muchos sin criterio.',
         body: 'Nuestro objetivo no es que compres cualquier coche, sino el adecuado. Si una unidad no convence, te lo diremos, aunque eso signifique seguir buscando.',
         rows: [
           { title: 'Escuchamos antes de proponer.', body: 'La búsqueda empieza por ti, no por lo que haya disponible.' },
-          { title: 'Decimos lo que sabemos, y lo que no.', body: 'Si falta información sobre un coche, lo sabrás antes de decidir.' },
+          { title: 'Decimos lo que sabemos, y lo que no.', body: 'Si falta información sobre un coche, lo sabrás antes de decidir.' },
           { title: 'Hablamos claro.', body: 'Sin tecnicismos innecesarios: si algo importa, te explicamos por qué.' },
           { title: 'La decisión es tuya.', body: 'Te damos criterio y contexto, sin prisas ni presión.' },
         ],
@@ -122,7 +118,6 @@ export const es: Dictionary = {
       images: { opening: 'Vehículo en contexto · fotografía pendiente', detail: 'Detalle · fotografía pendiente' },
     },
     import: {
-      "eyebrow": "GP SELECT · IMPORTACIÓN",
       "title": "Importación",
       "lede": "Te ayudamos a encontrar en el mercado europeo el coche que buscas: definimos contigo qué necesitas, comparamos opciones, analizamos la información disponible y te acompañamos durante el proceso de compra e importación.",
       "define": {
@@ -138,7 +133,7 @@ export const es: Dictionary = {
         "detail": "Con eso, la búsqueda deja de ser una lista de anuncios y pasa a ser una comparación con criterio."
       },
       "search": {
-        "title": "Buscar y descartar.",
+        "title": "Buscar y descartar.",
         "body": "Buscamos en el mercado europeo unidades que respondan a esa definición y descartamos las que no encajan: una especificación distinta, un precio que no se sostiene frente a opciones comparables o información insuficiente para valorarla. Lo que llega a ti es una selección corta, no un listado."
       },
       "analysis": {
@@ -161,7 +156,7 @@ export const es: Dictionary = {
       "secondary": "Tengo un coche concreto en mente"
     },
     contact: {
-      eyebrow: 'GP SELECT · CONTACTO', title: 'Contacto', lede: 'Hablemos sobre tu próximo vehículo.',
+      title: 'Contacto', lede: 'Hablemos sobre tu próximo vehículo.',
       pathsLabel: '¿Cómo empezamos?', vehiclePath: 'Sé qué coche quiero', searchPath: 'Quiero que GP SELECT me ayude a encontrarlo',
       vehicleIntro: 'Dinos qué vehículo te interesa y qué te gustaría saber. Empezamos por ahí.',
       searchIntro: 'Cuéntanos qué buscas: cómo conduces, qué modelos te gustan y qué presupuesto tienes en mente. No necesitas haber elegido un vehículo.',
@@ -182,13 +177,12 @@ export const es: Dictionary = {
   brand: 'GP SELECT',
   languages: { label: 'Idioma', es: 'Español', en: 'English' },
   nav: {
-    home: 'Inicio', vehicles: 'Vehículos', import: 'Importación',
+    label: 'Navegación principal', home: 'Inicio', vehicles: 'Vehículos', import: 'Importación',
     services: 'Servicios', about: 'Nosotros', contact: 'Contacto', admin: 'Administración',
   },
   hero: {
     left: 'Selección', right: 'Exclusiva',
     description: 'Deportivos europeos seleccionados\npor su diseño atemporal\ny una búsqueda a tu medida.',
-    cta: 'Ver colección',
   },
   carHandoff: {
     states: [
@@ -196,17 +190,11 @@ export const es: Dictionary = {
       { left: 'Potencia', right: 'Control', description: 'Toda la potencia,\nsiempre bajo control.' },
       { left: 'Visión', right: 'Global', description: 'Vehículos premium,\nseleccionados en toda Europa.' },
     ],
-    cta: 'Ver vehículos',
     carA: 'BMW M4 · vista cenital',
     carCutaway: 'BMW M4 · vista técnica de la mecánica',
     interlude: 'Ingeniería,\npor dentro y por fuera.',
-    captions: [
-      { name: 'BMW M4 Coupé', note: 'Modelo de ejemplo' },
-      { name: 'Vista técnica', note: 'Ilustración' },
-    ],
   },
   process: {
-    eyebrow: 'EL CRITERIO GP SELECT',
     title: 'Cada detalle. Cada decisión.',
     steps: [
       { word: 'Buscamos', title: 'El punto de partida', description: 'Un vehículo que encaje contigo.' },
@@ -220,7 +208,7 @@ export const es: Dictionary = {
     backHome: 'Volver al inicio', prototype: 'Vista previa · Fase 3',
     menu: 'Abrir menú', close: 'Cerrar menú', skipContent: 'Saltar al contenido',
     missingAsset: 'Imagen definitiva pendiente', heroAsset: 'Vehículo · vista lateral',
-    backgroundAsset: 'Fondo fotográfico pendiente',
+    backgroundAsset: 'Fondo fotográfico pendiente', catalogue: 'Ver catálogo', loading: 'Cargando',
   },
   notFound: {
     eyebrow: 'Error 404', title: 'Página no encontrada',

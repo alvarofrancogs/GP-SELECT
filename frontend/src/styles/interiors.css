@@ -11,7 +11,6 @@
 .interior-page .type-lede { font-size: clamp(1.25rem, 1.85vw, 2rem); }
 .interior-page .type-heading { font-size: clamp(1.4rem, 2.2vw, 2.75rem); }
 .interior-header { padding-top: calc(var(--header-height) + clamp(3rem, 6vw, 7rem)); padding-bottom: clamp(3.5rem, 6vw, 7rem); }
-.interior-header > .type-label { margin-bottom: clamp(2rem, 4vw, 4.5rem); }
 .interior-header__line { display: grid; grid-template-columns: minmax(0, 2.15fr) minmax(0, 1fr); align-items: end; align-items: last baseline; gap: 3vw; }
 .interior-header h1 { font-size: clamp(4rem, 10.5vw, 12rem); white-space: nowrap; }
 .interior-header__line > p { max-width: 24ch; }
@@ -97,7 +96,6 @@
 @media (max-width: 767px) {
   .interior-page { --interior-space: 4.5rem; }
   .interior-header { padding-top: calc(var(--header-height) + 3rem); padding-bottom: 3.5rem; }
-  .interior-header > .type-label { font-size: .6rem; margin-bottom: 2rem; }
   .interior-header__line { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
   .interior-header h1 { font-size: clamp(2.75rem, 14vw, 6.5rem); }
   .interior-header__line > p { max-width: 24ch; margin-left: 17%; font-size: 1.15rem; }
@@ -121,10 +119,6 @@
 :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header {
   padding-top: calc(var(--header-height) + clamp(1.5rem, 2.2vw, 2.75rem));
   padding-bottom: clamp(2.5rem, 3.3vw, 4rem);
-}
-:is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header > .type-label {
-  font-size: clamp(.78125rem, .9vw, .875rem);
-  margin-bottom: 1.5rem;
 }
 :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__line {
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);

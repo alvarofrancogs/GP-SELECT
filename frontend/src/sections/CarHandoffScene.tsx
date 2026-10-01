@@ -1,6 +1,5 @@
 import { sceneAssets } from '../assets/sceneAssets';
 import { AssetSlot } from '../components/AssetSlot';
-import { Button } from '../components/Button';
 import { useCarHandoffScene } from '../hooks/useCarHandoffScene';
 import { useLanguage } from '../i18n/useLanguage';
 import '../styles/car-handoff.css';
@@ -20,15 +19,6 @@ function HandoffText({ state, name, layout, titleId }: { state: HandoffState; na
       </Heading>
       <p className="scene-description hero-description" data-line>{state.description}</p>
     </div>
-  );
-}
-
-function CarCaption({ name, note, car }: { name: string; note: string; car: string }) {
-  return (
-    <p className="car-handoff__caption" data-caption={car}>
-      <span>{name}</span>
-      <small>{note}</small>
-    </p>
   );
 }
 
@@ -61,8 +51,6 @@ export function CarHandoffScene() {
             <div className="car-handoff__layer car-handoff__photo" data-car-photo>
               <AssetSlot asset={sceneAssets.carA} label={text.carA} />
             </div>
-            <CarCaption {...text.captions[0]} car="a" />
-            <CarCaption {...text.captions[1]} car="b" />
           </div>
         </div>
         <div className="car-handoff__panel car-handoff__panel--overcast">
@@ -80,9 +68,6 @@ export function CarHandoffScene() {
         </div>
         {/* One light over world and cars, so the weather changes the car too. */}
         <div className="car-handoff__grade" data-handoff-grade aria-hidden="true" />
-        <div className="car-handoff__cta" data-handoff-cta>
-          <Button to="/vehiculos" variant="light">{text.cta}</Button>
-        </div>
       </div>
     </section>
   );

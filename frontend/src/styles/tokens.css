@@ -13,8 +13,6 @@
   --hero-leading: var(--type-display-leading);
   --hero-gutter-start: 5.7vw;
   --hero-gutter-end: 3.7vw;
-  --hero-cta-width: clamp(11.8rem, 13.1vw, 16rem);
-  --hero-cta-height: clamp(3rem, 6.1svh, 4.2rem);
   --weight-extended-copy: var(--type-lede-weight);
   --hero-copy-size: clamp(1rem, 1.32vw, 1.65rem);
   --hero-copy-leading: var(--type-lede-leading);
@@ -54,6 +52,8 @@
   --type-heading-weight: 700;
   --type-heading-tracking: -.035em;
   --type-heading-leading: 1.05;
+  /* Two-part titles share one editorial weight: neither heavy nor thin. */
+  --type-title-weight: 520;
   --type-fine-width: 125%;
   --type-fine-weight: 250;
   --type-fine-tracking: -.04em;
@@ -108,9 +108,11 @@
   --z-media: 1;
   --z-content: 3;
   --z-ui: 5;
+  --z-cta: 12;
   --z-handoff: 8;
   --z-header: 20;
   --z-skip: 30;
+  --z-preloader: 40;
 }
 
 @media (max-width: 1199px) {

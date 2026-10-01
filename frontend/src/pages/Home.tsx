@@ -2,8 +2,7 @@ import { HeroScene } from '../sections/HeroScene';
 import { PerformanceScene } from '../sections/PerformanceScene';
 import { CarHandoffScene } from '../sections/CarHandoffScene';
 import { ServicesSection } from '../sections/ServicesSection';
-import { InventoryPreview } from '../sections/InventoryPreview';
-import { FinalCta } from '../sections/FinalCta';
+import { FeaturedVehicle } from '../sections/FeaturedVehicle';
 import '../styles/services.css';
 
 export function Home() {
@@ -13,8 +12,7 @@ export function Home() {
       <PerformanceScene />
       <CarHandoffScene />
       <ServicesSection />
-      <InventoryPreview />
-      <FinalCta />
+      <FeaturedVehicle />
     </>
   );
 }

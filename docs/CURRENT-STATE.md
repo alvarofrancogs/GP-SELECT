@@ -1,3 +1,4 @@
+
 # GP SELECT — estado actual
 
 ## PHASE
@@ -8,7 +9,7 @@ Unidades: 1A PASS · 1B PASS · 1C PASS · 1D PASS · 1E PASS · 1F PASS.
 
 **Sustituido por `CarHandoffScene` (1F):** la antigua escena BMW de 1B (`PerformanceScene` conserva solo Process) y la antigua escena Europe de 1E fueron eliminadas (commit `fd8336a`). Ahora un único frame fijado hace BMW → noche/mapa → Audi RS Q3 (`useCarHandoffScene.ts`, `CarHandoffScene.tsx`, `car-handoff.css`). Los apartados BMW y Europe de más abajo son historial: su motion y sus deudas ya no aplican al código actual, salvo donde se indique lo contrario.
 
-Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHandoff: BMW cenital → corte mecánico, cielo claro → nublado** → Services (crema) → Inventory (crema) → CTA final (oscuro) → Footer (oscuro). El texto de 1F de abajo es historial: 3C sustituyó noche/mapa/Audi.
+Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHandoff: BMW cenital → corte mecánico, cielo claro → nublado** → Services (crema) → vehículo destacado real (`FeaturedVehicle`) → Footer (oscuro). Sin CTA final ni Inventory de ejemplo (UI Simplification). El texto de 1F de abajo es historial: 3C sustituyó noche/mapa/Audi.
 
 **1F — PASS.** Un solo pin (4,5 vh; 3,5 en móvil). Timeline de escena (cielo, sombreado, noche desde arriba, mapa, titulares y CTA) y timeline de coches con scrub más pesado. Ambos coches comparten caja, ancla y origen de transformación: un único avance continuo con crossfade BMW → Audi en la misma caja. Titulares con la receta del hero y tamaño ajustado por palabra; «Visión / Global» no invade el coche. Services entra como telón de papel sobre el último viewport. El header lee el tono publicado por la escena (`data-header-tone`) sin hit-test por frame. Reduced-motion y alturas < 600 px: dos frames estáticos. QA a 1440, 1920 y 390 (descenso, ascenso, reduced-motion), build, lint y consola OK.
 
@@ -16,7 +17,70 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
 
 **FINAL CLOSURE PASS (desde 30-09-2026):** 3A production readiness (**PASS técnico**, aceptado por el usuario) → Final Technical / UX QA (**TECHNICALLY READY**) → 3B copy truth (**PASS**) → 3C final visual / asset polish → 3D final release QA. Una fase cada vez; cada una con su tag `<fase>-pass`.
 
-**3C FINAL VISUAL / ASSET POLISH = PASS (01-10-2026).** Rama `feat/3c-visual-asset-polish`, commits 3C.1–3C.4 + este documento, tag `3c-pass` (sin push).
+## 3C FINAL VISUAL / ASSET POLISH = PASS (01-10-2026)
+
+Rama `feat/3c-visual-asset-polish`. Commits 3C.1–3C.4 más un commit de cierre (UI Simplification, QA A–G, Real Stack Regression y sus fixes). Tag `3c-pass` sobre el commit de cierre. Sin push ni merge a `main`.
+
+### UI Simplification Pass — aprobado expresamente por el usuario
+
+Forma parte de 3C por decisión del usuario; no es una ampliación accidental de alcance.
+
+- Fuera la sección negra «Encuentra tu próximo coche» (HOME: …Services → vehículo destacado → Footer) y todos los CTA de la HOME. CTA global único «Ver catálogo» (`CatalogueCta`, liquid glass + magnetismo ≤6 px solo con ratón y sin reduced-motion; oculto en `/vehiculos*`).
+- Eliminados eyebrows, rayitas y captions decorativas; títulos de dos partes a peso único `--type-title-weight` (520).
+- Hero: el Porsche avanza con `translateX` (0,34 del viewport) y solo 1,06 de escala. Límite: el asset tiene corte duro a la derecha; más recorrido pide un asset más ancho.
+- «Vehículos excepcionales» = un solo vehículo real (`FeaturedVehicle`), el más nuevo por `CreatedAt`. El API público lista ahora **descendente** (antes ascendente + `Take(100)` perdía el más nuevo con >100); el cliente ya no invierte. Sin precio, filas opcionales solo si tienen dato, estado vacío y de error limpios. Mocks de inventario, `InventoryPreview` y `FinalCta` eliminados.
+- Pasadas posteriores: preloader (≤2 s, una vez por carga, precarga la lista de vehículos), fundido entre rutas, `lib/scrollRefresh.ts` (un solo `ScrollTrigger.refresh()` compartido: arregla el «crasheo» al volver a la Home), reset de scroll antes de construir los pins, telón Hero→Process con borde degradado, cortinilla BMW→rayos X como variable CSS (sobrevive a un refresh), título de pestaña por ruta, anti doble envío (contacto y login admin), `scroll-padding-bottom` por el botón fijo, foco al `main` tras navegar, bloqueo de scroll con `<dialog>` abierto.
+
+### Exhaustive QA A–G — PASS
+
+- Gemini como tester adversarial (READ-ONLY), Opus como gate.
+- Cobertura: navegación, routing, datos hostiles, formularios, Admin, responsive, performance y chaos/soak.
+- **0 P0 y 0 P1 abiertos.** Reduced-motion y touch comprobados a mano. Falsos positivos conocidos: contraste del header (`mix-blend-mode: difference`) y foco por `.focus()` en script.
+
+### Real Stack Final Regression — PASS
+
+- **Entorno:** build de producción del frontend, API .NET real, PostgreSQL real, migraciones desde cero, almacenamiento real de QA.
+- **Resultados:**
+  - backend: build con 0 warnings, 78/78 unitarios, 52/52 de integración, migraciones limpias;
+  - frontend: typecheck, lint y build OK;
+  - navegador: 81/81 checks PASS tras el último fix;
+  - Contacto persistido de verdad en PostgreSQL; Admin de principio a fin; catálogo y detalle con datos reales;
+  - reduced-motion y touch;
+  - 0 errores JS inesperados y 0 HTTP 500 inesperados.
+
+### Findings corregidos (QA A–G y Real Stack)
+
+- `FeaturedVehicle` desbordaba entre 768 y 1024 px: columnas `minmax(0, …)` y `min-width: 0`.
+- Textos largos válidos según contrato (modelo de 60 caracteres, URLs en descripciones) ensanchaban fichas y detalle: `overflow-wrap` en catálogo, detalle y destacado.
+- Caption de la galería del detalle: un texto largo se parte en vez de desbordar la fila del contador.
+- Specs largas del destacado (`fuelType`, etc.): se parten dentro de su celda.
+- Título de pestaña normalizado para `/nosotros/`, `/NOSOTROS` y variantes (el router ignora mayúsculas y barra final).
+- Título correcto para un vehículo inexistente.
+- Menú móvil: se cierra al pasar a escritorio (≥1200 px).
+
+### P3 / deuda no bloqueante
+
+- Datos imposibles según el contrato (`NaN`, `images: null`): sin hardening adicional.
+- Guard síncrono opcional del Admin frente a eventos sintéticos (doble envío por eventos disparados por script).
+- `/#criterio` no hace scroll al ancla por navegación interna.
+- Miniaturas de la galería cargan la imagen grande (P2 previo).
+- Imagen que falta en el almacenamiento → 500 en vez de 404 (P2 previo).
+- Bundle público > 500 kB (P2 previo).
+- CLS ~3 en el scroll de la Home por los pins de GSAP (métrica, sin saltos visibles; decidir en SEO/rendimiento).
+- `hero-car.webp` lleva una cola sintética hasta tener foto ancha en alta resolución (la versión HQ de prueba queda fuera del repo).
+- El resto de P2/P3 ya registrados más abajo siguen vigentes.
+
+### Remaining release blockers (no invalidan el PASS técnico de 3C)
+
+- **LEGAL / PRIVACY:** responsable, base jurídica, texto del formulario y conservación.
+- **EMAIL PROVIDER:** sin adaptador de `IEnquiryNotifier`.
+- **RECIPIENT MAILBOX:** `Enquiries__NotificationEmail` sin definir.
+- **DOMAIN / DEPLOY:** más adelante (`Security__AllowedOrigin`).
+- **SEO:** más adelante.
+- **FINAL USER PHOTOGRAPHY / ASSETS:** fotos reales del usuario para sustituir los slots provisionales.
+
+### Unidades 3C.1–3C.5
+
 - **3C.1 · Assets HOME y escena del coche** (`0e2bec5`):
   - Assets generados por Astra y normalizados (WebP, `temporary: false`, en `public/assets/home/`):
     - hero: cielo y coupé;
@@ -49,9 +113,9 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
   - catálogo y detalle no se pudieron calibrar sin backend.
 - **Pendiente (no bloquea 3C):**
   - las fotos reales que enviará el usuario (Services, Inventory, CTA, Nosotros, Importación) sustituyen sus slots en `sceneAssets.ts` y en las páginas, un commit por lote;
-  - la imagen del CTA final sigue reutilizando `temp/hero-car.svg`.
 
 **3B COPY TRUTH = PASS (01-10-2026).** Auditoría del texto público (HOME, Nosotros, Importación, Contacto, catálogo/detalle, footer) contra lo confirmado. Solo se cambió lo UNSUPPORTED, siempre en ES y EN con la misma promesa. Sin cambios de layout, CSS, motion, assets, backend ni Admin.
+
 - **Cambiado (UNSUPPORTED → prudente):**
   - Process: «Inspeccionamos / Inspect» → «Analizamos / Analyse» (no hay inspección física confirmada); «Entregamos / Deliver» → «Acompañamos / Guide» (entrega y transporte sin confirmar). Mismas 4 etapas; «Seleccionamos» sigue siendo la palabra más ancha.
   - Services intro: «Nos ocupamos de todo, desde la búsqueda hasta la entrega» / «We handle the entire process…» → «Te acompañamos desde la búsqueda hasta la compra…» / «We guide you from the search to the purchase…».
@@ -66,6 +130,7 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
 - **Deuda que sigue:** el estado de error del detalle no tiene H1 (hacerlo H1 cambiaría la tipografía de `.vehicle-state`); el resto de deudas P2 del QA técnico, intactas.
 
 **FINAL TECHNICAL / UX QA — TECHNICALLY READY (01-10-2026).** Auditoría técnica, funcional, responsive, accesible y de release sobre `main` con 3A. Sin SEO, dominio, deploy ni analytics. No significa PUBLIC RELEASE READY (ver RELEASE BLOCKERS de 3A).
+
 - **Cobertura:** Gemini (G1): 16 rutas públicas × 1920/1440/390 × ES/EN (96 cargas: H1, headings, overflow, imágenes y alt, consola, red, textos rotos, recorrido completo de la HOME en ambos sentidos) y los 28 enlaces internos: PASS. Opus (G3/G4, porque Gemini agotó su cuota): teclado y foco, móvil, reduced-motion, contraste, validación y estados de error del formulario y de la API, y el Admin completo en el navegador (login, sesión, logout, crear, editar/PATCH, equipamiento, especificaciones, estados, fotos, portada, orden, quitar, última foto, vista previa, cambios sin guardar, archivar, 390). API a mano: cookie, CSRF, 401/403/404/413/415/429, límites y persistencia.
 - **P1 corregido:** el 404 global mostraba copy de desarrollo («GP SELECT · FASE 3», «Esta página llegará en una próxima fase»). Ahora `NotFound.tsx`: «Error 404», «Página no encontrada», «Volver al inicio» y «Ver vehículos» (ES/EN). `PlannedPage` eliminado.
 - **P2 corregidos:** la API ya no envía `Server: Kestrel` y añade `X-Content-Type-Options: nosniff` (test).
@@ -80,6 +145,7 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
 **3A — PASS técnico (30-09-2026), aceptado por el usuario.** Dos partes, ambas PASS: hardening de seguridad y consultas reales del formulario de Contacto, guardadas en PostgreSQL. El formulario queda desactivado en producción hasta resolver legal, email y dominio: son RELEASE BLOCKERS externos (ver abajo), no defectos técnicos de 3A. Detalle operativo en `docs/BACKEND-SETUP.md`. Cookie auth, CSRF, rol y modelo de un solo administrador sin cambios.
 
 **3A.1 — Security hardening (PASS, aprobado por el usuario).**
+
 - **Login (bug corregido):** el limitador agrupaba por IP más la cabecera `X-Login-Email`, que el cliente nunca enviaba y cualquiera podía variar para estrenar cupo. Reproducido antes de corregir: el sexto intento con la contraseña buena y una cabecera nueva devolvía 200. Ahora el cupo es por IP (en IPv6, el /64), 5 por minuto, y el rechazo es **429** `rate_limited` con `Retry-After`, sin cookie (antes, 503 sin cuerpo). El Admin muestra «Demasiados intentos» solo con 429.
 - **Proxy inverso:** `Security__TrustedProxies` opcional (`ForwardedHeaders` nativo); `X-Forwarded-For` solo se acepta si llega de esas IP. Sin ella, detrás de un proxy todos compartirían cupo.
 - **Production no arranca** sin `Security__AllowedOrigin`, con un origen que no sea `https`, que sea `localhost` o loopback, o con ruta, barra final o comodín, ni sin `Admin__Email` / `Admin__PasswordHash`. Development sin cambios.
@@ -89,6 +155,7 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
 - **QA:** Opus contra la API real con Postgres (login, `/me`, logout, CSRF con Origin correcto, ajeno, `localhost` y ausente, Referer, 429, bypass, `X-Forwarded-For` falso) y arranque real en Production con 6 configuraciones. Gemini (UI del Admin: login, error, sesión HttpOnly, logout, 429 con mensaje; Contacto a 1440 y 390, ES y EN: 0 peticiones, estado honesto, validación): los 10 checks PASS. Su FAIL se debió solo a un cambio de docs de Opus durante la ejecución.
 
 **3A.2 — Consultas / leads (PASS técnico, aceptado por el usuario).** Decisión del usuario: PostgreSQL + aviso por email. Flujo: formulario → `POST /api/public/enquiries` → la consulta se guarda (fuente de verdad) → 202 → un worker intenta el email después.
+
 - **Modelo `Enquiry`:** solo los campos del formulario (intent, nombre, email, teléfono opcional, vehículo, mensaje) más `CreatedAt` (indexado, para una retención futura) y el estado técnico del aviso (`Pending`/`Sent`/`Failed`, intentos, próximo intento y `NotifiedAt`). Sin IP, sin estado comercial y sin CRM. Migración `AddEnquiries` (solo crea la tabla).
 - **Validación en Domain** (mismas reglas que el formulario, límites de longitud, sin caracteres de control); 400 con `code` y `field`, 413 con más de 32 KB, 415 sin JSON, 429 al pasar de 5 envíos por 10 minutos por cliente, 503 `enquiries_unavailable` si `Enquiries__Enabled` no es `true`.
 - **Email desacoplado:** puerto `IEnquiryNotifier` y outbox con reintentos (1 min, 5 min, 30 min, 2 h, 12 h; `Failed` al sexto intento, sin perder la consulta). **Sin adaptador:** proveedor sin decidir. Hasta entonces, las consultas quedan `Pending` y se leen por SQL; el worker enviará las pendientes cuando haya adaptador. Destinatario: `Enquiries__NotificationEmail`, sin valor en el código.
@@ -99,14 +166,15 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
 - **QA:** Opus contra la API real con Postgres (202 y fila guardada `Pending`, 400, cuerpo no JSON, `text/plain` → 415, 40 KB → 413, 503 en una instancia desactivada, 429 con `Retry-After`, logs sin datos personales) y comprobación del bundle (con el flag desactivado no incluye el endpoint; con `VITE_ENQUIRIES_ENABLED=true` sí). Gemini en el navegador (dev y build de producción, 1440 y 390, ES y EN): envío real 202, «Enviar otra consulta», vehículo precargado, validación vacía, 429 con los datos conservados, producción sin peticiones y con aviso; 9/9 PASS, sin archivos modificados. Las 5 consultas de Gemini quedaron en PostgreSQL; la sexta (429) no. Datos de QA borrados.
 
 **RELEASE BLOCKERS de 3A (decisiones externas, no técnicas; bloquean la publicación, no el PASS técnico):**
+
 - **LEGAL/PRIVACY DECISION REQUIRED BEFORE PUBLIC RELEASE:** responsable del tratamiento, base jurídica, texto informativo o de consentimiento en el formulario y plazo de conservación. No se ha inventado nada. Hasta entonces, `Enquiries__Enabled` y `VITE_ENQUIRIES_ENABLED` quedan desactivados en producción.
 - **Proveedor de email** sin elegir, y por tanto sin adaptador de `IEnquiryNotifier`. Alternativas mínimas: SMTP genérico (sin paquete nuevo; vale cualquier buzón con envío SMTP autenticado) o un adaptador HTTP para un proveedor concreto.
 - **Buzón destinatario** (`Enquiries__NotificationEmail`) sin definir.
 - **Dominio final** sin definir (`Security__AllowedOrigin`).
-
 - **Deuda 3A (no bloqueante):** los cupos de login y consultas están en memoria (por instancia; suficiente con una sola instancia), y lo mismo el worker de avisos; sin límite global entre IP (para no permitir bloquear el login del administrador); la sesión dura lo predeterminado de ASP.NET (14 días deslizantes); `Swashbuckle` referenciado sin usar; con un cuerpo demasiado grande, el framework registra el error antes de que el handler devuelva el 413 (el log no lleva datos personales).
 
 **2G — PASS (30-09-2026).** Interiores: escala tipográfica y densidad editorial de `/nosotros`, `/importacion` y `/contacto`. HOME, catálogo, detalle, Admin y backend sin cambios.
+
 - **Escala:** H1 interior 96 / 76 / 40 px (1920 / 1440 / 390), igual en las tres páginas y en ES/EN; antes 192 / 151 / 55, por encima del hero de la HOME (120 / 90 / 46). Titulares de sección ≤ 56 / 44 / 30 px, body 16–18 px. Todo scopeado a `:is(.about-page, .import-page, .contact-page)` en `interiors.css`; las reglas compartidas con catálogo, detalle y Admin no cambian. Eliminado el hack `.import-page:lang(es)`.
 - **Importación:** capítulos editoriales (Primero, qué buscas · Buscar y descartar · Leer cada opción · Contigo hasta el cierre) con wording prudente: búsqueda, comparación, análisis de la información disponible y acompañamiento. Sin inspección propia, negociación, transporte, impuestos, tasas, matriculación, garantía, posventa ni «de principio a fin». `ProcessStep.tsx` eliminado.
 - **Nosotros:** página «quiénes somos» sin repetir Importación: por qué GP SELECT, con quién trabajamos (dos caminos, como Contacto), cómo trabajamos (banda oscura, cuatro compromisos de trato) y cierre al cuestionario + enlace a Importación. ~3,2 viewports a 1440. Sin cifras, años, sede ni fundadores.
@@ -123,6 +191,7 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
   - cabecera interior ~370–395 px a 1440, algo por encima del objetivo orientativo de ~300 px.
 
 **2F-C.3 — PASS (30-09-2026).** Catálogo y detalle reales. Implementado por Opus; backend, HOME y Admin sin cambios (salvo `AdminPreview.toDetail`).
+
 - **Datos:** `services/vehicles.ts` lee `/api/public/vehicles` (una sola petición) y `/{slug}`; 404 → estado editorial, otro fallo → error con reintento. `vehicles.mock.ts` y `vehicleAssets.ts` eliminados; sin fallback a datos ficticios. Precio nulo o ≤ 0 → «Precio bajo consulta».
 - **Orden:** el API lista por `CreatedAt` ascendente; el cliente lo invierte («Últimas incorporaciones»).
 - **Facetas** (`lib/vehicleFacets.ts`, todo en cliente): una selección por categoría, AND entre categorías. Cada faceta se recalcula con los demás filtros activos y oculta lo imposible; una faceta con menos de 2 opciones se oculta. Marca, carrocería y combustible agrupan variantes de escritura sin distinguir mayúsculas ni tildes. Precio y km usan bandas 1-2-2,5-5 sobre el mín–máx real del inventario; el año son los años presentes. Las selecciones inválidas (URL editada o combinación imposible) se eliminan con `replace`; el filtro que acaba de cambiar el usuario prevalece. Los vehículos sin precio o km quedan fuera de un filtro numérico activo.
@@ -137,6 +206,7 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
   - en desarrollo, StrictMode duplica la petición de la lista (la primera se cancela); en producción es una sola.
 
 **HOME HANDOFF FIX — PASS (30-09-2026).** Auditoría motion de la HOME (Opus + QA mecánica de Gemini) y corrección del principio de la página. Defectos presentes desde 1A, sin regresiones. Todo en `useGsapScene.ts` y `Header.tsx`.
+
 - **Hero → Process:** Process sube como telón opaco sobre el hero oscurecido. Se elimina el fundido que se sumaba al deslizamiento y que, con scroll rápido, dejaba ver un panel gris.
 - **Header:** sin banda crema. El hero publica `data-header-tone` según su estado visible (timeline con scrub, igual que `#coches`): difference sobre el cielo, tinta desde 0,45 y blanco desde 0,72. El header lo sigue con un `MutationObserver`. En el cruce el fondo es gris medio y ni tinta ni blanco llegan solos a AA (mínimo real 3,57:1), así que durante el hero la tinta pasa a negro puro y el blanco lleva un halo oscuro ajustado (`data-tone-scene="hero"`, CarHandoff no cambia). Contraste mínimo medido bajo el texto: **4,61:1** (1920), 4,75:1 (1440) y 4,84:1 (390). EN inactivo (opacidad 0,55, en todo el sitio) queda fuera de esta medición.
 - **Porsche:** el recorrido a la izquierda se calcula en cada refresh (`heroCarTravel`) para que el borde difuminado del coche (88 % de su caja) nunca entre en pantalla. Se conservan la dirección, el zoom 1,65 `power1.in` y los tiempos. El recorrido baja de 949 a ~250 px a 1440; para recuperarlo harían falta un asset más ancho o más zoom.
@@ -144,6 +214,7 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
 - **QA:** 1920, 1440 y 390; scroll lento, medio, rápido y hacia arriba, frame a frame, sin fallos; reversibilidad exacta; consola limpia; build y lint OK. Reduced-motion idéntico a HEAD. Desde CarHandoff (fuera del fundido de entrada) hasta el Footer, idéntico pixel a pixel a HEAD, salvo el antialiasing del texto del CTA de CarHandoff al 70 %, con el mismo estado computado.
 
 **2F-C.2 — PASS (Admin frontend).** Implementado por Opus contra el contrato real de 2F-C.1; backend sin cambios.
+
 - **Rutas** (chunk lazy `pages/admin/AdminApp.tsx`, fuera del `SiteLayout` público):
   - `/admin/login`;
   - `/admin` (listado);
@@ -201,8 +272,9 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
   - el bundle público pasa el umbral de 500 kB (data router);
   - en consola solo aparecen los logs de red del navegador para respuestas esperadas (401 de `/me` sin sesión, 404, 409 y 422); no hay errores de JS;
   - al caducar la sesión se pierden los cambios no guardados;
-  
+
 **2F-C.1 — PASS (backend contract hardening).** Detalle y puesta en marcha en `docs/BACKEND-SETUP.md`.
+
 - **Merge-patch en `PATCH /api/admin/vehicles/{id}`** (`Optional<T>`): ausente conserva, `null` o vacío borra, un valor se valida. Marca, modelo y año no se pueden borrar.
 - **Enums como texto** en todo el API; los números se rechazan.
 - **`PowerHp` y `Drivetrain`** en dominio, DTOs y validación (migración `AddPowerHpAndDrivetrain`).
@@ -221,6 +293,7 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
   - frontend intacto.
 
 **2F-A — PASS.** Sistema tipográfico global y páginas interiores.
+
 - **ADN tipográfico:** «Curated / Luxury» (hero) es la referencia absoluta: Archivo Variable, `font-stretch: 125%`, 800, −0,055em, interlineado 0,94, caja mixta.
 - **Recetas `--type-*` (tokens.css) y clases `.type-*` (global.css):** display, section, heading, fine, lede y label a 125 %; body a 108 %; UI a 115 %. Cifras con `tabular-nums`. `.button` en una sola regla con la receta UI.
 - **HOME migrada solo en tipografía:** Process, Services, Inventory, CTA final (ahora en caja mixta), botones, nav, eyebrows y footer. Tamaños recalibrados para conservar las cajas; motion, hooks y JSX intactos.
@@ -234,6 +307,7 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
 - **MEDIA PROVISIONAL:** `about-selection`, `about-detail`, `import-search`, `import-inspection` e `import-delivery` (SVG en `public/assets/temp/`).
 
 **2F-B — PASS.** `/vehiculos` y `/vehiculos/:slug`, frontend con datos mock y preparado para el backend.
+
 - **Catálogo homogéneo:** 3 columnas iguales en escritorio, 2 en tablet y 1 en móvil. Todas las fichas son iguales: imagen 4:3 y `subgrid` para alinear identidad, datos, precio y CTA por fila. Sin destacados ni piezas anchas; la última fila queda alineada a la izquierda.
 - **Ficha:** marca y modelo en heavy (`.type-heading`) y versión en fine (`.type-fine`); año · km; CV · combustible · transmisión; precio (o «Precio bajo consulta»); estado solo si aplica; «Ver vehículo →».
 - **Filtros:** Marca, Carrocería, Combustible, Precio, Año y Kilometraje, más Orden. Estado en la URL. Son capability-driven: un filtro sin datos no se muestra. Transmisión no es filtro, solo dato.
@@ -288,7 +362,6 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
 ## FINAL POLISH — deuda registrada
 
 - 1F · Car handoff: `.scene-cta` no se reutilizó (añade `min-width` al botón); z-index locales sin simplificar. ~~Assets provisionales~~: sustituidos en 3C.1 (contrato: WebP RGBA 1200×1800, coche en el 75 % central, sombra integrada).
-
 - ~~P1 · Header: banda sólida crema durante el handoff del hero~~ — resuelto en HOME HANDOFF FIX.
 - P2 · Hero: más profundidad o parallax del cielo (hoy solo −3 %).
 - P2 · `frontend/package.json`: revertir `--configLoader runner` (solo hace falta dentro del sandbox de Codex).
@@ -348,6 +421,7 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
 ## NEXT
 
 **Orden aprobado:**
+
 1. 2F-C.1 backend (**PASS**);
 2. 2F-C.2 Admin (**PASS**);
 3. **2F-C.3 — catálogo real + detalle real + facetas dependientes + rangos derivados del inventario** (**PASS**);
@@ -355,19 +429,21 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
 5. **3A** production readiness (**PASS técnico, aceptado**: hardening y consultas reales; quedan los RELEASE BLOCKERS externos de legal, email y dominio);
 6. **Final Technical / UX QA** (**TECHNICALLY READY**, 01-10-2026);
 7. **3B copy truth** (**PASS**, 01-10-2026);
-8. **3C final visual / asset polish** (**PASS**, 01-10-2026; sin push);
+8. **3C final visual / asset polish** (**PASS**, 01-10-2026: UI Simplification, QA A–G y Real Stack Regression incluidas; sin push ni merge);
 9. **Siguiente: por decidir por el usuario**: sustituir las fotos del usuario según lleguen, y después 3D final release QA. SEO y dominio/deploy son fases aparte. NO iniciada.
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
+
 - **Objetivo:** panel administrativo muy sencillo para gestionar el inventario real.
 - **Estilo:** mismo ADN de GP SELECT (Archivo Variable, `--type-*`, off-white / charcoal, filetes, jerarquía editorial, botones existentes), pero más funcional, compacto y menos cinematográfico. No es un dashboard SaaS: sin KPIs, gráficas, analytics, sidebar extensa, CRM, clientes, ventas, facturación, reservas ni pagos.
 - **Flujo ideal:** login → listado → añadir → datos → fotografías → guardar borrador → vista previa → publicar → listado, y listado → eliminar (con confirmación y copy fiel al tipo de borrado real). Solo se implementa lo que el backend soporte de verdad.
 - **Antes de Astra:** Opus inspecciona el backend de administración real y clasifica cada campo del formulario objetivo como:
+
   - **A:** soportado hoy;
   - **B:** existe en el dominio pero no en el DTO;
   - **C:** no existe;
   - **D:** flexible (`CustomSpecifications`).
-  
+
   Sin tocar el backend sin aprobación.
 - **Rutas previstas:** `/admin` (eyebrow «GP SELECT · ADMIN», H1 «Vehículos», «Añadir vehículo →», filas editoriales con filetes, sin cards) y `/admin/nuevo` (formulario por secciones: Vehículo · Acabado y procedencia · Información · Equipamiento · Especificaciones adicionales).
 - **Formulario:** equipamiento y especificaciones con interfaz humana, nunca JSON.
@@ -375,7 +451,6 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
 - **Auth:** reutilizar la existente (cookie, CSRF, rol Admin), sin `localStorage`.
 - **Responsive:** 1920 / 1440 / 390; en 390, listado apilado, una columna, fotos en 2 columnas y sin tabla horizontal.
 - **Skills:** Opus con frontend-design, impeccable, Playwright MCP y verification-before-completion. Astra con design-taste-frontend, vercel:react-best-practices y playwright-cli si existe. Sin GSAP.
-
 - ~~Deuda de seguridad preproducción del limitador del login~~: resuelta en 3A.
 - `docs/HANDOFF.md` describe las fases 2 y 3 y está desfasado; la referencia vigente es este archivo.
 - FINAL VISUAL POLISH PASS: continúa tras 2F-C.

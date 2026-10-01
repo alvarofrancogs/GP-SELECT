@@ -1,0 +1,46 @@
+/* Start-up screen: charcoal, the brand mark and a quiet counter. It lifts like a curtain (GSAP, see Preloader.tsx). */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-preloader);
+  display: grid;
+  place-items: center;
+  background: var(--color-dark);
+  color: var(--color-paper);
+  will-change: transform;
+}
+.preloader__brand {
+  font-family: var(--font-family);
+  font-stretch: var(--type-lede-width);
+  font-size: clamp(1.6rem, 3.2vw, 3.4rem);
+  font-weight: 300;
+  letter-spacing: .2em;
+  line-height: 1;
+  white-space: nowrap;
+  animation: preloader-brand 600ms var(--ease-cinematic) both;
+}
+.preloader__meter {
+  position: absolute;
+  left: var(--page-gutter);
+  right: var(--page-gutter);
+  bottom: clamp(1.5rem, 4vh, 3rem);
+  display: grid;
+  gap: var(--space-3);
+}
+.preloader__count {
+  justify-self: end;
+  font-stretch: var(--type-ui-width);
+  font-size: var(--text-nav);
+  font-weight: var(--type-ui-weight);
+  letter-spacing: .14em;
+  font-variant-numeric: tabular-nums;
+  opacity: .7;
+}
+.preloader__line { display: block; height: var(--border-width); background: rgb(255 252 247 / .18); }
+.preloader__line > span { display: block; height: 100%; background: var(--color-paper); transform: scaleX(0); transform-origin: left; }
+
+@keyframes preloader-brand { from { opacity: 0; filter: blur(14px); transform: translateY(10px); } to { opacity: 1; filter: blur(0); transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .preloader__brand { animation: none; }
+}

@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { refreshAfterFonts, scheduleScrollRefresh } from '../lib/scrollRefresh';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -89,14 +90,6 @@ export function useCarHandoffScene() {
     const pin = pinRef.current;
     if (!section || !pin) return;
 
-    let disposed = false;
-    let frame = 0;
-    const refresh = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!disposed) ScrollTrigger.refresh();
-      });
-    };
     const fit = () => fitHeadlines(section);
     ScrollTrigger.addEventListener('refreshInit', fit);
     fit();
@@ -175,7 +168,6 @@ export function useCarHandoffScene() {
       const leave = (targets: gsap.TweenTarget, at: number) => scene.to(targets,
         { autoAlpha: 0, yPercent: -20, filter: 'blur(8px)', duration: 0.18, stagger: 0.036 }, at);
 
-      scene.fromTo(select('[data-handoff-cta]'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }, 0.55);
       enter(lines('a'), 0.55);
       // Once the car has parked, the first headline drops out of the frame behind it, a little
       // faster than the scroll, as if the car flew on and left it behind (Jesko's «Fly in / Luxury»).
@@ -188,8 +180,6 @@ export function useCarHandoffScene() {
         duration: 0.85,
       }, 1.85);
       enter(lines('b'), 2.6);
-      enter(select('[data-caption="a"]'), 2.75);
-      leave(select('[data-caption="a"]'), 3.05);
       leave(lines('b'), 3.25);
       enter(lines('interlude'), 3.6);
       leave(lines('interlude'), 4.0);
@@ -201,7 +191,6 @@ export function useCarHandoffScene() {
       // Ink over the bright sky, white over the overcast one: switched while no lettering is shown.
       scene.fromTo(section, { '--handoff-ink': '#101112' }, { '--handoff-ink': '#fffcf7', duration: 0.05 }, AT.ink);
       enter(lines('c'), 4.25);
-      enter(select('[data-caption="b"]'), 4.35);
 
       // Car timeline: same range, heavier scrub for some inertia. The world never moves, only the car.
       const cars = gsap.timeline({
@@ -215,13 +204,14 @@ export function useCarHandoffScene() {
       const [shrinkFrom, shrinkTo] = AT.shrink;
       cars.fromTo(car, { scale: () => carFrom }, { scale: 1, duration: shrinkTo - shrinkFrom, ease: 'power3.in' }, shrinkFrom);
       // Curtain: the photograph's mask shrinks towards the nose and uncovers the cutaway little by little.
-      const curtain = { size: CURTAIN_FROM };
+      // The mask height is a CSS variable tweened by GSAP (not written by hand), so it is restored
+      // correctly whenever ScrollTrigger refreshes: a hand-written onUpdate left the photograph back
+      // on screen after a refresh once the curtain had finished.
       const [curtainFrom, curtainTo] = AT.curtain;
-      cars.fromTo(curtain, { size: CURTAIN_FROM }, {
-        size: 0,
+      cars.fromTo(photo, { '--curtain': `${CURTAIN_FROM}%` }, {
+        '--curtain': '0%',
         duration: curtainTo - curtainFrom,
         ease: 'power1.inOut',
-        onUpdate: () => { photo.style.maskSize = `100% ${curtain.size}%`; },
       }, curtainFrom);
 
       // Header tone over the whole section, including the stretch where it leaves with the page.
@@ -233,7 +223,8 @@ export function useCarHandoffScene() {
         onUpdate: ({ start, end, scroll }) => {
           const at = (scroll() - start) / vh();
           const covered = end - scroll() <= headerHalf;
-          section.dataset.headerTone = at < AT.shown || covered ? '' : at < AT.ink ? 'light' : 'dark';
+          const tone = at < AT.shown || covered ? '' : at < AT.ink ? 'light' : 'dark';
+          if (section.dataset.headerTone !== tone) section.dataset.headerTone = tone;
         },
         onToggle: ({ isActive }) => { if (!isActive) section.dataset.headerTone = ''; },
       });
@@ -241,21 +232,19 @@ export function useCarHandoffScene() {
       return () => {
         ScrollTrigger.removeEventListener('refreshInit', measureHeader);
         ScrollTrigger.removeEventListener('refreshInit', measureCar);
-        photo.style.maskSize = '';
+        photo.style.removeProperty('--curtain');
       };
     }, section);
 
-    void document.fonts.ready.then(() => { if (!disposed) refresh(); });
-    section.addEventListener('load', refresh, true);
-    const observer = new MutationObserver(refresh);
+    refreshAfterFonts();
+    section.addEventListener('load', scheduleScrollRefresh, true);
+    const observer = new MutationObserver(scheduleScrollRefresh);
     observer.observe(section, { characterData: true, subtree: true });
-    refresh();
+    scheduleScrollRefresh();
 
     return () => {
-      disposed = true;
-      cancelAnimationFrame(frame);
       observer.disconnect();
-      section.removeEventListener('load', refresh, true);
+      section.removeEventListener('load', scheduleScrollRefresh, true);
       ScrollTrigger.removeEventListener('refreshInit', fit);
       media.revert();
       delete section.dataset.motion;

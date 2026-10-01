@@ -18,7 +18,6 @@ export function About() {
       </div>
       <section className="about-why" aria-labelledby="about-why-title">
         <div className="about-why__copy">
-          <p className="type-label">{text.why.label}</p>
           <h2 id="about-why-title" className="type-section">{text.why.title}</h2>
           <p className="type-body">{text.why.body}</p>
         </div>
@@ -40,7 +39,6 @@ export function About() {
       </section>
       <section className="interior-band about-approach" aria-labelledby="about-approach-title">
         <div>
-          <p className="type-label">{text.approach.label}</p>
           <h2 id="about-approach-title" className="type-section">{text.approach.title}</h2>
           <p className="type-body">{text.approach.body}</p>
         </div>

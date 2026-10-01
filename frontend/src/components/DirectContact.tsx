@@ -10,7 +10,6 @@ export function DirectContact() {
 
   return (
     <aside className="direct-contact" aria-label={text.directLabel}>
-      <p className="type-label">{text.directLabel}</p>
       {whatsapp || preview ? <div className="direct-contact__whatsapp">
         <h2 className="type-section">{text.whatsappTitle}</h2>
         <p className="type-body">{text.whatsappBody}</p>
