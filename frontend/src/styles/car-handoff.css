@@ -1,69 +1,119 @@
-/* Layers, bottom to top: sky → shade → first lettering → night (falls from the top) with map → car A → car B
-   → later lettering → CTA. Panels only group the two static frames; they set no stacking context. */
+/* Layers, bottom to top: bright world → overcast world → first headline → car box (cutaway, photograph, captions)
+   → shared light → lettering → CTA. Panels only group the two static frames; they set no stacking context. */
 .car-handoff {
   --handoff-ink: var(--color-ink);
   --handoff-side: none;
-  --car-top: 14%;
-  --car-height: 70%;
+  --car-top: 20%;
+  --car-height: 58%;
   position: relative;
   z-index: 0;
 }
-/* Services rises over the last viewport as an opaque paper curtain. */
-.car-handoff[data-motion='scroll'] { margin-bottom: -100svh; }
-
 .car-handoff__pin { position: relative; height: 100svh; overflow: hidden; isolation: isolate; background: var(--color-paper); }
 .car-handoff__panel { position: absolute; inset: 0; }
-/* The sky darkens from the top first, ahead of the night layer. */
-.car-handoff__shade { position: absolute; inset: 0; z-index: 2; background: linear-gradient(to bottom, var(--color-dark), transparent 85%); opacity: 0; }
-[data-text='a'] { z-index: 3; }
-.car-handoff__night { z-index: 4; }
-[data-car='a'] { z-index: 5; }
-[data-car='b'] { z-index: 6; }
-[data-text='b'], [data-text='c'] { z-index: 7; }
 
-/* Both cars share one box, anchor and transform origin; assets never adjust the motion. */
+/* The world stays still while the car moves: only the weather changes. */
+.car-handoff__world { position: absolute; inset: 0; z-index: 1; }
+.car-handoff__overcast { position: absolute; inset: 0; opacity: 0; }
+.car-handoff[data-motion='scroll'] :is(.car-handoff__world--static, .car-handoff__car--static) { display: none; }
+
+/* Both views share one box and scale around its centre; assets never adjust the motion. */
 .car-handoff__car {
   position: absolute;
+  z-index: 3;
   top: var(--car-top);
   left: 0;
   right: 0;
   height: var(--car-height);
-  aspect-ratio: 1 / 2;
+  aspect-ratio: 2 / 3;
   margin-inline: auto;
-  transform-origin: 50% 0;
+  will-change: transform;
 }
-.car-handoff__car .asset-slot img { object-fit: contain; }
+.car-handoff__layer { position: absolute; inset: 0; }
+.car-handoff__layer .asset-slot img { object-fit: contain; }
 .car-handoff .asset-slot__caption { display: none; }
-
-.car-handoff__night {
-  position: absolute;
-  inset: 0 0 auto;
-  height: 120%;
-  background: var(--color-dark);
-  mask-image: linear-gradient(to top, transparent, #000 16%);
+/* Curtain: a tall gradient mask on the photograph; shrinking it lifts the photograph off from tail to nose,
+   with a long soft edge, and uncovers the cutaway underneath. */
+.car-handoff__photo {
+  mask-image: linear-gradient(to bottom, #000 40%, rgb(0 0 0 / .6) 70%, transparent);
+  mask-size: 100% 240%;
+  mask-position: 50% 0;
+  mask-repeat: no-repeat;
 }
-.car-handoff__map { position: absolute; inset: 6% 4% 24%; opacity: .9; }
-.car-handoff__map .asset-slot img { object-fit: contain; }
+
+/* Editorial captions travel with the car, outside its silhouette. */
+.car-handoff__caption {
+  position: absolute;
+  left: calc(87.5% + clamp(1rem, 2vw, 2.5rem));
+  bottom: 22%;
+  display: grid;
+  gap: .35rem;
+  margin: 0;
+  width: max-content;
+  color: var(--handoff-ink);
+  font-size: var(--text-nav);
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+.car-handoff__caption::before { content: ''; width: 2rem; height: var(--border-width); margin-bottom: .4rem; background: currentColor; }
+.car-handoff__caption small { font-size: .75em; opacity: .7; }
+.car-handoff__caption[data-caption='b'] { left: auto; right: calc(87.5% + clamp(1rem, 2vw, 2.5rem)); bottom: auto; top: 18%; justify-items: end; text-align: right; }
+.car-handoff__caption[data-caption='b']::before { justify-self: end; }
+
+.car-handoff__grade { position: absolute; inset: 0; z-index: 7; background: #fff; mix-blend-mode: multiply; pointer-events: none; }
+.car-handoff__text, .car-handoff__interlude { z-index: 8; }
+.car-handoff__text[data-text='a'] { z-index: 2; }
 
 .car-handoff__text { position: absolute; inset: 0; color: var(--handoff-ink); pointer-events: none; }
 .car-handoff .hero-title { top: 38%; }
 .car-handoff .hero-title > span:last-child { font-size: var(--hero-size); }
 .car-handoff .hero-title > span > span { display: inline-block; }
 .car-handoff .hero-description { top: 51%; max-width: var(--handoff-side); }
-.car-handoff__cta { position: absolute; left: 50%; bottom: 6%; z-index: 8; transform: translateX(-50%); white-space: nowrap; }
+
+/* Stacked in one lane: the car keeps the centre, the words take a side each time. */
+.car-handoff [data-layout='left'] .hero-title { top: 20%; right: auto; flex-direction: column; align-items: flex-start; gap: .1em; }
+.car-handoff [data-layout='left'] .hero-description { top: 62%; }
+.car-handoff [data-layout='right'] .hero-title { top: 26%; left: auto; flex-direction: column; align-items: flex-end; gap: .1em; text-align: right; }
+.car-handoff [data-layout='right'] .hero-description { top: auto; bottom: 16%; }
+
+.car-handoff__interlude {
+  position: absolute;
+  right: var(--hero-gutter-end, var(--page-gutter));
+  bottom: 22%;
+  margin: 0;
+  color: var(--handoff-ink);
+  font-family: var(--font-family);
+  font-stretch: var(--width-extended);
+  font-size: clamp(1.2rem, 2.1vw, 2.75rem);
+  font-weight: var(--weight-extended-copy, 500);
+  line-height: 1.15;
+  text-align: right;
+  /* Two set lines, never re-wrapped: the copy decides the break. */
+  white-space: pre;
+  pointer-events: none;
+}
+.car-handoff__interlude > span { display: inline-block; }
+
+.car-handoff__cta { position: absolute; left: 50%; bottom: 6%; z-index: 9; transform: translateX(-50%); white-space: nowrap; }
 
 @media (max-width: 1023px) {
   .car-handoff { --car-top: 46%; --car-height: 38%; }
   .car-handoff .hero-title { top: 16%; flex-direction: column; gap: var(--space-2); }
   .car-handoff .hero-title > span:last-child { align-self: flex-end; }
-  .car-handoff .hero-description { top: 35%; }
+  .car-handoff [data-layout='left'] .hero-title, .car-handoff [data-layout='right'] .hero-title { top: 16%; left: var(--page-gutter); right: var(--page-gutter); }
+  .car-handoff [data-layout='left'] .hero-title > span:last-child { align-self: flex-start; }
+  .car-handoff .hero-description, .car-handoff [data-layout] .hero-description { top: 35%; bottom: auto; }
+  .car-handoff [data-layout='right'] .hero-description { left: auto; right: var(--page-gutter); text-align: right; }
+  .car-handoff__interlude { top: 16%; bottom: auto; left: var(--page-gutter); right: var(--page-gutter); max-width: none; text-align: left; font-size: 1.375rem; }
+  .car-handoff__caption { display: none; }
   .car-handoff__cta { bottom: 5%; }
 }
 
-/* Reduced motion and short screens: two readable frames, state A (light) and state C (dark). */
+/* Reduced motion and short screens: two readable frames, the bright photograph and the overcast cutaway. */
 .car-handoff[data-motion='static'] .car-handoff__pin { height: auto; }
 .car-handoff[data-motion='static'] .car-handoff__panel { position: relative; height: 100svh; min-height: 640px; overflow: hidden; }
-.car-handoff[data-motion='static'] .car-handoff__panel--dark { --handoff-ink: var(--color-white); background: var(--color-dark); }
-.car-handoff[data-motion='static'] .car-handoff__night { inset: 0; height: 100%; mask-image: none; }
-.car-handoff[data-motion='static'] [data-text='b'] { display: none; }
+.car-handoff[data-motion='static'] :is([data-handoff-grade], .car-handoff__interlude, [data-text='b'], [data-caption='b']) { display: none; }
+.car-handoff[data-motion='static'] .car-handoff__panel--overcast { --handoff-ink: var(--color-white); }
+.car-handoff[data-motion='static'] .car-handoff__photo { mask: none; }
+/* The overcast frame takes the scroll's final light, so white lettering keeps its contrast. */
+.car-handoff[data-motion='static'] .car-handoff__panel--overcast::after { content: ''; position: absolute; inset: 0; z-index: 7; background: #b9bfc9; mix-blend-mode: multiply; pointer-events: none; }
 .car-handoff[data-motion='static'] .car-handoff__cta { bottom: 3%; }

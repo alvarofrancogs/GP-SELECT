@@ -141,8 +141,11 @@ export interface Dictionary {
     states: { left: string; right: string; description: string }[];
     cta: string;
     carA: string;
-    carB: string;
-    map: string;
+    carCutaway: string;
+    /** Line shown while the scan reveals the car's insides. */
+    interlude: string;
+    /** Small captions beside the car: the photograph, then the X-ray view. */
+    captions: [{ name: string; note: string }, { name: string; note: string }];
   };
   process: {
     eyebrow: string;

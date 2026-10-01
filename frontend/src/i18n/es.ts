@@ -198,8 +198,12 @@ export const es: Dictionary = {
     ],
     cta: 'Ver vehículos',
     carA: 'BMW M4 · vista cenital',
-    carB: 'Audi RS Q3 · vista cenital',
-    map: 'Mapa de Europa',
+    carCutaway: 'BMW M4 · vista técnica de la mecánica',
+    interlude: 'Ingeniería,\npor dentro y por fuera.',
+    captions: [
+      { name: 'BMW M4 Coupé', note: 'Modelo de ejemplo' },
+      { name: 'Vista técnica', note: 'Ilustración' },
+    ],
   },
   process: {
     eyebrow: 'EL CRITERIO GP SELECT',

@@ -196,8 +196,12 @@ export const en: Dictionary = {
     ],
     cta: 'View vehicles',
     carA: 'BMW M4 · top view',
-    carB: 'Audi RS Q3 · top view',
-    map: 'Map of Europe',
+    carCutaway: 'BMW M4 · technical cutaway',
+    interlude: 'Engineering,\ninside and out.',
+    captions: [
+      { name: 'BMW M4 Coupé', note: 'Example model' },
+      { name: 'Technical view', note: 'Illustration' },
+    ],
   },
   process: {
     eyebrow: 'THE GP SELECT STANDARD', title: 'Every detail. Every decision.',

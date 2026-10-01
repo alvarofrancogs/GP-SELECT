@@ -4,14 +4,31 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Pin length in viewport heights. Services covers the last one as a paper curtain,
-// so every state is complete and still before progress 1 - 1 / distance.
-const DISTANCE = { desktop: 4.5, mobile: 3.5 };
+// Pin length in viewport heights; afterwards the scene leaves with the page.
+const DISTANCE = 4.9;
 // Gap between the headlines, as a multiple of the car width, plus a margin per side.
 const GAP_FACTOR = 1.3;
 const GAP_MARGIN = 24;
-// Share of the car box visible above the viewport edge when it starts.
-const NOSE_PEEK = 0.12;
+// The car fills the middle three quarters of its box; the rest is room for its shadow.
+const CAR_SHARE = 0.75;
+// Share of the box height above the car's nose.
+const NOSE_INSET = 0.055;
+// The car comes in closer to the camera and shrinks to its parked size as it flies off. Unlike
+// a jet's narrow nose, a car is wide all along, so it starts no wider than the gap between the
+// first headline's words and never covers them (stacked: below the lettering).
+const CAR_FROM = { max: 1.7, stacked: 1.25 };
+// Photograph mask height (% of the box): whole at the start, gone at the end.
+const CURTAIN_FROM = 240;
+// The scene in viewport heights of scroll, after Jesko Jets' jet: it rises with the scroll,
+// shrinks with an accelerating ease, parks, and a soft curtain turns the photograph into the plan.
+const AT = {
+  shown: 0.68, // Process has handed over the frame
+  rise: 0.7,
+  shrink: [0.7, 3.1],
+  curtain: [3.1, 4.15],
+  weather: [1.5, 4.15],
+  ink: 3.5,
+};
 
 const STACKED = '(max-width: 1023px)';
 
@@ -24,38 +41,43 @@ function fitWord(word: HTMLElement, room: number) {
   }
 }
 
-/** Each headline word takes the largest size of the hero recipe that fits its side. */
+/** Each headline word takes the largest size of the hero recipe that fits its lane beside the car. */
 function fitHeadlines(section: HTMLElement) {
   const car = section.querySelector<HTMLElement>('[data-car]');
   if (!car) return;
   const stacked = window.matchMedia(STACKED).matches;
   const center = section.clientWidth / 2;
-  const half = (car.offsetWidth * GAP_FACTOR) / 2 + GAP_MARGIN;
+  const half = (car.offsetWidth * CAR_SHARE * GAP_FACTOR) / 2 + GAP_MARGIN;
   let side = Infinity;
 
   section.querySelectorAll<HTMLElement>('[data-headline]').forEach((headline) => {
     const box = headline.getBoundingClientRect();
+    const layout = headline.closest<HTMLElement>('[data-layout]')?.dataset.layout;
     const [left, right] = headline.querySelectorAll<HTMLElement>('[data-word]');
-    const leftRoom = stacked ? box.width : center - half - box.left;
-    side = Math.min(side, leftRoom);
-    fitWord(left, leftRoom);
-    fitWord(right, stacked ? box.width : box.right - (center + half));
+    // Lanes measured from the section edges, so a stacked headline gets the whole side.
+    const leftLane = center - half - box.left;
+    const rightLane = box.right - (center + half);
+    if (stacked) {
+      fitWord(left, box.width);
+      fitWord(right, box.width);
+      return;
+    }
+    if (layout === 'split') side = Math.min(side, leftLane);
+    fitWord(left, layout === 'right' ? rightLane : leftLane);
+    fitWord(right, layout === 'left' ? leftLane : rightLane);
   });
-  // The supporting line never crosses into the car's lane.
+  // Supporting lines never cross into the car's lane.
   section.style.setProperty('--handoff-side', stacked ? 'none' : `${Math.floor(side)}px`);
 }
 
-/** Largest start scale that keeps the car inside the measured gap between headlines. */
+/** Largest start scale that keeps the car inside the measured gap between the first headline's words. */
 function startScale(section: HTMLElement, car: HTMLElement) {
-  if (window.matchMedia(STACKED).matches) {
-    return Math.min(1.3, (section.clientWidth * 0.9) / car.offsetWidth);
-  }
-  let gap = Infinity;
-  section.querySelectorAll<HTMLElement>('[data-headline]').forEach((headline) => {
-    const [left, right] = headline.querySelectorAll<HTMLElement>('[data-word]');
-    gap = Math.min(gap, right.getBoundingClientRect().left - left.getBoundingClientRect().right);
-  });
-  return Math.max(1, Math.min(1.3, (gap - GAP_MARGIN * 2) / car.offsetWidth));
+  if (window.matchMedia(STACKED).matches) return CAR_FROM.stacked;
+  const first = section.querySelector<HTMLElement>('[data-layout="split"] [data-headline]');
+  if (!first) return 1;
+  const [left, right] = first.querySelectorAll<HTMLElement>('[data-word]');
+  const gap = right.getBoundingClientRect().left - left.getBoundingClientRect().right;
+  return Math.max(1, Math.min(CAR_FROM.max, (gap - GAP_MARGIN * 2) / (car.offsetWidth * CAR_SHARE)));
 }
 
 export function useCarHandoffScene() {
@@ -81,41 +103,58 @@ export function useCarHandoffScene() {
 
     const media = gsap.matchMedia();
     media.add({
+      // Re-run when the layout switches between stacked and side by side.
       desktop: '(min-width: 1024px)',
       reduced: '(prefers-reduced-motion: reduce)',
       enoughHeight: '(min-height: 600px)',
     }, (context) => {
-      const { desktop, reduced, enoughHeight } = context.conditions!;
+      const { reduced, enoughHeight } = context.conditions!;
       section.dataset.motion = reduced || !enoughHeight ? 'static' : 'scroll';
-      if (reduced || !enoughHeight) return;
+      if (reduced || !enoughHeight) {
+        // Two still frames: dark lettering over the bright one, white over the overcast one,
+        // switched when a frame reaches the middle of the header.
+        const headerLine = () => `${(document.querySelector('.site-header')?.clientHeight ?? 0) / 2}px`;
+        section.querySelectorAll<HTMLElement>('.car-handoff__panel').forEach((panel, index) => {
+          ScrollTrigger.create({
+            trigger: panel,
+            start: () => `top ${headerLine()}`,
+            end: () => `bottom ${headerLine()}`,
+            onToggle: ({ isActive }) => {
+              if (isActive) section.dataset.headerTone = index === 0 ? 'light' : 'dark';
+              else if (section.dataset.headerTone === (index === 0 ? 'light' : 'dark')) section.dataset.headerTone = '';
+            },
+          });
+        });
+        return;
+      }
 
       const select = gsap.utils.selector(section);
-      const [carA, carB] = select('[data-car]') as HTMLElement[];
-      const night = select('[data-handoff-night]');
+      const car = select('[data-car]')[0] as HTMLElement;
+      const photo = select('[data-car-photo]')[0] as HTMLElement;
       const lines = (state: string) => select(`[data-text="${state}"] [data-line]`);
-      const distance = desktop ? DISTANCE.desktop : DISTANCE.mobile;
-      const height = () => pin.clientHeight;
-      // Measured once per refresh (after the headlines are fitted), shared by scale and y.
-      let carStart = 1;
-      const measure = () => { carStart = startScale(section, carA); };
-      // Half the header: the point where Services (the curtain) starts covering it.
+      const vh = () => pin.clientHeight;
+      // Half the header: the point where Services starts covering it.
       let headerHalf = 0;
       const measureHeader = () => { headerHalf = (document.querySelector('.site-header')?.clientHeight ?? 0) / 2; };
-      ScrollTrigger.addEventListener('refreshInit', measure);
       ScrollTrigger.addEventListener('refreshInit', measureHeader);
-      measure();
       measureHeader();
-      // Only the nose shows at the bottom edge, then the car climbs to its parked box.
-      const startY = () => height() - carA.offsetTop - carA.offsetHeight * NOSE_PEEK * carStart;
+      // Measured once per refresh, after the headlines are fitted.
+      let carFrom = 1;
+      const measureCar = () => { carFrom = startScale(section, car); };
+      ScrollTrigger.addEventListener('refreshInit', measureCar);
+      measureCar();
+      // The nose starts just below the frame, with the car at its start scale around its centre.
+      const startY = () => vh() - car.offsetTop
+        - (car.offsetHeight * (1 - carFrom)) / 2 - car.offsetHeight * carFrom * NOSE_INSET;
 
       const trigger = {
         trigger: section,
         start: 'top top',
-        end: () => `+=${window.innerHeight * distance}`,
+        end: () => `+=${vh() * DISTANCE}`,
         invalidateOnRefresh: true,
       };
 
-      // Scene timeline: background, curtain, lettering and CTA.
+      // Scene timeline, in viewport heights: weather, light, lettering and CTA.
       const scene = gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: {
@@ -125,57 +164,84 @@ export function useCarHandoffScene() {
           pinSpacing: true,
           anticipatePin: 1,
           scrub: 0.5,
-          onUpdate: ({ progress, end, scroll }) => {
-            section.dataset.progress = progress.toFixed(4);
-            // The header reads this once the frame has taken over from Process,
-            // until Services covers it.
-            const covered = end - scroll() <= headerHalf;
-            section.dataset.headerTone = progress < 0.15 || covered ? '' : progress < 0.34 ? 'light' : 'dark';
-          },
+          onUpdate: ({ progress }) => { section.dataset.progress = progress.toFixed(4); },
         },
       });
-      scene.to({}, { duration: 1 }, 0);
+      scene.to({}, { duration: DISTANCE }, 0);
 
       const enter = (targets: gsap.TweenTarget, at: number) => scene.fromTo(targets,
         { autoAlpha: 0, yPercent: 30, filter: 'blur(10px)' },
-        { autoAlpha: 1, yPercent: 0, filter: 'blur(0px)', duration: 0.07, stagger: 0.012, ease: 'power3.out' }, at);
+        { autoAlpha: 1, yPercent: 0, filter: 'blur(0px)', duration: 0.27, stagger: 0.054, ease: 'power3.out' }, at);
       const leave = (targets: gsap.TweenTarget, at: number) => scene.to(targets,
-        { autoAlpha: 0, yPercent: -20, filter: 'blur(8px)', duration: 0.05, stagger: 0.008 }, at);
+        { autoAlpha: 0, yPercent: -20, filter: 'blur(8px)', duration: 0.18, stagger: 0.036 }, at);
 
-      scene.fromTo(select('[data-handoff-cta]'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.07 }, 0.12);
-      enter(lines('a'), 0.12);
-      leave(lines('a'), 0.3);
-      scene.fromTo(select('[data-handoff-shade]'), { opacity: 0 }, { opacity: 0.35, duration: 0.26 }, 0.04);
-      scene.to(select('[data-handoff-shade]'), { opacity: 0.7, duration: 0.16 }, 0.3);
-      // Night falls from the top, behind the car, with a soft lower edge: it covers
-      // the header at 0.34, the headlines at ~0.4 and the centre at 0.42.
-      scene.fromTo(night, { y: () => -height() * 1.25 }, { y: 0, duration: 0.2 }, 0.3);
-      scene.fromTo(select('[data-handoff-map]'), { yPercent: -8, scale: 1.06 }, { yPercent: 0, scale: 1, duration: 0.38 }, 0.3);
-      // Same elements, one colour variable: ink over the sky, white over the night.
-      scene.fromTo(section, { '--handoff-ink': '#101112' }, { '--handoff-ink': '#fffcf7', duration: 0.04 }, 0.39);
-      enter(lines('b'), 0.43);
-      leave(lines('b'), 0.51);
-      enter(lines('c'), 0.57);
+      scene.fromTo(select('[data-handoff-cta]'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }, 0.55);
+      enter(lines('a'), 0.55);
+      // Once the car has parked, the first headline drops out of the frame behind it, a little
+      // faster than the scroll, as if the car flew on and left it behind (Jesko's «Fly in / Luxury»).
+      // Stacked above the car, it leaves through the top instead, as Jesko's mobile layout does,
+      // fading before it reaches the header.
+      const stacked = () => window.matchMedia(STACKED).matches;
+      scene.fromTo(select('[data-text="a"]'), { y: 0, autoAlpha: 1 }, {
+        y: () => (stacked() ? -0.1 : 1) * vh(),
+        autoAlpha: () => (stacked() ? 0 : 1),
+        duration: 0.85,
+      }, 1.85);
+      enter(lines('b'), 2.6);
+      enter(select('[data-caption="a"]'), 2.75);
+      leave(select('[data-caption="a"]'), 3.05);
+      leave(lines('b'), 3.25);
+      enter(lines('interlude'), 3.6);
+      leave(lines('interlude'), 4.0);
+      // Weather closes in progressively: bright → overcast, and one light dims world and car together.
+      const [weatherFrom, weatherTo] = AT.weather;
+      scene.fromTo(select('[data-handoff-overcast]'), { opacity: 0 }, { opacity: 1, duration: weatherTo - weatherFrom }, weatherFrom);
+      scene.fromTo(select('[data-handoff-grade]'), { backgroundColor: '#ffffff' },
+        { backgroundColor: '#b9bfc9', duration: weatherTo - weatherFrom }, weatherFrom);
+      // Ink over the bright sky, white over the overcast one: switched while no lettering is shown.
+      scene.fromTo(section, { '--handoff-ink': '#101112' }, { '--handoff-ink': '#fffcf7', duration: 0.05 }, AT.ink);
+      enter(lines('c'), 4.25);
+      enter(select('[data-caption="b"]'), 4.35);
 
-      // Car timeline: same range, heavier scrub for a floating inertia.
+      // Car timeline: same range, heavier scrub for some inertia. The world never moves, only the car.
       const cars = gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: { ...trigger, id: 'scene-car-handoff-cars', scrub: 1 },
       });
-      cars.to({}, { duration: 1 }, 0);
-      // B waits invisible on top of A (a set at time 0 would not render before the pin starts).
-      gsap.set(carB, { autoAlpha: 0 });
-      // One continuous forward drive for the shared box: nose at the bottom edge,
-      // then always climbing until it parks, while the BMW dissolves into the RS Q3.
-      cars.fromTo([carA, carB],
-        { y: startY, scale: () => carStart },
-        { y: 0, scale: 1, duration: 0.7, ease: 'power1.out' }, 0);
-      cars.to(carB, { autoAlpha: 1, duration: 0.16 }, 0.4);
-      cars.to(carA, { autoAlpha: 0, duration: 0.08 }, 0.52);
+      cars.to({}, { duration: DISTANCE }, 0);
+      // It rises at the speed of the scroll until it reaches its box, as if the page carried it…
+      cars.fromTo(car, { y: startY }, { y: 0, duration: () => startY() / vh() }, AT.rise);
+      // …while it shrinks slowly, then faster, as it flies away from the camera.
+      const [shrinkFrom, shrinkTo] = AT.shrink;
+      cars.fromTo(car, { scale: () => carFrom }, { scale: 1, duration: shrinkTo - shrinkFrom, ease: 'power3.in' }, shrinkFrom);
+      // Curtain: the photograph's mask shrinks towards the nose and uncovers the cutaway little by little.
+      const curtain = { size: CURTAIN_FROM };
+      const [curtainFrom, curtainTo] = AT.curtain;
+      cars.fromTo(curtain, { size: CURTAIN_FROM }, {
+        size: 0,
+        duration: curtainTo - curtainFrom,
+        ease: 'power1.inOut',
+        onUpdate: () => { photo.style.maskSize = `100% ${curtain.size}%`; },
+      }, curtainFrom);
+
+      // Header tone over the whole section, including the stretch where it leaves with the page.
+      ScrollTrigger.create({
+        trigger: section,
+        start: 'top top',
+        end: 'bottom top',
+        invalidateOnRefresh: true,
+        onUpdate: ({ start, end, scroll }) => {
+          const at = (scroll() - start) / vh();
+          const covered = end - scroll() <= headerHalf;
+          section.dataset.headerTone = at < AT.shown || covered ? '' : at < AT.ink ? 'light' : 'dark';
+        },
+        onToggle: ({ isActive }) => { if (!isActive) section.dataset.headerTone = ''; },
+      });
 
       return () => {
-        ScrollTrigger.removeEventListener('refreshInit', measure);
         ScrollTrigger.removeEventListener('refreshInit', measureHeader);
+        ScrollTrigger.removeEventListener('refreshInit', measureCar);
+        photo.style.maskSize = '';
       };
     }, section);
 
