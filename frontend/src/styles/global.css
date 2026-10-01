@@ -37,7 +37,8 @@ img { display: block; max-width: 100%; }
 .header-nav { font-family: var(--font-family); font-stretch: var(--width-nav); font-size: var(--header-nav-size); font-weight: var(--weight-extended-copy); letter-spacing: var(--header-nav-tracking); }
 .nav-link { position: relative; padding-block: var(--space-2); white-space: nowrap; }
 .nav-link::after { position: absolute; bottom: 0; left: 0; right: 0; height: var(--border-width); content: ''; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform var(--duration-ui) var(--ease-out); }
-.nav-link:hover::after, .nav-link:focus-visible::after { transform: scaleX(1); }
+.nav-link:hover::after, .nav-link:focus-visible::after, .nav-link.active::after { transform: scaleX(1); }
+.mobile-nav a.active { text-decoration: underline; text-decoration-thickness: var(--border-width); text-underline-offset: .2em; }
 .header-brand { position: absolute; left: 50.55%; transform: translateX(-50%); display: flex; gap: .4em; white-space: nowrap; font-family: var(--font-family); font-stretch: var(--width-extended); font-size: var(--header-brand-size); font-weight: var(--weight-extended-copy); letter-spacing: var(--header-brand-tracking); line-height: 1; }
 .brand-mark, .brand-name { font-weight: 400; }
 .header-actions { margin-left: auto; }

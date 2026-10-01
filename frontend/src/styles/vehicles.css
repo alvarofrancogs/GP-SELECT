@@ -28,6 +28,8 @@
 .vehicle-closing h2 { max-width: 20ch; }
 .vehicle-state { padding-block: clamp(4rem, 8vw, 9rem); min-height: 35vh; }
 .vehicle-state :is(h1, h2) { font-size: clamp(2.4rem, 5.5vw, 7rem); max-width: 20ch; }
+/* The detail's load error is its page heading, at lede size. */
+.vehicle-state h1.type-lede { font-size: clamp(1.25rem, 1.85vw, 2rem); max-width: none; }
 .vehicle-state > .editorial-link, .vehicle-state__links { margin-top: 2rem; }
 .vehicle-state__links { display: flex; flex-wrap: wrap; gap: 1.5rem 3rem; }
 

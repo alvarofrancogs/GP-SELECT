@@ -33,7 +33,7 @@ function VehicleDetailContent({ slug }: { slug: string }) {
     return () => request.abort();
   }, [slug, attempt]);
   const back = <Link className="editorial-link type-ui" to="/vehiculos"><span aria-hidden="true">←</span>{text.back}</Link>;
-  if (status !== 'ready') return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state" role={status === 'error' ? 'alert' : 'status'}><p className="type-lede">{status === 'error' ? text.detailError : text.loading}</p>{status === 'error' ? <button className="editorial-link type-ui" onClick={() => { setStatus('loading'); setAttempt(attempt + 1); }}>{text.retry}</button> : null}</div></article>;
+  if (status !== 'ready') return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state" role={status === 'error' ? 'alert' : 'status'}>{status === 'error' ? <h1 className="type-lede">{text.detailError}</h1> : <p className="type-lede">{text.loading}</p>}{status === 'error' ? <button className="editorial-link type-ui" onClick={() => { setStatus('loading'); setAttempt(attempt + 1); }}>{text.retry}</button> : null}</div></article>;
   if (!vehicle) return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state"><h1 className="type-display">{text.notFound}</h1><Link className="editorial-link type-ui" to={qualificationUrl({ intent: 'import', source: 'vehicle-not-found' })}>{text.search}<span aria-hidden="true">→</span></Link></div></article>;
 
   return <VehicleDetailView vehicle={vehicle} back={back} />;

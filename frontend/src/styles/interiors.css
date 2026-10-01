@@ -76,7 +76,7 @@
 .contact-success .editorial-link { margin-top: 2rem; }
 .direct-contact { min-width: 0; background: var(--color-dark); color: var(--color-paper); padding: clamp(1.75rem, 3vw, 3.5rem); }
 .direct-contact__whatsapp { padding-top: 3rem; }
-.direct-contact h2 { font-size: clamp(1.7rem, 2.7vw, 3.4rem); margin-bottom: 1.5rem; }
+.direct-contact h2 { font-size: clamp(1.6rem, 2.2vw, 2.75rem); margin-bottom: 1.5rem; }
 .direct-contact .editorial-link { margin-block: 2rem 1rem; font-size: .9rem; }
 .direct-contact .editorial-link:disabled { opacity: .6; cursor: default; }
 .direct-contact .editorial-link:disabled > span { transform: none; }
@@ -117,25 +117,25 @@
   .direct-contact h2 { max-width: 13ch; font-size: 2.5rem; }
 }
 
-/* Compact editorial headers. Catalogue and vehicle detail keep the shared recipes. */
-:is(.about-page, .import-page, .contact-page) .interior-header {
+/* Compact editorial headers, shared by every interior with an InteriorPageHeader. */
+:is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header {
   padding-top: calc(var(--header-height) + clamp(1.5rem, 2.2vw, 2.75rem));
   padding-bottom: clamp(2.5rem, 3.3vw, 4rem);
 }
-:is(.about-page, .import-page, .contact-page) .interior-header > .type-label {
+:is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header > .type-label {
   font-size: clamp(.78125rem, .9vw, .875rem);
   margin-bottom: 1.5rem;
 }
-:is(.about-page, .import-page, .contact-page) .interior-header__line {
+:is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__line {
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
   align-items: start;
   gap: 5vw;
 }
-:is(.about-page, .import-page, .contact-page) .interior-header h1 {
+:is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header h1 {
   font-size: clamp(3.75rem, calc(1rem + 4.166667vw), 6rem);
   white-space: normal;
 }
-:is(.about-page, .import-page, .contact-page) .interior-header__line > p {
+:is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__line > p {
   max-width: 44ch;
   margin-left: 0;
   font-size: clamp(1.375rem, calc(.625rem + .833333vw), 1.625rem);
@@ -242,11 +242,11 @@
 .import-closing > .type-body { margin-top: 1.5rem; }
 
 @media (min-width: 768px) and (max-width: 1199px) {
-  :is(.about-page, .import-page, .contact-page) .interior-header__line {
+  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__line {
     grid-template-columns: minmax(0, 1fr);
     gap: 1.75rem;
   }
-  :is(.about-page, .import-page, .contact-page) .interior-header__line > p {
+  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__line > p {
     margin-left: 24%;
     max-width: 44ch;
   }
@@ -254,10 +254,10 @@
 }
 
 @media (max-width: 767px) {
-  :is(.about-page, .import-page, .contact-page) .interior-header { padding-top: calc(var(--header-height) + 1.75rem); padding-bottom: 2.5rem; }
-  :is(.about-page, .import-page, .contact-page) .interior-header__line { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
-  :is(.about-page, .import-page, .contact-page) .interior-header h1 { font-size: clamp(2.375rem, calc(1.21rem + 5.29vw), 3.75rem); }
-  :is(.about-page, .import-page, .contact-page) .interior-header__line > p { font-size: 1.1875rem; max-width: 44ch; }
+  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header { padding-top: calc(var(--header-height) + 1.75rem); padding-bottom: 2.5rem; }
+  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__line { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header h1 { font-size: clamp(2.375rem, calc(1.21rem + 5.29vw), 3.75rem); }
+  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__line > p { font-size: 1.1875rem; max-width: 44ch; }
   :is(.about-page, .import-page) .type-section { font-size: clamp(1.875rem, calc(1.23rem + 2.645vw), 2.5rem); }
   :is(.about-page, .import-page) .type-heading { font-size: 1.25rem; }
   :is(.about-page, .import-page) .type-lede { font-size: 1.1875rem; }
