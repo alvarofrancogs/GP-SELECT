@@ -58,7 +58,7 @@ export function useInventoryScene(vehicles: InventoryPreviewVehicle[], status: I
           { opacity: 1, y: 0, duration: 0.35, delay }, 0);
       });
 
-      // Sober exit: the cards recede and a dark shade hands the page to the final CTA.
+      // Sober exit: the cards recede; the final CTA's dark surface meets the cream with a clean edge.
       const exit = gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: {
@@ -68,7 +68,6 @@ export function useInventoryScene(vehicles: InventoryPreviewVehicle[], status: I
         },
       });
       exit.fromTo(section.firstElementChild, { opacity: 1 }, { opacity: 0.5, duration: 1 }, 0);
-      exit.fromTo(section, { '--inventory-exit': 0 }, { '--inventory-exit': 1, duration: 1 }, 0);
     }, section);
 
     let disposed = false;

@@ -74,16 +74,3 @@
 @media (min-width: 1920px) {
   .inventory-preview__intro h2 { font-size: min(5.833vw, 9.792rem); }
 }
-
-/* Dark shade scrubbed by the Inventory exit; it meets the final CTA's surface. */
-@media (prefers-reduced-motion: no-preference) and (min-height: 600px) {
-  .inventory-preview::after {
-    content: '';
-    position: absolute;
-    inset: auto 0 0;
-    height: 40svh;
-    opacity: var(--inventory-exit, 0);
-    background: linear-gradient(to bottom, transparent, var(--color-dark));
-    pointer-events: none;
-  }
-}

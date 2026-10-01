@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/useLanguage';
 import { footerCopy } from '../i18n/footerCopy';
 import { qualificationUrl } from '../lib/qualification';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import '../styles/footer.css';
 
 export function Footer() {
@@ -22,15 +23,15 @@ export function Footer() {
           <p>{text.description}</p>
         </div>
         <nav className="footer-nav" aria-label={text.navigation}>
+          <Link to="/nosotros">{copy.nav.about}</Link>
           <Link to="/vehiculos">{copy.nav.vehicles}</Link>
           <Link to="/importacion">{copy.nav.import}</Link>
-          <Link to="/nosotros">{copy.nav.about}</Link>
           <Link to={qualificationUrl({ intent: 'information', source: 'home-footer' })}>{copy.nav.contact}</Link>
         </nav>
       </div>
       <div className="footer-bottom">
-        <p>© {new Date().getFullYear()} {copy.brand}. {text.rights}</p>
-        <button type="button" onClick={backToTop}>{text.backToTop}<span aria-hidden="true">↑</span></button>
+        <p>© {new Date().getFullYear()} {copy.brand}</p>
+        <LanguageSwitcher />
       </div>
     </footer>
   );
