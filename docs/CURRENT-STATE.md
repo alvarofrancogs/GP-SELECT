@@ -2,19 +2,54 @@
 
 ## PHASE
 
-**PHASE COMPLETED: MOTION / SCROLL ARCHITECTURE PASS (29-09-2026).** Objetivo cumplido: HOME completa de principio a fin con scroll, pinning, handoffs y vehículos en movimiento ligados al scroll y reversibles. Siguiente fase (sin abrir todavía): FINAL VISUAL POLISH PASS.
+**Estado vivo: FINAL CLOSURE PASS, 3C PASS (01-10-2026); ver el bloque 3C más abajo.** Historial: **PHASE COMPLETED: MOTION / SCROLL ARCHITECTURE PASS (29-09-2026).** Objetivo cumplido: HOME completa de principio a fin con scroll, pinning, handoffs y vehículos en movimiento ligados al scroll y reversibles. Siguiente fase (sin abrir todavía): FINAL VISUAL POLISH PASS.
 
 Unidades: 1A PASS · 1B PASS · 1C PASS · 1D PASS · 1E PASS · 1F PASS.
 
 **Sustituido por `CarHandoffScene` (1F):** la antigua escena BMW de 1B (`PerformanceScene` conserva solo Process) y la antigua escena Europe de 1E fueron eliminadas (commit `fd8336a`). Ahora un único frame fijado hace BMW → noche/mapa → Audi RS Q3 (`useCarHandoffScene.ts`, `CarHandoffScene.tsx`, `car-handoff.css`). Los apartados BMW y Europe de más abajo son historial: su motion y sus deudas ya no aplican al código actual, salvo donde se indique lo contrario.
 
-Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (claro) → noche/mapa → Audi RS Q3 (oscuro)** → Services (crema) → Inventory (crema) → CTA final (oscuro) → Footer (oscuro).
+Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHandoff: BMW cenital → corte mecánico, cielo claro → nublado** → Services (crema) → Inventory (crema) → CTA final (oscuro) → Footer (oscuro). El texto de 1F de abajo es historial: 3C sustituyó noche/mapa/Audi.
 
 **1F — PASS.** Un solo pin (4,5 vh; 3,5 en móvil). Timeline de escena (cielo, sombreado, noche desde arriba, mapa, titulares y CTA) y timeline de coches con scrub más pesado. Ambos coches comparten caja, ancla y origen de transformación: un único avance continuo con crossfade BMW → Audi en la misma caja. Titulares con la receta del hero y tamaño ajustado por palabra; «Visión / Global» no invade el coche. Services entra como telón de papel sobre el último viewport. El header lee el tono publicado por la escena (`data-header-tone`) sin hit-test por frame. Reduced-motion y alturas < 600 px: dos frames estáticos. QA a 1440, 1920 y 390 (descenso, ascenso, reduced-motion), build, lint y consola OK.
 
 **FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · 2F-C.2 PASS (30-09-2026) · HOME HANDOFF FIX PASS (30-09-2026) · 2F-C.3 PASS (30-09-2026) · 2G PASS (30-09-2026).
 
 **FINAL CLOSURE PASS (desde 30-09-2026):** 3A production readiness (**PASS técnico**, aceptado por el usuario) → Final Technical / UX QA (**TECHNICALLY READY**) → 3B copy truth (**PASS**) → 3C final visual / asset polish → 3D final release QA. Una fase cada vez; cada una con su tag `<fase>-pass`.
+
+**3C FINAL VISUAL / ASSET POLISH = PASS (01-10-2026).** Rama `feat/3c-visual-asset-polish`, commits 3C.1–3C.4 + este documento, tag `3c-pass` (sin push).
+- **3C.1 · Assets HOME y escena del coche** (`0e2bec5`):
+  - Assets generados por Astra y normalizados (WebP, `temporary: false`, en `public/assets/home/`):
+    - hero: cielo y coupé;
+    - BMW cenital (`car-a.webp`) y su **corte mecánico** (`car-cutaway.webp`: grafito y acero, misma silueta exacta que la foto);
+    - cielo claro y cielo nublado alineados.
+  - **CarHandoff reconstruido sobre la mecánica del jet de Jesko Jets**, medida en directo:
+    - la página queda quieta y solo se mueve el coche: sube al ritmo del scroll y se encoge (power3.in) hasta su caja;
+    - nunca es más ancho que el hueco entre «Ingeniería» y «Alemana»: no tapa las letras;
+    - el titular cae por detrás del coche (en móvil sale por arriba con fundido);
+    - «Potencia / Control» a la izquierda, después «Ingeniería, por dentro y por fuera.» y «Visión / Global» a la derecha;
+    - una cortinilla de máscara degradada pasa de la foto al corte mecánico, de la cola al morro;
+    - el cielo se nubla de forma progresiva (nunca de noche), con una luz multiply común a mundo y coche;
+    - al final el pin se suelta y la escena se va con la página; **Services ya no es telón**.
+  - Pin de 4,9 vh. El header sigue `data-header-tone`, incluido el tramo en que la escena se va.
+  - Reduced-motion: dos frames (foto clara, corte nublado), con el tono del header por panel.
+  - Copy nuevo ES/EN (`carHandoff.carCutaway`, `interlude`, `captions`), sin claims nuevos.
+  - Eliminados: el mapa, el Audi y los SVG/PNG provisionales del coche (`temp/car-a|car-b|europe-map|hero-sky.svg`, `vehicles/bmw-m4-off|on.png`).
+  - QA:
+    - Opus a 1920/1440/390, ES/EN y reduced-motion: ningún solape coche–texto, coche siempre visible, nunca dos titulares legibles a la vez, consola limpia;
+    - Gemini READ-ONLY sobre los fotogramas: lo que confirmó (header en reduced-motion, solape en el interludio, salida en móvil) está corregido y lo demás se descartó.
+- **3C.2 · Interiores** (`9f2701f`): cabecera compacta también en `/vehiculos` (289 px a 1440); página activa marcada en la navegación; el error del detalle es ya su H1; título de WhatsApp más pequeño.
+- **3C.3 · HOME** (`3d8d6f3`): eliminada la banda gris Inventory → CTA (borde limpio). Footer calibrado al mockup `15_42_09`: marca espaciada con filete, enlaces en dos columnas, © y ES/EN abajo. Sin ubicación, legales ni redes hasta que estén confirmados.
+- **3C.4 · Limpieza** (`a6ba78d`):
+  - desinstaladas `@fontsource-variable/inter` e `inter-tight`;
+  - objetivos táctiles de al menos 24 px (marca, ES/EN, enlaces del footer, enlaces editoriales), sin mover la tipografía;
+  - `--configLoader runner` se mantiene mientras se use Codex.
+- **3C.5 · Calibración:**
+  - el hero coincide con el mockup (titular a ~40 % de la altura, encuadre del coche);
+  - Servicios e Importación difieren del mockup por decisiones ya aprobadas (migración tipográfica de la HOME, página de Importación de 2G);
+  - catálogo y detalle no se pudieron calibrar sin backend.
+- **Pendiente (no bloquea 3C):**
+  - las fotos reales que enviará el usuario (Services, Inventory, CTA, Nosotros, Importación) sustituyen sus slots en `sceneAssets.ts` y en las páginas, un commit por lote;
+  - la imagen del CTA final sigue reutilizando `temp/hero-car.svg`.
 
 **3B COPY TRUTH = PASS (01-10-2026).** Auditoría del texto público (HOME, Nosotros, Importación, Contacto, catálogo/detalle, footer) contra lo confirmado. Solo se cambió lo UNSUPPORTED, siempre en ES y EN con la misma promesa. Sin cambios de layout, CSS, motion, assets, backend ni Admin.
 - **Cambiado (UNSUPPORTED → prudente):**
@@ -217,7 +252,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 - **BACKEND INTEGRATION GAP** (constante `BACKEND_INTEGRATION_GAP`): el DTO público no expone km, potencia, tracción, color interior, estado, país de procedencia, propietarios, historial, equipamiento, especificaciones adicionales ni metadatos de imagen. El listado tampoco trae combustible, transmisión ni carrocería. `powerHp` no existe en el dominio. El API no filtra, ordena ni pagina (máximo 100). No se ha tocado el backend.
 - **Ejecución:** Astra hizo la unidad y la mayor parte del ajuste final. Se quedó sin cuota de Codex a mitad del `--resume`, y Opus cerró el error de tipos y la QA.
 - **QA:** 1920, 1440 y 390 en ES/EN con 8, 7, 5, 4, 3, 2 y 1 resultados, sin huecos ni desbordamiento. Detalle, galería, CTA y slug desconocido OK. Build, lint y consola OK.
-- **MEDIA PROVISIONAL:** `vehicle-silver`, `vehicle-stone`, `vehicle-slate`, `vehicle-detail` y `vehicle-interior` (SVG en `public/assets/temp/`). Real: solo `public/assets/vehicles/bmw-m4-off.png` (recorte cenital, `fit: contain`).
+- **MEDIA PROVISIONAL:** `vehicle-silver`, `vehicle-stone`, `vehicle-slate`, `vehicle-detail` y `vehicle-interior` (SVG en `public/assets/temp/`). (El PNG `vehicles/bmw-m4-off.png` se eliminó en 3C.1; las fotos reales llegan por el Admin.)
 
 ## DONE
 
@@ -252,24 +287,25 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 ## FINAL POLISH — deuda registrada
 
-- 1F · Car handoff: `.scene-cta` no se reutilizó (añade `min-width` al botón); z-index locales sin simplificar; assets `car-a/car-b/europe-map` provisionales, con contrato PNG/WebP RGBA alineados en un mismo lienzo.
+- 1F · Car handoff: `.scene-cta` no se reutilizó (añade `min-width` al botón); z-index locales sin simplificar. ~~Assets provisionales~~: sustituidos en 3C.1 (contrato: WebP RGBA 1200×1800, coche en el 75 % central, sombra integrada).
 
 - ~~P1 · Header: banda sólida crema durante el handoff del hero~~ — resuelto en HOME HANDOFF FIX.
 - P2 · Hero: más profundidad o parallax del cielo (hoy solo −3 %).
 - P2 · `frontend/package.json`: revertir `--configLoader runner` (solo hace falta dentro del sandbox de Codex).
-- P2 · Desinstalar `@fontsource-variable/inter` e `inter-tight`: ya no se usan.
+- ~~P2 · Desinstalar `@fontsource-variable/inter` e `inter-tight`~~: hecho en 3C.4.
 - Con Archivo, «Performance» (BMW) y «EUROPEAN PERFORMANCE» quedan pegados a sus slots de coche. Calibrarlo por escena.
 - Calibración por escena contra los mockups: tamaños, posiciones, responsive fino, máscaras y blur.
 - Inventory (1D): motion deliberadamente sobrio (afinar intensidad), imágenes provisionales.
-- Europe / CTA (1E): el placeholder del GLC pasa por detrás del botón «Ver vehículos» de Europe; el mapa es un placeholder oscuro; afinar el borde telón papel/negro en Europe → Services; la banda gris del sombreado Inventory → CTA; imagen del CTA provisional (reutiliza `hero-car.svg`); footer frente al mockup (Murcia / Spain, legales).
+- Europe / CTA (1E): el placeholder del GLC pasa por detrás del botón «Ver vehículos» de Europe; el mapa es un placeholder oscuro; afinar el borde telón papel/negro en Europe → Services; ~~la banda gris del sombreado Inventory → CTA~~ (3C.3); imagen del CTA provisional (reutiliza `hero-car.svg`); ~~footer frente al mockup~~ (3C.3; Murcia / Spain y legales siguen fuera hasta confirmarse).
 - Services (1C): imágenes definitivas por servicio (hoy comparten placeholder); posible enriquecimiento del handoff Services → Inventory.
-- BMW (1B): los PNG `bmw-m4-off/on` están desalineados (el coche «encendido» está 134 px a la izquierda en su lienzo y es ~6 px más alto) y el coche se ve duplicado durante el crossfade: recortar o normalizar. También: encaje fino frente al mockup, glow y encendido final, y posición y tamaño exactos.
+- ~~BMW (1B)~~ (historial; los PNG se eliminaron en 3C.1): los PNG `bmw-m4-off/on` están desalineados (el coche «encendido» está 134 px a la izquierda en su lienzo y es ~6 px más alto) y el coche se ve duplicado durante el crossfade: recortar o normalizar. También: encaje fino frente al mockup, glow y encendido final, y posición y tamaño exactos.
 
 ## MEDIA PROVISIONAL
 
-- Hero: `hero-car.svg` y `hero-sky.svg`, pendientes de la foto real del Porsche y del cielo.
+- Hero y escena del coche: assets generados en 3C.1 (`public/assets/home/`), sustituibles por fotografía con el mismo encuadre.
+- CTA final: reutiliza `temp/hero-car.svg`.
 - BMW: los prototipos `bmw_m4_faros_apagados/encendidos.png` se retiraron de la raíz el 30-09-2026 (ya no se usaban; siguen en el historial de git).
-- GLC cenital, mapa de Europa, fotos de servicios e inventario: placeholders.
+- Fotos de servicios, inventario, Nosotros e Importación: placeholders hasta que el usuario las envíe.
 - Todo el media de los vehículos puede sustituirse por vídeo, secuencia de frames, render o Canvas en la fase de media production.
 
 ## GAPS CONOCIDOS
@@ -307,7 +343,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 ## CHECKPOINTS (tags de git)
 
-`pre-car-handoff` · `2f-a-pass` · `2f-b-pass` · `2f-c1-pass` · `2f-c2-pass` · `home-handoff-fix-pass` · **`home-closed-pass`** (HOME cerrada, 30-09-2026) · `2f-c3-pass` · `2g-pass` · `3a-production-ready-pass` · `final-technical-qa-pass` · **`3b-copy-truth-pass`** (último checkpoint). Cada unidad aprobada se cierra con un tag `<unidad>-pass`.
+`pre-car-handoff` · `2f-a-pass` · `2f-b-pass` · `2f-c1-pass` · `2f-c2-pass` · `home-handoff-fix-pass` · **`home-closed-pass`** (HOME cerrada, 30-09-2026) · `2f-c3-pass` · `2g-pass` · `3a-production-ready-pass` · `final-technical-qa-pass` · `3b-copy-truth-pass` · **`3c-pass`** (último checkpoint). Cada unidad aprobada se cierra con un tag `<unidad>-pass`.
 
 ## NEXT
 
@@ -319,7 +355,8 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 5. **3A** production readiness (**PASS técnico, aceptado**: hardening y consultas reales; quedan los RELEASE BLOCKERS externos de legal, email y dominio);
 6. **Final Technical / UX QA** (**TECHNICALLY READY**, 01-10-2026);
 7. **3B copy truth** (**PASS**, 01-10-2026);
-8. **Siguiente: por decidir por el usuario** (3C final visual / asset polish, 3D; SEO y dominio/deploy son fases aparte). NO iniciada.
+8. **3C final visual / asset polish** (**PASS**, 01-10-2026; sin push);
+9. **Siguiente: por decidir por el usuario**: sustituir las fotos del usuario según lleguen, y después 3D final release QA. SEO y dominio/deploy son fases aparte. NO iniciada.
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 - **Objetivo:** panel administrativo muy sencillo para gestionar el inventario real.
