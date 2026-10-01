@@ -35,6 +35,7 @@ export const es: Dictionary = {
     "find": "Encontrar mi coche",
     "loading": "Cargando vehículos…",
     "error": "No hemos podido cargar los vehículos.",
+    "detailError": "No hemos podido cargar este vehículo.",
     "retry": "Volver a intentar",
     "back": "Vehículos",
     "notFound": "Este vehículo no está en el catálogo",
@@ -54,7 +55,7 @@ export const es: Dictionary = {
     "interiorColour": "Color interior",
     "history": "Historial",
     "importTitle": "Tu próxima historia puede empezar en Europa.",
-    "importBody": "Localizamos la configuración que buscas y te acompañamos en la verificación, los trámites y la entrega.",
+    "importBody": "Buscamos en el mercado europeo la configuración que quieres y te acompañamos durante la compra y la importación.",
     "importLink": "Conocer el servicio de importación",
     "gallery": "Galería del vehículo",
     "previous": "Imagen anterior",
@@ -205,9 +206,9 @@ export const es: Dictionary = {
     title: 'Cada detalle. Cada decisión.',
     steps: [
       { word: 'Buscamos', title: 'El punto de partida', description: 'Un vehículo que encaje contigo.' },
-      { word: 'Inspeccionamos', title: 'La atención al detalle', description: 'Cada detalle cuenta antes de elegir.' },
+      { word: 'Analizamos', title: 'La atención al detalle', description: 'Cada detalle cuenta antes de elegir.' },
       { word: 'Seleccionamos', title: 'Nuestro criterio', description: 'Sólo lo que cumple nuestras expectativas.' },
-      { word: 'Entregamos', title: 'El siguiente capítulo', description: 'Tu próximo coche, con confianza.' },
+      { word: 'Acompañamos', title: 'El siguiente capítulo', description: 'Tu próximo coche, con confianza.' },
     ],
   },
   common: {

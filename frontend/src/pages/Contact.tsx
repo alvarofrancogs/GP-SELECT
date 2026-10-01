@@ -12,9 +12,10 @@ export function Contact() {
   const text = copy.interiors.contact;
   const [params, setParams] = useSearchParams();
   const intent = params.get('intent');
-  const path: LeadIntent = intent === 'search' || intent === 'import' ? 'search' : 'vehicle';
   // Support both the public Spanish parameter and existing qualificationUrl links.
   const vehicle = (params.get('vehiculo') ?? params.get('vehicle') ?? '').slice(0, 200);
+  // Only a vehicle link (or an explicit choice) asks for a vehicle; general contact starts on the open path.
+  const path: LeadIntent = intent === 'vehicle' || (!intent && vehicle) ? 'vehicle' : 'search';
   const hasChannels = showContactPreview || Boolean(contactConfig.whatsapp || contactConfig.phone || contactConfig.email);
 
   function selectPath(next: LeadIntent) {

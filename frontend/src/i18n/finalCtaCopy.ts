@@ -2,14 +2,14 @@ export const finalCtaCopy = {
   es: {
     title: 'Encuentra',
     subtitle: 'tu próximo coche.',
-    description: ['Cuéntanos qué estás buscando.', 'Nosotros nos encargamos del resto.'],
+    description: ['Cuéntanos qué estás buscando.', 'Te ayudamos a encontrarlo.'],
     cta: 'Empezar cuestionario',
     asset: 'Vehículo oscuro · vista trasera',
   },
   en: {
     title: 'Find',
     subtitle: 'your next car.',
-    description: ["Tell us what you're looking for.", "We'll take care of the rest."],
+    description: ["Tell us what you're looking for.", "We'll help you find it."],
     cta: 'Start questionnaire',
     asset: 'Dark vehicle · rear view',
   },

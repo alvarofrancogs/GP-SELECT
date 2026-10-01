@@ -14,7 +14,21 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 **FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · 2F-C.2 PASS (30-09-2026) · HOME HANDOFF FIX PASS (30-09-2026) · 2F-C.3 PASS (30-09-2026) · 2G PASS (30-09-2026).
 
-**FINAL CLOSURE PASS (desde 30-09-2026):** 3A production readiness (**PASS técnico**, aceptado por el usuario) → Final Technical / UX QA (**TECHNICALLY READY**) → 3B copy truth → 3C final visual / asset polish → 3D final release QA. Una fase cada vez; cada una con su tag `<fase>-pass`.
+**FINAL CLOSURE PASS (desde 30-09-2026):** 3A production readiness (**PASS técnico**, aceptado por el usuario) → Final Technical / UX QA (**TECHNICALLY READY**) → 3B copy truth (**PASS**) → 3C final visual / asset polish → 3D final release QA. Una fase cada vez; cada una con su tag `<fase>-pass`.
+
+**3B COPY TRUTH = PASS (01-10-2026).** Auditoría del texto público (HOME, Nosotros, Importación, Contacto, catálogo/detalle, footer) contra lo confirmado. Solo se cambió lo UNSUPPORTED, siempre en ES y EN con la misma promesa. Sin cambios de layout, CSS, motion, assets, backend ni Admin.
+- **Cambiado (UNSUPPORTED → prudente):**
+  - Process: «Inspeccionamos / Inspect» → «Analizamos / Analyse» (no hay inspección física confirmada); «Entregamos / Deliver» → «Acompañamos / Guide» (entrega y transporte sin confirmar). Mismas 4 etapas; «Seleccionamos» sigue siendo la palabra más ancha.
+  - Services intro: «Nos ocupamos de todo, desde la búsqueda hasta la entrega» / «We handle the entire process…» → «Te acompañamos desde la búsqueda hasta la compra…» / «We guide you from the search to the purchase…».
+  - Services: «Inspección del vehículo / Full inspection» → «Análisis de cada opción / Every option analysed», sin «estado del vehículo»; «Importación y matriculación / Import & registration» (transporte y matriculación) → «Compra e importación / Purchase & import», con la coordinación de pasos de Importación; «Un proceso transparente»: fuera «costes previstos» y «estado de cada gestión», ahora qué se sabe, qué falta y qué queda por confirmar. Etiquetas de foto provisional de «inspección» → «análisis».
+  - CTA final: «Nosotros nos encargamos del resto / We'll take care of the rest» → «Te ayudamos a encontrarlo / We'll help you find it».
+  - Banda de importación del detalle: «Localizamos… verificación, trámites y entrega» → búsqueda en el mercado europeo y acompañamiento en la compra y la importación.
+  - EN que prometía más que ES: «Not here? We will find it in Europe» → «We will look for it…»; «Let us find it for you» → «Let us look for it».
+- **Catálogo:** el error de red del detalle decía «No hemos podido cargar los vehículos»; ahora «No hemos podido cargar este vehículo» (`detailError`). Sold («ya no está disponible»), 404 («no está en el catálogo») y error quedan distintos. Sin cambios de lógica.
+- **Contacto (bug corregido):** el footer (`intent=information`) y el enlace del header (sin intent) caían en el camino «vehículo» con vehículo obligatorio. Ahora solo `intent=vehicle`, o un `vehiculo` sin intent, abre ese camino; el resto entra por el camino abierto (vehículo opcional). Sold sigue en `intent=search`.
+- **Conservado (SAFE/CONFIRMED):** Nosotros e Importación de 2G (sin tocar); «Búsqueda en toda Europa» y «seleccionados en toda Europa» (ámbito de búsqueda, no red propia); «Seleccionamos / Sólo lo que cumple nuestras expectativas» (criterio, no certificación); hero y titulares del handoff (carácter de los coches); «Vehículos excepcionales. Una perspectiva europea.» (footer); 404 aprobado; formulario desactivado honesto («Consulta preparada… GP SELECT no la ha recibido»).
+- **QA:** typecheck, lint y build OK. Opus: palabras de Process a 390 (máx. 255/328 px) y Services EN a 1440 (títulos en una línea). Gemini (build de producción): textos a 1920/1440/390 ES/EN, 0 términos residuales en 7 rutas × 2 idiomas, sin overflow, regresión de motion de la HOME lenta y rápida en ambos sentidos a 1440 y 390, 7 casos de intent de Contacto, envío desactivado sin petición, 404 y consola: 7/7 PASS. Dejó una captura en la raíz del repo, borrada.
+- **Deuda que sigue:** el estado de error del detalle no tiene H1 (hacerlo H1 cambiaría la tipografía de `.vehicle-state`); el resto de deudas P2 del QA técnico, intactas.
 
 **FINAL TECHNICAL / UX QA — TECHNICALLY READY (01-10-2026).** Auditoría técnica, funcional, responsive, accesible y de release sobre `main` con 3A. Sin SEO, dominio, deploy ni analytics. No significa PUBLIC RELEASE READY (ver RELEASE BLOCKERS de 3A).
 - **Cobertura:** Gemini (G1): 16 rutas públicas × 1920/1440/390 × ES/EN (96 cargas: H1, headings, overflow, imágenes y alt, consola, red, textos rotos, recorrido completo de la HOME en ambos sentidos) y los 28 enlaces internos: PASS. Opus (G3/G4, porque Gemini agotó su cuota): teclado y foco, móvil, reduced-motion, contraste, validación y estados de error del formulario y de la API, y el Admin completo en el navegador (login, sesión, logout, crear, editar/PATCH, equipamiento, especificaciones, estados, fotos, portada, orden, quitar, última foto, vista previa, cambios sin guardar, archivar, 390). API a mano: cookie, CSRF, 401/403/404/413/415/429, límites y persistencia.
@@ -24,7 +38,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 - **Cookies:** solo `.AspNetCore.Cookies` del Admin (first-party, `HttpOnly`, `SameSite=Strict`, `Secure` fuera de Development, cookie de sesión del navegador con ticket deslizante de 14 días): estrictamente necesaria. La web pública no crea cookies ni hace peticiones a terceros (fuentes locales). `localStorage` guarda solo el idioma elegido (`gp-select.locale.v1`). No hace falta banner por la funcionalidad actual; confirmarlo forma parte de la decisión legal.
 - **Secretos:** ninguno en código, `.env*` (no hay ninguno trackeado), bundle, docs ni historial git. Las credenciales de docs son las de Postgres local de Docker.
 - **Abuso:** login 5/min y consultas 5/10 min por IP, con 429 y `Retry-After`; los rechazados no se guardan y los aceptados sí; los inválidos también consumen cupo. Suficiente para la release inicial; sin CAPTCHA.
-- **Deuda no bloqueante (P2):** (1) las miniaturas de la galería cargan la imagen de detalle (2400×1800): con fotos reales y muchas fotos, varios MB al abrir la ficha; exponer la URL `card` por imagen en el detalle (cambio de contrato, pendiente de decidir). (2) Un objeto que falta en el almacenamiento devuelve 500 en vez de 404 (la web muestra «sin imagen»). (3) Chunk principal 521 kB (174 kB gzip), dominado por react-dom, react-router y GSAP; el Admin ya va aparte; no hay ganancia trivial. (4) Objetivos táctiles de 18–23 px de alto (ES/EN, marca, enlaces del footer, «Ampliar», radios con label). (5) `public/assets/vehicles/bmw-m4-*.png` (1,4 MB) sin uso y dependencias `@fontsource-variable/inter` e `inter-tight` sin importar. (6) El error del detalle dice «vehículos» y no tiene H1; el footer «Contacto» abre la ruta con vehículo obligatorio; «Nos ocupamos de todo, desde la búsqueda hasta la entrega» (Services): revisar en 3B.
+- **Deuda no bloqueante (P2):** (1) las miniaturas de la galería cargan la imagen de detalle (2400×1800): con fotos reales y muchas fotos, varios MB al abrir la ficha; exponer la URL `card` por imagen en el detalle (cambio de contrato, pendiente de decidir). (2) Un objeto que falta en el almacenamiento devuelve 500 en vez de 404 (la web muestra «sin imagen»). (3) Chunk principal 521 kB (174 kB gzip), dominado por react-dom, react-router y GSAP; el Admin ya va aparte; no hay ganancia trivial. (4) Objetivos táctiles de 18–23 px de alto (ES/EN, marca, enlaces del footer, «Ampliar», radios con label). (5) `public/assets/vehicles/bmw-m4-*.png` (1,4 MB) sin uso y dependencias `@fontsource-variable/inter` e `inter-tight` sin importar. (6) ~~El error del detalle dice «vehículos»; el footer «Contacto» abre la ruta con vehículo obligatorio; «Nos ocupamos de todo…»~~: resuelto en 3B; el error del detalle sigue sin H1.
 - **ASSET NEED (deliberado, no blocker):** «Recurso provisional» en Nosotros/Importación/HOME y «Modelos de ejemplo» en la HOME, todos etiquetados.
 - **Build y tests:** typecheck, lint y build OK; backend 0 warnings, 78 unitarios y 52 de integración (migraciones sobre Postgres limpio).
 
@@ -66,7 +80,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 - **QA:** Gemini (18 combinaciones de las tres páginas + regresión HOME y `/vehiculos`; después 10 checks de `/nosotros` en 6 combinaciones), todo PASS. Reduced-motion verificado por Opus. Build y lint OK.
 - **Deuda 2G (no resuelta):**
   - ASSET NEED: 5 fotografías reales (2 Nosotros, 3 Importación); hoy placeholders `about-*` / `import-*`;
-  - claims de la HOME sin confirmar: «Inspeccionamos», «Inspección del vehículo», «Importación y matriculación», «Nos ocupamos de todo…», «Nosotros nos encargamos del resto»;
+  - ~~claims de la HOME sin confirmar~~: resuelto en 3B;
   - `/vehiculos` conserva el H1 antiguo (151 px a 1440), distinto del resto de interiores;
   - el menú no marca la página activa (Header es HOME);
   - panel WhatsApp de Contacto (solo en desarrollo): titular ~49 px y microtexto pequeño;
@@ -293,7 +307,7 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 
 ## CHECKPOINTS (tags de git)
 
-`pre-car-handoff` · `2f-a-pass` · `2f-b-pass` · `2f-c1-pass` · `2f-c2-pass` · `home-handoff-fix-pass` · **`home-closed-pass`** (HOME cerrada, 30-09-2026) · `2f-c3-pass` · `2g-pass` · `3a-production-ready-pass` · **`final-technical-qa-pass`** (último checkpoint). Cada unidad aprobada se cierra con un tag `<unidad>-pass`.
+`pre-car-handoff` · `2f-a-pass` · `2f-b-pass` · `2f-c1-pass` · `2f-c2-pass` · `home-handoff-fix-pass` · **`home-closed-pass`** (HOME cerrada, 30-09-2026) · `2f-c3-pass` · `2g-pass` · `3a-production-ready-pass` · `final-technical-qa-pass` · **`3b-copy-truth-pass`** (último checkpoint). Cada unidad aprobada se cierra con un tag `<unidad>-pass`.
 
 ## NEXT
 
@@ -304,7 +318,8 @@ Secuencia de la HOME: Hero (claro) → Process (oscuro) → **CarHandoff: BMW (c
 4. **2G** interiores, escala tipográfica y densidad (**PASS**);
 5. **3A** production readiness (**PASS técnico, aceptado**: hardening y consultas reales; quedan los RELEASE BLOCKERS externos de legal, email y dominio);
 6. **Final Technical / UX QA** (**TECHNICALLY READY**, 01-10-2026);
-7. **Siguiente: por decidir por el usuario** (3B copy truth, 3C, 3D; SEO y dominio/deploy son fases aparte). NO iniciada.
+7. **3B copy truth** (**PASS**, 01-10-2026);
+8. **Siguiente: por decidir por el usuario** (3C final visual / asset polish, 3D; SEO y dominio/deploy son fases aparte). NO iniciada.
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 - **Objetivo:** panel administrativo muy sencillo para gestionar el inventario real.

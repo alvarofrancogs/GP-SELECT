@@ -90,6 +90,7 @@ export interface VehicleCopy extends InteriorHeaderCopy {
   find: string;
   loading: string;
   error: string;
+  detailError: string;
   retry: string;
   back: string;
   notFound: string;
