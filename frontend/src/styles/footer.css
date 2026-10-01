@@ -57,7 +57,7 @@
   padding-top: .35rem;
   font-size: clamp(.875rem, 1vw, 1.0625rem);
 }
-.footer-nav a { justify-self: start; }
+.footer-nav a { justify-self: start; padding-block: .3rem; margin-block: -.3rem; }
 .footer-nav a:hover { text-decoration: underline; text-underline-offset: .3em; }
 
 .footer-bottom {

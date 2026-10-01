@@ -29,7 +29,7 @@
 .editorial-media--portrait img { aspect-ratio: 9 / 11; }
 .editorial-media figcaption { display: flex; justify-content: space-between; gap: 1rem; padding-top: .75rem; font-size: .7rem; line-height: 1.4; color: var(--color-muted); }
 .editorial-media figcaption span { flex-shrink: 0; }
-.editorial-link { display: inline-flex; align-items: baseline; gap: 1em; width: fit-content; max-width: 100%; padding-block: .4em; border: 0; border-bottom: 1px solid currentColor; background: none; text-align: left; }
+.editorial-link { display: inline-flex; align-items: baseline; gap: 1em; width: fit-content; max-width: 100%; min-height: 1.5rem; padding-block: .4em; border: 0; border-bottom: 1px solid currentColor; background: none; text-align: left; }
 .editorial-link > span { flex-shrink: 0; transition: transform var(--duration-ui) var(--ease-out); }
 .editorial-link:hover > span { transform: translateX(.2em); }
 .interior-band { margin-inline: calc(-1 * var(--page-gutter)); padding: var(--interior-space) var(--page-gutter); background: var(--color-dark); color: var(--color-paper); --interior-rule: var(--color-muted); }
