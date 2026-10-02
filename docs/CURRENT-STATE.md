@@ -31,6 +31,30 @@ Trabajo posterior a `3c-pass`, en la misma rama. Verificación (02-10-2026): typ
 - **Frontend:** `Select` y `SuggestInput` propios (`select.css`), `useProgressiveList` (catálogo por tandas con foco al primer nuevo), `useFeaturedRotation` (el destacado rota cada 10 s solo con la sección visible, sin hover/foco ni reduced-motion, tras decodificar la siguiente portada). Ajustes en filtros, tarjetas, editor y listado del Admin, preloader, CTA y Services.
 - **Pendiente:** decidir si esta ronda merece tag propio.
 
+### Backend hardening — 02-10-2026 (rama `backend-hardening`, sin tag)
+
+Plan en `docs/superpowers/plans/2026-10-02-backend-hardening.md`. Sin migraciones, sin paquetes nuevos y sin cambios de contrato para el frontend (solo dos códigos en `adminCopy.ts`).
+
+- **Enums solo por nombre declarado:** `"7"`, `"6"` o `"Sold, ComingSoon"` → 400; `ChangeStatus` rechaza estados no definidos.
+- **Imágenes:** lectura acotada a 20 MiB en memoria (arregla el stream no seekable de S3); dimensiones comprobadas con `Identify` antes de decodificar; EXIF/IPTC/XMP eliminados tras auto-orientar. El fallo del worker nunca pisa una imagen borrada ni un job cancelado; una imagen borrada o inexistente cierra su job al momento.
+- **Archivado = solo lectura también en la galería:** intent, complete, portada, quitar, reordenar y guardar → 409 `archived`. Imagen pública con `Cache-Control: public,max-age=86400`.
+- **Guardado del editor:** publica solo las fotos en staging que lista `gallery.order` (el resto sigue en staging); retirar va antes de validar (Draft + precio 0 en un guardado funciona); reordenar puede omitir fotos en staging.
+- **Texto y precio:** caracteres de control rechazados en todos los textos de vehículo y consulta (`invalid_text`); precio con 2 decimales como máximo (`invalid_precision`).
+- **Slugs URL-safe:** minúsculas, sin diacríticos, `[a-z0-9-]`, fallback `vehicle` (`SlugGenerator.cs`).
+- **Verificación (02-10-2026):** build 0 warnings; 104/104 unitarios; 63/63 de integración; typecheck, lint y build del frontend OK. Datos de desarrollo: 0 filas con estado desconocido o slug no URL-safe. QA del Admin en navegador a 1440 y 390: subir, guardar, descartar, portada, archivar y recuperar (las acciones de galería de un archivado muestran «El vehículo está archivado y ya no admite cambios.»), carácter de control y precio con tres decimales (el Admin lo frena antes de enviar; el API responde `invalid_precision`).
+
+**Deuda abierta del backend:**
+
+- **Concurrencia:** `complete` puede crear dos jobs; publicar mientras se borra la portada; superar las 30 fotos con intents simultáneos.
+- **S3:** la URL firmada no limita el tamaño (el worker ya rechaza más de 20 MiB, pero el objeto se queda en el bucket); no hay limpieza de huérfanos, de intents abandonados (bloquean cupo) ni de registros de idempotencia.
+- **Sesiones:** no se revocan al cambiar contraseña o email; claves de Data Protection sin persistencia definida (**decidirlo antes del despliegue**).
+- **Login:** sin límite agregado entre IP; un hash de contraseña mal formado solo falla al hacer login.
+- **Listados sin paginar:** el catálogo se trunca a 100.
+- **Índices:** faltan `Images(VehicleUnitId)` completo e `Images(OriginalKey)`.
+- **Jobs:** la recuperación de jobs caducados consume intentos; el outbox puede reenviar un aviso; la cancelación del futuro proveedor de email.
+- **Estados:** Available → Sold con `showWhenSold` + precio 0 en el mismo guardado sigue dando `price_zero`.
+- **Otros:** objeto ausente → 500 en vez de 404; equipamiento con validación cuadrática; aviso ICC de ImageSharp 3.1.11 sin CVE; SSH.NET solo en los tests.
+
 ### UI Simplification Pass — aprobado expresamente por el usuario
 
 Forma parte de 3C por decisión del usuario; no es una ampliación accidental de alcance.
