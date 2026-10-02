@@ -23,13 +23,13 @@ Rama `feat/3c-visual-asset-polish`. Commits 3C.1–3C.4 más un commit de cierre
 
 ### Post-3C: Admin, catálogo y destacado (02-10-2026, sin tag)
 
-Trabajo posterior a `3c-pass`, en la misma rama. Verificado: typecheck, lint y build del frontend OK; backend con 0 warnings y 84/84 unitarios. **Los de integración no se pudieron ejecutar completos** (Docker/Testcontainers apagado: 26 fallos de entorno, 27 OK); hay que repetirlos con Docker antes de 3D. Sin QA en navegador de esta ronda.
+Trabajo posterior a `3c-pass`, en la misma rama. Verificación (02-10-2026): typecheck, lint y build del frontend OK; backend con 0 warnings y 84/84 unitarios. Una ejecución de integración con Docker apagado dio 26 fallos de entorno (Testcontainers) y 27 OK. La verificación completa (integración y navegador) se hizo el 01-10-2026 según el usuario; no hay resultados detallados registrados aquí.
 
 - **Vendidos visibles (`ShowWhenSold`, migración `AddShowWhenSold`):** `POST …/status` acepta `showWhenSold`; un `Sold` marcado aparece en el catálogo al final de la lista y exige portada, no precio.
 - **Archivar y recuperar:** `POST …/restore` devuelve un archivado como `Draft`; archivado = solo lectura (409 `archived`). Nuevo `RestoreVehicleButton` en el Admin.
 - **Fotos en staging (`IsStaged`, migración `AddStagedImages`):** las subidas del editor no son públicas ni portada hasta guardar; un único guardado del editor publica, quita y ordena. `CoverPersistence.cs` guarda el cambio de portada en dos pasos por el índice único. Portada = primera foto Ready.
 - **Frontend:** `Select` y `SuggestInput` propios (`select.css`), `useProgressiveList` (catálogo por tandas con foco al primer nuevo), `useFeaturedRotation` (el destacado rota cada 10 s solo con la sección visible, sin hover/foco ni reduced-motion, tras decodificar la siguiente portada). Ajustes en filtros, tarjetas, editor y listado del Admin, preloader, CTA y Services.
-- **Pendiente:** integración con Docker, QA en navegador (Admin, catálogo, destacado a 1920/1440/390) y decidir si esta ronda merece tag propio.
+- **Pendiente:** decidir si esta ronda merece tag propio.
 
 ### UI Simplification Pass — aprobado expresamente por el usuario
 
