@@ -26,7 +26,21 @@ public sealed class ImageProcessingWorker(IServiceScopeFactory scopes, IObjectSt
          var job=await db.ImageJobs.SingleAsync(x=>x.Id==candidate,ct);
         var image = await db.Images.FirstOrDefaultAsync(x => x.Id == job.ImageId, ct); if (image is null || image.State == ImageState.Deleted) { job.Complete(); await db.SaveChangesAsync(ct); return; }
         try {
-             image.StartProcessing(); await db.SaveChangesAsync(ct);
+            // Claim the image with a conditional update: the admin can remove it after it was loaded,
+            // and saving the tracked entity would bring it back as Processing.
+            var started = await db.Images.Where(x => x.Id == image.Id && (x.State == ImageState.PendingUpload || x.State == ImageState.Failed))
+                .ExecuteUpdateAsync(u => u.SetProperty(x => x.State, ImageState.Processing).SetProperty(x => x.FailureReason, (string?)null), ct);
+            if (started == 0)
+            {
+                // A run that died mid-way leaves the image Processing: fail it so the job retries it.
+                if (await db.Images.AnyAsync(x => x.Id == image.Id && x.State == ImageState.Processing, ct))
+                    throw new InvalidOperationException("Image was left processing by an interrupted run");
+                // Removed or already finished meanwhile: nothing left to do.
+                await db.ImageJobs.Where(x => x.Id == job.Id && x.State == ImageJobState.Processing).ExecuteUpdateAsync(u => u
+                    .SetProperty(x => x.State, ImageJobState.Complete).SetProperty(x => x.ClaimedAt, (DateTimeOffset?)null)
+                    .SetProperty(x => x.Error, (string?)null), ct);
+                return;
+            }
             await using var original = await storage.OpenReadAsync(image.OriginalKey, ct);
             await using var input = await ImagePipeline.ReadBoundedAsync(original, ImagePipeline.MaxUploadBytes, ct);
             using var source = await ImagePipeline.DecodeAsync(input, image.MimeType, ct);

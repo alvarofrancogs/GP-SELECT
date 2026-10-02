@@ -2,7 +2,10 @@ using System.Buffers.Binary;
 using System.Text;
 using GpSelect.Infrastructure;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Metadata;
 using SixLabors.ImageSharp.Metadata.Profiles.Exif;
+using SixLabors.ImageSharp.Metadata.Profiles.Iptc;
+using SixLabors.ImageSharp.Metadata.Profiles.Xmp;
 using SixLabors.ImageSharp.PixelFormats;
 using Xunit;
 
@@ -55,21 +58,38 @@ public class ImagePipelineTests
         original.Metadata.ExifProfile.SetValue(ExifTag.Orientation, (ushort)6);
         original.Metadata.ExifProfile.SetValue(ExifTag.GPSLatitude,
             new Rational[] { new(40u, 1u), new(25u, 1u), new(0u, 1u) });
+        original.Metadata.IptcProfile = new IptcProfile();
+        original.Metadata.IptcProfile.SetValue(IptcTag.Caption, "Private caption");
+        original.Metadata.XmpProfile = new XmpProfile(Encoding.UTF8.GetBytes(
+            "<?xpacket begin=\"\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?><x:xmpmeta xmlns:x=\"adobe:ns:meta/\"></x:xmpmeta><?xpacket end=\"w\"?>"));
         using var input = new MemoryStream();
         await original.SaveAsJpegAsync(input);
+        input.Position = 0;
+        var seeded = Image.Identify(input).Metadata;
+        Assert.True(seeded.ExifProfile!.TryGetValue(ExifTag.GPSLatitude, out _));
+        Assert.NotNull(seeded.IptcProfile);
+        Assert.NotNull(seeded.XmpProfile);
         input.Position = 0;
 
         using var decoded = await ImagePipeline.DecodeAsync(input, "image/jpeg", CancellationToken.None);
 
         Assert.Equal(20, decoded.Width);
         Assert.Equal(40, decoded.Height);
-        Assert.Null(decoded.Metadata.ExifProfile);
+        AssertNoMetadata(decoded.Metadata);
         var rendered = await ImagePipeline.RenderAsync(decoded, CancellationToken.None);
         using var card = rendered.Card;
         using var detail = rendered.Detail;
         Assert.Equal(0L, card.Position);
         Assert.Equal(0L, detail.Position);
-        Assert.Null(Image.Identify(card).Metadata.ExifProfile);
+        AssertNoMetadata(Image.Identify(card).Metadata);
+        AssertNoMetadata(Image.Identify(detail).Metadata);
+    }
+
+    private static void AssertNoMetadata(ImageMetadata metadata)
+    {
+        Assert.Null(metadata.ExifProfile);
+        Assert.Null(metadata.IptcProfile);
+        Assert.Null(metadata.XmpProfile);
     }
 
     [Fact]

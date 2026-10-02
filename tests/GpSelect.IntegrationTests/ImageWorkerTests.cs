@@ -52,6 +52,73 @@ public sealed class ImageWorkerTests(ApiFactory api) : IClassFixture<ApiFactory>
         await AssertProcessingFailureAsync(reason, reason[..500]);
     }
 
+    [Fact]
+    public async Task Worker_completes_the_job_of_an_image_it_can_no_longer_claim()
+    {
+        // The claim only takes a PendingUpload or Failed image; a Ready one stands in for an image the admin
+        // removed after the worker loaded it, which cannot be timed from a test.
+        Guid imageId, jobId;
+        using (var scope = api.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
+            var (image, job) = await SeedQueuedAsync(db, x => x.Ready("card.jpg", "detail.jpg"));
+            (imageId, jobId) = (image.Id, job.Id);
+        }
+
+        var savedJob = await WaitForJobAsync(jobId, x => x.State == ImageJobState.Complete);
+
+        using var readScope = api.Services.CreateScope();
+        var savedImage = await readScope.ServiceProvider.GetRequiredService<GpSelectDbContext>().Images.SingleAsync(x => x.Id == imageId);
+        Assert.Equal(ImageState.Ready, savedImage.State);
+        Assert.Equal("card.jpg", savedImage.CardKey);
+        Assert.Null(savedJob.Error);
+    }
+
+    [Fact]
+    public async Task Worker_fails_an_image_left_processing_so_its_job_retries_it()
+    {
+        Guid imageId, jobId;
+        using (var scope = api.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
+            var (image, job) = await SeedQueuedAsync(db, x => x.StartProcessing());
+            (imageId, jobId) = (image.Id, job.Id);
+        }
+
+        var savedJob = await WaitForJobAsync(jobId, x => x.Error is not null);
+
+        using var readScope = api.Services.CreateScope();
+        var savedImage = await readScope.ServiceProvider.GetRequiredService<GpSelectDbContext>().Images.SingleAsync(x => x.Id == imageId);
+        Assert.Equal(ImageState.Failed, savedImage.State);
+        Assert.Equal(ImageJobState.Queued, savedJob.State);
+    }
+
+    private async Task<ImageProcessingJob> WaitForJobAsync(Guid jobId, Func<ImageProcessingJob, bool> done)
+    {
+        for (var i = 0; i < 120; i++)
+        {
+            using var scope = api.Services.CreateScope();
+            var job = await scope.ServiceProvider.GetRequiredService<GpSelectDbContext>().ImageJobs.SingleAsync(x => x.Id == jobId);
+            if (done(job))
+                return job;
+            await Task.Delay(250);
+        }
+        throw new TimeoutException("The worker did not reach the expected job state");
+    }
+
+    private static async Task<(VehicleImage Image, ImageProcessingJob Job)> SeedQueuedAsync(GpSelectDbContext db, Action<VehicleImage> state)
+    {
+        var vehicle = VehicleUnit.Create("BMW", "M4", 2024, 1, $"worker-test-{Guid.NewGuid():N}");
+        var image = VehicleImage.Create(vehicle.Id, $"vehicles/{vehicle.Id}/original.jpg", "image/jpeg", 100);
+        state(image);
+        var job = ImageProcessingJob.Create(image.Id);
+        db.Vehicles.Add(vehicle);
+        db.Images.Add(image);
+        db.ImageJobs.Add(job);
+        await db.SaveChangesAsync();
+        return (image, job);
+    }
+
     private async Task AssertProcessingFailureAsync(string reason, string expectedImageReason)
     {
         using var scope = api.Services.CreateScope();

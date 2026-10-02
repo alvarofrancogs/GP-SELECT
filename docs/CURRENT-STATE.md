@@ -36,7 +36,7 @@ Trabajo posterior a `3c-pass`, en la misma rama. Verificación (02-10-2026): typ
 Plan en `docs/superpowers/plans/2026-10-02-backend-hardening.md`. Sin migraciones, sin paquetes nuevos y sin cambios de contrato para el frontend (solo dos códigos en `adminCopy.ts`).
 
 - **Enums solo por nombre declarado:** `"7"`, `"6"` o `"Sold, ComingSoon"` → 400; `ChangeStatus` rechaza estados no definidos.
-- **Imágenes:** lectura acotada a 20 MiB en memoria (arregla el stream no seekable de S3); dimensiones comprobadas con `Identify` antes de decodificar; EXIF/IPTC/XMP eliminados tras auto-orientar. El fallo del worker nunca pisa una imagen borrada ni un job cancelado; una imagen borrada o inexistente cierra su job al momento.
+- **Imágenes:** lectura acotada a 20 MiB en memoria (arregla el stream no seekable de S3); dimensiones comprobadas con `Identify` antes de decodificar; EXIF/IPTC/XMP eliminados tras auto-orientar. El worker nunca pisa una imagen borrada (ni al reclamarla, ni al terminar, ni al fallar) ni un job cancelado; una imagen borrada o inexistente cierra su job al momento.
 - **Archivado = solo lectura también en la galería:** intent, complete, portada, quitar, reordenar y guardar → 409 `archived`. Imagen pública con `Cache-Control: public,max-age=86400`.
 - **Guardado del editor:** publica solo las fotos en staging que lista `gallery.order` (el resto sigue en staging); retirar va antes de validar (Draft + precio 0 en un guardado funciona); reordenar puede omitir fotos en staging.
 - **Texto y precio:** caracteres de control rechazados en todos los textos de vehículo y consulta (`invalid_text`); precio con 2 decimales como máximo (`invalid_precision`).
@@ -53,6 +53,11 @@ Plan en `docs/superpowers/plans/2026-10-02-backend-hardening.md`. Sin migracione
 - **Índices:** faltan `Images(VehicleUnitId)` completo e `Images(OriginalKey)`.
 - **Jobs:** la recuperación de jobs caducados consume intentos; el outbox puede reenviar un aviso; la cancelación del futuro proveedor de email.
 - **Estados:** Available → Sold con `showWhenSold` + precio 0 en el mismo guardado sigue dando `price_zero`.
+- **Imágenes:** las fotos pequeñas se amplían al generar `detail` (ResizeMode.Max: 1600×1000 → 2400×1500); valorar no ampliar.
+- **Memoria:** el peor caso por job ronda 0,7 GB (40 MP, PNG de 16 bits); dar ~1 GB al contenedor o usar `DecoderOptions.TargetSize`.
+- **Validación:** los 400 de cuerpo inválido incluyen un error espurio `"r"` del model binding (no tocar `SuppressImplicitRequiredAttribute…`, que quitaría los [Required] implícitos).
+- **Admin:** se puede archivar con una subida en curso; la foto queda pendiente y bloquea Guardar hasta Descartar tras recuperar. Deshabilitar archivar mientras hay subida/cambios.
+- **Slugs:** ß, ø, æ, ł, đ se pierden («Straße» → `stra-e`).
 - **Otros:** objeto ausente → 500 en vez de 404; equipamiento con validación cuadrática; aviso ICC de ImageSharp 3.1.11 sin CVE; SSH.NET solo en los tests.
 
 ### UI Simplification Pass — aprobado expresamente por el usuario

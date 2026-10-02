@@ -400,6 +400,28 @@ public class VehicleContractTests
         Assert.True(b.IsCover);
         Assert.True(staged.SortOrder > a.SortOrder);
         Assert.Equal("invalid_order", Fails(() => VehicleGallery.Reorder(images, [a.Id])).Code);
+        Assert.Equal("invalid_order", Fails(() => VehicleGallery.Reorder(images, [a.Id, b.Id, a.Id])).Code);
+        Assert.Equal("invalid_order", Fails(() => VehicleGallery.Reorder(images, [a.Id, b.Id, Guid.NewGuid()])).Code);
+        var removed = ReadyImage(v, 3);
+        removed.Delete();
+        images.Add(removed);
+        Assert.Equal("invalid_order", Fails(() => VehicleGallery.Reorder(images, [a.Id, b.Id, removed.Id])).Code);
+    }
+
+    [Fact]
+    public void Staged_images_left_out_of_the_order_keep_their_relative_order_after_it()
+    {
+        var v = NewVehicle();
+        var a = ReadyImage(v, 0, cover: true);
+        var b = ReadyImage(v, 1);
+        var late = VehicleImage.Create(v.Id, "late.jpg", "image/jpeg", 10, staged: true);
+        late.Order(2);
+        var early = VehicleImage.Create(v.Id, "early.jpg", "image/jpeg", 10, staged: true);
+        early.Order(0);
+        var images = new List<VehicleImage> { a, b, late, early };
+        VehicleGallery.Reorder(images, [b.Id, a.Id]);
+        Assert.True(early.SortOrder > a.SortOrder && early.SortOrder > b.SortOrder);
+        Assert.True(late.SortOrder > early.SortOrder);
     }
 
     [Fact]

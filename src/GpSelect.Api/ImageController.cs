@@ -265,7 +265,7 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
         return NoContent();
     }
 
-    /// <summary>New order for every active image; the first ready image becomes the cover.</summary>
+    /// <summary>New order for every saved active image; staged images left out go after the listed ones. The first ready image becomes the cover.</summary>
     [HttpPost("reorder")]
     public async Task<IActionResult> Reorder(Guid vehicleId, [FromBody] ReorderRequest request)
     {
