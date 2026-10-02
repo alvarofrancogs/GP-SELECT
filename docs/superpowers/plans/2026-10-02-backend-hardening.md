@@ -271,3 +271,44 @@ Hoy `Save` publica **todas** las fotos en staging (las de otra pestaña incluida
   - **Jobs:** la recuperación de jobs caducados consume intentos; el outbox puede reenviar un aviso; la cancelación del futuro proveedor de email.
   - **Otros:** objeto ausente → 500 en vez de 404; equipamiento con validación cuadrática; aviso ICC de ImageSharp 3.1.11 sin CVE; SSH.NET solo en los tests.
 - [ ] **Step 5: Commit.** `git commit -m "docs: record backend hardening and remaining backend debt"`
+
+---
+
+## Estado (02-10-2026)
+
+Tasks 1–9 hechas y revisadas, más una ronda final de la revisión de rama. Verificado: compilación sin advertencias, 105/105 unitarios, 65/65 de integración, typecheck y lint del frontend OK, QA del Admin a 1440 y 390.
+
+## Pendientes (no corregidos en este plan)
+
+**Seguridad — antes de desplegar**
+- [ ] **Claves de Data Protection:** definir dónde persisten. Sin eso, cada despliegue invalida las sesiones, y con varias instancias se rechazan unas a otras.
+- [ ] **Sesiones:** revocarlas al cambiar la contraseña o el email del admin.
+- [ ] **Login:** límite agregado entre IP (hoy es solo por IP, así que muchas IP pueden probar contra la única cuenta).
+- [ ] **Hash de contraseña:** validarlo al arrancar; uno mal formado solo falla al hacer login.
+- [ ] **URL firmada de S3:** no limita el tamaño. El worker rechaza más de 20 MiB, pero el objeto se queda en el bucket.
+- [ ] **Prueba de humo contra el S3 real:** subida, procesado y borrado. Los tests usan almacenamiento en archivos.
+
+**Concurrencia y jobs**
+- [ ] `complete` puede crear dos jobs para la misma foto.
+- [ ] Publicar mientras se borra la portada puede dejar un vehículo listado sin fotos.
+- [ ] Subidas simultáneas pueden superar las 30 fotos.
+- [ ] La recuperación de jobs caducados consume intentos.
+- [ ] Un job recién cancelado puede acabar como `Complete` (las dos son finales; nada se pierde).
+- [ ] Con varias instancias, un proceso de más de 10 minutos puede dejar una imagen en `Failed`.
+- [ ] Outbox de avisos: puede reenviar un aviso; definir cancelación y plazo del futuro proveedor de email.
+
+**Limpieza y datos**
+- [ ] Sin limpieza de huérfanos en S3, de subidas abandonadas (bloquean cupo) ni de registros de idempotencia.
+- [ ] Faltan índices `Images(VehicleUnitId)` completo e `Images(OriginalKey)`.
+- [ ] Listados sin paginar: el catálogo se trunca a 100.
+- [ ] Objeto ausente en el almacenamiento → 500 en vez de 404.
+
+**Comportamiento y calidad**
+- [ ] Las fotos pequeñas se amplían al generar `detail` (`ResizeMode.Max`).
+- [ ] Los 400 de cuerpo inválido incluyen un error espurio `"r"` del model binding.
+- [ ] Admin: se puede archivar con una subida en curso; deshabilitar archivar mientras haya subida o cambios.
+- [ ] Available → Sold con `showWhenSold` y precio 0 en el mismo guardado sigue dando `price_zero`.
+- [ ] Slugs: ß, ø, æ, ł y đ se pierden («Straße» → `stra-e`).
+- [ ] Memoria: el peor caso por job ronda 0,7 GB; dar ~1 GB al contenedor o usar `DecoderOptions.TargetSize`.
+- [ ] Equipamiento validado con un recorrido cuadrático.
+- [ ] Aviso ICC de ImageSharp 3.1.11 (sin CVE); SSH.NET vulnerable solo en el proyecto de tests (transitivo de Testcontainers).
