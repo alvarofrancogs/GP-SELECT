@@ -290,6 +290,47 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Equal("powerHp", range.GetProperty("field").GetString());
     }
 
+    private HttpRequestMessage Intent(Guid vehicleId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/admin/vehicles/{vehicleId}/images/intent") { Content = JsonContent.Create(new { mimeType = "image/png", sizeBytes = 100 }) };
+        request.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
+        return request;
+    }
+
+    [Fact]
+    public async Task Archived_vehicle_gallery_is_read_only_and_public_images_cache_for_a_day()
+    {
+        var (id, _) = await CreateVehicle();
+        var photo = await UploadImage(id);
+        var pending = (await Json(await admin.SendAsync(Intent(id)))).GetProperty("imageId").GetGuid();
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/admin/vehicles/{id}/archive", null)).StatusCode);
+
+        async Task AssertArchived(HttpResponseMessage response) =>
+            Assert.Equal("archived", (await Problem(response, HttpStatusCode.Conflict)).GetProperty("code").GetString());
+
+        await AssertArchived(await admin.SendAsync(Intent(id)));
+        var complete = new HttpRequestMessage(HttpMethod.Post, $"/api/admin/vehicles/{id}/images/{pending}/complete");
+        complete.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
+        await AssertArchived(await admin.SendAsync(complete));
+        await AssertArchived(await admin.PostAsync($"/api/admin/vehicles/{id}/images/{photo}/cover", null));
+        await AssertArchived(await admin.PostAsync($"/api/admin/vehicles/{id}/images/{photo}/remove", null));
+        await AssertArchived(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/images/reorder", new { imageIds = new[] { photo } }));
+        await AssertArchived(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/save", new { gallery = new { removed = new[] { photo } } }));
+
+        await Json(await admin.PostAsync($"/api/admin/vehicles/{id}/restore", null));
+        await Json(await admin.SendAsync(Intent(id)));
+
+        var (publicId, slug) = await CreateVehicle();
+        await Json(await Patch(publicId, new { priceEur = 86900 }));
+        await UploadImage(publicId);
+        await Json(await SetStatus(publicId, "Available"));
+        using var visitor = api.Anonymous();
+        var url = (await Json(await visitor.GetAsync($"/api/public/vehicles/{slug}"))).GetProperty("images")[0].GetString();
+        var image = await visitor.GetAsync(url);
+        Assert.Equal(HttpStatusCode.OK, image.StatusCode);
+        Assert.Equal(TimeSpan.FromDays(1), image.Headers.CacheControl!.MaxAge);
+    }
+
     [Fact]
     public async Task Status_cover_and_public_visibility_follow_the_rules()
     {

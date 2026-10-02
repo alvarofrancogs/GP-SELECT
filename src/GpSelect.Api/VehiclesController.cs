@@ -64,6 +64,7 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
         var removed = new List<VehicleImage>();
         try
         {
+            VehicleGallery.EnsureEditable(v);
             if (r.Changes is not null) v.Apply(r.Changes);
             // Leaving the catalogue goes first, so a vehicle being withdrawn can lose its last photo in the same save;
             // entering it goes last, once the photos it needs are in place.

@@ -180,6 +180,13 @@ public sealed class VehicleImage
 /// Staged images (uploaded but not saved) take part in the order but never in the cover.</summary>
 public static class VehicleGallery
 {
+    /// <summary>An archived vehicle keeps its photos as they are; restore it first to change them.</summary>
+    public static void EnsureEditable(VehicleUnit vehicle)
+    {
+        if (vehicle.Status == VehicleStatus.Archived)
+            throw new DomainException("archived", "Restore the vehicle before changing its photos");
+    }
+
     public static IEnumerable<VehicleImage> InPublicOrder(IEnumerable<VehicleImage> images) =>
         images.OrderByDescending(x => x.IsCover).ThenBy(x => x.SortOrder).ThenBy(x => x.Id);
 

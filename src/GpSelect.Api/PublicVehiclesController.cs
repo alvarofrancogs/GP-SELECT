@@ -50,7 +50,7 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
         var image = await db.Images.AsNoTracking().SingleOrDefaultAsync(x => x.Id == imageId && x.VehicleUnitId == vehicle && x.State == ImageState.Ready && !x.IsStaged);
         var key = detail ? image?.DetailKey : image?.CardKey;
         if (key is null) return NotFound();
-        Response.Headers.CacheControl = "public,max-age=31536000,immutable";
+        Response.Headers.CacheControl = "public,max-age=86400";
         return File(await storage.OpenReadAsync(key, HttpContext.RequestAborted), "image/jpeg");
     }
 }

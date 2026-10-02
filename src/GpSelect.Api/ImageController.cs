@@ -33,6 +33,23 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
             : Problem(statusCode: 409, title: "Idempotency key was already used with a different payload", detail: "Use a new Idempotency-Key.");
     }
 
+    /// <summary>Null when the vehicle's photos can change; otherwise the response to send (404, or 409 archived).</summary>
+    async Task<IActionResult?> RefuseUnlessEditable(Guid vehicleId)
+    {
+        var vehicle = await db.Vehicles.AsNoTracking().SingleOrDefaultAsync(x => x.Id == vehicleId);
+        if (vehicle is null)
+            return NotFound();
+        try
+        {
+            VehicleGallery.EnsureEditable(vehicle);
+        }
+        catch (DomainException e)
+        {
+            return DomainProblems.Create(this, e);
+        }
+        return null;
+    }
+
     [HttpPost("intent")]
     public async Task<IActionResult> Intent(Guid vehicleId, ImageIntentRequest request)
     {
@@ -40,8 +57,9 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
             return Problem(statusCode: 415, title: "Unsupported image format");
         if (request.SizeBytes is < 1 or > ImagePipeline.MaxUploadBytes)
             return Problem(statusCode: 413, title: "Image exceeds 20 MiB limit");
-        if (!await db.Vehicles.AnyAsync(x => x.Id == vehicleId))
-            return NotFound();
+        var refusal = await RefuseUnlessEditable(vehicleId);
+        if (refusal is not null)
+            return refusal;
         var key = Key();
         if (string.IsNullOrWhiteSpace(key) || key.Length > 200)
             return Problem(statusCode: 400, title: "Idempotency-Key is required");
@@ -115,6 +133,9 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
     [HttpPost("{imageId:guid}/complete")]
     public async Task<IActionResult> Complete(Guid vehicleId, Guid imageId)
     {
+        var refusal = await RefuseUnlessEditable(vehicleId);
+        if (refusal is not null)
+            return refusal;
         var key = Key();
         if (string.IsNullOrWhiteSpace(key) || key.Length > 200)
             return Problem(statusCode: 400, title: "Idempotency-Key is required");
@@ -186,6 +207,9 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
     [HttpPost("{imageId:guid}/cover")]
     public async Task<IActionResult> Cover(Guid vehicleId, Guid imageId)
     {
+        var refusal = await RefuseUnlessEditable(vehicleId);
+        if (refusal is not null)
+            return refusal;
         await using var tx = await db.Database.BeginTransactionAsync();
         var active = await db.Images.Where(x => x.VehicleUnitId == vehicleId && x.State != ImageState.Deleted).ToListAsync();
         var x = active.FirstOrDefault(x => x.Id == imageId);
@@ -203,6 +227,9 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
     [HttpPost("{imageId:guid}/remove")]
     public async Task<IActionResult> Remove(Guid vehicleId, Guid imageId)
     {
+        var refusal = await RefuseUnlessEditable(vehicleId);
+        if (refusal is not null)
+            return refusal;
         await using var tx = await db.Database.BeginTransactionAsync();
         var vehicle = await db.Vehicles.FindAsync(vehicleId);
         if (vehicle is null)
@@ -245,6 +272,9 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
         var ids = request.ImageIds;
         if (ids.Count > 30 || ids.Distinct().Count() != ids.Count)
             return Problem(statusCode: 400, title: "Invalid image order");
+        var refusal = await RefuseUnlessEditable(vehicleId);
+        if (refusal is not null)
+            return refusal;
         await using var tx = await db.Database.BeginTransactionAsync();
         var images = await db.Images.Where(x => x.VehicleUnitId == vehicleId && x.State != ImageState.Deleted).ToListAsync();
         VehicleImage? cover;
