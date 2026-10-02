@@ -24,7 +24,7 @@ public sealed class ImageProcessingWorker(IServiceScopeFactory scopes, IObjectSt
           var claimedAt = DateTimeOffset.UtcNow; var claimed=await db.ImageJobs.Where(x=>x.Id==candidate&&x.State==ImageJobState.Queued&&x.NextAttemptAt<=DateTimeOffset.UtcNow).ExecuteUpdateAsync(s=>s.SetProperty(x=>x.State,ImageJobState.Processing).SetProperty(x=>x.Attempts,x=>x.Attempts+1).SetProperty(x=>x.ClaimedAt,claimedAt),ct);
          if(claimed==0)return;
          var job=await db.ImageJobs.SingleAsync(x=>x.Id==candidate,ct);
-        var image = await db.Images.FirstOrDefaultAsync(x => x.Id == job.ImageId, ct); if (image is null) { job.Complete(); await db.SaveChangesAsync(ct); return; }
+        var image = await db.Images.FirstOrDefaultAsync(x => x.Id == job.ImageId, ct); if (image is null || image.State == ImageState.Deleted) { job.Complete(); await db.SaveChangesAsync(ct); return; }
         try {
              image.StartProcessing(); await db.SaveChangesAsync(ct);
             await using var original = await storage.OpenReadAsync(image.OriginalKey, ct);
@@ -54,7 +54,24 @@ public sealed class ImageProcessingWorker(IServiceScopeFactory scopes, IObjectSt
             var siblings = await db.Images.Where(x => x.VehicleUnitId == image.VehicleUnitId && x.State != ImageState.Deleted).ToListAsync(ct);
             await db.SaveGalleryAsync(VehicleGallery.EnsureCover(siblings), ct);
             await tx.CommitAsync(ct);
-         } catch (Exception ex) { logger.LogError(ex, "Image processing failed for {ImageId}", image.Id); image.Fail(ex.Message[..Math.Min(500, ex.Message.Length)]); job.Retry(ex.Message); await db.SaveChangesAsync(ct); }
+         } catch (Exception ex) { logger.LogError(ex, "Image processing failed for {ImageId}", image.Id); await FailAsync(db, image.Id, job.Id, ex.Message, ct); }
+    }
+
+    public static async Task FailAsync(GpSelectDbContext db, Guid imageId, Guid jobId, string reason, CancellationToken ct)
+    {
+        db.ChangeTracker.Clear();
+        var failureReason = reason[..Math.Min(500, reason.Length)];
+        await db.Images.Where(x => x.Id == imageId && x.State == ImageState.Processing)
+            .ExecuteUpdateAsync(u => u
+                .SetProperty(x => x.State, ImageState.Failed)
+                .SetProperty(x => x.FailureReason, failureReason), ct);
+
+        var job = await db.ImageJobs.FirstOrDefaultAsync(x => x.Id == jobId, ct);
+        if (job is not null && job.State == ImageJobState.Processing)
+        {
+            job.Retry(reason);
+            await db.SaveChangesAsync(ct);
+        }
     }
 }
 
