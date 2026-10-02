@@ -106,8 +106,10 @@ export function ServicesSection() {
                       <span className="service-toggle__icon" aria-hidden="true">{expanded ? '−' : '+'}</span>
                     </button>
                   </h3>
-                  <div id={panelId} className="service-answer" role="region" aria-labelledby={buttonId} hidden={!expanded}>
-                    <p>{item.description}</p>
+                  {/* Always rendered so it can unfold; `inert` keeps a closed answer out of focus and assistive tech. */}
+                  <div id={panelId} className="service-answer" role="region" aria-labelledby={buttonId}
+                    data-expanded={expanded || undefined} inert={!expanded}>
+                    <div className="service-answer__inner"><p>{item.description}</p></div>
                   </div>
                 </div>
               );

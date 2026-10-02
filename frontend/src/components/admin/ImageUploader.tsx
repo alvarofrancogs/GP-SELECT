@@ -7,7 +7,6 @@ import { describeError } from '../../lib/adminErrors';
 const MAX_IMAGES = 30;
 const MAX_BYTES = 20 * 1024 * 1024;
 const TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const POLL_MS = 1500;
 
 /** A file on its way to the server. Once the server image is Ready or Failed, the server state takes over. */
 interface Upload {
@@ -27,26 +26,34 @@ interface ImageUploaderProps {
   reload: () => Promise<void>;
   disabled?: boolean;
   onBusyChange: (busy: boolean) => void;
+  /** Local uploads not yet settled on the server: still in flight, or failed and waiting for retry or removal. */
+  onPendingChange: (state: 'none' | 'working' | 'failed') => void;
+  onImageAdded: (image: AdminImage) => void;
+  onOrderChange: (ids: string[]) => void;
+  onRemove: (id: string) => void;
 }
 
-export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChange }: ImageUploaderProps) {
+export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChange, onPendingChange, onImageAdded, onOrderChange, onRemove }: ImageUploaderProps) {
   const text = adminCopy.photos;
   const [uploads, setUploads] = useState<Upload[]>([]);
   const uploadsRef = useRef<Upload[]>([]);
   const running = useRef(false);
+  const mounted = useRef(true);
   const input = useRef<HTMLInputElement>(null);
   const grid = useRef<HTMLOListElement>(null);
   const [focusMove, setFocusMove] = useState<number | null>(null);
   const focusDir = useRef<'earlier' | 'later'>('later');
   const [rejected, setRejected] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [live, setLive] = useState('');
-  const [order, setOrder] = useState<string[] | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [dropActive, setDropActive] = useState(false);
-  const [working, setWorking] = useState(false);
 
-  const commit = useCallback((next: Upload[]) => { uploadsRef.current = next; setUploads(next); }, []);
+  const commit = useCallback((next: Upload[]) => {
+    uploadsRef.current = next;
+    setUploads(next);
+    onBusyChange(next.some((upload) => upload.phase === 'waiting' || upload.phase === 'uploading'));
+    onPendingChange(next.some((upload) => upload.phase === 'failed') ? 'failed' : next.length ? 'working' : 'none');
+  }, [onBusyChange, onPendingChange]);
   const patch = useCallback((key: string, changes: Partial<Upload>) => {
     commit(uploadsRef.current.map((u) => u.key === key ? { ...u, ...changes } : u));
   }, [commit]);
@@ -55,37 +62,29 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
   const pendingLocal = uploads.filter((u) => !u.imageId || !serverIds.has(u.imageId));
   const total = images.length + pendingLocal.filter((u) => u.phase !== 'failed' || u.imageId).length;
   const transferring = uploads.some((u) => u.phase === 'waiting' || u.phase === 'uploading');
-  const processing = images.some((image) => image.state === 'Processing'
-    || (image.state === 'PendingUpload' && uploads.some((u) => u.imageId === image.id && u.phase === 'queued')));
-
-  useEffect(() => { onBusyChange(transferring); }, [transferring, onBusyChange]);
-
-  // Poll the vehicle while the worker processes completed uploads.
-  useEffect(() => {
-    if (!processing) return;
-    const timer = window.setTimeout(() => { void reload(); }, POLL_MS);
-    return () => window.clearTimeout(timer);
-  }, [processing, images, reload]);
-
   // Drop local copies once the server has the final state.
   useEffect(() => {
-    const done = uploadsRef.current.filter((u) => u.phase === 'queued' && u.imageId
-      && (!serverIds.has(u.imageId) || images.some((image) => image.id === u.imageId && (image.state === 'Ready' || image.state === 'Failed'))));
+    const done = uploadsRef.current.filter((u) => (u.phase === 'queued' || u.phase === 'failed') && u.imageId
+      && images.some((image) => image.id === u.imageId && (image.state === 'Ready' || image.state === 'Failed')));
     if (!done.length) return;
     done.forEach((u) => URL.revokeObjectURL(u.preview));
     commit(uploadsRef.current.filter((u) => !done.includes(u)));
     if (!uploadsRef.current.length) setLive(text.announceReady);
-  // serverIds derives from images.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [images, commit, text.announceReady]);
+  }, [images, uploads, commit, text.announceReady]);
 
-  useEffect(() => () => uploadsRef.current.forEach((u) => URL.revokeObjectURL(u.preview)), []);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      uploadsRef.current.forEach((u) => URL.revokeObjectURL(u.preview));
+    };
+  }, []);
 
   const pump = useCallback(async () => {
     if (running.current) return;
     running.current = true;
     try {
-      for (let next = uploadsRef.current.find((u) => u.phase === 'waiting'); next; next = uploadsRef.current.find((u) => u.phase === 'waiting')) {
+      for (let next = uploadsRef.current.find((u) => u.phase === 'waiting'); next && mounted.current; next = uploadsRef.current.find((u) => u.phase === 'waiting')) {
         const upload = next;
         patch(upload.key, { phase: 'uploading', progress: 0, error: null });
         try {
@@ -94,12 +93,15 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
             const intent = await adminApi.imageIntent(vehicleId, upload.file);
             ({ imageId, uploadUrl } = intent);
             patch(upload.key, { imageId, uploadUrl });
+            onImageAdded({ id: imageId, state: 'PendingUpload', cardUrl: null, detailUrl: null,
+              isCover: false, isStaged: true, sortOrder: 0, failureReason: null });
           }
           await uploadImage(uploadUrl, upload.file, (progress) => patch(upload.key, { progress }));
           await adminApi.completeImage(vehicleId, imageId);
           patch(upload.key, { phase: 'queued' });
           setLive(text.announceUploaded(upload.file.name));
-          await reload();
+          // The upload is complete; a failed refresh must not trigger another PUT.
+          await reload().catch(() => { /* Polling retries and reports connection errors. */ });
         } catch (failure) {
           patch(upload.key, { phase: 'failed', error: describeError(failure) });
           setLive(`${upload.file.name}: ${describeError(failure)}`);
@@ -108,9 +110,10 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
     } finally {
       running.current = false;
     }
-  }, [patch, reload, vehicleId, text]);
+  }, [patch, reload, vehicleId, text, onImageAdded]);
 
   function addFiles(files: FileList | File[]) {
+    if (disabled) return;
     const accepted: Upload[] = [];
     const refused: string[] = [];
     let room = MAX_IMAGES - total;
@@ -124,58 +127,40 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
       }
     }
     setRejected(refused);
-    setError(null);
     if (!accepted.length) return;
     commit([...uploadsRef.current, ...accepted]);
     void pump();
   }
 
-  async function run(action: () => Promise<unknown>) {
-    setWorking(true);
-    setError(null);
-    try { await action(); await reload(); } catch (failure) { setError(describeError(failure)); } finally { setWorking(false); }
-  }
-
-  async function discard(upload: Upload) {
-    // An intent without a finished upload leaves a pending image on the server; remove it too.
-    if (upload.imageId) await run(() => adminApi.removeImage(vehicleId, upload.imageId!));
+  function discard(upload: Upload) {
+    if (upload.imageId) onRemove(upload.imageId);
     URL.revokeObjectURL(upload.preview);
     commit(uploadsRef.current.filter((u) => u.key !== upload.key));
   }
 
-  const ordered = order ? order.map((id) => images.find((image) => image.id === id)).filter((image): image is AdminImage => !!image) : images;
-  const canReorder = !disabled && !working && !transferring && ordered.length > 1;
+  const ordered = images;
+  const coverId = ordered.find((image) => image.state === 'Ready')?.id;
+  const canReorder = !disabled && !transferring && ordered.length > 1;
 
-  async function move(from: number, to: number, keepFocus = false) {
-    if (to < 0 || to >= ordered.length || from === to) return;
+  function move(from: number, to: number, keepFocus = false) {
+    if (!canReorder || from < 0 || to < 0 || to >= ordered.length || from === to) return;
     const ids = ordered.map((image) => image.id);
     const [id] = ids.splice(from, 1);
     ids.splice(to, 0, id);
-    setOrder(ids); // Optimistic; reverts if the server refuses.
-    setWorking(true);
-    setError(null);
-    try {
-      await adminApi.reorderImages(vehicleId, ids);
-      await reload();
-      setLive(text.moved(to + 1));
-    } catch {
-      setError(text.reorderFailed);
-    } finally {
-      setOrder(null);
-      setWorking(false);
-      if (keepFocus) { focusDir.current = to > from ? 'later' : 'earlier'; setFocusMove(to); }
-    }
+    onOrderChange(ids);
+    setLive(text.moved(to + 1));
+    if (keepFocus) { focusDir.current = to > from ? 'later' : 'earlier'; setFocusMove(to); }
   }
 
-  // Move buttons are disabled while saving; give keyboard users their place back on the moved photo.
+  // Keep keyboard focus on the moved photo.
   useEffect(() => {
-    if (focusMove === null || working) return;
+    if (focusMove === null) return;
     const buttons = grid.current?.querySelectorAll<HTMLButtonElement>(`[data-move="${focusMove}"]`);
     // Prefer the button that keeps moving the same way; at either end, the other one.
     const enabled = Array.from(buttons ?? []).filter((button) => !button.disabled);
     (enabled.find((button) => button.dataset.dir === focusDir.current) ?? enabled[0])?.focus();
     setFocusMove(null);
-  }, [focusMove, working]);
+  }, [focusMove]);
 
   function onDropZone(event: DragEvent) {
     event.preventDefault();
@@ -203,7 +188,6 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
     </div>}
 
     {rejected.length ? <ul className="admin-photos__messages" role="alert">{rejected.map((line) => <li key={line}>{line}</li>)}</ul> : null}
-    {error ? <p className="admin-notice" role="alert">{error}</p> : null}
     <p className="sr-only" role="status" aria-live="polite">{live}</p>
 
     {ordered.length || pendingLocal.length ? <ol className="admin-photos__grid" ref={grid}>
@@ -231,7 +215,8 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
           </div>
           <div className="admin-photo__line">
             <span className="type-numeric">{index + 1}</span>
-            {image.isCover ? <strong>{text.cover}</strong> : null}
+            {image.id === coverId ? <strong>{text.cover}</strong> : null}
+            {image.isStaged ? <span className="admin-photo__unsaved">{text.unsaved}</span> : null}
             {state ? <span className="admin-photo__state">{state}</span> : null}
             {!disabled && ordered.length > 1 ? <span className="admin-photo__move">
               <button type="button" className="admin-action admin-action--icon" disabled={!canReorder || index === 0}
@@ -242,23 +227,24 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
           </div>
           {image.state === 'Failed' ? <p className="admin-field__hint">{text.failedHint}</p> : null}
           {disabled ? null : <div className="admin-photo__actions">
-            {image.state === 'Ready' && !image.isCover ? <button type="button" className="admin-action" disabled={working}
-              onClick={() => run(() => adminApi.setCover(vehicleId, image.id))}>{text.makeCover}<span className="sr-only">, {label}</span></button> : null}
+            {image.state === 'Ready' && image.id !== coverId ? <button type="button" className="admin-action" disabled={!canReorder}
+              onClick={() => move(index, 0)}>{text.makeCover}<span className="sr-only">, {label}</span></button> : null}
             {local?.phase === 'failed' ? <button type="button" className="admin-action"
               onClick={() => { patch(local.key, { phase: 'waiting', error: null }); void pump(); }}>{text.retry}</button> : null}
-            <button type="button" className="admin-action" disabled={working || local?.phase === 'uploading'}
-              onClick={() => local ? void discard(local) : void run(() => adminApi.removeImage(vehicleId, image.id))}>{text.remove}<span className="sr-only">, {label}</span></button>
+            <button type="button" className="admin-action" disabled={local?.phase === 'uploading' || local?.phase === 'waiting'}
+              onClick={() => local ? discard(local) : onRemove(image.id)}>{text.remove}<span className="sr-only">, {label}</span></button>
           </div>}
         </li>;
       })}
       {pendingLocal.map((upload) => <li key={upload.key} className="admin-photo" data-state={upload.phase}>
         <div className="admin-photo__media"><img src={upload.preview} alt={upload.file.name} /></div>
         <div className="admin-photo__line">
+          <span className="admin-photo__unsaved">{text.unsaved}</span>
           <span className="admin-photo__state">{upload.phase === 'failed' ? text.uploadFailed
             : upload.phase === 'waiting' ? text.queued : text.uploading(Math.round(upload.progress * 100))}</span>
         </div>
         {upload.phase === 'uploading' ? <progress className="admin-photo__progress" max={1} value={upload.progress} aria-label={upload.file.name} /> : null}
-        {upload.phase === 'failed' ? <>
+        {upload.phase === 'failed' && !disabled ? <>
           <p className="admin-field__error">{upload.error}</p>
           <div className="admin-photo__actions">
             <button type="button" className="admin-action" onClick={() => { patch(upload.key, { phase: 'waiting', error: null }); void pump(); }}>{text.retry}</button>

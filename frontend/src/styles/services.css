@@ -32,7 +32,18 @@
 .service-toggle__icon { flex: 0 0 auto; min-width: var(--space-5); font-weight: 300; text-align: center; }
 .service-toggle:hover { color: var(--color-muted); }
 .service-toggle:focus-visible { outline-offset: var(--space-1); }
-.service-answer { padding: 0 var(--space-6) var(--space-5) 0; }
+/* The answer unfolds (0fr -> 1fr) and its text settles in just after; the icon turns with it. */
+.service-answer { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 520ms var(--ease-cinematic); }
+.service-answer[data-expanded] { grid-template-rows: 1fr; }
+.service-answer__inner { min-height: 0; overflow: hidden; }
+.service-answer__inner > p { padding: 0 var(--space-6) var(--space-5) 0; opacity: 0; transform: translateY(-.5rem); filter: blur(4px);
+  transition: opacity 260ms var(--ease-out), transform 420ms var(--ease-cinematic), filter 260ms var(--ease-out); }
+.service-answer[data-expanded] .service-answer__inner > p { opacity: 1; transform: none; filter: none; transition-delay: 120ms; }
+.service-toggle__icon { transition: transform 420ms var(--ease-cinematic); }
+.service-toggle[aria-expanded='true'] .service-toggle__icon { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .service-answer, .service-answer__inner > p, .service-toggle__icon { transition: none; }
+}
 .service-answer p { max-width: 44ch; font: var(--weight-body) var(--text-services-body)/1.5 var(--font-family); color: var(--color-muted); }
 .services-visual { position: relative; overflow: hidden; min-height: 100%; }
 .services-media { position: absolute; inset: -3% 0; }

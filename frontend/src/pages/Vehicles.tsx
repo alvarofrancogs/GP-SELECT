@@ -49,7 +49,7 @@ export function Vehicles() {
     {status === 'ready' && !vehicles.length ? <div className="vehicle-state"><h2 className="type-section">{text.emptyCatalogue}</h2><div className="vehicle-state__links"><Link className="editorial-link type-ui" to={searchUrl}>{text.search}<span aria-hidden="true">→</span></Link></div></div> : null}
     {status === 'ready' && vehicles.length ? <>
       <VehicleFilters vehicles={vehicles} params={clean} count={shown.length} onClear={clear} onChange={change} />
-      {shown.length ? <VehicleGrid vehicles={shown} /> : <div className="vehicle-state">
+      {shown.length ? <VehicleGrid key={clean.toString()} vehicles={shown} /> : <div className="vehicle-state">
         <h2 className="type-section">{text.empty}</h2><div className="vehicle-state__links"><button className="editorial-link type-ui" onClick={clear}>{text.clear}</button><Link className="editorial-link type-ui" to={searchUrl}>{text.search}<span aria-hidden="true">→</span></Link></div>
       </div>}
     </> : null}

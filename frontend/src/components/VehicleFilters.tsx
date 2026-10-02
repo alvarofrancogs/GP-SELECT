@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
+import { Select } from './Select';
 import { availableSorts, getFacets, vehicleFilterKeys } from '../lib/vehicleFacets';
 import type { Band, FacetKey, FacetOption } from '../lib/vehicleFacets';
 import { useLanguage } from '../i18n/useLanguage';
@@ -11,6 +12,7 @@ export function VehicleFilters({ vehicles, params, onChange, count, onClear }: {
   const { copy, locale } = useLanguage();
   const text = copy.vehicles;
   const [open, setOpen] = useState(false);
+  const id = useId();
   const facets = useMemo(() => getFacets(vehicles, params), [vehicles, params]);
   const sorts = useMemo(() => availableSorts(vehicles), [vehicles]);
   const active = vehicleFilterKeys.some((key) => params.has(key));
@@ -28,13 +30,15 @@ export function VehicleFilters({ vehicles, params, onChange, count, onClear }: {
   return <div className="vehicle-filters type-ui">
     <button type="button" className="vehicle-filters__toggle editorial-link" aria-expanded={open} aria-controls="vehicle-filter-fields" onClick={() => setOpen(!open)}>{text.filters}<span aria-hidden="true">{open ? '↑' : '→'}</span></button>
     <div id="vehicle-filter-fields" className={`vehicle-filters__fields${open ? ' is-open' : ''}`}>
-      {facets.filter((facet) => facet.options.length > 1 || params.has(facet.key)).map((facet) => <label className="vehicle-filter" key={facet.key}>
-        <span>{labels[facet.key]}</span><select value={params.get(facet.key) ?? ''} onChange={(e) => onChange(facet.key, e.target.value)}>
-          <option value="">{text.all}</option>
-          {facet.options.map((option) => <option key={option.value} value={option.value}>{optionLabel(facet.key, option)}</option>)}
-        </select>
-      </label>)}
-      <label className="vehicle-filter vehicle-filter--sort"><span>{text.sort}</span><select value={params.get('sort') ?? ''} onChange={(e) => onChange('sort', e.target.value)}>{orders.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+      {facets.filter((facet) => facet.options.length > 1 || params.has(facet.key)).map((facet) => <div className="vehicle-filter" key={facet.key}>
+        <label id={`${id}-${facet.key}`} htmlFor={`${id}-${facet.key}-control`}>{labels[facet.key]}</label>
+        <Select id={`${id}-${facet.key}-control`} labelledBy={`${id}-${facet.key}`} value={params.get(facet.key) ?? ''} onChange={(value) => onChange(facet.key, value)}
+          options={[{ value: '', label: text.all }, ...facet.options.map((option) => ({ value: option.value, label: optionLabel(facet.key, option) }))]} />
+      </div>)}
+      <div className="vehicle-filter vehicle-filter--sort">
+        <label id={`${id}-sort`} htmlFor={`${id}-sort-control`}>{text.sort}</label>
+        <Select id={`${id}-sort-control`} labelledBy={`${id}-sort`} value={params.get('sort') ?? ''} onChange={(value) => onChange('sort', value)} options={orders} />
+      </div>
     </div>
     <div className="vehicle-filters__result"><p className="type-numeric" role="status">{count} {count === 1 ? text.singular : text.plural}</p>{active ? <button type="button" className="editorial-link" onClick={onClear}>{text.clear}</button> : null}</div>
   </div>;

@@ -44,7 +44,8 @@
 .contact-paths legend { margin-bottom: 1.5rem; padding: 0; }
 .contact-path { position: relative; display: grid; grid-template-columns: 1rem minmax(0, 1fr) auto; align-items: baseline; gap: 1.25rem; padding-block: 1.75rem 2rem; border-block: 1px solid var(--interior-rule); cursor: pointer; }
 .contact-path:has(input:checked) { border-top-color: var(--color-ink); border-top-width: 2px; padding-top: calc(1.75rem - 1px); }
-.contact-path input { margin: 0; accent-color: var(--color-ink); }
+.contact-path input { appearance: none; width: 1rem; height: 1rem; margin: 0; border: 1px solid var(--color-ink); border-radius: 50%; background: transparent; cursor: pointer; transform: translateY(.1em); transition: box-shadow var(--duration-ui) var(--ease-out), background-color var(--duration-ui) var(--ease-out); }
+.contact-path input:checked { background: var(--color-ink); box-shadow: inset 0 0 0 3px var(--color-paper); }
 .contact-path > .type-heading { font-size: clamp(1.4rem, 2.05vw, 2.6rem); max-width: 24ch; }
 .contact-path__arrow { font-size: 1.75rem; transition: transform var(--duration-ui) var(--ease-out); }
 .contact-path:has(input:focus-visible) { outline: 2px solid var(--color-ink); outline-offset: 5px; }

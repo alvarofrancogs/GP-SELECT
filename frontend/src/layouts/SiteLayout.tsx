@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
@@ -30,6 +30,35 @@ const BRAND = 'GP SELECT';
 export function SiteLayout() {
   const { pathname } = useLocation();
   const { copy } = useLanguage();
+  const navigate = useNavigate();
+  const mainRef = useRef<HTMLElement>(null);
+  const exitRef = useRef<Animation[]>([]);
+
+  useLayoutEffect(() => () => {
+    exitRef.current.forEach((animation) => animation.cancel());
+    exitRef.current = [];
+  }, [pathname]);
+
+  async function openCatalogue(link: HTMLAnchorElement) {
+    if (exitRef.current.length) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      void navigate('/vehiculos');
+      return;
+    }
+    // Opacity never changes the containing block of the Home's fixed pins.
+    const elements = [mainRef.current, link].filter((element): element is HTMLElement => element !== null);
+    const animations = elements.map((element) => element.animate(
+      [{ opacity: getComputedStyle(element).opacity }, { opacity: 0 }],
+      { duration: 160, easing: 'ease-out', fill: 'forwards' },
+    ));
+    exitRef.current = animations;
+    link.setAttribute('aria-disabled', 'true');
+    try {
+      await Promise.all(animations.map((animation) => animation.finished));
+      void navigate('/vehiculos');
+    } catch { /* Another navigation cancels the pending exit. */ }
+    finally { link.removeAttribute('aria-disabled'); }
+  }
 
   // One title per route. A vehicle detail sets its own (the vehicle's name), so it is left alone here.
   const pageTitles: Record<string, string> = {
@@ -47,9 +76,9 @@ export function SiteLayout() {
       <Preloader />
       <ScrollReset />
       <Header key={pathname} />
-      <main key={`page:${pathname}`} id="main-content" tabIndex={-1}><Outlet /></main>
+      <main ref={mainRef} key={`page:${pathname}`} id="main-content" tabIndex={-1}><Outlet /></main>
       <Footer />
-      <CatalogueCta />
+      <CatalogueCta onNavigate={(link) => void openCatalogue(link)} />
     </div>
   );
 }

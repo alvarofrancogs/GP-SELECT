@@ -9,9 +9,18 @@ import '../styles/preloader.css';
 // Shown once per page load. It covers the work the Home does at start-up (fonts, the hero photographs,
 // the vehicle list and the scroll scenes being built) and lifts like a curtain when everything is ready.
 // Whole animation <= 2 s: on screen 0.7 s at least, forced out at 1.2 s, plus a 0.75 s exit.
+// Once it has played in this tab, a reload runs it at half the time (the visitor has already seen it).
 const MIN_MS = 700;
 const MAX_MS = 1200;
+const SEEN_KEY = 'gp-select.preloader.seen';
 let shown = false;
+
+function seenBefore() {
+  try { return sessionStorage.getItem(SEEN_KEY) === '1'; } catch { return false; }
+}
+function markSeen() {
+  try { sessionStorage.setItem(SEEN_KEY, '1'); } catch { /* Private mode: every load is the full version. */ }
+}
 
 /** Downloads and decodes the image so the browser has it ready when the hero first paints. */
 function loadImage(src: string) {
@@ -25,6 +34,7 @@ export function Preloader() {
   const { pathname } = useLocation();
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const [active, setActive] = useState(() => !shown && !reduced);
+  const [speed] = useState(() => seenBefore() ? 0.5 : 1);
   const root = useRef<HTMLDivElement>(null);
   const counter = useRef<HTMLSpanElement>(null);
   const bar = useRef<HTMLSpanElement>(null);
@@ -32,6 +42,7 @@ export function Preloader() {
   useEffect(() => {
     if (!active) return;
     shown = true;
+    markSeen();
     const start = performance.now();
     const onHome = pathname === '/';
     const tasks = [
@@ -60,20 +71,20 @@ export function Preloader() {
       if (leaving || !root.current) return;
       leaving = true;
       gsap.timeline({ onComplete: () => setActive(false) })
-        .to(state, { shown: 100, duration: 0.15, ease: 'power2.out', onUpdate: paint })
-        .to('.preloader__brand, .preloader__meter', { opacity: 0, y: -10, duration: 0.25, ease: 'power2.in' })
-        .to(root.current, { yPercent: -100, duration: 0.6, ease: 'power4.inOut' }, '<0.05');
+        .to(state, { shown: 100, duration: 0.15 * speed, ease: 'power2.out', onUpdate: paint })
+        .to('.preloader__brand, .preloader__meter', { opacity: 0, y: -10, duration: 0.25 * speed, ease: 'power2.in' })
+        .to(root.current, { yPercent: -100, duration: 0.6 * speed, ease: 'power4.inOut' }, `<${0.05 * speed}`);
     };
     const tick = () => {
       if (leaving) return;
       const elapsed = performance.now() - start;
       const real = (done / tasks.length) * 100;
       // The number never runs ahead of what is really loaded, nor of the minimum on-screen time.
-      const target = Math.min(real, (elapsed / MIN_MS) * 100);
+      const target = Math.min(real, (elapsed / (MIN_MS * speed)) * 100);
       state.shown += (Math.min(target, 99) - state.shown) * 0.18;
       paint();
-      if (done === tasks.length && elapsed >= MIN_MS) leave();
-      else if (elapsed >= MAX_MS) leave();
+      if (done === tasks.length && elapsed >= MIN_MS * speed) leave();
+      else if (elapsed >= MAX_MS * speed) leave();
     };
     gsap.ticker.add(tick);
 
@@ -83,12 +94,12 @@ export function Preloader() {
       window.removeEventListener('touchmove', stop);
       window.removeEventListener('keydown', stopKeys);
     };
-  }, [active, pathname]);
+  }, [active, pathname, speed]);
 
   if (!active) return null;
 
   return (
-    <div ref={root} className="preloader" role="status" aria-live="polite" aria-label={copy.common.loading}>
+    <div ref={root} className={`preloader${speed < 1 ? ' preloader--quick' : ''}`} role="status" aria-live="polite" aria-label={copy.common.loading}>
       <p className="preloader__brand">{copy.brand}</p>
       <div className="preloader__meter" aria-hidden="true">
         <span ref={counter} className="preloader__count">000</span>

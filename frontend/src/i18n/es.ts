@@ -28,6 +28,8 @@ export const es: Dictionary = {
     "onRequest": "Precio bajo consulta",
     "comingSoon": "Próximamente",
     "reserved": "Reservado",
+    "sold": "Vendido",
+    "showMore": "Ver más",
     "empty": "Ningún vehículo coincide con tu búsqueda.",
     "search": "Lo buscamos por ti",
     "closing": "¿No está aquí? Lo buscamos en Europa.",

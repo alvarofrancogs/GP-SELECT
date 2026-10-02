@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, type RefObject } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { observeResize, refreshAfterFonts, scheduleScrollRefresh } from '../lib/scrollRefresh';
@@ -6,9 +6,7 @@ import { observeResize, refreshAfterFonts, scheduleScrollRefresh } from '../lib/
 gsap.registerPlugin(ScrollTrigger);
 
 /** Entrance for the featured vehicle: the heading follows the scroll; the piece plays one composed reveal. */
-export function useFeaturedVehicleScene(vehicleKey: string, locale: string) {
-  const sectionRef = useRef<HTMLElement>(null);
-
+export function useFeaturedVehicleScene(sectionRef: RefObject<HTMLElement | null>, vehicleKey: string, locale: string) {
   useLayoutEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -26,6 +24,24 @@ export function useFeaturedVehicleScene(vehicleKey: string, locale: string) {
       });
       entrance.fromTo(select('h2 > span'),
         { opacity: 0.2, x: -18 }, { opacity: 1, x: 0, duration: 0.65, stagger: 0.12 }, 0);
+    }, section);
+
+    const observer = observeResize(section);
+    section.addEventListener('load', scheduleScrollRefresh, true);
+    refreshAfterFonts();
+    scheduleScrollRefresh();
+    return () => {
+      observer.disconnect();
+      section.removeEventListener('load', scheduleScrollRefresh, true);
+      media.revert();
+    };
+  }, [sectionRef, locale]);
+
+  useLayoutEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    const media = gsap.matchMedia();
+    media.add('(prefers-reduced-motion: no-preference) and (min-height: 600px)', () => {
 
       const piece = section.querySelector('.featured__piece');
       const frame = piece?.querySelector('.featured__media');
@@ -35,7 +51,7 @@ export function useFeaturedVehicleScene(vehicleKey: string, locale: string) {
       // One composed entrance, played when the piece comes into view and reversed on the way back up:
       // the frame opens upward like a shutter while the photograph settles from a slight over-scale,
       // then the data follows line by line.
-      const lines = piece.querySelectorAll('.featured__make, .featured__identity h3, .featured__variant, .featured__specs > div, .featured__link');
+      const lines = piece.querySelectorAll('.featured__make, .featured__identity h3, .featured__variant, .featured__availability, .featured__specs > div, .featured__link');
       const reveal = gsap.timeline({
         paused: true,
         scrollTrigger: {
@@ -49,18 +65,7 @@ export function useFeaturedVehicleScene(vehicleKey: string, locale: string) {
       reveal.fromTo(lines, { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out', stagger: 0.07 }, 0.35);
     }, section);
 
-    // The API state, translated text, fonts and the photo can all move what follows.
-    const observer = observeResize(section);
-    section.addEventListener('load', scheduleScrollRefresh, true);
-    refreshAfterFonts();
     scheduleScrollRefresh();
-
-    return () => {
-      observer.disconnect();
-      section.removeEventListener('load', scheduleScrollRefresh, true);
-      media.revert();
-    };
-  }, [vehicleKey, locale]);
-
-  return sectionRef;
+    return () => media.revert();
+  }, [sectionRef, vehicleKey, locale]);
 }

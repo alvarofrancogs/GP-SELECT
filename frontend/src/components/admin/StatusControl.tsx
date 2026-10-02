@@ -1,63 +1,61 @@
-import { useId, useState } from 'react';
-import { adminApi } from '../../services/adminApi';
+import { useId, useRef, useState } from 'react';
 import type { AdminVehicle, SettableStatus } from '../../types/admin';
 import { adminCopy } from '../../i18n/adminCopy';
-import { describeError } from '../../lib/adminErrors';
 import { StatusMark } from './StatusMark';
 
 const ORDER: SettableStatus[] = ['Draft', 'ComingSoon', 'Available', 'Reserved', 'Sold'];
 
 interface StatusControlProps {
   vehicle: AdminVehicle;
-  dirty: boolean;
-  onChanged: (vehicle: AdminVehicle) => void;
+  disabled?: boolean;
+  onChanged: (status: SettableStatus, showWhenSold: boolean) => void;
 }
 
-/** Current state in words, and a disclosure with the other states and what each one means publicly. */
-export function StatusControl({ vehicle, dirty, onChanged }: StatusControlProps) {
+/** A local selection is only persisted by the explicit save action. */
+export function StatusControl({ vehicle, disabled, onChanged }: StatusControlProps) {
   const text = adminCopy.status;
   const id = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState<SettableStatus | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState('');
+  const selected = vehicle.status;
+  const showWhenSold = vehicle.showWhenSold;
   const archived = vehicle.status === 'Archived';
-  const readyImages = vehicle.images.filter((image) => image.state === 'Ready').length;
+  const visibility = (status: AdminVehicle['status'], visible: boolean) => status === 'Sold' && visible ? text.soldVisible : text.visibility[status];
 
-  async function change(status: SettableStatus) {
-    setBusy(status);
-    setError(null);
-    try {
-      const updated = await adminApi.changeStatus(vehicle.id, status);
-      onChanged(updated);
-      setOpen(false);
-      setDone(text.changed(text.names[status]));
-    } catch (failure) {
-      setError(describeError(failure));
-    } finally {
-      setBusy(null);
-    }
+  function close() {
+    setOpen(false);
+    triggerRef.current?.focus();
+  }
+
+  function toggle() {
+    if (open) { close(); return; }
+    setOpen(true);
   }
 
   return <div className="admin-status-control">
     <div className="admin-status-control__current">
       <p className="admin-status-control__label">{text.label}</p>
-      <p className="admin-status-control__value"><StatusMark status={vehicle.status} /></p>
-      <p className="admin-field__hint">{text.visibility[vehicle.status]}</p>
+      <p className="admin-status-control__value"><StatusMark status={vehicle.status} showWhenSold={vehicle.showWhenSold} /></p>
+      <p className="admin-field__hint">{visibility(vehicle.status, vehicle.showWhenSold)}</p>
     </div>
-    {archived ? null : <button type="button" className="admin-link" aria-expanded={open} aria-controls={`${id}-panel`}
-      onClick={() => { setOpen(!open); setError(null); }}>{open ? text.close : text.change}<span aria-hidden="true">{open ? '×' : '→'}</span></button>}
-    <p className="sr-only" role="status">{busy ? text.changing : done}</p>
-    {open ? <div id={`${id}-panel`} className="admin-status-control__panel">
-      {dirty ? <p className="admin-notice">{text.saveFirst}</p> : null}
-      {!dirty && !error && readyImages === 0 ? <p className="admin-field__hint">{adminCopy.errors.codes.images_required}</p> : null}
-      {error ? <p className="admin-notice" role="alert">{error}</p> : null}
-      <ul>{ORDER.filter((status) => status !== vehicle.status).map((status) => <li key={status}>
-        <button type="button" className="admin-status-option" disabled={dirty || busy !== null} onClick={() => change(status)}>
-          <span className="admin-status-option__name">{busy === status ? text.changing : text.actions[status]}</span>
-          <span className="admin-status-option__meta">{text.visibility[status]}</span>
-        </button>
-      </li>)}</ul>
+    {archived ? null : <button ref={triggerRef} type="button" className="admin-link" aria-expanded={open} aria-controls={`${id}-panel`}
+      disabled={disabled} onClick={toggle}>{open ? text.close : text.change}<span aria-hidden="true">{open ? '×' : '→'}</span></button>}
+    {open && !archived ? <div id={`${id}-panel`} className="admin-status-control__panel"
+      onKeyDown={(event) => { if (event.key === 'Escape' && !disabled) { event.preventDefault(); close(); } }}>
+      <fieldset className="admin-status-control__options" disabled={disabled}>
+        <legend className="sr-only">{text.choose}</legend>
+        {ORDER.map((status) => <label key={status} className="admin-status-option admin-check">
+          <input type="radio" name={`${id}-status`} value={status} checked={selected === status}
+            aria-labelledby={`${id}-${status}-name`} aria-describedby={`${id}-${status}-hint`} onChange={() => { onChanged(status, showWhenSold); }} />
+          <span><span id={`${id}-${status}-name`} className="admin-status-option__name">{text.names[status]}</span>
+            <span id={`${id}-${status}-hint`} className="admin-status-option__meta">{visibility(status, showWhenSold)}</span></span>
+        </label>)}
+        {selected === 'Sold' || vehicle.status === 'Sold' ? <div className="admin-status-control__sold">
+          <label className="admin-check"><input type="checkbox" checked={showWhenSold} disabled={selected !== 'Sold'}
+            aria-describedby={`${id}-sold-hint`} onChange={(event) => { onChanged(selected === 'Archived' ? 'Draft' : selected, event.target.checked); }} />{text.showWhenSold}</label>
+          <p id={`${id}-sold-hint`} className="admin-field__hint">{selected === 'Sold' ? visibility('Sold', showWhenSold) : text.soldPreference}</p>
+        </div> : null}
+      </fieldset>
     </div> : null}
   </div>;
 }

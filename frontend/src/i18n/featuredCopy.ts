@@ -7,6 +7,8 @@ interface FeaturedCopy {
   loading: string;
   empty: string;
   error: string;
+  pause: string;
+  position: (current: number, total: number) => string;
 }
 
 export const featuredCopy: Record<Locale, FeaturedCopy> = {
@@ -14,7 +16,9 @@ export const featuredCopy: Record<Locale, FeaturedCopy> = {
     title: 'Vehículos',
     titleFine: 'excepcionales.',
     view: 'Ver vehículo',
-    loading: 'Cargando el último vehículo…',
+    pause: 'Pausar rotación',
+    position: (current, total) => `Vehículo ${current} de ${total}`,
+    loading: 'Cargando la selección…',
     empty: 'Estamos preparando la próxima selección.',
     error: 'No se ha podido cargar el vehículo. Puedes intentarlo de nuevo más tarde.',
   },
@@ -22,7 +26,9 @@ export const featuredCopy: Record<Locale, FeaturedCopy> = {
     title: 'Premium',
     titleFine: 'vehicles.',
     view: 'View vehicle',
-    loading: 'Loading the latest vehicle…',
+    pause: 'Pause rotation',
+    position: (current, total) => `Vehicle ${current} of ${total}`,
+    loading: 'Loading the selection…',
     empty: 'We are preparing the next selection.',
     error: 'The vehicle could not be loaded. Please try again later.',
   },

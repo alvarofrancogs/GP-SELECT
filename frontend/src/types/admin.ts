@@ -11,6 +11,7 @@ export interface AdminImage {
   cardUrl: string | null;
   detailUrl: string | null;
   isCover: boolean;
+  isStaged: boolean;
   sortOrder: number;
   failureReason: string | null;
 }
@@ -19,6 +20,7 @@ export interface AdminVehicleRow {
   id: string;
   slug: string;
   status: VehicleStatus;
+  showWhenSold: boolean;
   make: string;
   model: string;
   variant: string | null;
@@ -39,6 +41,7 @@ export interface AdminVehicle {
   id: string;
   slug: string;
   status: VehicleStatus;
+  showWhenSold: boolean;
   make: string;
   model: string;
   year: number;
@@ -123,6 +126,12 @@ export interface VehiclePatch {
 }
 
 export type SettableStatus = Exclude<VehicleStatus, 'Archived'>;
+
+export interface VehicleSaveRequest {
+  changes?: VehiclePatch;
+  gallery?: { order: string[]; removed: string[] };
+  status?: { status: SettableStatus; showWhenSold?: boolean };
+}
 
 export interface ImageIntent { imageId: string; uploadUrl: string; expiresInSeconds: number }
 export interface ImageStatus { imageId: string; state: ImageState; error: string | null }

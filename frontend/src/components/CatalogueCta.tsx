@@ -14,7 +14,7 @@ const LIGHT_SURFACES = '#servicios, #seleccion, .interior-page, .planned-page, .
 const DARK_SURFACES = '.interior-band';
 
 /** The one global conversion: a small liquid-glass pill, fixed at the bottom centre of the public site. */
-export function CatalogueCta() {
+export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElement) => void }) {
   const { copy } = useLanguage();
   const { pathname } = useLocation();
   const linkRef = useRef<HTMLAnchorElement>(null);
@@ -104,7 +104,11 @@ export function CatalogueCta() {
   if (hidden) return null;
 
   return (
-    <Link ref={linkRef} to="/vehiculos" className="catalogue-cta">
+    <Link ref={linkRef} to="/vehiculos" className="catalogue-cta" onClick={(event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      onNavigate(event.currentTarget);
+    }}>
       <span ref={bodyRef} className="catalogue-cta__body">
         <span className="catalogue-cta__glass" aria-hidden="true" />
         <span className="catalogue-cta__label">{copy.common.catalogue}</span>

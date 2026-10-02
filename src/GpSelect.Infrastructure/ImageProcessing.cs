@@ -39,10 +39,25 @@ public sealed class ImageProcessingWorker(IServiceScopeFactory scopes, IObjectSt
              var encoder = new JpegEncoder { Quality = 84 }; await card.SaveAsJpegAsync(cardStream, encoder, ct); await detail.SaveAsJpegAsync(detailStream, encoder, ct);
             cardStream.Position = detailStream.Position = 0; var prefix = $"vehicles/{image.VehicleUnitId}/{image.Id}";
             await storage.PutAsync(prefix + "/card.jpg", cardStream, "image/jpeg", ct); await storage.PutAsync(prefix + "/detail.jpg", detailStream, "image/jpeg", ct);
-            image.Ready(prefix + "/card.jpg", prefix + "/detail.jpg"); job.Complete(); await db.SaveChangesAsync(ct);
-            // The first ready image becomes the cover when the vehicle has none.
+            // The tracked image may be stale: the admin can remove it while it is processed. Finish it with a
+            // conditional update, in one transaction with the cover change, so a removed image stays removed.
+            await using var tx = await db.Database.BeginTransactionAsync(ct);
+            var finished = await db.Images.Where(x => x.Id == image.Id && x.State == ImageState.Processing).ExecuteUpdateAsync(u => u
+                .SetProperty(x => x.State, ImageState.Ready).SetProperty(x => x.CardKey, prefix + "/card.jpg")
+                .SetProperty(x => x.DetailKey, prefix + "/detail.jpg").SetProperty(x => x.FailureReason, (string?)null), ct);
+            job.Complete(); await db.SaveChangesAsync(ct);
+            db.ChangeTracker.Clear();
+            if (finished == 0)
+            {
+                await tx.CommitAsync(ct);
+                foreach (var key in new[] { prefix + "/card.jpg", prefix + "/detail.jpg" })
+                    try { await storage.DeleteAsync(key, ct); } catch (Exception ex) { logger.LogWarning(ex, "Cleanup of {Key} failed", key); }
+                return;
+            }
+            // The cover is the first ready image: a newly ready image can take it.
             var siblings = await db.Images.Where(x => x.VehicleUnitId == image.VehicleUnitId && x.State != ImageState.Deleted).ToListAsync(ct);
-            if (VehicleGallery.EnsureCover(siblings) is not null) await db.SaveChangesAsync(ct);
+            await db.SaveGalleryAsync(VehicleGallery.EnsureCover(siblings), ct);
+            await tx.CommitAsync(ct);
          } catch (Exception ex) { logger.LogError(ex, "Image processing failed for {ImageId}", image.Id); image.Fail(ex.Message[..Math.Min(500, ex.Message.Length)]); job.Retry(ex.Message); await db.SaveChangesAsync(ct); }
     }
     private static async Task<bool> IsSupported(Stream s, string claimed, CancellationToken ct)

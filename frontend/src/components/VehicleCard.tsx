@@ -31,7 +31,7 @@ export function VehicleCard({ vehicle }: { vehicle: VehicleSummary }) {
         {mechanical ? <p>{mechanical}</p> : null}
       </div>
       <div className="vehicle-card__pricing">
-        <p className="vehicle-card__price type-ui type-numeric">{formatPrice(vehicle.priceEur, locale, text.onRequest)}</p>
+        {vehicle.availability !== 'sold' ? <p className="vehicle-card__price type-ui type-numeric">{formatPrice(vehicle.priceEur, locale, text.onRequest)}</p> : <p className="vehicle-card__availability type-ui">{text.sold}</p>}
         {vehicle.availability === 'coming-soon' || vehicle.availability === 'reserved' ? <p className="vehicle-card__availability type-ui">{vehicle.availability === 'reserved' ? text.reserved : text.comingSoon}</p> : null}
       </div>
       <span className="vehicle-card__link editorial-link type-ui">{text.view}<span aria-hidden="true">→</span></span>

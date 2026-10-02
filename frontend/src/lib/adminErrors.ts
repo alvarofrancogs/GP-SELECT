@@ -25,7 +25,7 @@ export function errorReference(error: unknown): string | null {
 export function fieldErrors(error: unknown): Record<string, string> {
   if (!(error instanceof ApiError)) return {};
   const result: Record<string, string> = {};
-  for (const key of Object.keys(error.fieldErrors)) result[key] = text.number;
-  if (error.field) result[error.field] = error.code && text.codes[error.code] ? text.codes[error.code] : text.unexpected;
+  for (const key of Object.keys(error.fieldErrors)) result[key.replace(/^changes\./i, '')] = text.number;
+  if (error.field) result[error.field.replace(/^changes\./i, '')] = error.code && text.codes[error.code] ? text.codes[error.code] : text.unexpected;
   return result;
 }

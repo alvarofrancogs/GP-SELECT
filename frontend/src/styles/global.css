@@ -54,7 +54,7 @@ dialog { overscroll-behavior: contain; }
 .language-switcher button[aria-pressed='true'] { opacity: 1; text-decoration: underline; text-underline-offset: .35em; }
 .menu-toggle { display: none; border: 0; background: none; font-size: var(--text-h2); padding: var(--space-2); line-height: 1; }
 .mobile-nav { display: none; }
-.button { min-height: var(--button-height); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-6); padding: var(--space-4) var(--space-6); border-radius: var(--radius-pill); border: var(--border-width) solid transparent; font-family: var(--font-family); font-stretch: var(--type-ui-width); font-size: var(--text-nav); font-weight: var(--type-ui-weight); letter-spacing: var(--type-ui-tracking); line-height: var(--type-ui-leading); text-transform: none; transition: background var(--duration-ui), color var(--duration-ui); }
+.button { min-height: var(--button-height); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-6); padding: var(--space-4) var(--space-6); border-radius: 0; border: var(--border-width) solid transparent; font-family: var(--font-family); font-stretch: var(--type-ui-width); font-size: var(--text-nav); font-weight: var(--type-ui-weight); letter-spacing: var(--type-ui-tracking); line-height: var(--type-ui-leading); text-transform: none; transition: background var(--duration-ui), color var(--duration-ui); }
 .button:disabled { opacity: .6; cursor: wait; }
 .button--light { color: var(--color-ink); background: var(--color-white); }
 .button--dark { color: var(--color-white); background: var(--color-ink); }

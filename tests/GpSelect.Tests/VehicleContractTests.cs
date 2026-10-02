@@ -256,13 +256,56 @@ public class VehicleContractTests
     }
 
     [Fact]
-    public void Archive_is_not_a_status_change_and_stays_terminal()
+    public void Archive_is_not_a_status_change_and_holds_until_restored()
     {
         var (v, images) = ListedVehicle();
         Assert.Equal("invalid_transition", Fails(() => v.ChangeStatus(VehicleStatus.Archived, images)).Code);
         v.Archive();
         Assert.Equal("archived", Fails(() => v.ChangeStatus(VehicleStatus.Draft, images)).Code);
         Assert.Equal("archived", Fails(() => v.Publish(images, VehicleStatus.Available)).Code);
+        Assert.Equal("archived", Fails(() => v.Apply(new VehicleChanges { Variant = "x" })).Code);
+    }
+
+    [Fact]
+    public void Restored_vehicle_comes_back_as_a_draft_and_can_be_published_again()
+    {
+        var (v, images) = ListedVehicle();
+        v.Archive();
+        v.Restore();
+        Assert.Equal(VehicleStatus.Draft, v.Status);
+        Assert.False(VehicleVisibility.IsListed(v.Status));
+        v.ChangeStatus(VehicleStatus.Reserved, images);
+        Assert.Equal(VehicleStatus.Reserved, v.Status);
+        v.Restore(); // not archived: no change
+        Assert.Equal(VehicleStatus.Reserved, v.Status);
+    }
+
+    [Fact]
+    public void Sold_vehicle_can_stay_in_the_catalogue_when_the_admin_chooses_it()
+    {
+        var (v, images) = ListedVehicle();
+        v.ChangeStatus(VehicleStatus.Sold, images);
+        Assert.False(VehicleVisibility.IsInCatalogue(v.Status, v.ShowWhenSold));
+        v.ChangeStatus(VehicleStatus.Sold, images, showWhenSold: true);
+        Assert.True(VehicleVisibility.IsInCatalogue(v.Status, v.ShowWhenSold));
+        // The choice is kept when the status changes without it, and only counts while Sold.
+        v.ChangeStatus(VehicleStatus.Draft, images);
+        Assert.True(v.ShowWhenSold);
+        Assert.False(VehicleVisibility.IsInCatalogue(v.Status, v.ShowWhenSold));
+        // Kept on show, it cannot lose its last photograph.
+        v.ChangeStatus(VehicleStatus.Sold, images);
+        VehicleGallery.Remove(v, images[0], images);
+        Assert.Equal("last_public_image", Fails(() => VehicleGallery.Remove(v, images[1], images)).Code);
+    }
+
+    [Fact]
+    public void Sold_vehicle_on_show_needs_a_photograph_but_not_a_price()
+    {
+        var v = NewVehicle();
+        Assert.Equal("images_required", Fails(() => v.ChangeStatus(VehicleStatus.Sold, [], showWhenSold: true)).Code);
+        v.ChangeStatus(VehicleStatus.Sold, [ReadyImage(v, 0, cover: true)], showWhenSold: true);
+        Assert.Null(v.PriceEur);
+        Assert.True(VehicleVisibility.HasPublicDetail(v.Status, v.PublishedAt, v.ShowWhenSold));
     }
 
     [Theory]
@@ -289,6 +332,51 @@ public class VehicleContractTests
         Assert.Same(images[1], VehicleGallery.EnsureCover(images));
         Assert.Null(VehicleGallery.EnsureCover(images));
         Assert.Single(images, x => x.IsCover);
+    }
+
+    [Fact]
+    public void Making_an_image_the_cover_moves_it_to_the_front()
+    {
+        var v = NewVehicle();
+        var images = new List<VehicleImage> { ReadyImage(v, 0, cover: true), ReadyImage(v, 1), ReadyImage(v, 2) };
+        Assert.Same(images[2], VehicleGallery.MakeCover(images, images[2]));
+        Assert.Equal(new[] { 1, 2, 0 }, images.Select(x => x.SortOrder));
+        Assert.Single(images, x => x.IsCover);
+        Assert.True(images[2].IsCover);
+    }
+
+    [Fact]
+    public void Moving_an_image_to_the_front_makes_it_the_cover()
+    {
+        var v = NewVehicle();
+        var pending = VehicleImage.Create(v.Id, "p.jpg", "image/jpeg", 10);
+        var images = new List<VehicleImage> { ReadyImage(v, 0, cover: true), ReadyImage(v, 1), pending };
+        // A photo still processing at the front cannot be the cover: the first ready one is.
+        Assert.Same(images[1], VehicleGallery.Reorder(images, [pending.Id, images[1].Id, images[0].Id]));
+        Assert.True(images[1].IsCover);
+        Assert.False(images[0].IsCover);
+        // Once ready it takes the cover, because it is first.
+        pending.Ready("c.jpg", "d.jpg");
+        Assert.Same(pending, VehicleGallery.EnsureCover(images));
+        Assert.Single(images, x => x.IsCover);
+        Assert.Equal("invalid_order", Fails(() => VehicleGallery.Reorder(images, [images[0].Id])).Code);
+    }
+
+    [Fact]
+    public void Staged_image_is_never_the_cover_nor_public_until_published()
+    {
+        var v = NewVehicle();
+        var saved = ReadyImage(v, 1, cover: true);
+        var staged = VehicleImage.Create(v.Id, "s.jpg", "image/jpeg", 10, staged: true);
+        staged.Ready("s-card.jpg", "s-detail.jpg");
+        staged.Order(0);
+        var images = new List<VehicleImage> { saved, staged };
+        Assert.Null(VehicleGallery.EnsureCover(images));
+        Assert.Equal("image_not_ready", Fails(() => VehicleGallery.MakeCover(images, staged)).Code);
+        Assert.Single(PublicMapping.Map(v, images).Images);
+        staged.Publish();
+        Assert.Same(staged, VehicleGallery.EnsureCover(images));
+        Assert.Equal(2, PublicMapping.Map(v, images).Images.Count);
     }
 
     [Fact]

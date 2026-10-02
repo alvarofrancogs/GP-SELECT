@@ -18,10 +18,14 @@ public static class VehicleVisibility
     public static bool IsListed(VehicleStatus status) =>
         status is VehicleStatus.ComingSoon or VehicleStatus.Available or VehicleStatus.Reserved;
 
+    /// <summary>In the public catalogue: the listed statuses, and a sold vehicle the admin chose to keep on show.</summary>
+    public static bool IsInCatalogue(VehicleStatus status, bool showWhenSold) =>
+        IsListed(status) || (status == VehicleStatus.Sold && showWhenSold);
+
     /// <summary>A sold vehicle keeps its public URL (the site shows it as no longer available),
-    /// but only if it was published at some point.</summary>
-    public static bool HasPublicDetail(VehicleStatus status, DateTimeOffset? publishedAt) =>
-        IsListed(status) || (status == VehicleStatus.Sold && publishedAt is not null);
+    /// but only if it was published at some point or is kept on show.</summary>
+    public static bool HasPublicDetail(VehicleStatus status, DateTimeOffset? publishedAt, bool showWhenSold = false) =>
+        IsInCatalogue(status, showWhenSold) || (status == VehicleStatus.Sold && publishedAt is not null);
 }
 
 public sealed class VehicleUnit
@@ -46,6 +50,8 @@ public sealed class VehicleUnit
     public DateTimeOffset CreatedAt { get; private set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; private set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? PublishedAt { get; private set; }
+    /// <summary>Only matters while Sold: keeps the vehicle in the public catalogue, marked as sold.</summary>
+    public bool ShowWhenSold { get; private set; }
 
     public static VehicleUnit Create(string make, string model, int year, int? month, string slug, string? internalReference = null)
     {
@@ -66,7 +72,7 @@ public sealed class VehicleUnit
     /// present values are validated. Every change is validated before anything is assigned.</summary>
     public void Apply(VehicleChanges c)
     {
-        if (Status == VehicleStatus.Archived) throw new DomainException("archived", "Archived vehicles cannot change");
+        if (Status == VehicleStatus.Archived) throw new DomainException("archived", "Restore the vehicle before editing it");
 
         var make = c.Make.HasValue ? VehicleRules.RequiredText(c.Make.Value, VehicleRules.MakeMax, "make") : Make;
         var model = c.Model.HasValue ? VehicleRules.RequiredText(c.Model.Value, VehicleRules.ModelMax, "model") : Model;
@@ -103,35 +109,46 @@ public sealed class VehicleUnit
         Touch();
     }
 
-    /// <summary>Operational status. Archived is terminal and only reachable through <see cref="Archive"/>.
-    /// Entering a listed status requires the publication minimum.</summary>
-    public void ChangeStatus(VehicleStatus next, IReadOnlyCollection<VehicleImage> images)
+    /// <summary>Operational status. Archived is only reachable through <see cref="Archive"/> and left through
+    /// <see cref="Restore"/>. Entering a listed status requires the publication minimum; a sold vehicle kept on
+    /// show needs its photograph (its price is never shown). <paramref name="showWhenSold"/> null keeps the choice.</summary>
+    public void ChangeStatus(VehicleStatus next, IReadOnlyCollection<VehicleImage> images, bool? showWhenSold = null)
     {
-        if (Status == VehicleStatus.Archived) throw new DomainException("archived", "Archived is terminal");
+        if (Status == VehicleStatus.Archived) throw new DomainException("archived", "Restore the vehicle before changing its status");
         if (next == VehicleStatus.Archived) throw new DomainException("invalid_transition", "Use archive to archive a vehicle", "status");
-        if (VehicleVisibility.IsListed(next))
+        var show = showWhenSold ?? ShowWhenSold;
+        if (VehicleVisibility.IsListed(next) || (next == VehicleStatus.Sold && show))
         {
             if (string.IsNullOrWhiteSpace(Make) || string.IsNullOrWhiteSpace(Model) || FirstRegistrationYear < VehicleRules.FirstYear)
                 throw new DomainException("incomplete", "Minimum vehicle fields are missing");
-            if (images.Count(x => x.State == ImageState.Ready) == 0 || images.Count(x => x.IsCover && x.State == ImageState.Ready) != 1)
+            var published = images.Where(x => !x.IsStaged).ToList();
+            if (published.Count(x => x.State == ImageState.Ready) == 0 || published.Count(x => x.IsCover && x.State == ImageState.Ready) != 1)
                 throw new DomainException("images_required", "A ready cover and image is required");
+        }
+        if (VehicleVisibility.IsListed(next))
+        {
             VehicleRules.EnsurePublicPrice(PriceEur);
             PublishedAt ??= DateTimeOffset.UtcNow;
         }
         Status = next;
+        ShowWhenSold = show;
         Touch();
     }
 
     /// <summary>Kept for the existing publish endpoint: publishing is a change to ComingSoon or Available.</summary>
     public void Publish(IReadOnlyCollection<VehicleImage> images, VehicleStatus target = VehicleStatus.ComingSoon)
     {
-        if (Status == VehicleStatus.Archived) throw new DomainException("archived", "Archived is terminal");
+        if (Status == VehicleStatus.Archived) throw new DomainException("archived", "Restore the vehicle before publishing it");
         if (target is not (VehicleStatus.ComingSoon or VehicleStatus.Available))
             throw new DomainException("invalid_transition", "Invalid publication status", "target");
         ChangeStatus(target, images);
     }
 
+    /// <summary>Archiving hides the vehicle from the site and from the working list until it is restored.</summary>
     public void Archive() { if (Status == VehicleStatus.Archived) return; Status = VehicleStatus.Archived; Touch(); }
+
+    /// <summary>A restored vehicle comes back as a draft: nothing becomes public until it is published again.</summary>
+    public void Restore() { if (Status != VehicleStatus.Archived) return; Status = VehicleStatus.Draft; Touch(); }
 
     private static T Pick<T>(Optional<T> change, T current, Func<T, T> validate) => change.HasValue ? validate(change.Value) : current;
     private void Touch() => UpdatedAt = DateTimeOffset.UtcNow;
@@ -144,7 +161,11 @@ public sealed class VehicleImage
     public string OriginalKey { get; private set; } = ""; public string? CardKey { get; private set; } public string? DetailKey { get; private set; }
     public string MimeType { get; private set; } = ""; public long SizeBytes { get; private set; } public int SortOrder { get; private set; }
     public bool IsCover { get; private set; } public ImageState State { get; private set; } = ImageState.PendingUpload; public string? FailureReason { get; private set; }
-    public static VehicleImage Create(Guid vehicle, string key, string mime, long size) => new() { VehicleUnitId = vehicle, OriginalKey = key, MimeType = mime, SizeBytes = size };
+    /// <summary>Uploaded from the editor but not saved yet: processed in the background, never public and never the cover.</summary>
+    public bool IsStaged { get; private set; }
+    public static VehicleImage Create(Guid vehicle, string key, string mime, long size, bool staged = false) => new() { VehicleUnitId = vehicle, OriginalKey = key, MimeType = mime, SizeBytes = size, IsStaged = staged };
+    /// <summary>The editor saved: the photograph becomes part of the vehicle.</summary>
+    public void Publish() => IsStaged = false;
     public void StartProcessing() { if (State != ImageState.PendingUpload && State != ImageState.Failed) throw new DomainException("invalid_image_state", "Image is not uploadable"); State = ImageState.Processing; FailureReason = null; }
     public void Ready(string card, string detail) { if (State == ImageState.Deleted) return; CardKey = card; DetailKey = detail; State = ImageState.Ready; FailureReason = null; }
     public void Fail(string reason) { if (State == ImageState.Deleted) return; State = ImageState.Failed; FailureReason = reason; }
@@ -153,33 +174,54 @@ public sealed class VehicleImage
     public void Delete() => State = ImageState.Deleted;
 }
 
-/// <summary>The cover is the principal image: it goes first publicly and there is always one while a ready image exists.</summary>
+/// <summary>The cover is the principal image and always the first ready image in the admin order:
+/// making an image the cover moves it to the front, and moving an image to the front makes it the cover.
+/// Staged images (uploaded but not saved) take part in the order but never in the cover.</summary>
 public static class VehicleGallery
 {
     public static IEnumerable<VehicleImage> InPublicOrder(IEnumerable<VehicleImage> images) =>
         images.OrderByDescending(x => x.IsCover).ThenBy(x => x.SortOrder).ThenBy(x => x.Id);
 
-    /// <summary>Promotes the first ready image when no ready cover exists. Returns the new cover, if any.</summary>
+    /// <summary>Gives the cover to the first ready image. Returns the new cover when it changed, so the caller can
+    /// persist the old cover's removal first (one active cover per vehicle is a unique index).</summary>
     public static VehicleImage? EnsureCover(IEnumerable<VehicleImage> images)
     {
         var active = images.Where(x => x.State != ImageState.Deleted).ToList();
-        if (active.Any(x => x.IsCover && x.State == ImageState.Ready)) return null;
-        foreach (var stale in active.Where(x => x.IsCover)) stale.SetCover(false);
-        var next = active.Where(x => x.State == ImageState.Ready).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).FirstOrDefault();
-        next?.SetCover(true);
-        return next;
+        var first = active.Where(x => x.State == ImageState.Ready && !x.IsStaged).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).FirstOrDefault();
+        if (first is not null && first.IsCover && active.Count(x => x.IsCover) == 1) return null;
+        foreach (var stale in active.Where(x => x.IsCover && x != first)) stale.SetCover(false);
+        first?.SetCover(true);
+        return first;
+    }
+
+    /// <summary>Applies a new order (every active image, once) and gives the cover to the first ready image.</summary>
+    public static VehicleImage? Reorder(IReadOnlyList<VehicleImage> images, IReadOnlyList<Guid> order)
+    {
+        var active = images.Where(x => x.State != ImageState.Deleted).ToList();
+        if (order.Count != active.Count || order.Distinct().Count() != order.Count || active.Any(x => !order.Contains(x.Id)))
+            throw new DomainException("invalid_order", "The order must list every active image once");
+        for (var i = 0; i < order.Count; i++) active.Single(x => x.Id == order[i]).Order(i);
+        return EnsureCover(active);
+    }
+
+    /// <summary>Makes a ready image the cover by moving it to the front; the rest keep their relative order.</summary>
+    public static VehicleImage? MakeCover(IReadOnlyList<VehicleImage> images, VehicleImage cover)
+    {
+        if (cover.State != ImageState.Ready || cover.IsStaged) throw new DomainException("image_not_ready", "Only a ready, saved image can be the cover");
+        var rest = images.Where(x => x.State != ImageState.Deleted && x != cover).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).Select(x => x.Id);
+        return Reorder(images, [cover.Id, .. rest]);
     }
 
     /// <summary>Removes an image, promoting the next ready image when the cover goes. A listed vehicle
     /// cannot lose its last ready image: it would stay public without a photograph.</summary>
-    public static void Remove(VehicleUnit vehicle, VehicleImage image, IReadOnlyCollection<VehicleImage> images)
+    public static VehicleImage? Remove(VehicleUnit vehicle, VehicleImage image, IReadOnlyCollection<VehicleImage> images)
     {
-        var otherReady = images.Count(x => x.Id != image.Id && x.State == ImageState.Ready);
-        if (VehicleVisibility.IsListed(vehicle.Status) && image.State == ImageState.Ready && otherReady == 0)
+        var otherReady = images.Count(x => x.Id != image.Id && x.State == ImageState.Ready && !x.IsStaged);
+        if (VehicleVisibility.IsInCatalogue(vehicle.Status, vehicle.ShowWhenSold) && image.State == ImageState.Ready && !image.IsStaged && otherReady == 0)
             throw new DomainException("last_public_image", "A listed vehicle needs at least one ready image; withdraw it first");
         image.SetCover(false);
         image.Delete();
-        EnsureCover(images);
+        return EnsureCover(images);
     }
 }
 

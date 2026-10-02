@@ -1,6 +1,6 @@
 import type {
   AdminSession, AdminVehicle, AdminVehicleRow, CreateVehicleRequest, ImageIntent, ImageStatus, ProblemDetails,
-  SettableStatus, VehiclePatch, VehiclePreview,
+  SettableStatus, VehiclePatch, VehiclePreview, VehicleSaveRequest,
 } from '../types/admin';
 
 /** Same origin as the site: Vite proxies /api in development, production serves both together. */
@@ -76,13 +76,16 @@ export const adminApi = {
   createVehicle: (body: CreateVehicleRequest) => request<AdminVehicle>('/vehicles', { method: 'POST', body: json(body) }),
   updateVehicle: (id: string, patch: VehiclePatch) =>
     request<AdminVehicle>(`/vehicles/${id}`, { method: 'PATCH', body: json(patch) }),
-  changeStatus: (id: string, status: SettableStatus) =>
-    request<AdminVehicle>(`/vehicles/${id}/status`, { method: 'POST', body: json({ status }) }),
+  saveVehicle: (id: string, body: VehicleSaveRequest) =>
+    request<AdminVehicle>(`/vehicles/${id}/save`, { method: 'POST', body: json(body) }),
+  changeStatus: (id: string, status: SettableStatus, showWhenSold?: boolean) =>
+    request<AdminVehicle>(`/vehicles/${id}/status`, { method: 'POST', body: json({ status, showWhenSold }) }),
   archiveVehicle: (id: string) => request<void>(`/vehicles/${id}/archive`, { method: 'POST' }),
+  restoreVehicle: (id: string) => request<AdminVehicle>(`/vehicles/${id}/restore`, { method: 'POST' }),
   previewVehicle: (id: string) => request<VehiclePreview>(`/vehicles/${id}/preview`),
 
-  imageIntent: (vehicleId: string, file: File) => request<ImageIntent>(`/vehicles/${vehicleId}/images/intent`, {
-    method: 'POST', body: json({ mimeType: file.type, sizeBytes: file.size }), headersExtra: { 'Idempotency-Key': crypto.randomUUID() },
+  imageIntent: (vehicleId: string, file: File, staged = true) => request<ImageIntent>(`/vehicles/${vehicleId}/images/intent`, {
+    method: 'POST', body: json({ mimeType: file.type, sizeBytes: file.size, staged }), headersExtra: { 'Idempotency-Key': crypto.randomUUID() },
   }),
   completeImage: (vehicleId: string, imageId: string) => request<{ imageId: string; state: string }>(
     `/vehicles/${vehicleId}/images/${imageId}/complete`, { method: 'POST', headersExtra: { 'Idempotency-Key': crypto.randomUUID() } }),

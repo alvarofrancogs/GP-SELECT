@@ -50,10 +50,10 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
     }
 
     /// <summary>The real upload flow: intent, PUT to the returned URL, complete, then wait for the worker.</summary>
-    private async Task<Guid> UploadImage(Guid vehicleId)
+    private async Task<Guid> UploadImage(Guid vehicleId, bool staged = false)
     {
         var bytes = Png();
-        var intent = new HttpRequestMessage(HttpMethod.Post, $"/api/admin/vehicles/{vehicleId}/images/intent") { Content = JsonContent.Create(new { mimeType = "image/png", sizeBytes = bytes.Length }) };
+        var intent = new HttpRequestMessage(HttpMethod.Post, $"/api/admin/vehicles/{vehicleId}/images/intent") { Content = JsonContent.Create(new { mimeType = "image/png", sizeBytes = bytes.Length, staged }) };
         intent.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
         var ticket = await Json(await admin.SendAsync(intent));
         var imageId = ticket.GetProperty("imageId").GetGuid();
@@ -319,6 +319,16 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.True(await IsListed(slug));
         await Json(await SetStatus(id, "Sold"));
         Assert.False(await IsListed(slug));
+        // A body without status is refused instead of reading as Draft.
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/status", new { showWhenSold = true })).StatusCode);
+        Assert.False(await IsListed(slug));
+        // Kept on show: back in the catalogue, marked as sold, after anything still for sale.
+        var kept = await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/status", new { status = "Sold", showWhenSold = true }));
+        Assert.True(kept.GetProperty("showWhenSold").GetBoolean());
+        Assert.True(await IsListed(slug));
+        Assert.Equal("Sold", (await Json(await visitor.GetAsync("/api/public/vehicles"))).EnumerateArray().Single(x => x.GetProperty("slug").GetString() == slug).GetProperty("status").GetString());
+        await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/status", new { status = "Sold", showWhenSold = false }));
+        Assert.False(await IsListed(slug));
         Assert.Equal("Sold", (await Json(await visitor.GetAsync($"/api/public/vehicles/{slug}"))).GetProperty("status").GetString());
         await Json(await SetStatus(id, "Draft"));
         Assert.False(await IsListed(slug));
@@ -330,6 +340,21 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         // PostgreSQL stores microseconds; the first response still held .NET's 100 ns ticks.
         Assert.True((republished.GetProperty("publishedAt").GetDateTimeOffset() - publishedAt).Duration() < TimeSpan.FromMilliseconds(1));
 
+        // The cover is the first photo: choosing another cover moves it to the front, and so does reordering.
+        var third = await UploadImage(id);
+        Assert.Equal(HttpStatusCode.OK, (await admin.PostAsync($"/api/admin/vehicles/{id}/images/{third}/cover", null)).StatusCode);
+        var gallery = (await Json(await admin.GetAsync($"/api/admin/vehicles/{id}"))).GetProperty("images").EnumerateArray().ToList();
+        Assert.Equal(new[] { third, first, second }, gallery.Select(x => x.GetProperty("id").GetGuid()));
+        Assert.True(gallery[0].GetProperty("isCover").GetBoolean());
+        Assert.Single(gallery, x => x.GetProperty("isCover").GetBoolean());
+        Assert.Contains(third.ToString(), (await Json(await visitor.GetAsync($"/api/public/vehicles/{slug}"))).GetProperty("images")[0].GetString());
+        Assert.Equal(HttpStatusCode.OK, (await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/images/reorder", new { imageIds = new[] { first, third, second } })).StatusCode);
+        gallery = (await Json(await admin.GetAsync($"/api/admin/vehicles/{id}"))).GetProperty("images").EnumerateArray().ToList();
+        Assert.Equal(first, gallery[0].GetProperty("id").GetGuid());
+        Assert.True(gallery[0].GetProperty("isCover").GetBoolean());
+        Assert.Single(gallery, x => x.GetProperty("isCover").GetBoolean());
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/admin/vehicles/{id}/images/{third}/remove", null)).StatusCode);
+
         // Removing the cover promotes the next ready image; the last ready image of a listed vehicle stays.
         Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/admin/vehicles/{id}/images/{first}/remove", null)).StatusCode);
         var remaining = Assert.Single((await Json(await admin.GetAsync($"/api/admin/vehicles/{id}"))).GetProperty("images").EnumerateArray());
@@ -337,11 +362,71 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         var last = await Problem(await admin.PostAsync($"/api/admin/vehicles/{id}/images/{second}/remove", null), HttpStatusCode.Conflict);
         Assert.Equal("last_public_image", last.GetProperty("code").GetString());
 
-        // Archived is terminal and never public.
+        // Archived is never public and frozen until it is restored, as a draft.
         Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/admin/vehicles/{id}/archive", null)).StatusCode);
         Assert.Equal("archived", (await Problem(await SetStatus(id, "Available"), HttpStatusCode.Conflict)).GetProperty("code").GetString());
         Assert.Equal(HttpStatusCode.Conflict, (await Patch(id, new { variant = "x" })).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync($"/api/public/vehicles/{slug}")).StatusCode);
+        var restored = await Json(await admin.PostAsync($"/api/admin/vehicles/{id}/restore", null));
+        Assert.Equal("Draft", restored.GetProperty("status").GetString());
+        Assert.False(await IsListed(slug));
+        Assert.Equal("Reserved", (await Json(await SetStatus(id, "Reserved"))).GetProperty("status").GetString());
+        Assert.True(await IsListed(slug));
+    }
+
+    [Fact]
+    public async Task Editor_save_applies_everything_at_once_and_nothing_before()
+    {
+        var (id, slug) = await CreateVehicle();
+        await Json(await Patch(id, new { priceEur = 86900 }));
+        var first = await UploadImage(id);
+        await Json(await SetStatus(id, "Available"));
+        using var visitor = api.Anonymous();
+        async Task<List<string>> PublicImages() => (await Json(await visitor.GetAsync($"/api/public/vehicles/{slug}"))).GetProperty("images").EnumerateArray().Select(x => x.GetString()!).ToList();
+
+        // A staged upload is processed but stays out of the vehicle: not public, not the cover, not counted.
+        var staged = await UploadImage(id, staged: true);
+        var before = await PublicImages();
+        Assert.Single(before);
+        Assert.DoesNotContain(before, x => x.Contains(staged.ToString()));
+        Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync($"/api/public/vehicles/{slug}/images/{staged}/detail")).StatusCode);
+        var editor = (await Json(await admin.GetAsync($"/api/admin/vehicles/{id}"))).GetProperty("images").EnumerateArray().ToList();
+        Assert.True(editor.Single(x => x.GetProperty("id").GetGuid() == staged).GetProperty("isStaged").GetBoolean());
+        Assert.Equal(HttpStatusCode.Conflict, (await admin.PostAsync($"/api/admin/vehicles/{id}/images/{staged}/cover", null)).StatusCode);
+
+        // An invalid part refuses the whole save: nothing changes.
+        var refused = await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/save", new
+        {
+            changes = new { variant = "Touring", powerHp = 99999 },
+            gallery = new { order = new[] { staged, first }, removed = Array.Empty<Guid>() },
+        });
+        Assert.Equal("powerHp", (await Problem(refused, HttpStatusCode.BadRequest)).GetProperty("field").GetString());
+        var unchanged = await Json(await admin.GetAsync($"/api/admin/vehicles/{id}"));
+        Assert.Equal(JsonValueKind.Null, unchanged.GetProperty("variant").ValueKind);
+        Assert.Equal(before, await PublicImages());
+
+        // One save: fields, the staged photo kept and moved to the front (so it is the cover), the old one removed, status.
+        var saved = await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/save", new
+        {
+            changes = new { variant = "Touring" },
+            gallery = new { order = new[] { staged }, removed = new[] { first } },
+            status = new { status = "Reserved" },
+        }));
+        Assert.Equal(("Touring", "Reserved"), (saved.GetProperty("variant").GetString(), saved.GetProperty("status").GetString()));
+        var image = Assert.Single(saved.GetProperty("images").EnumerateArray());
+        Assert.Equal(staged, image.GetProperty("id").GetGuid());
+        Assert.True(image.GetProperty("isCover").GetBoolean());
+        Assert.False(image.GetProperty("isStaged").GetBoolean());
+        Assert.Contains(staged.ToString(), Assert.Single(await PublicImages()));
+
+        // Withdrawing and removing the last photo in the same save is allowed: the vehicle leaves the catalogue first.
+        var withdrawn = await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/save", new
+        {
+            gallery = new { order = Array.Empty<Guid>(), removed = new[] { staged } },
+            status = new { status = "Draft" },
+        }));
+        Assert.Empty(withdrawn.GetProperty("images").EnumerateArray());
+        Assert.False(await IsListed(slug));
     }
 
     [Fact]

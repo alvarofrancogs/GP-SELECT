@@ -7,7 +7,9 @@ import { describeError, errorReference } from '../../lib/adminErrors';
 import { formatNumber, searchable } from '../../lib/adminFormat';
 import { formatPrice, formatRegistration } from '../../lib/vehicleFormat';
 import { StatusMark } from '../../components/admin/StatusMark';
+import { RestoreVehicleButton } from '../../components/admin/RestoreVehicleButton';
 import { ArchiveVehicleDialog } from '../../components/admin/ArchiveVehicleDialog';
+import { useProgressiveList } from '../../hooks/useProgressiveList';
 
 export function AdminVehicles() {
   const text = adminCopy.list;
@@ -18,6 +20,7 @@ export function AdminVehicles() {
   const [showArchived, setShowArchived] = useState(false);
   const [archiving, setArchiving] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState('');
+  const { containerRef, count, revealMore } = useProgressiveList<HTMLUListElement>(10, JSON.stringify([query, showArchived]), '.admin-row', '.admin-row__name');
 
   useEffect(() => {
     let ignore = false;
@@ -69,7 +72,11 @@ export function AdminVehicles() {
         <span>{text.columns.vehicle}</span><span>{text.columns.year}</span><span>{text.columns.mileage}</span>
         <span>{text.columns.power}</span><span className="admin-rows__numeric">{text.columns.price}</span><span>{text.columns.status}</span><span />
       </div>
-      <ul className="admin-rows">{shown.map((v) => <VehicleRow key={v.id} vehicle={v} onArchive={() => setArchiving(v.id)} />)}</ul>
+      <ul ref={containerRef} id="admin-vehicle-results" className="admin-rows">{shown.slice(0, count).map((v) => <VehicleRow key={v.id} vehicle={v} onArchive={() => setArchiving(v.id)} onRestored={() => {
+        setVehicles((rows) => rows?.map((row) => row.id === v.id ? { ...row, status: 'Draft' } : row) ?? rows);
+        setAnnouncement(adminCopy.archive.restored);
+      }} />)}</ul>
+      {count < shown.length ? <div className="admin-list__more"><button type="button" className="button button--dark admin-button" aria-controls="admin-vehicle-results" onClick={revealMore}>{text.showMore}<span aria-hidden="true">↓</span></button></div> : null}
     </>}
     <ArchiveVehicleDialog vehicleId={archiving} onClose={() => setArchiving(null)} onArchived={(id) => {
       setVehicles((rows) => rows?.map((row) => row.id === id ? { ...row, status: 'Archived' } : row) ?? rows);
@@ -79,7 +86,7 @@ export function AdminVehicles() {
   </section>;
 }
 
-function VehicleRow({ vehicle: v, onArchive }: { vehicle: AdminVehicleRow; onArchive: () => void }) {
+function VehicleRow({ vehicle: v, onArchive, onRestored }: { vehicle: AdminVehicleRow; onArchive: () => void; onRestored: () => void }) {
   const text = adminCopy.list;
   const archived = v.status === 'Archived';
   const href = `/admin/vehiculos/${v.id}`;
@@ -97,10 +104,10 @@ function VehicleRow({ vehicle: v, onArchive }: { vehicle: AdminVehicleRow; onArc
     <p className="admin-row__fact type-numeric" data-empty={v.mileageKm === null || undefined}><span className="admin-row__label">{text.columns.mileage}</span>{v.mileageKm === null ? '—' : `${formatNumber(v.mileageKm)} km`}</p>
     <p className="admin-row__fact type-numeric" data-empty={v.powerHp === null || undefined}><span className="admin-row__label">{text.columns.power}</span>{v.powerHp === null ? '—' : `${formatNumber(v.powerHp)} CV`}</p>
     <p className="admin-row__fact admin-row__price type-numeric"><span className="admin-row__label">{text.columns.price}</span>{formatPrice(v.priceEur, 'es', text.onRequest)}</p>
-    <p className="admin-row__fact admin-row__state"><span className="admin-row__label">{text.columns.status}</span><StatusMark status={v.status} /></p>
+    <p className="admin-row__fact admin-row__state"><span className="admin-row__label">{text.columns.status}</span><StatusMark status={v.status} showWhenSold={v.showWhenSold} /></p>
     </div>
     <div className="admin-row__actions">
-      {archived ? null : <>
+      {archived ? <RestoreVehicleButton vehicleId={v.id} label={`${v.make} ${v.model}`} onRestored={onRestored} /> : <>
         <Link to={href} className="admin-action">{text.edit}{name}</Link>
         <Link to={`${href}/vista-previa`} className="admin-action">{text.preview}{name}</Link>
         <button type="button" className="admin-action" onClick={onArchive}>{text.archive}{name}</button>

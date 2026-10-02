@@ -29,6 +29,7 @@
   animation: catalogue-cta-in 600ms var(--ease-cinematic) 400ms backwards;
 }
 /* Paper and bright sky: frosted white glass with ink type. */
+.catalogue-cta[aria-disabled='true'] { cursor: progress; }
 .catalogue-cta[data-tone='light'] {
   --cta-ink: var(--color-ink);
   --cta-tint: rgb(255 255 255 / .3);

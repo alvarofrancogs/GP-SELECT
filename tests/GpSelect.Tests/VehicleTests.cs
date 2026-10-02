@@ -3,7 +3,7 @@ namespace GpSelect.Tests;
 public class VehicleTests {
  [Fact] public void Draft_can_be_incomplete(){var v=VehicleUnit.Create("Porsche","911",2020,null,"porsche-911-x");Assert.Equal(VehicleStatus.Draft,v.Status);}
  [Fact] public void Registration_month_is_optional(){var v=VehicleUnit.Create("A","B",2020,null,"a-b-x");Assert.Null(v.FirstRegistrationMonth);}
- [Fact] public void Archived_is_terminal(){var v=VehicleUnit.Create("A","B",2020,null,"a-b-x");v.Archive();Assert.Throws<DomainException>(()=>v.ChangeStatus(VehicleStatus.Available,[]));}
+ [Fact] public void Archived_needs_restoring_before_publishing(){var v=VehicleUnit.Create("A","B",2020,null,"a-b-x");v.Archive();Assert.Throws<DomainException>(()=>v.ChangeStatus(VehicleStatus.Available,[]));}
  [Fact] public void Publish_requires_ready_cover(){var v=VehicleUnit.Create("A","B",2020,null,"a-b-x");Assert.Throws<DomainException>(()=>v.Publish([]));}
  [Fact] public void Money_is_decimal(){var propertyType=typeof(VehicleUnit).GetProperty("PriceEur")!.PropertyType;Assert.Equal(typeof(decimal),Nullable.GetUnderlyingType(propertyType)??propertyType);}
  [Fact] public void Deleted_image_cannot_be_revived_by_worker(){var image=VehicleImage.Create(Guid.NewGuid(),"quarantine/x.jpg","image/jpeg",10);image.Delete();image.Ready("vehicles/x/card.jpg","vehicles/x/detail.jpg");image.Fail("late worker");Assert.Equal(ImageState.Deleted,image.State);}

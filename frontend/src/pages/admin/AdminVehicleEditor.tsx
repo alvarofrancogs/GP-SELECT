@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useBlocker, useParams } from 'react-router-dom';
-import { adminApi } from '../../services/adminApi';
-import type { AdminVehicle } from '../../types/admin';
+import { adminApi, ApiError } from '../../services/adminApi';
+import type { AdminImage, AdminVehicle, SettableStatus, VehicleSaveRequest } from '../../types/admin';
 import { adminCopy } from '../../i18n/adminCopy';
 import { describeError, errorReference, fieldErrors } from '../../lib/adminErrors';
 import { buildPatch, formSignature, LIMITS, mapServerErrors, parseInteger, textFields, toForm, type TextField, type VehicleForm } from '../../lib/vehicleForm';
@@ -10,9 +10,11 @@ import { ListEditor } from '../../components/admin/ListEditor';
 import { KeyValueEditor } from '../../components/admin/KeyValueEditor';
 import { ImageUploader } from '../../components/admin/ImageUploader';
 import { StatusControl } from '../../components/admin/StatusControl';
+import { RestoreVehicleButton } from '../../components/admin/RestoreVehicleButton';
 import { ArchiveVehicleDialog } from '../../components/admin/ArchiveVehicleDialog';
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { MonthSelect } from '../../components/admin/MonthSelect';
+import { SuggestInput } from '../../components/SuggestInput';
 import { formatPrice } from '../../lib/vehicleFormat';
 
 export function AdminVehicleEditor() {
@@ -42,7 +44,7 @@ function EditorLoader({ id }: { id: string }) {
 
 const BackLink = () => <Link to="/admin" className="admin-back"><span aria-hidden="true">←</span>{adminCopy.editor.back}</Link>;
 
-type SaveState = { kind: 'idle' | 'saving' | 'saved' } | { kind: 'error'; message: string; reference: string | null };
+type SaveState = { kind: 'idle' | 'saving' | 'saved' | 'discarding' } | { kind: 'error'; message: string; reference: string | null };
 
 function VehicleEditor({ initial }: { initial: AdminVehicle }) {
   const text = adminCopy.editor;
@@ -52,26 +54,108 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [save, setSave] = useState<SaveState>({ kind: 'idle' });
   const [uploading, setUploading] = useState(false);
+  const [uploadState, setUploadState] = useState<'none' | 'working' | 'failed'>('none');
+  const pendingUploads = uploadState !== 'none';
+  const [images, setImages] = useState(initial.images);
+  const [removed, setRemoved] = useState<string[]>([]);
+  const [status, setStatus] = useState<SettableStatus>(initial.status === 'Archived' ? 'Draft' : initial.status);
+  const [showWhenSold, setShowWhenSold] = useState(initial.showWhenSold);
+  const [uploaderKey, setUploaderKey] = useState(0);
+  const actionRef = useRef(false);
+  const galleryVersion = useRef(0);
+  const reloadSequence = useRef(0);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const archived = vehicle.status === 'Archived';
 
   const savedSignature = useMemo(() => formSignature(toForm(vehicle)), [vehicle]);
-  const dirty = !archived && formSignature(form) !== savedSignature;
+  const visibleImages = images.filter((image) => !removed.includes(image.id));
+  const galleryDirty = removed.length > 0 || images.some((image) => image.isStaged)
+    || JSON.stringify(visibleImages.map((image) => image.id)) !== JSON.stringify(vehicle.images.filter((image) => !image.isStaged).map((image) => image.id));
+  const statusDirty = status !== vehicle.status || (status === 'Sold' && showWhenSold !== vehicle.showWhenSold);
+  const dirty = !archived && (formSignature(form) !== savedSignature || galleryDirty || statusDirty || pendingUploads);
+  const processing = !archived && (uploading || uploadState === 'working' || images.some((image) => image.state === 'Processing'));
+  const incomplete = !archived && (pendingUploads || visibleImages.some((image) => image.state === 'PendingUpload'));
+  const working = save.kind === 'saving' || save.kind === 'discarding';
 
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => (dirty || uploading) && currentLocation.pathname !== nextLocation.pathname);
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => !archived && (dirty || uploading || processing || working) && (currentLocation.pathname !== nextLocation.pathname || currentLocation.search !== nextLocation.search || currentLocation.hash !== nextLocation.hash));
   useEffect(() => {
-    if (!dirty && !uploading) return;
+    if (archived || (!dirty && !uploading && !processing && !working)) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
-  }, [dirty, uploading]);
+  }, [archived, dirty, uploading, processing, working]);
 
+  // Polling only refreshes image metadata. It must not replace the editing baseline or local order.
   const reload = useCallback(async () => {
-    try { setVehicle(await adminApi.getVehicle(vehicle.id)); } catch { /* The next action surfaces connection problems. */ }
-  }, [vehicle.id]);
+    const version = galleryVersion.current;
+    const sequence = ++reloadSequence.current;
+    const updated = await adminApi.getVehicle(initial.id);
+    if (version !== galleryVersion.current || sequence !== reloadSequence.current || actionRef.current) return;
+    setImages((current) => {
+      const byId = new Map(updated.images.map((image) => [image.id, image]));
+      const knownIds = new Set(current.map((image) => image.id));
+      return [...current.map((image) => byId.get(image.id) ?? image),
+        ...updated.images.filter((image) => !knownIds.has(image.id))];
+    });
+  }, [initial.id]);
+
+  useEffect(() => {
+    if (archived || working || !images.some((image) => image.state === 'Processing' || image.state === 'PendingUpload')) return;
+    const version = galleryVersion.current;
+    const timer = window.setTimeout(() => {
+      void reload().catch((failure) => {
+        if (version !== galleryVersion.current || actionRef.current) return;
+        setSave({ kind: 'error', message: describeError(failure), reference: errorReference(failure) });
+      });
+    }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [archived, images, working, reload, save]);
+
+  const imageAdded = useCallback((image: AdminImage) => {
+    setImages((current) => current.some((item) => item.id === image.id) ? current : [...current, image]);
+    setSave({ kind: 'idle' });
+  }, []);
+
+  function resetDraft(updated: AdminVehicle) {
+    galleryVersion.current += 1;
+    setVehicle(updated);
+    setForm(toForm(updated));
+    setImages(updated.images);
+    setRemoved([]);
+    setStatus(updated.status === 'Archived' ? 'Draft' : updated.status);
+    setShowWhenSold(updated.showWhenSold);
+    setUploadState('none');
+    setUploading(false);
+    setUploaderKey((key) => key + 1);
+    setErrors({});
+  }
+
+  async function discard() {
+    if (actionRef.current || uploading || archived) return;
+    actionRef.current = true;
+    galleryVersion.current += 1;
+    setSave({ kind: 'discarding' });
+    setUploaderKey((key) => key + 1);
+    setUploadState('none');
+    try {
+      // Remove only staged images; saved images have only been removed from the local draft.
+      for (const image of images.filter((item) => item.isStaged)) {
+        await adminApi.removeImage(vehicle.id, image.id);
+        setImages((current) => current.filter((item) => item.id !== image.id));
+        setRemoved((current) => current.filter((id) => id !== image.id));
+      }
+      resetDraft({ ...vehicle, images: vehicle.images.filter((image) => !image.isStaged) });
+      setSave({ kind: 'idle' });
+    } catch (failure) {
+      setSave({ kind: 'error', message: describeError(failure), reference: errorReference(failure) });
+    } finally {
+      actionRef.current = false;
+    }
+  }
 
   function set<K extends keyof VehicleForm>(key: K, value: VehicleForm[K]) {
+    if (actionRef.current || archived) return;
     setForm((current) => ({ ...current, [key]: value }));
     if (save.kind !== 'saving') setSave({ kind: 'idle' });
     const errorKey = key as string;
@@ -84,7 +168,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!dirty || save.kind === 'saving') return;
+    if (!dirty || archived || actionRef.current || processing || incomplete) return;
     const { patch, errors: local, specKeys } = buildPatch(vehicle, form);
     if (Object.keys(local).length) {
       setErrors(local);
@@ -92,38 +176,46 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
       focusFirstError();
       return;
     }
-    if (!Object.keys(patch).length) { setForm(toForm(vehicle)); return; } // Only whitespace changed.
+    const body: VehicleSaveRequest = {};
+    if (Object.keys(patch).length) body.changes = patch;
+    if (galleryDirty) body.gallery = { order: visibleImages.map((image) => image.id), removed };
+    if (statusDirty) body.status = { status, ...(status === 'Sold' ? { showWhenSold } : {}) };
+    if (!Object.keys(body).length) { setForm(toForm(vehicle)); setSave({ kind: 'idle' }); return; }
+    actionRef.current = true;
+    galleryVersion.current += 1;
     setSave({ kind: 'saving' });
     try {
-      const updated = await adminApi.updateVehicle(vehicle.id, patch);
-      setVehicle(updated);
-      setForm(toForm(updated));
-      setErrors({});
+      const updated = await adminApi.saveVehicle(vehicle.id, body);
+      resetDraft(updated);
       setSave({ kind: 'saved' });
     } catch (failure) {
-      const server = mapServerErrors(fieldErrors(failure), specKeys);
+      const mapped = mapServerErrors(fieldErrors(failure), specKeys);
+      const server = failure instanceof ApiError && failure.status === 422 ? {}
+        : Object.fromEntries(Object.entries(mapped).filter(([key]) => key in form || key.startsWith('spec:') || key === 'customSpecifications'));
       setErrors(server);
       setSave({ kind: 'error', message: Object.keys(server).length ? text.fixErrors : describeError(failure), reference: errorReference(failure) });
       if (Object.keys(server).length) focusFirstError();
+    } finally {
+      actionRef.current = false;
     }
   }
 
-  const textInput = (name: TextField, label: string, options: { hint?: string; list?: string } = {}) =>
+  const textInput = (name: TextField, label: string, options: { hint?: string; suggestions?: readonly string[] } = {}) =>
     <FormField id={`field-${name}`} label={label} error={errors[name]} hint={options.hint}>
-      {(a11y) => <input {...a11y} value={form[name]} maxLength={textFields[name].max} list={options.list}
-        onChange={(event) => set(name, event.target.value)} />}
+      {(a11y) => options.suggestions
+        ? <SuggestInput {...a11y} value={form[name]} maxLength={textFields[name].max} suggestions={options.suggestions} onChange={(value) => set(name, value)} />
+        : <input {...a11y} value={form[name]} maxLength={textFields[name].max} onChange={(event) => set(name, event.target.value)} />}
     </FormField>;
   const numberInput = (name: 'mileageKm' | 'priceEur' | 'powerHp', label: string, unit: string, hint?: string) =>
     <FormField id={`field-${name}`} label={label} error={errors[name]} hint={hint} unit={unit}>
       {(a11y) => <input {...a11y} value={form[name]} inputMode="numeric" autoComplete="off" onChange={(event) => set(name, event.target.value)} />}
     </FormField>;
-  const suggestions = (name: keyof typeof f.suggestions) =>
-    <datalist id={`suggest-${name}`}>{f.suggestions[name].map((value) => <option key={value} value={value} />)}</datalist>;
 
   const price = parseInteger(form.priceEur);
   const priceHint = typeof price === 'number' ? `${formatPrice(price, 'es', '')}. ${f.priceHint}` : f.priceHint;
-  const statusMessage = save.kind === 'saving' ? text.saving : save.kind === 'saved' && !dirty ? text.saved
-    : save.kind === 'error' ? save.message : dirty ? text.dirty : text.clean;
+  const statusMessage = save.kind === 'saving' ? text.saving : save.kind === 'discarding' ? text.discarding
+    : save.kind === 'error' ? save.message : processing ? text.processing : incomplete ? text.pendingPhotos
+    : save.kind === 'saved' && !dirty ? text.saved : dirty ? text.dirty : text.clean;
 
   return <article className="admin-editor">
     <header className="admin-editor__head">
@@ -135,12 +227,28 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
         </h1>
         {archived ? null : <Link to={`/admin/vehiculos/${vehicle.id}/vista-previa`} className="admin-link">{text.preview}<span aria-hidden="true">→</span></Link>}
       </div>
-      <StatusControl vehicle={vehicle} dirty={dirty} onChanged={setVehicle} />
-      {archived ? <p className="admin-notice" role="status">{text.archivedNotice}</p> : null}
+      <StatusControl vehicle={archived ? vehicle : { ...vehicle, status, showWhenSold }} disabled={working}
+        onChanged={(next, visible) => { setStatus(next); setShowWhenSold(visible); setSave({ kind: 'idle' }); }} />
+      {archived ? <div className="admin-notice admin-notice--archived" role="status"><p>{text.archivedNotice}</p>
+        <RestoreVehicleButton vehicleId={vehicle.id} className="admin-link" onRestored={(restored) => { resetDraft(restored); setSave({ kind: 'idle' }); }} />
+      </div> : null}
     </header>
 
-    <form ref={formRef} className="admin-form" onSubmit={submit} noValidate aria-label={text.sections.vehicle}>
-      <fieldset disabled={archived} className="admin-form__fields">
+    {archived ? null : <div className="admin-savebar" data-dirty={dirty || undefined}>
+      <p className="admin-savebar__status" role={save.kind === 'error' ? 'alert' : 'status'} data-kind={save.kind}>
+        {statusMessage}{save.kind === 'error' && save.reference ? <span className="admin-reference"> {adminCopy.errors.reference}: {save.reference}</span> : null}
+      </p>
+      <div className="admin-savebar__actions">
+        <button type="button" className="admin-link" disabled={!dirty || working || uploading}
+          onClick={() => void discard()}>{text.discard}</button>
+        <button type="submit" form="vehicle-editor-form" className="button button--dark admin-button" disabled={!dirty || working || processing || incomplete}>
+          <span>{save.kind === 'saving' ? text.saving : text.save}</span>
+        </button>
+      </div>
+    </div>}
+
+    <form id="vehicle-editor-form" ref={formRef} className="admin-form" onSubmit={submit} noValidate aria-label={text.sections.vehicle}>
+      <fieldset disabled={archived || working} className="admin-form__fields">
         <Section id="vehicle" title={text.sections.vehicle} note={text.requiredNote}>
           <div className="admin-grid">
             <FormField id="field-make" label={f.make} error={errors.make}>
@@ -160,13 +268,12 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
             {numberInput('mileageKm', f.mileageKm, f.kmUnit)}
             {numberInput('priceEur', f.priceEur, f.eurUnit, priceHint)}
             {numberInput('powerHp', f.powerHp, f.hpUnit)}
-            {textInput('fuelType', f.fuelType, { list: 'suggest-fuelType' })}
-            {textInput('transmission', f.transmission, { list: 'suggest-transmission' })}
-            {textInput('bodyType', f.bodyType, { list: 'suggest-bodyType' })}
-            {textInput('drivetrain', f.drivetrain, { list: 'suggest-drivetrain' })}
+            {textInput('fuelType', f.fuelType, { suggestions: f.suggestions.fuelType })}
+            {textInput('transmission', f.transmission, { suggestions: f.suggestions.transmission })}
+            {textInput('bodyType', f.bodyType, { suggestions: f.suggestions.bodyType })}
+            {textInput('drivetrain', f.drivetrain, { suggestions: f.suggestions.drivetrain })}
             {textInput('internalReference', f.internalReference, { hint: f.internalHint })}
           </div>
-          {suggestions('fuelType')}{suggestions('transmission')}{suggestions('bodyType')}{suggestions('drivetrain')}
         </Section>
 
         <Section id="appearance" title={text.sections.appearance}>
@@ -196,6 +303,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
 
         <Section id="specifications" title={text.sections.specifications}>
           <KeyValueEditor rows={form.specifications} errors={errors} onChange={(rows) => {
+            if (actionRef.current || archived) return;
             setForm((current) => ({ ...current, specifications: rows }));
             if (save.kind !== 'saving') setSave({ kind: 'idle' });
           }} />
@@ -203,22 +311,16 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
         </Section>
       </fieldset>
 
-      {archived ? null : <div className="admin-savebar" data-dirty={dirty || undefined}>
-        <p className="admin-savebar__status" role={save.kind === 'error' ? 'alert' : 'status'} data-kind={save.kind}>
-          {statusMessage}{save.kind === 'error' && save.reference ? <span className="admin-reference"> {adminCopy.errors.reference}: {save.reference}</span> : null}
-        </p>
-        <div className="admin-savebar__actions">
-          {dirty ? <button type="button" className="admin-link" disabled={save.kind === 'saving'}
-            onClick={() => { setForm(toForm(vehicle)); setErrors({}); setSave({ kind: 'idle' }); }}>{text.discard}</button> : null}
-          <button type="submit" className="button button--dark admin-button" disabled={!dirty || save.kind === 'saving'}>
-            <span>{save.kind === 'saving' ? text.saving : text.save}</span>
-          </button>
-        </div>
-      </div>}
     </form>
 
     <Section id="photos" title={text.sections.photos}>
-      <ImageUploader vehicleId={vehicle.id} images={vehicle.images} reload={reload} disabled={archived} onBusyChange={setUploading} />
+      <ImageUploader key={uploaderKey} vehicleId={vehicle.id} images={visibleImages} reload={reload}
+        disabled={archived || working} onBusyChange={setUploading} onPendingChange={setUploadState} onImageAdded={imageAdded}
+        onOrderChange={(ids) => {
+          setImages((current) => [...ids.map((id) => current.find((image) => image.id === id)!), ...current.filter((image) => !ids.includes(image.id))]);
+          setSave({ kind: 'idle' });
+        }}
+        onRemove={(id) => { setRemoved((current) => [...current, id]); setSave({ kind: 'idle' }); }} />
     </Section>
 
     {archived ? null : <section className="admin-archive" aria-labelledby="archive-title">
@@ -230,7 +332,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     </section>}
 
     <ArchiveVehicleDialog vehicleId={archiveOpen ? vehicle.id : null} onClose={() => setArchiveOpen(false)}
-      onArchived={() => { setArchiveOpen(false); setVehicle({ ...vehicle, status: 'Archived' }); setForm(toForm(vehicle)); }} />
+      onArchived={() => { setArchiveOpen(false); resetDraft({ ...vehicle, status: 'Archived' }); }} />
     <ConfirmDialog open={blocker.state === 'blocked'} title={adminCopy.unsaved.title} body={adminCopy.unsaved.body}
       confirmLabel={adminCopy.unsaved.leave} cancelLabel={adminCopy.unsaved.stay}
       onConfirm={() => blocker.proceed?.()} onCancel={() => blocker.reset?.()} />

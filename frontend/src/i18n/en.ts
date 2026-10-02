@@ -28,6 +28,8 @@ export const en: Dictionary = {
     "onRequest": "Price on request",
     "comingSoon": "Coming soon",
     "reserved": "Reserved",
+    "sold": "Sold",
+    "showMore": "Show more",
     "empty": "No vehicles match your search.",
     "search": "Let us look for it",
     "closing": "Not here? We will look for it in Europe.",

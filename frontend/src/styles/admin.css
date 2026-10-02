@@ -47,6 +47,7 @@
 .admin-empty-line { font-size: .875rem; color: var(--color-muted); }
 .admin-notice { padding-block: .75rem; border-top: 1px solid currentColor; font-size: .875rem; line-height: 1.45; }
 .admin-notice[role='alert'] { color: var(--admin-alert); }
+.admin-notice--archived { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 2rem; }
 .admin-state { display: grid; justify-items: start; gap: .75rem; padding-block: 4rem; font-size: 1rem; }
 
 /* Fields: the contact form vocabulary, tightened */
@@ -59,7 +60,9 @@
   background: transparent; color: var(--color-ink); font-size: 1rem; font-stretch: var(--type-body-width);
 }
 .admin :is(input, textarea)::placeholder { color: var(--color-muted); opacity: .8; }
-.admin .admin-field select { appearance: none; padding-right: 1.5rem; cursor: pointer; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' fill='none' stroke='%23101112'/%3E%3C/svg%3E") right .25rem center no-repeat; }
+/* Select and SuggestInput (shared, see select.css) take the admin field size. */
+.admin .admin-field .select__trigger { padding: .55rem 0; border-bottom-color: var(--color-muted); font-size: 1rem; font-stretch: var(--type-body-width); }
+.admin .admin-field .select__list { font-size: .9375rem; }
 .admin .admin-field textarea { min-height: 7rem; padding: .75rem .9rem; border: 1px solid var(--color-line); resize: vertical; line-height: 1.5; }
 .admin .admin-field textarea[aria-invalid='true'] { border: 2px solid var(--admin-alert); }
 .admin :is(input, select, textarea):hover:not(:disabled) { border-bottom-color: var(--color-ink); }
@@ -72,16 +75,21 @@
 .admin-field__error { margin-top: .4rem; font-size: .8125rem; line-height: 1.45; color: var(--admin-alert); }
 .admin-field__error:empty { display: none; }
 .admin-check { display: inline-flex; align-items: center; gap: .6rem; min-height: 2.75rem; font-size: .875rem; cursor: pointer; }
-.admin-check input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--color-ink); }
+/* Same square as the status mark: outlined off, filled on. */
+.admin-check input { appearance: none; flex: 0 0 auto; width: 1rem; height: 1rem; margin: 0; border: 1px solid var(--color-ink); background: transparent; cursor: pointer; transition: box-shadow var(--duration-ui) var(--ease-out), background-color var(--duration-ui) var(--ease-out); }
+.admin-check input:checked { background: var(--color-ink); box-shadow: inset 0 0 0 3px var(--color-paper); }
+.admin-check input:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
 .admin-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.75rem 2rem; }
 .admin-grid--single { grid-template-columns: minmax(0, 1fr); max-width: 52rem; }
 
 /* Status: text first, the square repeats whether it is in the catalogue */
-.admin-status { display: inline-flex; align-items: center; gap: .55em; white-space: nowrap; font-weight: 500; }
+.admin-status { display: inline-flex; align-items: baseline; gap: .55em; white-space: normal; font-weight: 500; }
 .admin-status__mark { flex: none; width: .55em; height: .55em; border: 1px solid currentColor; }
 .admin-status:is([data-status='Available'], [data-status='Reserved'], [data-status='ComingSoon']) .admin-status__mark { background: currentColor; }
 .admin-status:is([data-status='Draft'], [data-status='Sold'], [data-status='Archived']) { color: var(--color-muted); }
 .admin-status[data-status='Archived'] .admin-status__mark { border-style: dashed; }
+.admin-status[data-sold-visible] { color: var(--color-ink); }
+.admin-status[data-sold-visible] .admin-status__mark { background: currentColor; }
 
 /* Login */
 .admin-login { width: min(100%, 26rem); margin: clamp(2rem, 10vh, 7rem) auto 0; }
@@ -98,6 +106,8 @@
 .admin-rows__head { margin-top: 2rem; padding-block: .6rem; border-bottom: 1px solid var(--color-ink); font-size: .75rem; color: var(--color-muted); }
 .admin-rows__numeric, .admin-row__price { text-align: right; }
 .admin-row { padding-block: 1rem; }
+.admin-row__name { scroll-margin-top: 2rem; }
+.admin-list__more { display: flex; justify-content: center; margin-top: 2rem; }
 .admin-row + .admin-row { border-top: 1px solid var(--color-line); }
 .admin-row__facts { display: contents; }
 .admin-row__thumb { display: grid; place-items: center; aspect-ratio: 4 / 3; overflow: hidden; background: var(--color-placeholder); font-size: .6875rem; color: var(--color-muted); }
@@ -134,12 +144,15 @@
 .admin-status-control__value { font-size: 1.0625rem; }
 .admin-status-control__current .admin-field__hint { grid-column: 2; margin: 0; }
 .admin-status-control__panel { grid-column: 1 / -1; max-width: 40rem; margin-top: 1rem; }
-.admin-status-control__panel ul { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-ink); }
-.admin-status-option { display: grid; gap: .2rem; width: 100%; padding: .85rem 0; border: 0; border-bottom: 1px solid var(--color-line); background: none; text-align: left; }
+.admin-status-control__options { min-width: 0; margin: 0; padding: 0; border: 0; border-top: 1px solid var(--color-ink); }
+.admin-status-option { display: flex; align-items: baseline; gap: .8rem; width: 100%; padding: .85rem 0; border-bottom: 1px solid var(--color-line); text-align: left; }
+.admin-status-option > span { display: grid; gap: .2rem; }
 .admin-status-option__name { font-size: 1rem; font-weight: 600; font-stretch: var(--type-ui-width); }
 .admin-status-option__meta { font-size: .8125rem; color: var(--color-muted); }
-.admin-status-option:hover:not(:disabled) .admin-status-option__name { text-decoration: underline; text-underline-offset: .3em; }
-.admin-status-option:disabled { opacity: .45; cursor: default; }
+.admin-status-option:has(input:focus-visible) { outline: 2px solid var(--color-ink); outline-offset: 4px; }
+.admin-status-control__options:disabled, .admin-check:has(input:disabled) { opacity: .5; cursor: default; }
+.admin-status-control__sold { margin-top: 1rem; }
+.admin-status-control__actions { display: flex; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-top: 1.5rem; }
 .admin-status-control__panel .admin-notice, .admin-status-control__panel .admin-field__hint { margin-bottom: .75rem; }
 
 .admin-form__fields { min-width: 0; margin: 0; padding: 0; border: 0; }
@@ -148,8 +161,11 @@
 .admin-section__body { min-width: 0; }
 .admin-form__fields > .admin-section:first-child { border-top: 0; }
 
-.admin-savebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 2rem; padding-block: 1rem; border-top: 1px solid var(--color-line); background: var(--color-paper); }
-.admin-savebar[data-dirty] { position: sticky; bottom: 0; z-index: var(--z-ui); border-top-color: var(--color-ink); }
+.admin-savebar { position: sticky; top: 0; z-index: var(--z-ui); border-bottom: 1px solid var(--color-line); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 2rem; padding-block: 1rem; border-top: 1px solid var(--color-line); background: var(--color-paper); }
+.admin-savebar[data-dirty] { border-top-color: var(--color-ink); }
+.admin-editor :is(input, textarea, button, select, [tabindex]) { scroll-margin-top: 8rem; }
+.admin-photo__unsaved { display: inline-flex; align-items: center; gap: .4rem; font-size: .75rem; }
+.admin-photo__unsaved::before { content: ""; width: .4rem; height: .4rem; background: currentColor; }
 .admin-savebar__status { font-size: .875rem; color: var(--color-muted); }
 .admin-savebar__status[data-kind='saved'] { color: var(--color-ink); }
 .admin-savebar__status[data-kind='error'] { color: var(--admin-alert); }
@@ -253,7 +269,8 @@
   .admin-status-control__current .admin-field__hint { grid-column: 1; }
   .admin-section { padding-block: 1.75rem; }
   .admin-savebar { padding-block: .75rem; }
-  .admin-savebar { flex-wrap: nowrap; gap: 1rem; }
+  .admin-savebar { flex-wrap: wrap; gap: .5rem 1rem; }
+  .admin-savebar__status { flex-basis: 100%; }
   .admin-savebar__status { font-size: .75rem; }
   .admin-savebar__actions { gap: 1rem; }
   .admin-savebar .admin-button { padding-inline: 1.1rem; }

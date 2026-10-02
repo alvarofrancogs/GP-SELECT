@@ -9,18 +9,21 @@ namespace GpSelect.Api;
 [ApiController][Route("api/public/vehicles")]
 public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage storage) : ControllerBase
 {
-    // SQL twins of VehicleVisibility: the catalogue lists ComingSoon, Available and Reserved;
-    // detail pages also serve Sold vehicles that were published at some point.
+    // SQL twins of VehicleVisibility: the catalogue lists ComingSoon, Available, Reserved and the Sold vehicles kept
+    // on show; detail pages also serve Sold vehicles that were published at some point.
     private static readonly Expression<Func<VehicleUnit, bool>> Listed = x =>
-        x.Status == VehicleStatus.ComingSoon || x.Status == VehicleStatus.Available || x.Status == VehicleStatus.Reserved;
+        x.Status == VehicleStatus.ComingSoon || x.Status == VehicleStatus.Available || x.Status == VehicleStatus.Reserved
+        || (x.Status == VehicleStatus.Sold && x.ShowWhenSold);
     private static readonly Expression<Func<VehicleUnit, bool>> WithPublicDetail = x =>
         x.Status == VehicleStatus.ComingSoon || x.Status == VehicleStatus.Available || x.Status == VehicleStatus.Reserved
-        || (x.Status == VehicleStatus.Sold && x.PublishedAt != null);
+        || (x.Status == VehicleStatus.Sold && (x.ShowWhenSold || x.PublishedAt != null));
 
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<VehiclePublicCardDto>>> List(CancellationToken ct)
     {
-        var vehicles = await db.Vehicles.AsNoTracking().Where(Listed).OrderByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id).Take(100).ToListAsync(ct);
+        // Newest first, sold vehicles kept on show after everything still for sale.
+        var vehicles = await db.Vehicles.AsNoTracking().Where(Listed).OrderBy(x => x.Status == VehicleStatus.Sold)
+            .ThenByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id).Take(100).ToListAsync(ct);
         var ids = vehicles.Select(x => x.Id).ToList();
         var images = (await db.Images.AsNoTracking().Where(x => ids.Contains(x.VehicleUnitId)).ToListAsync(ct)).ToLookup(x => x.VehicleUnitId);
         return Ok(vehicles.Select(v => PublicMapping.MapCard(v, images[v.Id])).ToList());
@@ -44,7 +47,7 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
     {
         var vehicle = await db.Vehicles.AsNoTracking().Where(WithPublicDetail).Where(x => x.PublicSlug == slug).Select(x => (Guid?)x.Id).FirstOrDefaultAsync();
         if (vehicle is null) return NotFound();
-        var image = await db.Images.AsNoTracking().SingleOrDefaultAsync(x => x.Id == imageId && x.VehicleUnitId == vehicle && x.State == ImageState.Ready);
+        var image = await db.Images.AsNoTracking().SingleOrDefaultAsync(x => x.Id == imageId && x.VehicleUnitId == vehicle && x.State == ImageState.Ready && !x.IsStaged);
         var key = detail ? image?.DetailKey : image?.CardKey;
         if (key is null) return NotFound();
         Response.Headers.CacheControl = "public,max-age=31536000,immutable";

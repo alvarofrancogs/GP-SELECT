@@ -3,6 +3,7 @@ using System;
 using GpSelect.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GpSelect.Infrastructure.Migrations
 {
     [DbContext(typeof(GpSelectDbContext))]
-    partial class GpSelectDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261001221845_AddShowWhenSold")]
+    partial class AddShowWhenSold
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -135,9 +138,6 @@ namespace GpSelect.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<bool>("IsCover")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsStaged")
                         .HasColumnType("boolean");
 
                     b.Property<string>("MimeType")

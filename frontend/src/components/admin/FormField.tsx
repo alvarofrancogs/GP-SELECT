@@ -18,7 +18,7 @@ interface FormFieldProps {
 export function FormField({ id, label, error, hint, optional, unit, wide, children }: FormFieldProps) {
   const described = [hint ? `${id}-hint` : null, error ? `${id}-error` : null].filter(Boolean).join(' ') || undefined;
   return <div className={`admin-field${wide ? ' admin-field--wide' : ''}`} data-invalid={error ? true : undefined}>
-    <label htmlFor={id}>{label}{optional ? <span className="admin-field__optional"> ({adminCopy.fields.optional})</span> : null}</label>
+    <label id={`${id}-label`} htmlFor={id}>{label}{optional ? <span className="admin-field__optional"> ({adminCopy.fields.optional})</span> : null}</label>
     <div className={unit ? 'admin-field__unit' : undefined}>
       {children({ id, 'aria-invalid': error ? true : undefined, 'aria-describedby': described })}
       {unit ? <span aria-hidden="true">{unit}</span> : null}

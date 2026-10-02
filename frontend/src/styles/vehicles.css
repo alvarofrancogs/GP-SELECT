@@ -1,12 +1,13 @@
 .vehicle-filters { display: flex; align-items: flex-end; gap: 2rem; border-block: 1px solid var(--interior-rule); margin-bottom: clamp(3rem, 5vw, 6rem); font-size: .75rem; }
 .vehicle-filters__fields { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem 2.5vw; padding-block: 1.5rem; }
 .vehicle-filter { position: relative; min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: .8rem; }
-.vehicle-filter::after { position: absolute; right: .15rem; bottom: 1.05rem; width: .35rem; height: .35rem; border-right: 1px solid currentColor; border-bottom: 1px solid currentColor; transform: rotate(45deg); content: ''; pointer-events: none; }
-.vehicle-filter > span { color: var(--color-muted); }
-.vehicle-filter select { appearance: none; width: 100%; min-width: 0; min-height: 2.75rem; padding: .65rem 1rem .65rem 0; border: 0; border-bottom: 1px solid var(--interior-rule); border-radius: 0; background: transparent; color: var(--color-ink); cursor: pointer; }
+.vehicle-filter > label { color: var(--color-muted); cursor: pointer; }
+.vehicle-filter .select__list { font-size: .8125rem; }
 .vehicle-filters__result { display: flex; flex-direction: column; align-items: flex-end; gap: .65rem; padding-block: 1.5rem; }
 .vehicle-filters__toggle { display: none; }
 .vehicle-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: clamp(1.5rem, 3vw, 4rem); }
+.vehicle-grid__more { display: flex; justify-content: center; }
+.vehicle-card { scroll-margin-top: calc(var(--header-height) + 1.5rem); }
 /* Five shared content tracks align each row without fixed card heights. */
 .vehicle-card { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: subgrid; grid-row: span 5; row-gap: 0; margin-bottom: clamp(4.5rem, 8vw, 10rem); }
 .vehicle-card > * { align-self: start; }
@@ -50,7 +51,9 @@
 .vehicle-specs dt { color: var(--color-muted); }
 .vehicle-specs dd { margin: 0; overflow-wrap: anywhere; }
 .vehicle-detail__data .vehicle-specs { margin-block: 2rem; }
-.vehicle-detail__data .button { width: 100%; font-size: .8rem; }
+/* "Solicitar información": a touch larger than the global button text. */
+.vehicle-detail .button { font-size: clamp(.875rem, 1vw, 1rem); }
+.vehicle-detail__data .button { width: 100%; }
 .vehicle-detail__data > .editorial-link { margin-top: 1.5rem; font-size: .75rem; }
 .vehicle-detail__data > .editorial-link:disabled { opacity: .5; cursor: default; }
 .vehicle-detail__body { margin-block: var(--interior-space); }
