@@ -8,7 +8,8 @@ public sealed record UpdateVehicleRequest : VehicleChanges;
 /// <summary>Status is required (a missing enum would otherwise read as Draft). ShowWhenSold null keeps the
 /// current choice; it only has an effect while the vehicle is Sold.</summary>
 public sealed record StatusChangeRequest([Required] VehicleStatus? Status, bool? ShowWhenSold = null);
-/// <summary>Final order of every photo the vehicle keeps (staged ones included) and the photos to remove.</summary>
+/// <summary>Final order of every saved photo the vehicle keeps plus the staged ones to publish, and the photos to
+/// remove. Staged photos not in the order stay staged; without an order no staged photo is published.</summary>
 public sealed record GalleryChanges(IReadOnlyList<Guid>? Order, IReadOnlyList<Guid>? Removed);
 /// <summary>Everything the editor changed, saved at once. Each part is optional; Changes has merge-patch semantics.</summary>
 public sealed record SaveVehicleRequest(UpdateVehicleRequest? Changes, GalleryChanges? Gallery, StatusChangeRequest? Status);

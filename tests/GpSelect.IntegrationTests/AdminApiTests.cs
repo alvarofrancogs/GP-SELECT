@@ -479,6 +479,68 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.False(await IsListed(slug));
     }
 
+    private async Task<Dictionary<Guid, bool>> StagedById(Guid id) =>
+        (await Json(await admin.GetAsync($"/api/admin/vehicles/{id}"))).GetProperty("images").EnumerateArray()
+            .ToDictionary(x => x.GetProperty("id").GetGuid(), x => x.GetProperty("isStaged").GetBoolean());
+
+    [Fact]
+    public async Task Save_publishes_only_the_staged_photos_it_lists()
+    {
+        var (id, slug) = await CreateVehicle();
+        await Json(await Patch(id, new { priceEur = 86900 }));
+        var a = await UploadImage(id);
+        await Json(await SetStatus(id, "Available"));
+        var b = await UploadImage(id, staged: true);
+        var c = await UploadImage(id, staged: true); // uploaded from another tab
+
+        await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/save", new
+        {
+            gallery = new { order = new[] { a, b }, removed = Array.Empty<Guid>() },
+        }));
+        var staged = await StagedById(id);
+        Assert.False(staged[b]);
+        Assert.True(staged[c]);
+        var images = (await Json(await api.Anonymous().GetAsync($"/api/public/vehicles/{slug}"))).GetProperty("images").EnumerateArray().Select(x => x.GetString()!).ToList();
+        Assert.Equal(2, images.Count);
+        Assert.DoesNotContain(images, x => x.Contains(c.ToString()));
+
+        // A save without an order publishes no staged photo.
+        await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/save", new { gallery = new { removed = Array.Empty<Guid>() } }));
+        Assert.True((await StagedById(id))[c]);
+    }
+
+    [Fact]
+    public async Task Save_publishes_staged_photos_left_from_an_earlier_session()
+    {
+        var (id, _) = await CreateVehicle();
+        var a = await UploadImage(id);
+        var b = await UploadImage(id, staged: true); // left staged before the editor was opened
+
+        await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/save", new
+        {
+            gallery = new { order = new[] { a, b }, removed = Array.Empty<Guid>() },
+        }));
+        Assert.False((await StagedById(id))[b]);
+    }
+
+    [Fact]
+    public async Task Save_can_withdraw_and_zero_the_price_together()
+    {
+        var (id, slug) = await CreateVehicle();
+        await Json(await Patch(id, new { priceEur = 86900 }));
+        await UploadImage(id);
+        await Json(await SetStatus(id, "Available"));
+
+        var saved = await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/save", new
+        {
+            changes = new { priceEur = 0 },
+            status = new { status = "Draft" },
+        }));
+        Assert.Equal("Draft", saved.GetProperty("status").GetString());
+        Assert.Equal(0m, saved.GetProperty("priceEur").GetDecimal());
+        Assert.False(await IsListed(slug));
+    }
+
     [Fact]
     public async Task Admin_list_uses_the_same_queries_for_any_number_of_vehicles()
     {

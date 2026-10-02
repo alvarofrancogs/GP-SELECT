@@ -362,6 +362,21 @@ public class VehicleContractTests
     }
 
     [Fact]
+    public void Reorder_may_leave_out_staged_images_but_not_saved_ones()
+    {
+        var v = NewVehicle();
+        var a = ReadyImage(v, 0, cover: true);
+        var b = ReadyImage(v, 1);
+        var staged = VehicleImage.Create(v.Id, "s.jpg", "image/jpeg", 10, staged: true);
+        staged.Ready("s-card.jpg", "s-detail.jpg");
+        var images = new List<VehicleImage> { a, b, staged };
+        VehicleGallery.Reorder(images, [b.Id, a.Id]);
+        Assert.True(b.IsCover);
+        Assert.True(staged.SortOrder > a.SortOrder);
+        Assert.Equal("invalid_order", Fails(() => VehicleGallery.Reorder(images, [a.Id])).Code);
+    }
+
+    [Fact]
     public void Staged_image_is_never_the_cover_nor_public_until_published()
     {
         var v = NewVehicle();

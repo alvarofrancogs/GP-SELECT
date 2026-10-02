@@ -65,16 +65,18 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
         try
         {
             VehicleGallery.EnsureEditable(v);
-            if (r.Changes is not null) v.Apply(r.Changes);
-            // Leaving the catalogue goes first, so a vehicle being withdrawn can lose its last photo in the same save;
-            // entering it goes last, once the photos it needs are in place.
+            // Leaving the catalogue goes first, so a vehicle being withdrawn can lose its last photo or its price in
+            // the same save; entering it goes last, once the photos it needs are in place.
             var target = r.Status?.Status;
             var leaves = target is not null && !VehicleVisibility.IsInCatalogue(target.Value, r.Status!.ShowWhenSold ?? v.ShowWhenSold);
             if (leaves) v.ChangeStatus(target!.Value, images, r.Status!.ShowWhenSold);
+            if (r.Changes is not null) v.Apply(r.Changes);
             if (r.Gallery is not null)
             {
                 var removing = r.Gallery.Removed ?? [];
-                foreach (var image in images.Where(x => x.IsStaged && !removing.Contains(x.Id))) image.Publish();
+                // Only the staged photos this editor lists are kept: another tab's uploads stay staged.
+                var keeping = r.Gallery.Order ?? [];
+                foreach (var image in images.Where(x => x.IsStaged && keeping.Contains(x.Id) && !removing.Contains(x.Id))) image.Publish();
                 foreach (var imageId in removing.Distinct())
                 {
                     var image = images.FirstOrDefault(x => x.Id == imageId) ?? throw new DomainException("invalid_gallery", "Unknown photo", "gallery");

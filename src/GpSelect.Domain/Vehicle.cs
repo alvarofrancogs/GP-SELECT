@@ -202,13 +202,17 @@ public static class VehicleGallery
         return first;
     }
 
-    /// <summary>Applies a new order (every active image, once) and gives the cover to the first ready image.</summary>
+    /// <summary>Applies a new order and gives the cover to the first ready image. The order lists every saved active
+    /// image once and may include staged ones; staged images left out (another tab's uploads) keep their relative
+    /// order after it.</summary>
     public static VehicleImage? Reorder(IReadOnlyList<VehicleImage> images, IReadOnlyList<Guid> order)
     {
         var active = images.Where(x => x.State != ImageState.Deleted).ToList();
-        if (order.Count != active.Count || order.Distinct().Count() != order.Count || active.Any(x => !order.Contains(x.Id)))
-            throw new DomainException("invalid_order", "The order must list every active image once");
+        if (order.Distinct().Count() != order.Count || order.Any(id => active.All(x => x.Id != id)) || active.Any(x => !x.IsStaged && !order.Contains(x.Id)))
+            throw new DomainException("invalid_order", "The order must list every saved image once");
+        var rest = active.Where(x => !order.Contains(x.Id)).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToList();
         for (var i = 0; i < order.Count; i++) active.Single(x => x.Id == order[i]).Order(i);
+        for (var i = 0; i < rest.Count; i++) rest[i].Order(order.Count + i);
         return EnsureCover(active);
     }
 
