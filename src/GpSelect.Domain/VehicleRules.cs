@@ -61,6 +61,7 @@ public static class VehicleRules
     /// <summary>One-line text: whitespace collapsed, empty becomes null.</summary>
     public static string? ShortText(string? value, int max, string field)
     {
+        RejectControl(value, field);
         var clean = string.IsNullOrWhiteSpace(value) ? null : Spaces.Replace(value, " ").Trim();
         if (clean?.Length > max) throw new DomainException("too_long", $"{field} exceeds {max} characters", field);
         return clean;
@@ -72,17 +73,32 @@ public static class VehicleRules
     /// <summary>Multi-line text: line breaks kept, only trimmed; empty becomes null.</summary>
     public static string? LongText(string? value, int max, string field)
     {
+        RejectControl(value, field);
         var clean = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         if (clean?.Length > max) throw new DomainException("too_long", $"{field} exceeds {max} characters", field);
         return clean;
+    }
+
+    /// <summary>Only line breaks and tabs are allowed; NUL and the rest cannot reach the database or an email.</summary>
+    public static void RejectControl(string? value, string field)
+    {
+        if (value is null) return;
+        foreach (var c in value)
+            if (char.IsControl(c) && c is not ('\n' or '\r' or '\t'))
+                throw new DomainException("invalid_text", $"{field} contains control characters", field);
     }
 
     public static int? Range(int? value, int min, int max, string field) =>
         value is null || (value >= min && value <= max) ? value : throw new DomainException("out_of_range", $"{field} must be between {min} and {max}", field);
 
     /// <summary>Null means "no public price" (price on request). Zero is a value, never "on request".</summary>
-    public static decimal? Price(decimal? value) =>
-        value is null || (value >= 0 && value <= PriceMax) ? value : throw new DomainException("out_of_range", $"priceEur must be between 0 and {PriceMax}", "priceEur");
+    public static decimal? Price(decimal? value)
+    {
+        if (value is null) return null;
+        if (value < 0 || value > PriceMax) throw new DomainException("out_of_range", $"priceEur must be between 0 and {PriceMax}", "priceEur");
+        if (decimal.Round(value.Value, 2) != value) throw new DomainException("invalid_precision", "priceEur allows at most 2 decimals", "priceEur");
+        return value;
+    }
 
     /// <summary>A listed vehicle cannot show 0 €: leave the price empty for "price on request".</summary>
     public static void EnsurePublicPrice(decimal? price)

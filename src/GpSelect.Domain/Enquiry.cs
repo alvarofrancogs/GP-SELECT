@@ -75,25 +75,8 @@ public sealed class Enquiry
     }
 
     /// <summary>One line: whitespace (line breaks included) collapsed, empty becomes null.</summary>
-    private static string? Line(string? value, int max, string field)
-    {
-        RejectControl(value, field);
-        return VehicleRules.ShortText(value, max, field);
-    }
+    private static string? Line(string? value, int max, string field) => VehicleRules.ShortText(value, max, field);
 
     /// <summary>Multi-line text: line breaks kept, only trimmed.</summary>
-    private static string? Text(string? value, int max, string field)
-    {
-        RejectControl(value, field);
-        return VehicleRules.LongText(value, max, field);
-    }
-
-    /// <summary>Only line breaks and tabs are allowed; NUL and the rest cannot reach the database or an email.</summary>
-    private static void RejectControl(string? value, string field)
-    {
-        if (value is null) return;
-        foreach (var c in value)
-            if (char.IsControl(c) && c is not ('\n' or '\r' or '\t'))
-                throw new DomainException("invalid_text", $"{field} contains control characters", field);
-    }
+    private static string? Text(string? value, int max, string field) => VehicleRules.LongText(value, max, field);
 }

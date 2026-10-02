@@ -252,6 +252,8 @@ export const adminCopy = {
       too_long: 'Texto demasiado largo.',
       out_of_range: 'Valor fuera de rango.',
       invalid_registration: 'Fecha de matriculación no válida.',
+      invalid_text: 'El texto contiene caracteres no válidos.',
+      invalid_precision: 'El precio admite como máximo 2 decimales.',
       price_zero: 'Un vehículo publicado no puede costar 0 €. Deja el precio vacío para «Precio bajo consulta».',
       incomplete: 'Faltan marca, modelo o año para publicarlo.',
       images_required: 'Para publicarlo hace falta al menos una fotografía lista y una portada.',

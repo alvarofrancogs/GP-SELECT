@@ -290,6 +290,14 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Equal("powerHp", range.GetProperty("field").GetString());
     }
 
+    [Fact]
+    public async Task Patch_with_a_nul_character_is_a_400_not_a_500()
+    {
+        var (id, _) = await CreateVehicle();
+        var problem = await Problem(await Patch(id, new { model = "M4\u0000" }), HttpStatusCode.BadRequest);
+        Assert.Equal(("invalid_text", "model"), (problem.GetProperty("code").GetString(), problem.GetProperty("field").GetString()));
+    }
+
     private HttpRequestMessage Intent(Guid vehicleId)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, $"/api/admin/vehicles/{vehicleId}/images/intent") { Content = JsonContent.Create(new { mimeType = "image/png", sizeBytes = 100 }) };

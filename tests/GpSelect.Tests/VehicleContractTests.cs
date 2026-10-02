@@ -89,6 +89,32 @@ public class VehicleContractTests
     }
 
     [Fact]
+    public void Text_fields_reject_control_characters()
+    {
+        var v = NewVehicle();
+        var model = Fails(() => v.Apply(new VehicleChanges { Model = "M4\0" }));
+        Assert.Equal(("invalid_text", "model"), (model.Code, model.Field));
+        var description = Fails(() => v.Apply(new VehicleChanges { Description = "a\u0000b" }));
+        Assert.Equal(("invalid_text", "description"), (description.Code, description.Field));
+        var equipment = Fails(() => v.Apply(new VehicleChanges { Equipment = new[] { "Navi\0" } }));
+        Assert.Equal(("invalid_text", "equipment"), (equipment.Code, equipment.Field));
+
+        v.Apply(new VehicleChanges { Description = "uno\ndos\ttres" });
+        Assert.Equal("uno\ndos\ttres", v.Description);
+    }
+
+    [Fact]
+    public void Price_allows_at_most_two_decimals()
+    {
+        var v = NewVehicle();
+        var e = Fails(() => v.Apply(new VehicleChanges { PriceEur = 0.001m }));
+        Assert.Equal(("invalid_precision", "priceEur"), (e.Code, e.Field));
+        v.Apply(new VehicleChanges { PriceEur = 86900.5m });
+        v.Apply(new VehicleChanges { PriceEur = 86900.50m });
+        Assert.Equal(86900.5m, v.PriceEur);
+    }
+
+    [Fact]
     public void Patch_is_atomic_when_one_field_is_invalid()
     {
         var v = NewVehicle();
