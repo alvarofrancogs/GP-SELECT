@@ -81,6 +81,15 @@ public sealed class EnquiryApiTests(ApiFactory api) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Numeric_string_intent_is_rejected()
+    {
+        using var client = api.Anonymous();
+        using var request = Post(Body(intent: "1"), "198.51.100.67");
+        using var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Disabled_enquiries_answer_503_and_store_nothing()
     {
         using var closed = api.WithWebHostBuilder(b => b.UseSetting("Enquiries:Enabled", "false"));

@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using GpSelect.Application;
 using GpSelect.Domain;
 using Xunit;
@@ -403,10 +402,46 @@ public class VehicleContractTests
 
     // --- Contracts ----------------------------------------------------------------------------
 
-    private static readonly JsonSerializerOptions ApiJson = new(JsonSerializerDefaults.Web)
+    private static readonly JsonSerializerOptions ApiJson = Configured();
+
+    private static JsonSerializerOptions Configured()
     {
-        Converters = { new JsonStringEnumConverter(), new OptionalJsonConverterFactory() },
-    };
+        var o = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        ApiJsonOptions.Configure(o);
+        return o;
+    }
+
+    [Theory]
+    [InlineData("\"7\"")]
+    [InlineData("\"6\"")]
+    [InlineData("\"Sold, ComingSoon\"")]
+    [InlineData("7")]
+    [InlineData("\"\"")]
+    public void Status_is_read_only_from_a_declared_name(string status) =>
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<StatusChangeRequest>($$"""{"status":{{status}}}""", ApiJson));
+
+    [Fact]
+    public void Status_names_are_case_insensitive_and_written_as_names()
+    {
+        Assert.Equal(VehicleStatus.Sold, JsonSerializer.Deserialize<StatusChangeRequest>("""{"status":"sold"}""", ApiJson)!.Status);
+        Assert.Contains("\"status\":\"Available\"", JsonSerializer.Serialize(new StatusChangeRequest(VehicleStatus.Available), ApiJson));
+    }
+
+    [Fact]
+    public void ChangeStatus_rejects_an_undefined_status() =>
+        Assert.Equal("invalid_transition", Fails(() => NewVehicle().ChangeStatus((VehicleStatus)7, [])).Code);
+
+    [Fact]
+    public void Undefined_status_cannot_be_written() =>
+        Assert.Throws<JsonException>(() => JsonSerializer.Serialize(new StatusChangeRequest((VehicleStatus)7), ApiJson));
+
+    [Fact]
+    public void Nullable_status_uses_the_same_name_policy()
+    {
+        Assert.Null(JsonSerializer.Deserialize<VehicleStatus?>("null", ApiJson));
+        Assert.Equal(VehicleStatus.Sold, JsonSerializer.Deserialize<VehicleStatus?>("\"sold\"", ApiJson));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<VehicleStatus?>("\"7\"", ApiJson));
+    }
 
     [Fact]
     public void Patch_body_distinguishes_absent_null_and_value()

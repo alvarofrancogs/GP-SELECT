@@ -115,6 +115,7 @@ public sealed class VehicleUnit
     public void ChangeStatus(VehicleStatus next, IReadOnlyCollection<VehicleImage> images, bool? showWhenSold = null)
     {
         if (Status == VehicleStatus.Archived) throw new DomainException("archived", "Restore the vehicle before changing its status");
+        if (!Enum.IsDefined(next)) throw new DomainException("invalid_transition", "Unknown status", "status");
         if (next == VehicleStatus.Archived) throw new DomainException("invalid_transition", "Use archive to archive a vehicle", "status");
         var show = showWhenSold ?? ShowWhenSold;
         if (VehicleVisibility.IsListed(next) || (next == VehicleStatus.Sold && show))

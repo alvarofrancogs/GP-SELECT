@@ -83,6 +83,15 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         return list.EnumerateArray().Any(x => x.GetProperty("slug").GetString() == slug);
     }
 
+    [Fact]
+    public async Task Status_endpoint_rejects_numeric_strings_and_the_list_keeps_working()
+    {
+        var (id, _) = await CreateVehicle();
+        await Problem(await SetStatus(id, "7"), HttpStatusCode.BadRequest);
+        Assert.Equal("Draft", (await Json(await admin.GetAsync($"/api/admin/vehicles/{id}"))).GetProperty("status").GetString());
+        await Json(await admin.GetAsync("/api/admin/vehicles"));
+    }
+
     // --- Auth -----------------------------------------------------------------------------------
 
     [Fact]
