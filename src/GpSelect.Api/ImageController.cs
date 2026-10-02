@@ -14,7 +14,6 @@ namespace GpSelect.Api;
 [Authorize(Roles = "Admin")]
 public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage) : ControllerBase
 {
-    const long Max = 20 * 1024 * 1024;
     static readonly string[] Allowed = ["image/jpeg", "image/png", "image/webp"];
 
     static string Hash(object value)
@@ -39,7 +38,7 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
     {
         if (!Allowed.Contains(request.MimeType, StringComparer.OrdinalIgnoreCase))
             return Problem(statusCode: 415, title: "Unsupported image format");
-        if (request.SizeBytes is < 1 or > Max)
+        if (request.SizeBytes is < 1 or > ImagePipeline.MaxUploadBytes)
             return Problem(statusCode: 413, title: "Image exceeds 20 MiB limit");
         if (!await db.Vehicles.AnyAsync(x => x.Id == vehicleId))
             return NotFound();
@@ -96,7 +95,7 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
     }
 
     [HttpPut("{imageId:guid}/upload")]
-    [RequestSizeLimit(Max)]
+    [RequestSizeLimit(ImagePipeline.MaxUploadBytes)]
     public async Task<IActionResult> Upload(Guid vehicleId, Guid imageId)
     {
         var image = await db.Images.SingleOrDefaultAsync(x => x.Id == imageId && x.VehicleUnitId == vehicleId);
@@ -104,7 +103,7 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
             return NotFound();
         if (image.State != ImageState.PendingUpload)
             return Conflict();
-        if (Request.ContentLength is null or < 1 or > Max)
+        if (Request.ContentLength is null or < 1 or > ImagePipeline.MaxUploadBytes)
             return Problem(statusCode: 413, title: "Image exceeds 20 MiB limit");
         var mime = Request.ContentType?.Split(';')[0].Trim();
         if (!Allowed.Contains(mime, StringComparer.OrdinalIgnoreCase) || !string.Equals(mime, image.MimeType, StringComparison.OrdinalIgnoreCase))
@@ -130,7 +129,7 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
         if (image.State == ImageState.PendingUpload)
         {
             var meta = await storage.HeadAsync(image.OriginalKey, HttpContext.RequestAborted);
-            if (meta is null || meta.SizeBytes < 1 || meta.SizeBytes > Max || meta.SizeBytes != image.SizeBytes || !string.Equals(meta.ContentType, image.MimeType, StringComparison.OrdinalIgnoreCase))
+            if (meta is null || meta.SizeBytes < 1 || meta.SizeBytes > ImagePipeline.MaxUploadBytes || meta.SizeBytes != image.SizeBytes || !string.Equals(meta.ContentType, image.MimeType, StringComparison.OrdinalIgnoreCase))
                 return Problem(statusCode: 409, title: "Uploaded object is missing or invalid");
             if (!await db.ImageJobs.AnyAsync(x => x.ImageId == image.Id && (x.State == ImageJobState.Queued || x.State == ImageJobState.Processing)))
                 db.ImageJobs.Add(ImageProcessingJob.Create(image.Id));
