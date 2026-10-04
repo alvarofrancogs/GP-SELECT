@@ -127,7 +127,7 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - Gate de Opus: la ficha con error de red ya no se marca `noindex` (solo un vehículo inexistente confirmado). Detalle comprobado con API simulada en el navegador: `Car` + `Offer` (sin `offers` si está vendido), `<` escapado en el JSON-LD, 404 → `noindex`, navegación y vuelta atrás restauran el head, ruta desconocida → HTTP 404.
 - **Siguiente propuesto: GEO-1** (contenido legible sin JS en las páginas estáticas, bots de IA en robots, `llms.txt`). GEO-2 (FAQ) espera datos del usuario. SEO-2 espera hosting (recomendado: un servidor con Caddy para web + API).
 
-### UI: CTA, idioma y marca (04-10-2026, aprobado por el usuario, sin tag)
+### UI: CTA, idioma y marca (04-10-2026, pedido por el usuario, pendiente de su visto bueno)
 
 - `CatalogueCta`: el glass se adapta al lenguaje de la web: esquinas `--radius-small`, filete de 1 px, sin brillos ni sombra pesada, flecha en su propia celda tras un filete (hover: celda rellena). Mantiene tono claro/oscuro, magnetismo y reflejo.
 - Cambio de idioma: fundido de 260 ms con View Transitions (`LanguageSwitcher.tsx`, `global.css`); sin soporte o con reduced-motion, cambio directo.
