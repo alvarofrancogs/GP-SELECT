@@ -15,9 +15,9 @@
 .preloader__logo { position: relative; width: clamp(15rem, 44vw, 34rem); aspect-ratio: 1827 / 317; }
 .preloader__logo img { position: absolute; display: block; height: auto; }
 .preloader__gp { left: 0; top: 0; width: 28.736%;
-  animation: preloader-gp 500ms var(--ease-out) both; }
+  animation: preloader-gp 600ms var(--ease-out) both; }
 .preloader__select { left: 33.771%; top: 11.672%; width: 66.229%;
-  animation: preloader-select 500ms var(--ease-out) 30ms both; }
+  animation: preloader-select 600ms var(--ease-out) 30ms both; }
 .preloader__meter {
   position: absolute;
   left: var(--page-gutter);
@@ -39,7 +39,7 @@
 .preloader__line > span { display: block; height: 100%; background: var(--color-gold); transform: scaleX(0); transform-origin: left; }
 
 /* A reload in the same tab: the same entrance in half the time (see Preloader.tsx). */
-.preloader--quick .preloader__gp, .preloader--quick .preloader__select { animation-duration: 250ms; animation-delay: 0s; }
+.preloader--quick .preloader__gp, .preloader--quick .preloader__select { animation-duration: 300ms; animation-delay: 0s; }
 
 /* Each piece covers about a fifth of the logo's width on its way in (translate is relative to the piece). */
 @keyframes preloader-gp { from { opacity: 0; filter: blur(10px); transform: translateX(-76%); } to { opacity: 1; filter: blur(0); transform: none; } }

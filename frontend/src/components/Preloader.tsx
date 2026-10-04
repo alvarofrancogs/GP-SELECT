@@ -9,10 +9,10 @@ import '../styles/preloader.css';
 // Shown once per page load. It covers the work the Home does at start-up (fonts, the hero photographs,
 // the vehicle list and the scroll scenes being built) and lifts like a curtain when everything is ready.
 // The logo assembles (GP from the left, SELECT from the right) while it loads.
-// Whole animation <= 1.7 s: on screen 0.6 s at least, forced out at 1 s, plus a ~0.65 s exit.
+// Whole animation <= 2 s: on screen 0.7 s at least, forced out at 1.2 s, plus a 0.75 s exit.
 // Once it has played in this tab, a reload runs it at half the time (the visitor has already seen it).
-const MIN_MS = 600;
-const MAX_MS = 1000;
+const MIN_MS = 700;
+const MAX_MS = 1200;
 const SEEN_KEY = 'gp-select.preloader.seen';
 let shown = false;
 
@@ -72,9 +72,9 @@ export function Preloader() {
       if (leaving || !root.current) return;
       leaving = true;
       gsap.timeline({ onComplete: () => setActive(false) })
-        .to(state, { shown: 100, duration: 0.12 * speed, ease: 'power2.out', onUpdate: paint })
-        .to('.preloader__logo, .preloader__meter', { opacity: 0, y: -10, duration: 0.2 * speed, ease: 'power2.in' })
-        .to(root.current, { yPercent: -100, duration: 0.5 * speed, ease: 'power4.inOut' }, `<${0.05 * speed}`);
+        .to(state, { shown: 100, duration: 0.15 * speed, ease: 'power2.out', onUpdate: paint })
+        .to('.preloader__logo, .preloader__meter', { opacity: 0, y: -10, duration: 0.25 * speed, ease: 'power2.in' })
+        .to(root.current, { yPercent: -100, duration: 0.6 * speed, ease: 'power4.inOut' }, `<${0.05 * speed}`);
     };
     const tick = () => {
       if (leaving) return;
