@@ -118,17 +118,22 @@ export function useGsapScene(kind: SceneKind, id: string) {
             }, 0.12 + index * 0.04);
           });
           if (ui.length) timeline.to(ui, { autoAlpha: 0, y: -24, duration: 0.2 }, 0.15);
-          if (handoff.length) {
-            // The sky is almost dark before the Process curtain reaches it: no bright photo under a dark page.
-            const darken = gsap.timeline({
-              defaults: { ease: 'none' },
-              scrollTrigger: {
-                trigger: section, start: 'top top', scrub: true, invalidateOnRefresh: true,
-                end: () => `+=${window.innerHeight * HERO_DARKEN_BY}`,
-              },
-            });
-            darken.fromTo(handoff, { opacity: 0 }, { opacity: 0.88, duration: 1, delay: 0.5 }, 0);
-            timeline.fromTo(handoff, { opacity: 0.88 }, { opacity: 1, duration: 0.4, immediateRender: false }, 0.6);
+          // The sky is almost dark before the Process curtain reaches it: no bright photo under a dark page.
+          // One timeline, without scrub lag, owns the dark layer's opacity over the whole pin (positions in
+          // viewports of scroll). A second, lagging timeline on the same property used to leave it at 0.88
+          // after a fast return to the top.
+          const darken = handoff.length ? gsap.timeline({
+            defaults: { ease: 'none' },
+            scrollTrigger: {
+              trigger: section, start: 'top top', scrub: true, invalidateOnRefresh: true,
+              end: () => `+=${window.innerHeight * distance}`,
+            },
+          }) : null;
+          if (darken) {
+            const fullyDarkFrom = Math.max(distance * 0.6, HERO_DARKEN_BY);
+            darken.to({}, { duration: distance }, 0);
+            darken.fromTo(handoff, { opacity: 0 }, { opacity: 0.88, duration: HERO_DARKEN_BY * 2 / 3 }, HERO_DARKEN_BY / 3);
+            darken.to(handoff, { opacity: 1, duration: distance - fullyDarkFrom }, fullyDarkFrom);
           }
 
           // Process rises over the last viewport as an opaque curtain (scenes.css), so the
@@ -143,6 +148,7 @@ export function useGsapScene(kind: SceneKind, id: string) {
             if (section.dataset.headerTone !== tone) section.dataset.headerTone = tone;
           };
           timeline.eventCallback('onUpdate', publishTone);
+          darken?.eventCallback('onUpdate', publishTone);
           publishTone();
         }
 
