@@ -127,6 +127,13 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - Gate de Opus: la ficha con error de red ya no se marca `noindex` (solo un vehículo inexistente confirmado). Detalle comprobado con API simulada en el navegador: `Car` + `Offer` (sin `offers` si está vendido), `<` escapado en el JSON-LD, 404 → `noindex`, navegación y vuelta atrás restauran el head, ruta desconocida → HTTP 404.
 - **Siguiente propuesto: GEO-1** (contenido legible sin JS en las páginas estáticas, bots de IA en robots, `llms.txt`). GEO-2 (FAQ) espera datos del usuario. SEO-2 espera hosting (recomendado: un servidor con Caddy para web + API).
 
+### UI: CTA, idioma y marca (04-10-2026, aprobado por el usuario, sin tag)
+
+- `CatalogueCta`: el glass se adapta al lenguaje de la web: esquinas `--radius-small`, filete de 1 px, sin brillos ni sombra pesada, flecha en su propia celda tras un filete (hover: celda rellena). Mantiene tono claro/oscuro, magnetismo y reflejo.
+- Cambio de idioma: fundido de 260 ms con View Transitions (`LanguageSwitcher.tsx`, `global.css`); sin soporte o con reduced-motion, cambio directo.
+- «GP SELECT» (header y footer) en la Home: `lib/scrollToTop.ts`, scroll nativo con GSAP (power3.inOut, 0,45–0,95 s), interrumpible con rueda, touch o tecla; reduced-motion = salto. Desde otra ruta navega a la Home como antes.
+- QA 1440/390 con API real (pruebasGP): tonos del CTA en todas las escenas, rewind de 10 628 px en ~0,85 s, interrupción, ES↔EN a mitad de pin, reduced-motion. Ojo en QA automatizada: con la pestaña en segundo plano rAF y las view transitions se congelan (falsos positivos).
+
 ### GEO-1 · contenido legible sin JS = PASS (04-10-2026, tag `geo-1-pass`)
 
 - `frontend/build/readableContent.ts`: el build mete en `#root` de las 5 rutas estáticas y de `404.html` un HTML semántico (h1/h2/h3, listas, enlaces internos y footer) generado desde los mismos diccionarios ES que la SPA. Sin SSR del árbol React. Un script inline pone `html.js` y oculta ese bloque; `createRoot` lo sustituye antes de `DOMContentLoaded`, así que con JS nunca se ve.

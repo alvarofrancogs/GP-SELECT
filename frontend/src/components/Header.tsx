@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useLanguage } from '../i18n/useLanguage';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { scrollToTop } from '../lib/scrollToTop';
 
 export function Header() {
   const { copy } = useLanguage();
@@ -85,7 +86,11 @@ export function Header() {
         <nav className="header-nav" aria-label={copy.nav.label}>
           {links.map((link) => <NavLink key={link.to} className="nav-link" to={link.to}>{link.label}</NavLink>)}
         </nav>
-        <Link to="/" className="header-brand" aria-label={`${copy.brand} · ${copy.nav.home}`} onClick={() => setMenuOpen(false)}>
+        <Link to="/" className="header-brand" aria-label={`${copy.brand} · ${copy.nav.home}`} onClick={(event) => {
+          setMenuOpen(false);
+          // Already on the Home: rewind to the top instead of reloading the same route.
+          if (pathname === '/') { event.preventDefault(); scrollToTop(); }
+        }}>
           {copy.brand}
         </Link>
         <div className="header-actions">

@@ -1,17 +1,23 @@
-import { Link } from 'react-router-dom';
+import type { MouseEvent } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../i18n/useLanguage';
 import { footerCopy } from '../i18n/footerCopy';
 import { qualificationUrl } from '../lib/qualification';
+import { scrollToTop } from '../lib/scrollToTop';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import '../styles/footer.css';
 
 export function Footer() {
   const { locale, copy } = useLanguage();
   const text = footerCopy[locale];
+  const { pathname } = useLocation();
 
-  function backToTop() {
-    // Native immediate scrolling keeps the existing scroll timelines in control.
-    window.scrollTo({ top: 0, behavior: 'instant' });
+  // On the Home the brand rewinds to the top; elsewhere the route change already starts at the top.
+  function backToTop(event: MouseEvent<HTMLAnchorElement>) {
+    if (pathname === '/') {
+      event.preventDefault();
+      scrollToTop();
+    }
     document.querySelector<HTMLElement>('.header-brand')?.focus({ preventScroll: true });
   }
 
