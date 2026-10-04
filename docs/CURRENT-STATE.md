@@ -127,6 +127,13 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - Gate de Opus: la ficha con error de red ya no se marca `noindex` (solo un vehículo inexistente confirmado). Detalle comprobado con API simulada en el navegador: `Car` + `Offer` (sin `offers` si está vendido), `<` escapado en el JSON-LD, 404 → `noindex`, navegación y vuelta atrás restauran el head, ruta desconocida → HTTP 404.
 - **Siguiente propuesto: GEO-1** (contenido legible sin JS en las páginas estáticas, bots de IA en robots, `llms.txt`). GEO-2 (FAQ) espera datos del usuario. SEO-2 espera hosting (recomendado: un servidor con Caddy para web + API).
 
+### GEO-1 · contenido legible sin JS = PASS (04-10-2026, tag `geo-1-pass`)
+
+- `frontend/build/readableContent.ts`: el build mete en `#root` de las 5 rutas estáticas y de `404.html` un HTML semántico (h1/h2/h3, listas, enlaces internos y footer) generado desde los mismos diccionarios ES que la SPA. Sin SSR del árbol React. Un script inline pone `html.js` y oculta ese bloque; `createRoot` lo sustituye antes de `DOMContentLoaded`, así que con JS nunca se ve.
+- `robots.txt` con un único grupo `*` (un grupo por bot anularía los `Disallow`). `/llms.txt` con resumen, ubicación, ledes de Nosotros e Importación y enlaces. JSON-LD de la home en `@graph`: `AutoDealer` (con `description` y `sameAs` desde `contactConfig.sameAs`, vacío hasta tener perfiles verificados) + `WebSite`.
+- QA: typecheck, lint y build OK con y sin `VITE_SITE_URL`; sin JS a 1440/390, cada ruta legible y sin desborde; h1/h2 estáticos = SPA; red lenta con JS sin destello; sin excepciones JS. Astra hizo la implementación y su QA; Opus cerró la verificación (se le acabó el saldo a Astra) y añadió los ledes a `llms.txt`.
+- **Siguiente:** GEO-2 (FAQ con `FAQPage` en Importación) espera datos del usuario; SEO-2 espera hosting; rellenar `sameAs` al crear perfiles.
+
 ### Unidades 3C.1–3C.5
 
 - **3C.1 · Assets HOME y escena del coche** (`0e2bec5`):

@@ -2,8 +2,9 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import type { Plugin } from 'vite';
 import { adminMeta, escapeHtml, getStaticPageMeta, notFoundMeta, parseSiteUrl, renderPageHead, staticPageMeta } from '../src/lib/pageMeta';
+import { readableHead, renderLlmsText, renderReadableContent } from './readableContent';
 
-/** Head-only HTML copies: the built SPA body and its asset references stay intact. */
+/** Static reading views and metadata, retaining the SPA's built asset references. */
 export function seoPlugin(rawSiteUrl?: string): Plugin {
   const siteUrl = parseSiteUrl(rawSiteUrl);
   let outDir: string;
@@ -28,7 +29,7 @@ export function seoPlugin(rawSiteUrl?: string): Plugin {
           response.end();
           return;
         }
-        const explicitFiles = [...Object.values(staticFiles), 'admin/index.html', '404.html', 'spa.html', 'robots.txt', 'sitemap.xml'];
+        const explicitFiles = [...Object.values(staticFiles), 'admin/index.html', '404.html', 'spa.html', 'robots.txt', 'sitemap.xml', 'llms.txt'];
         if (explicitFiles.includes(path.slice(1))) return next();
         const file = staticFiles[path] || (path === '/admin' || path.startsWith('/admin/')
           ? 'admin/index.html' : /^\/vehiculos\/[^/]+$/.test(path) ? 'spa.html' : null);
@@ -55,19 +56,24 @@ export function seoPlugin(rawSiteUrl?: string): Plugin {
         ...Object.entries(staticFiles).map(([path, file]) => ({
           file,
           meta: getStaticPageMeta(path, siteUrl),
+          content: renderReadableContent(path),
         })),
-        { file: 'admin/index.html', meta: adminMeta },
-        { file: '404.html', meta: notFoundMeta },
+        { file: 'admin/index.html', meta: adminMeta, content: '' },
+        { file: '404.html', meta: notFoundMeta, content: renderReadableContent('/404.html') },
         // Dynamic details await SEO-2; this neutral shell never claims to be the home.
-        { file: 'spa.html', meta: { title: 'GP SELECT', description: staticPageMeta['/'].description } },
+        { file: 'spa.html', meta: { title: 'GP SELECT', description: staticPageMeta['/'].description }, content: '' },
       ];
-      for (const { file, meta } of pages) {
+      for (const { file, meta, content } of pages) {
         const target = resolve(outDir, file);
         await mkdir(resolve(target, '..'), { recursive: true });
-        await writeFile(target, template.replace('<title>GP SELECT</title>', renderPageHead(meta, siteUrl)));
+        const html = template.replace('<title>GP SELECT</title>', renderPageHead(meta, siteUrl))
+          .replace('</head>', `${content ? readableHead : ''}\n  </head>`)
+          .replace('<div id="root"></div>', `<div id="root">${content}</div>`);
+        await writeFile(target, html);
       }
-      const robots = `User-agent: *\nDisallow: /admin\nDisallow: /api\n${siteUrl ? `\nSitemap: ${siteUrl}/sitemap.xml\n` : ''}`;
+      const robots = `# One group covers all bots, including AI; bot-specific groups would override these Disallow rules.\nUser-agent: *\nDisallow: /admin\nDisallow: /api\n${siteUrl ? `\nSitemap: ${siteUrl}/sitemap.xml\n` : ''}`;
       await writeFile(resolve(outDir, 'robots.txt'), robots);
+      await writeFile(resolve(outDir, 'llms.txt'), renderLlmsText(siteUrl));
       if (siteUrl) {
         const entries = Object.keys(staticPageMeta).map((path) => `  <url><loc>${escapeHtml(`${siteUrl}${path}`)}</loc></url>`);
         await writeFile(resolve(outDir, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join('\n')}\n</urlset>\n`);

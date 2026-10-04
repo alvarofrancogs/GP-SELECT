@@ -69,19 +69,27 @@ export function getStaticPageMeta(path: string, siteUrl?: string): PageMeta {
   return {
     ...meta,
     jsonLd: {
-      '@context': 'https://schema.org', '@type': 'AutoDealer', name: 'GP SELECT',
-      ...(siteUrl ? { url: `${siteUrl}/` } : {}),
-      logo: assetUrl('/assets/seo/logo.svg', siteUrl),
-      areaServed: [
-        { '@type': 'Country', name: 'España' },
-        { '@type': 'AdministrativeArea', name: 'Región de Murcia' },
-      ],
-      address: {
-        '@type': 'PostalAddress', addressLocality: 'Murcia',
-        addressRegion: 'Región de Murcia', addressCountry: 'ES',
-      },
-      ...(contactConfig.phone ? { telephone: contactConfig.phone } : {}),
-      ...(contactConfig.email ? { email: contactConfig.email } : {}),
+      '@context': 'https://schema.org',
+      '@graph': [{
+        '@type': 'AutoDealer', name: 'GP SELECT',
+        description: meta.description,
+        ...(siteUrl ? { url: `${siteUrl}/` } : {}),
+        logo: assetUrl('/assets/seo/logo.svg', siteUrl),
+        areaServed: [
+          { '@type': 'Country', name: 'España' },
+          { '@type': 'AdministrativeArea', name: 'Región de Murcia' },
+        ],
+        address: {
+          '@type': 'PostalAddress', addressLocality: 'Murcia',
+          addressRegion: 'Región de Murcia', addressCountry: 'ES',
+        },
+        ...(contactConfig.phone ? { telephone: contactConfig.phone } : {}),
+        ...(contactConfig.email ? { email: contactConfig.email } : {}),
+        ...(contactConfig.sameAs.length ? { sameAs: contactConfig.sameAs } : {}),
+      }, {
+        '@type': 'WebSite', name: 'GP SELECT', inLanguage: 'es-ES',
+        ...(siteUrl ? { url: `${siteUrl}/` } : {}),
+      }],
     },
   };
 }
