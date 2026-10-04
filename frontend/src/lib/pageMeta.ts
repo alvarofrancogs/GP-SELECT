@@ -1,0 +1,165 @@
+import { contactConfig } from '../config/contactChannels';
+import type { VehicleDetail } from '../types/vehicle';
+
+export interface PageMeta {
+  title: string;
+  description: string;
+  path?: string;
+  robots?: string;
+  image?: string;
+  imageAlt?: string;
+  jsonLd?: Record<string, unknown>;
+  /** The tab can follow the selected language; search/social copy stays Spanish. */
+  tabTitle?: string;
+}
+
+export const staticPageMeta: Record<string, PageMeta> = {
+  '/': {
+    title: 'GP SELECT · Selección e importación de coches en Murcia',
+    description: 'Selección e importación de vehículos premium europeos desde Murcia para clientes de toda España. Conoce GP SELECT, nuestro catálogo y cómo trabajamos.',
+  },
+  '/vehiculos': {
+    title: 'Vehículos premium europeos · Catálogo de GP SELECT',
+    description: 'Explora el catálogo de vehículos de GP SELECT y consulta las fotos y los datos de cada unidad. Desde Murcia, trabajamos con clientes de toda España.',
+  },
+  '/importacion': {
+    title: 'Importación de vehículos europeos en Murcia · GP SELECT',
+    description: 'Cuéntanos qué coche buscas. En GP SELECT buscamos y comparamos opciones en Europa y analizamos la información disponible, desde Murcia para toda España.',
+  },
+  '/nosotros': {
+    title: 'Sobre GP SELECT · Selección de vehículos desde Murcia',
+    description: 'Conoce GP SELECT y nuestra forma de seleccionar vehículos europeos: criterio, información clara y trato directo, desde Murcia para clientes de toda España.',
+  },
+  '/contacto': {
+    title: 'Contacto GP SELECT · Tu próximo vehículo desde Murcia',
+    description: '¿Te interesa un vehículo o buscas una opción en Europa? Cuéntanos qué necesitas. GP SELECT tiene base en Murcia y trabaja con clientes de toda España.',
+  },
+};
+
+export const notFoundMeta: PageMeta = {
+  title: 'Página no encontrada · GP SELECT',
+  description: 'Esta página no está disponible. Consulta el catálogo de GP SELECT o vuelve al inicio para conocer nuestra selección de vehículos europeos.',
+  robots: 'noindex',
+};
+
+export const adminMeta: PageMeta = {
+  title: 'Administración · GP SELECT',
+  description: 'Área privada de administración de GP SELECT.',
+  robots: 'noindex,nofollow',
+};
+
+// A deployment URL is an origin, never a guessed production domain or a browser URL.
+export function parseSiteUrl(value?: string): string | undefined {
+  if (!value?.trim()) return undefined;
+  try {
+    const url = new URL(value.trim());
+    if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password ||
+      url.pathname !== '/' || url.search || url.hash) return undefined;
+    return url.origin;
+  } catch { return undefined; }
+}
+
+export function assetUrl(path: string, siteUrl?: string): string {
+  return siteUrl ? new URL(path, `${siteUrl}/`).href : path;
+}
+
+export function getStaticPageMeta(path: string, siteUrl?: string): PageMeta {
+  const meta = { ...staticPageMeta[path], path };
+  if (path !== '/') return meta;
+  return {
+    ...meta,
+    jsonLd: {
+      '@context': 'https://schema.org', '@type': 'AutoDealer', name: 'GP SELECT',
+      ...(siteUrl ? { url: `${siteUrl}/` } : {}),
+      logo: assetUrl('/assets/seo/logo.svg', siteUrl),
+      areaServed: [
+        { '@type': 'Country', name: 'España' },
+        { '@type': 'AdministrativeArea', name: 'Región de Murcia' },
+      ],
+      address: {
+        '@type': 'PostalAddress', addressLocality: 'Murcia',
+        addressRegion: 'Región de Murcia', addressCountry: 'ES',
+      },
+      ...(contactConfig.phone ? { telephone: contactConfig.phone } : {}),
+      ...(contactConfig.email ? { email: contactConfig.email } : {}),
+    },
+  };
+}
+
+export function getVehiclePageMeta(vehicle: VehicleDetail, siteUrl?: string): PageMeta {
+  const name = `${vehicle.make} ${vehicle.model}`;
+  const year = vehicle.firstRegistrationYear;
+  const identity = `${name}${year ? ` (${year})` : ''}`;
+  const path = `/vehiculos/${encodeURIComponent(vehicle.slug)}`;
+  const image = vehicle.images?.[0]?.src;
+  const publicPrice = vehicle.availability !== 'sold' && vehicle.priceEur !== null && vehicle.priceEur > 0;
+  return {
+    title: `${identity} · Vehículos europeos · GP SELECT`,
+    description: `Consulta las fotos y los datos de este ${identity} en GP SELECT. Selección de vehículos europeos desde Murcia para clientes de toda España.`,
+    path, image, imageAlt: identity,
+    jsonLd: {
+      '@context': 'https://schema.org', '@type': 'Car', name: identity,
+      brand: { '@type': 'Brand', name: vehicle.make }, model: vehicle.model,
+      // The DTO year is first registration, not a manufacturing/model year.
+      ...(year ? { dateVehicleFirstRegistration: String(year) } : {}),
+      ...(siteUrl ? { url: `${siteUrl}${path}` } : {}),
+      ...(image ? { image: assetUrl(image, siteUrl) } : {}),
+      ...(vehicle.description ? { description: vehicle.description } : {}),
+      ...(vehicle.mileageKm !== null ? { mileageFromOdometer: {
+        '@type': 'QuantitativeValue', value: vehicle.mileageKm, unitCode: 'KMT',
+      } } : {}),
+      ...(vehicle.fuelType ? { fuelType: vehicle.fuelType } : {}),
+      ...(vehicle.transmission ? { vehicleTransmission: vehicle.transmission } : {}),
+      ...(vehicle.exteriorColour ? { color: vehicle.exteriorColour } : {}),
+      ...(publicPrice ? { offers: {
+        '@type': 'Offer', price: vehicle.priceEur, priceCurrency: 'EUR',
+        ...(siteUrl ? { url: `${siteUrl}${path}` } : {}),
+      } } : {}),
+    },
+  };
+}
+
+/** Shared serialization keeps build HTML and client navigation identical. */
+export function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[character]!);
+}
+
+export function renderPageHead(meta: PageMeta, siteUrl?: string): string {
+  const canonical = siteUrl && meta.path ? `${siteUrl}${meta.path}` : undefined;
+  const image = assetUrl(meta.image || '/assets/seo/og-default.jpg', siteUrl);
+  const imageAlt = meta.image ? meta.imageAlt || meta.title : 'GP SELECT · Murcia · Clientes en toda España';
+  const tags: string[] = [];
+  const addMeta = (attribute: 'name' | 'property', key: string, value: string) => {
+    tags.push(`<meta data-page-meta ${attribute}="${key}" content="${escapeHtml(value)}">`);
+  };
+  tags.push(`<title data-page-meta>${escapeHtml(meta.tabTitle || meta.title)}</title>`);
+  addMeta('name', 'description', meta.description);
+  addMeta('name', 'robots', meta.robots || 'index,follow');
+  if (canonical) tags.push(`<link data-page-meta rel="canonical" href="${escapeHtml(canonical)}">`);
+  addMeta('property', 'og:type', 'website');
+  addMeta('property', 'og:title', meta.title);
+  addMeta('property', 'og:description', meta.description);
+  addMeta('property', 'og:locale', 'es_ES');
+  addMeta('property', 'og:site_name', 'GP SELECT');
+  if (canonical) addMeta('property', 'og:url', canonical);
+  addMeta('property', 'og:image', image);
+  addMeta('property', 'og:image:alt', imageAlt);
+  if (!meta.image) {
+    addMeta('property', 'og:image:type', 'image/jpeg');
+    addMeta('property', 'og:image:width', '1200');
+    addMeta('property', 'og:image:height', '630');
+  }
+  addMeta('name', 'twitter:card', 'summary_large_image');
+  addMeta('name', 'twitter:title', meta.title);
+  addMeta('name', 'twitter:description', meta.description);
+  addMeta('name', 'twitter:image', image);
+  addMeta('name', 'twitter:image:alt', imageAlt);
+  if (meta.jsonLd) {
+    // Escaping '<' prevents DTO text from closing a script in static HTML.
+    const json = JSON.stringify(meta.jsonLd).replace(/</g, '\\u003c');
+    tags.push(`<script data-page-meta type="application/ld+json">${json}</script>`);
+  }
+  return tags.join('\n    ');
+}

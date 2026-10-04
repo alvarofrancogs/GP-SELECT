@@ -1,5 +1,5 @@
 /* Calibrated to mockup 15_42_09: tracked brand over a short rule, links in two columns,
-   copyright and language at the bottom. No location or legal links until they are confirmed. */
+   copyright and language at the bottom. Location confirmed for SEO-1; no public street address. */
 .site-footer {
   position: relative;
   z-index: 2;
@@ -50,6 +50,7 @@
   padding-top: .35rem;
   font-size: clamp(.875rem, 1vw, 1.0625rem);
 }
+.footer-identity .footer-location { max-width: none; }
 .footer-nav a { justify-self: start; padding-block: .3rem; margin-block: -.3rem; }
 .footer-nav a:hover { text-decoration: underline; text-underline-offset: .3em; }
 

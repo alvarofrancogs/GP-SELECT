@@ -9,11 +9,6 @@ export function AdminLayout() {
   const navigate = useNavigate();
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [pathname]);
-  useEffect(() => {
-    const previous = document.title;
-    document.title = `${adminCopy.area} · ${adminCopy.brand}`;
-    return () => { document.title = previous; };
-  }, []);
 
   return <div className="admin">
     <a className="skip-link" href="#admin-main">Saltar al contenido</a>

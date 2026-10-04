@@ -8,8 +8,15 @@ import { Import } from './pages/Import';
 import { Contact } from './pages/Contact';
 import { Vehicles } from './pages/Vehicles';
 import { VehicleDetail } from './pages/VehicleDetail';
+import { usePageMeta } from './lib/usePageMeta';
+import { adminMeta } from './lib/pageMeta';
 
 const AdminApp = lazy(() => import('./pages/admin/AdminApp'));
+
+function AdminRoute() {
+  usePageMeta(adminMeta);
+  return <Suspense fallback={null}><AdminApp /></Suspense>;
+}
 
 export function App() {
   return (
@@ -24,7 +31,7 @@ export function App() {
         <Route path="contacto" element={<Contact />} />
         <Route path="*" element={<NotFound />} />
       </Route>
-      <Route path="admin/*" element={<Suspense fallback={null}><AdminApp /></Suspense>} />
+      <Route path="admin/*" element={<AdminRoute />} />
     </Routes>
   );
 }

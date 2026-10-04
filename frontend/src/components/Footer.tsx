@@ -21,6 +21,7 @@ export function Footer() {
         <div className="footer-identity">
           <Link className="footer-brand" to="/" onClick={backToTop}>{copy.brand}</Link>
           <p>{text.description}</p>
+          <p className="footer-location">{text.location}</p>
         </div>
         <nav className="footer-nav" aria-label={text.navigation}>
           <Link to="/nosotros">{copy.nav.about}</Link>

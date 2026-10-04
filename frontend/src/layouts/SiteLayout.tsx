@@ -6,7 +6,8 @@ import { Footer } from '../components/Footer';
 import { CatalogueCta } from '../components/CatalogueCta';
 import { Preloader } from '../components/Preloader';
 import { useLanguage } from '../i18n/useLanguage';
-import { useDocumentTitle } from '../lib/useDocumentTitle';
+import { siteUrl, usePageMeta } from '../lib/usePageMeta';
+import { getStaticPageMeta, notFoundMeta, staticPageMeta } from '../lib/pageMeta';
 
 /** Resets the scroll before the page below creates its pins. Layout effects run in tree order, so this
     must sit before <main>: otherwise the Home would be built (and painted) at the previous page's scroll. */
@@ -25,11 +26,9 @@ function ScrollReset() {
   return null;
 }
 
-const BRAND = 'GP SELECT';
-
 export function SiteLayout() {
   const { pathname } = useLocation();
-  const { copy } = useLanguage();
+  const { copy, locale } = useLanguage();
   const navigate = useNavigate();
   const mainRef = useRef<HTMLElement>(null);
   const exitRef = useRef<Animation[]>([]);
@@ -60,15 +59,21 @@ export function SiteLayout() {
     finally { link.removeAttribute('aria-disabled'); }
   }
 
-  // One title per route. A vehicle detail sets its own (the vehicle's name), so it is left alone here.
+  // Detail owns its metadata while loading, on error and once its public data arrives.
   const pageTitles: Record<string, string> = {
     '/nosotros': copy.nav.about, '/vehiculos': copy.nav.vehicles, '/importacion': copy.nav.import, '/contacto': copy.nav.contact,
   };
   // The router ignores case and a trailing slash (/NOSOTROS/ renders Nosotros), so the title lookup does too.
   const route = pathname.toLowerCase().replace(/\/+$/, '') || '/';
-  const known = route === '/' || route === '/servicios' || route in pageTitles || route.startsWith('/vehiculos/');
-  const pageTitle = route in pageTitles ? pageTitles[route] : known ? null : copy.notFound.title;
-  useDocumentTitle(pageTitle ? `${pageTitle} · ${BRAND}` : null);
+  const isDetail = /^\/vehiculos\/[^/]+$/.test(route);
+  const meta = route in staticPageMeta ? getStaticPageMeta(route, siteUrl) : notFoundMeta;
+  const translatedTitle = route in pageTitles ? `${pageTitles[route]} · GP SELECT` : undefined;
+  usePageMeta(isDetail || route === '/servicios' ? null : {
+    ...meta,
+    tabTitle: route in staticPageMeta
+      ? (locale === 'en' ? translatedTitle : undefined)
+      : `${copy.notFound.title} · GP SELECT`,
+  });
 
   return (
     <div className="site-layout">

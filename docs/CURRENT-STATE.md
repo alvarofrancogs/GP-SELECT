@@ -115,8 +115,17 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - **EMAIL PROVIDER:** sin adaptador de `IEnquiryNotifier`.
 - **RECIPIENT MAILBOX:** `Enquiries__NotificationEmail` sin definir.
 - **DOMAIN / DEPLOY:** más adelante (`Security__AllowedOrigin`).
-- **SEO:** más adelante.
+- **SEO:** SEO-1 PASS; SEO-2 (meta por vehículo en servidor y sitemap dinámico) espera dominio y hosting.
 - **FINAL USER PHOTOGRAPHY / ASSETS:** fotos reales del usuario para sustituir los slots provisionales.
+
+### SEO-1 · base técnica = PASS (04-10-2026, tag `seo-1-pass`)
+
+- Metadatos ES compartidos por React/build, JSON-LD público, robots e iconos; dominio mediante `VITE_SITE_URL` (origen http(s), sin subruta). Sin dominio se omiten canonical, `og:url` y sitemap. SEO-2 (fichas en servidor y sitemap dinámico) sigue pendiente.
+- Salida/rewrite agnóstico: servir primero archivos y `/<ruta>/index.html`; `/admin/*` → `/admin/index.html`, `/vehiculos/:slug` → `/spa.html` (sin canonical ni `noindex` inicial), desconocidas → `/404.html` con HTTP 404; conservar `/api` para el backend y redirigir `/servicios` → `/importacion`. No usar la home como fallback universal.
+- Ubicación confirmada: Murcia, clientes de toda España, sin dirección pública ni horario. Footer ES/EN; iconos Archivo y OG JPG 1200×630 provisionales/sustituibles en `frontend/public/assets/seo/` (OG con imagegen sobre los dos assets del hero).
+- QA: typecheck, lint y build OK con/sin `VITE_SITE_URL=https://example.com`; 8 HTML por build inspeccionados y URLs limpias sin JS. Preview 1440/390, ES/EN, navegación/head y footer calibrado al mockup `15_42_09`: OK. Sin excepciones JS ni assets fallidos; API local ausente (500 del proxy, 9 por viewport), detalle real pendiente; estados/precio/schema comprobados con fixtures aislados. Aviso de bundle >500 kB ya conocido.
+- Gate de Opus: la ficha con error de red ya no se marca `noindex` (solo un vehículo inexistente confirmado). Detalle comprobado con API simulada en el navegador: `Car` + `Offer` (sin `offers` si está vendido), `<` escapado en el JSON-LD, 404 → `noindex`, navegación y vuelta atrás restauran el head, ruta desconocida → HTTP 404.
+- **Siguiente propuesto: GEO-1** (contenido legible sin JS en las páginas estáticas, bots de IA en robots, `llms.txt`). GEO-2 (FAQ) espera datos del usuario. SEO-2 espera hosting (recomendado: un servidor con Caddy para web + API).
 
 ### Unidades 3C.1–3C.5
 
