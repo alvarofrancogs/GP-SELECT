@@ -11,10 +11,10 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
 {
     // SQL twins of VehicleVisibility: the catalogue lists ComingSoon, Available, Reserved and the Sold vehicles kept
     // on show; detail pages also serve Sold vehicles that were published at some point.
-    private static readonly Expression<Func<VehicleUnit, bool>> Listed = x =>
+    internal static readonly Expression<Func<VehicleUnit, bool>> Listed = x =>
         x.Status == VehicleStatus.ComingSoon || x.Status == VehicleStatus.Available || x.Status == VehicleStatus.Reserved
         || (x.Status == VehicleStatus.Sold && x.ShowWhenSold);
-    private static readonly Expression<Func<VehicleUnit, bool>> WithPublicDetail = x =>
+    internal static readonly Expression<Func<VehicleUnit, bool>> WithPublicDetail = x =>
         x.Status == VehicleStatus.ComingSoon || x.Status == VehicleStatus.Available || x.Status == VehicleStatus.Reserved
         || (x.Status == VehicleStatus.Sold && (x.ShowWhenSold || x.PublishedAt != null));
 

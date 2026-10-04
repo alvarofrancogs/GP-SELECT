@@ -40,15 +40,31 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Storage:Root", storageRoot);
         builder.UseSetting("Security:TrustedProxies", TrustedProxy);
         builder.UseSetting("Enquiries:Enabled", "true");
+        builder.UseSetting("Seo:SiteUrl", SiteUrl);
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<DbContextOptions<GpSelectDbContext>>();
             services.AddDbContext<GpSelectDbContext>(o => o.UseNpgsql(database.GetConnectionString()).AddInterceptors(Sql));
             services.AddSingleton<IStartupFilter, TestPeerAddress>();
+            services.RemoveAll<GpSelect.Api.ISpaTemplate>();
+            services.AddSingleton<GpSelect.Api.ISpaTemplate>(Template);
         });
     }
 
     public const string TrustedProxy = "10.0.0.1";
+
+    public const string SiteUrl = "https://gpselect.test";
+
+    /// <summary>The frontend's spa.html as the build writes it, without fetching it over HTTP. Tests can switch it off.</summary>
+    public FixedSpaTemplate Template { get; } = new();
+
+    public sealed class FixedSpaTemplate : GpSelect.Api.ISpaTemplate
+    {
+        public const string Shell = "<!doctype html><html lang=\"es\"><head><meta charset=\"UTF-8\" />\n    <!--page-meta-->\n    "
+            + "<title data-page-meta>GP SELECT</title>\n    <!--/page-meta-->\n  </head><body><div id=\"root\"></div></body></html>";
+        public string? Html { get; set; } = Shell;
+        public Task<string?> GetAsync(CancellationToken ct) => Task.FromResult(Html);
+    }
 
     /// <summary>TestServer has no socket: a request can choose its peer address with X-Test-Peer.
     /// Without it the peer is null, as before, so the shared admin login keeps its own bucket.</summary>

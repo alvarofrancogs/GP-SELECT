@@ -13,6 +13,8 @@ var connection=builder.Configuration.GetConnectionString("Default");
 if(string.IsNullOrWhiteSpace(connection)) throw new InvalidOperationException("ConnectionStrings:Default is required; configure it explicitly in every environment.");
 builder.Services.AddDbContext<GpSelectDbContext>(o=>o.UseNpgsql(connection));
 builder.Services.AddSingleton<GpSelect.Application.ISlugGenerator,SlugGenerator>();
+// SEO pages for crawlers (SeoController): the frontend's spa.html, fetched from Seo:TemplateUrl.
+builder.Services.AddHttpClient(); builder.Services.AddSingleton<ISpaTemplate,HttpSpaTemplate>();
 var provider=builder.Configuration["Storage:Provider"];
 if(string.Equals(provider,"File",StringComparison.OrdinalIgnoreCase)&&builder.Environment.IsProduction()) throw new InvalidOperationException("Storage:Provider=File is not allowed in Production; configure S3 before database migrations.");
 if(string.Equals(provider,"File",StringComparison.OrdinalIgnoreCase)) builder.Services.AddSingleton<IObjectStorage,FileObjectStorage>();

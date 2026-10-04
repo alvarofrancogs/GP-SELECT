@@ -75,6 +75,8 @@ Configura las siguientes variables o sus equivalentes en `appsettings.json`:
 - `Security__AllowedOrigin`: origen exacto permitido para CORS.
 - `Storage__Provider`: `File` para desarrollo o `S3` para producción.
 - `Storage__Endpoint`, `Storage__AccessKey`, `Storage__SecretKey`, `Storage__Bucket`: necesarios para S3.
+- `Seo__TemplateUrl`: URL del `spa.html` del frontend desplegado (p. ej. `http://web/spa.html`). Activa las fichas de vehículo para buscadores.
+- `Seo__SiteUrl`: origen público (`https://dominio`, sin ruta). Activa canonical absolutos y `/seo/sitemap.xml`.
 
 En producción se exige almacenamiento S3-compatible y se aplican las migraciones EF Core al iniciar. El proveedor `File` está destinado a desarrollo/no producción.
 

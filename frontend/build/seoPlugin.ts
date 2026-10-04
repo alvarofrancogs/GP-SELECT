@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import type { Plugin } from 'vite';
 import { adminMeta, escapeHtml, getStaticPageMeta, notFoundMeta, parseSiteUrl, renderPageHead, staticPageMeta } from '../src/lib/pageMeta';
+import type { PageMeta } from '../src/lib/pageMeta';
 import { readableHead, renderLlmsText, renderReadableContent } from './readableContent';
 
 /** Static reading views and metadata, retaining the SPA's built asset references. */
@@ -60,14 +61,16 @@ export function seoPlugin(rawSiteUrl?: string): Plugin {
         })),
         { file: 'admin/index.html', meta: adminMeta, content: '' },
         { file: '404.html', meta: notFoundMeta, content: renderReadableContent('/404.html') },
-        // Dynamic details await SEO-2; this neutral shell never claims to be the home.
-        { file: 'spa.html', meta: { title: 'GP SELECT', description: staticPageMeta['/'].description }, content: '' },
+        // Vehicle pages: the API (SeoController) fills this shell's metadata and #root per vehicle. Served as is,
+        // it is a neutral page that never claims to be the home. It always carries the readable-content styles.
+        { file: 'spa.html', meta: { title: 'GP SELECT', description: staticPageMeta['/'].description }, content: '', readable: true },
       ];
-      for (const { file, meta, content } of pages) {
+      for (const { file, meta, content, readable } of pages as { file: string; meta: PageMeta; content: string; readable?: boolean }[]) {
         const target = resolve(outDir, file);
         await mkdir(resolve(target, '..'), { recursive: true });
-        const html = template.replace('<title>GP SELECT</title>', renderPageHead(meta, siteUrl))
-          .replace('</head>', `${content ? readableHead : ''}\n  </head>`)
+        // The markers let the API replace exactly this block (VehicleSeo.cs).
+        const html = template.replace('<title>GP SELECT</title>', `<!--page-meta-->\n    ${renderPageHead(meta, siteUrl)}\n    <!--/page-meta-->`)
+          .replace('</head>', `${content || readable ? readableHead : ''}\n  </head>`)
           .replace('<div id="root"></div>', `<div id="root">${content}</div>`);
         await writeFile(target, html);
       }

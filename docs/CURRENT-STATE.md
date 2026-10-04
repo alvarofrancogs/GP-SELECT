@@ -115,7 +115,7 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - **EMAIL PROVIDER:** sin adaptador de `IEnquiryNotifier`.
 - **RECIPIENT MAILBOX:** `Enquiries__NotificationEmail` sin definir.
 - **DOMAIN / DEPLOY:** más adelante (`Security__AllowedOrigin`).
-- **SEO:** SEO-1 PASS; SEO-2 (meta por vehículo en servidor y sitemap dinámico) espera dominio y hosting.
+- **SEO:** SEO-1, GEO-1 y SEO-2 PASS. Pendiente: GEO-2 (FAQ, espera datos del usuario), Google Business Profile (fuera del código) y dominio para activar `VITE_SITE_URL` y `Seo__SiteUrl`.
 - **FINAL USER PHOTOGRAPHY / ASSETS:** fotos reales del usuario para sustituir los slots provisionales.
 
 ### SEO-1 · base técnica = PASS (04-10-2026, tag `seo-1-pass`)
@@ -144,6 +144,13 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - `robots.txt` con un único grupo `*` (un grupo por bot anularía los `Disallow`). `/llms.txt` con resumen, ubicación, ledes de Nosotros e Importación y enlaces. JSON-LD de la home en `@graph`: `AutoDealer` (con `description` y `sameAs` desde `contactConfig.sameAs`, vacío hasta tener perfiles verificados) + `WebSite`.
 - QA: typecheck, lint y build OK con y sin `VITE_SITE_URL`; sin JS a 1440/390, cada ruta legible y sin desborde; h1/h2 estáticos = SPA; red lenta con JS sin destello; sin excepciones JS. Astra hizo la implementación y su QA; Opus cerró la verificación (se le acabó el saldo a Astra) y añadió los ledes a `llms.txt`.
 - **Siguiente:** GEO-2 (FAQ con `FAQPage` en Importación) espera datos del usuario; SEO-2 espera hosting; rellenar `sameAs` al crear perfiles.
+
+### SEO-2 · fichas y sitemap desde el servidor = PASS (05-10-2026, tag `seo-2-pass`)
+
+- `SeoController` (API): `GET /seo/vehiculos/{slug}` devuelve el `spa.html` del frontend con el head del vehículo (title, description, canonical, OG con su foto, JSON-LD `Car` + `Offer` si no está vendido y tiene precio) y su contenido legible en `#root` (GEO), con `max-age=60`. Inexistente o no público → 404 + `noindex`. Sin plantilla o sin marcadores → 503. `GET /seo/sitemap.xml`: rutas estáticas + vehículos listados con `lastmod`.
+- Plantilla: `HttpSpaTemplate` la descarga de `Seo:TemplateUrl` (caché de 1 min; sirve la última buena si falla). El build marca el bloque con `<!--page-meta-->…<!--/page-meta-->`, y `spa.html` lleva los estilos del contenido legible. `VehicleSeo.cs` replica `getVehiclePageMeta`/`renderPageHead` de `pageMeta.ts`: cambiar ambos a la vez.
+- **Despliegue (cualquier proxy):** `/vehiculos/<slug>` → API `/seo/vehiculos/<slug>` con fallback a `/spa.html` si la API responde 5xx; `/sitemap.xml` → API `/seo/sitemap.xml` con fallback al estático. Variables `Seo__TemplateUrl` y `Seo__SiteUrl` (README). Ejemplo funcionando: `Desktop/pruebasGP/nginx.conf`.
+- Verificación: build 0 warnings; 105/105 unitarios; 70/70 de integración (5 nuevos en `SeoTests`); typecheck, lint y build del frontend. E2E en pruebasGP: ficha como crawler (sin JS), 404 `noindex`, sitemap, API parada → SPA y sitemap estático; con JS sin metadatos duplicados ni errores.
 
 ### Unidades 3C.1–3C.5
 
