@@ -1,5 +1,5 @@
 /* Calibrated to mockup 15_42_09: tracked brand over a short rule, links in two columns,
-   copyright and language at the bottom. Location confirmed for SEO-1; no public street address. */
+   copyright, legal links and language at the bottom. Location confirmed for SEO-1; no public street address. */
 .site-footer {
   position: relative;
   z-index: 2;
@@ -69,6 +69,9 @@
   text-transform: uppercase;
 }
 .footer-bottom p { opacity: .7; }
+.footer-legal { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); margin-right: auto; opacity: .7; }
+.footer-legal a { padding-block: .3rem; margin-block: -.3rem; }
+.footer-legal a:hover { opacity: 1; text-decoration: underline; text-underline-offset: .3em; }
 
 @media (max-width: 1199px) {
   .footer-main { grid-template-columns: 1fr 1fr; }

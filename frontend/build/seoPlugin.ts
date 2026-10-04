@@ -1,7 +1,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import type { Plugin } from 'vite';
-import { adminMeta, escapeHtml, getStaticPageMeta, notFoundMeta, parseSiteUrl, renderPageHead, staticPageMeta } from '../src/lib/pageMeta';
+import { adminMeta, escapeHtml, getStaticPageMeta, legalPageMeta, notFoundMeta, parseSiteUrl, renderPageHead, staticPageMeta } from '../src/lib/pageMeta';
+import { missingLegalFields } from '../src/config/legal';
 import type { PageMeta } from '../src/lib/pageMeta';
 import { readableHead, renderLlmsText, renderReadableContent } from './readableContent';
 
@@ -13,6 +14,9 @@ export function seoPlugin(rawSiteUrl?: string): Plugin {
   const staticFiles = Object.fromEntries(Object.keys(staticPageMeta).map((path) => [
     path, path === '/' ? 'index.html' : `${path.slice(1)}/index.html`,
   ]));
+  // Legal pages get their own file too (a direct visit is not a 404), but stay out of the sitemap.
+  const legalFiles = Object.fromEntries(Object.keys(legalPageMeta).map((path) => [path, `${path.slice(1)}/index.html`]));
+  const pageFiles: Record<string, string> = { ...staticFiles, ...legalFiles };
   return {
     name: 'gp-select-seo',
     configResolved(config) {
@@ -30,9 +34,9 @@ export function seoPlugin(rawSiteUrl?: string): Plugin {
           response.end();
           return;
         }
-        const explicitFiles = [...Object.values(staticFiles), 'admin/index.html', '404.html', 'spa.html', 'robots.txt', 'sitemap.xml', 'llms.txt'];
+        const explicitFiles = [...Object.values(pageFiles), 'admin/index.html', '404.html', 'spa.html', 'robots.txt', 'sitemap.xml', 'llms.txt'];
         if (explicitFiles.includes(path.slice(1))) return next();
-        const file = staticFiles[path] || (path === '/admin' || path.startsWith('/admin/')
+        const file = pageFiles[path] || (path === '/admin' || path.startsWith('/admin/')
           ? 'admin/index.html' : /^\/vehiculos\/[^/]+$/.test(path) ? 'spa.html' : null);
         if (file) {
           request.url = `/${file}${url.search}`;
@@ -52,11 +56,20 @@ export function seoPlugin(rawSiteUrl?: string): Plugin {
           ? 'VITE_SITE_URL inválida: usa un origen http(s). Se omiten canonical, og:url y sitemap.xml.'
           : 'VITE_SITE_URL no definida: se omiten canonical, og:url y sitemap.xml.');
       }
+      const missingLegal = missingLegalFields();
+      if (missingLegal.length) {
+        this.warn(`Datos legales pendientes en src/config/legal.ts (${missingLegal.join(', ')}): las páginas legales los marcan como «Pendiente». Necesarios antes de publicar.`);
+      }
       const template = await readFile(resolve(outDir, 'index.html'), 'utf8');
       const pages = [
         ...Object.entries(staticFiles).map(([path, file]) => ({
           file,
           meta: getStaticPageMeta(path, siteUrl),
+          content: renderReadableContent(path),
+        })),
+        ...Object.entries(legalFiles).map(([path, file]) => ({
+          file,
+          meta: { ...legalPageMeta[path], path },
           content: renderReadableContent(path),
         })),
         { file: 'admin/index.html', meta: adminMeta, content: '' },

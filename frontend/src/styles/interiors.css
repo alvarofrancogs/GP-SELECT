@@ -70,6 +70,9 @@
 .contact-field__error { margin-top: .75rem; font-size: .8rem; line-height: 1.4; }
 .contact-page .contact-preview { margin-top: 2rem; font-size: .8rem; color: var(--color-muted); }
 .contact-submit { margin-top: 1.5rem; }
+/* GDPR first layer: small and quiet under the button, but legible (muted ink on paper is AA). */
+.contact-privacy { max-width: 62ch; margin-top: 1.25rem; font-size: .8125rem; line-height: 1.5; color: var(--color-muted); }
+.contact-privacy a { color: var(--color-ink); text-decoration: underline; text-underline-offset: .2em; }
 .contact-failure { margin-top: 1.5rem; }
 .contact-success { padding-block: 2.5rem; border-block: 1px solid var(--interior-rule); }
 .contact-success h3 { font-size: clamp(2rem, 3.4vw, 4rem); margin-bottom: 1.5rem; }

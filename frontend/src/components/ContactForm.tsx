@@ -1,10 +1,14 @@
 import { useId, useRef, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { enquiriesEnabled } from '../config/contact';
+import { legalConfig } from '../config/legal';
+import { legalPaths, legalUi } from '../i18n/legalCopy';
 import { useLanguage } from '../i18n/useLanguage';
 import { submitLead, validateLead, type LeadDraft, type LeadField, type LeadIntent } from '../lib/submitLead';
 
 export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: string }) {
-  const { copy } = useLanguage();
+  const { copy, locale } = useLanguage();
+  const notice = legalUi[locale].formNotice;
   const text = copy.interiors.contact;
   const id = useId();
   const formRef = useRef<HTMLFormElement>(null);
@@ -112,6 +116,11 @@ export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: 
         <button className="button button--dark contact-submit" type="submit" disabled={status === 'submitting'} aria-describedby={enquiriesEnabled ? undefined : `${id}-preview`}>
           <span>{status === 'submitting' ? (enquiriesEnabled ? text.sending : text.submitting) : text.submit}</span><span className="button-arrow" aria-hidden="true">→</span>
         </button>
+        {/* First information layer (GDPR art. 13); the full text is the privacy policy. */}
+        <p className="contact-privacy type-ui">
+          {notice.before}{legalConfig.holder ?? copy.brand}{notice.purpose}
+          <Link to={legalPaths.privacidad}>{notice.link}</Link>{notice.after}
+        </p>
       </form>
     </section>
   );

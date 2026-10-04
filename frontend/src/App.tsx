@@ -8,6 +8,7 @@ import { Import } from './pages/Import';
 import { Contact } from './pages/Contact';
 import { Vehicles } from './pages/Vehicles';
 import { VehicleDetail } from './pages/VehicleDetail';
+import { LegalPage } from './pages/Legal';
 import { usePageMeta } from './lib/usePageMeta';
 import { adminMeta } from './lib/pageMeta';
 
@@ -29,6 +30,9 @@ export function App() {
         <Route path="servicios" element={<Navigate to="/importacion" replace />} />
         <Route path="nosotros" element={<About />} />
         <Route path="contacto" element={<Contact />} />
+        <Route path="aviso-legal" element={<LegalPage doc="aviso-legal" />} />
+        <Route path="privacidad" element={<LegalPage doc="privacidad" />} />
+        <Route path="cookies" element={<LegalPage doc="cookies" />} />
         <Route path="*" element={<NotFound />} />
       </Route>
       <Route path="admin/*" element={<AdminRoute />} />

@@ -2,6 +2,8 @@ import type { MouseEvent } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../i18n/useLanguage';
 import { footerCopy } from '../i18n/footerCopy';
+import { legalPaths, legalUi } from '../i18n/legalCopy';
+import type { LegalDoc } from '../i18n/legalCopy';
 import { qualificationUrl } from '../lib/qualification';
 import { scrollToTop } from '../lib/scrollToTop';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -10,6 +12,7 @@ import '../styles/footer.css';
 export function Footer() {
   const { locale, copy } = useLanguage();
   const text = footerCopy[locale];
+  const legal = legalUi[locale];
   const { pathname } = useLocation();
 
   // On the Home the brand rewinds to the top; elsewhere the route change already starts at the top.
@@ -38,6 +41,9 @@ export function Footer() {
       </div>
       <div className="footer-bottom">
         <p>© {new Date().getFullYear()} {copy.brand}</p>
+        <nav className="footer-legal" aria-label={legal.navigation}>
+          {(Object.keys(legalPaths) as LegalDoc[]).map((doc) => <Link key={doc} to={legalPaths[doc]}>{legal.links[doc]}</Link>)}
+        </nav>
         <LanguageSwitcher />
       </div>
     </footer>

@@ -111,7 +111,7 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 
 ### Remaining release blockers (no invalidan el PASS técnico de 3C)
 
-- **LEGAL / PRIVACY:** responsable, base jurídica, texto del formulario y conservación.
+- **LEGAL / PRIVACY:** páginas hechas (05-10-2026: `/aviso-legal`, `/privacidad`, `/cookies`, enlaces en el footer y primera capa RGPD bajo el formulario). **Faltan los datos del titular** en `frontend/src/config/legal.ts` (titular, NIF/CIF, domicilio, email y plazo de conservación; opcionales: teléfono y datos registrales). Hasta entonces se ven como «Pendiente» y el build avisa. Textos pendientes de revisión por un profesional legal.
 - **EMAIL PROVIDER:** sin adaptador de `IEnquiryNotifier`.
 - **RECIPIENT MAILBOX:** `Enquiries__NotificationEmail` sin definir.
 - **DOMAIN / DEPLOY:** más adelante (`Security__AllowedOrigin`).
@@ -144,6 +144,12 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - `robots.txt` con un único grupo `*` (un grupo por bot anularía los `Disallow`). `/llms.txt` con resumen, ubicación, ledes de Nosotros e Importación y enlaces. JSON-LD de la home en `@graph`: `AutoDealer` (con `description` y `sameAs` desde `contactConfig.sameAs`, vacío hasta tener perfiles verificados) + `WebSite`.
 - QA: typecheck, lint y build OK con y sin `VITE_SITE_URL`; sin JS a 1440/390, cada ruta legible y sin desborde; h1/h2 estáticos = SPA; red lenta con JS sin destello; sin excepciones JS. Astra hizo la implementación y su QA; Opus cerró la verificación (se le acabó el saldo a Astra) y añadió los ledes a `llms.txt`.
 - **Siguiente:** GEO-2 (FAQ con `FAQPage` en Importación) espera datos del usuario; SEO-2 espera hosting; rellenar `sameAs` al crear perfiles.
+
+### Legal y privacidad (05-10-2026, rama `feat/legal-pages`, pendiente de los datos del titular)
+
+- Contenido como datos en `src/i18n/legalCopy.ts` (español, versión vinculante; en EN una nota lo indica), renderizado por `pages/Legal.tsx` y por el build (HTML propio con contenido legible y `noindex,follow`, fuera del sitemap). Datos del titular en `src/config/legal.ts`: nunca inventarlos; si faltan, se marcan «Pendiente» y `seoPlugin` avisa en el build.
+- Reflejan lo que hace el código: formulario (nombre y email obligatorios; teléfono, vehículo y mensaje), IP en los registros del servidor, base jurídica art. 6.1.b (consulta) y 6.1.f (seguridad), solo almacenamiento técnico (`gp-select.locale.v1`, `gp-select.preloader.seen`, cookie de sesión del Admin) y, por tanto, sin banner de cookies (art. 22.2 LSSI). **Si se añade analítica, email o algún proveedor, actualizar los textos.**
+- Formulario: primera capa RGPD bajo el botón (responsable = titular o, si falta, la marca). El envío en producción sigue desactivado hasta tener los datos legales, el proveedor de email y el buzón.
 
 ### SEO-2 · fichas y sitemap desde el servidor = PASS (05-10-2026, tag `seo-2-pass`)
 

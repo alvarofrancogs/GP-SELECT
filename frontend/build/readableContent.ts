@@ -4,6 +4,9 @@ import { footerCopy } from '../src/i18n/footerCopy';
 import { servicesCopy } from '../src/i18n/servicesCopy';
 import { escapeHtml, staticPageMeta } from '../src/lib/pageMeta';
 import { qualificationUrl } from '../src/lib/qualification';
+import { legalConfig } from '../src/config/legal';
+import { legalPages, legalPaths, pendingLabels } from '../src/i18n/legalCopy';
+import type { LegalDoc, LegalInline } from '../src/i18n/legalCopy';
 
 const navigation = [
   ['/', es.brand],
@@ -70,6 +73,22 @@ function contactContent(): string {
     + `<li>${link('/contacto?intent=search', text.searchPath)}${paragraph(text.searchIntro)}</li></ul>`;
 }
 
+// Same text as the React legal page (src/pages/Legal.tsx); a missing detail reads as pending.
+function legalInline(inline: LegalInline): string {
+  if (typeof inline === 'string') return escapeHtml(inline);
+  if ('field' in inline) return escapeHtml(legalConfig[inline.field] ?? `[Pendiente: ${pendingLabels[inline.field]}]`);
+  return link(inline.to, inline.text);
+}
+
+function legalContent(doc: LegalDoc): string {
+  const page = legalPages[doc];
+  const shown = (item: LegalInline[]) => item.every((part) => typeof part === 'string' || !('field' in part) || !part.optional || legalConfig[part.field]);
+  return introduction(page.title, page.lede) + page.sections.map((item) => section(item.heading, item.blocks.map((block) =>
+    'p' in block ? `<p>${block.p.map(legalInline).join('')}</p>`
+      : `<ul>${block.list.filter(shown).map((entry) => `<li>${entry.map(legalInline).join('')}</li>`).join('')}</ul>`).join(''))).join('')
+    + paragraph(`Última revisión: ${legalConfig.updated}`);
+}
+
 /** Build-only reading view. All public copy comes from the same dictionaries as React. */
 export function renderReadableContent(path: string): string {
   let content: string;
@@ -82,6 +101,9 @@ export function renderReadableContent(path: string): string {
       content = introduction(es.vehicles.title, es.vehicles.lede)
         + section(es.vehicles.closing, link(qualificationUrl({ intent: 'import', source: 'vehicles' }), es.vehicles.find));
       break;
+    case legalPaths['aviso-legal']: content = legalContent('aviso-legal'); break;
+    case legalPaths.privacidad: content = legalContent('privacidad'); break;
+    case legalPaths.cookies: content = legalContent('cookies'); break;
     case '/404.html':
       content = paragraph(es.notFound.eyebrow) + introduction(es.notFound.title, es.notFound.description)
         + link('/', es.common.backHome) + ' ' + link('/vehiculos', es.notFound.vehicles);

@@ -7,7 +7,7 @@ import { CatalogueCta } from '../components/CatalogueCta';
 import { Preloader } from '../components/Preloader';
 import { useLanguage } from '../i18n/useLanguage';
 import { siteUrl, usePageMeta } from '../lib/usePageMeta';
-import { getStaticPageMeta, notFoundMeta, staticPageMeta } from '../lib/pageMeta';
+import { getStaticPageMeta, legalPageMeta, notFoundMeta, staticPageMeta } from '../lib/pageMeta';
 
 /** Resets the scroll before the page below creates its pins. Layout effects run in tree order, so this
     must sit before <main>: otherwise the Home would be built (and painted) at the previous page's scroll. */
@@ -66,11 +66,12 @@ export function SiteLayout() {
   // The router ignores case and a trailing slash (/NOSOTROS/ renders Nosotros), so the title lookup does too.
   const route = pathname.toLowerCase().replace(/\/+$/, '') || '/';
   const isDetail = /^\/vehiculos\/[^/]+$/.test(route);
-  const meta = route in staticPageMeta ? getStaticPageMeta(route, siteUrl) : notFoundMeta;
+  const meta = route in staticPageMeta ? getStaticPageMeta(route, siteUrl)
+    : route in legalPageMeta ? { ...legalPageMeta[route], path: route } : notFoundMeta;
   const translatedTitle = route in pageTitles ? `${pageTitles[route]} · GP SELECT` : undefined;
   usePageMeta(isDetail || route === '/servicios' ? null : {
     ...meta,
-    tabTitle: route in staticPageMeta
+    tabTitle: route in staticPageMeta || route in legalPageMeta
       ? (locale === 'en' ? translatedTitle : undefined)
       : `${copy.notFound.title} · GP SELECT`,
   });

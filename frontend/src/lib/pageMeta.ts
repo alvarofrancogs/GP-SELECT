@@ -36,6 +36,25 @@ export const staticPageMeta: Record<string, PageMeta> = {
   },
 };
 
+/** Legal pages: reachable and followed, but kept out of search results and the sitemap. */
+export const legalPageMeta: Record<string, PageMeta> = {
+  '/aviso-legal': {
+    title: 'Aviso legal · GP SELECT',
+    description: 'Datos del titular de GP SELECT, con base en Murcia, y condiciones de uso de la web.',
+    robots: 'noindex,follow',
+  },
+  '/privacidad': {
+    title: 'Política de privacidad · GP SELECT',
+    description: 'Qué datos trata GP SELECT cuando le escribes, para qué, durante cuánto tiempo y cómo ejercer tus derechos.',
+    robots: 'noindex,follow',
+  },
+  '/cookies': {
+    title: 'Política de cookies · GP SELECT',
+    description: 'GP SELECT no usa cookies de análisis ni de publicidad: solo almacenamiento técnico en el navegador.',
+    robots: 'noindex,follow',
+  },
+};
+
 export const notFoundMeta: PageMeta = {
   title: 'Página no encontrada · GP SELECT',
   description: 'Esta página no está disponible. Consulta el catálogo de GP SELECT o vuelve al inicio para conocer nuestra selección de vehículos europeos.',

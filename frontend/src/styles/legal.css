@@ -1,0 +1,29 @@
+/* Legal pages: the interior pages' paper, type and rules, set for reading. A quiet single column
+   (65-75ch), no media, and headings that wrap (unlike the one-line interior titles). */
+.legal-header {
+  padding-top: calc(var(--header-height) + clamp(3rem, 6vw, 7rem));
+  padding-bottom: clamp(2.5rem, 4vw, 4.5rem);
+  border-bottom: var(--border-width) solid var(--interior-rule);
+}
+.legal-header h1 { max-width: 14ch; font-size: clamp(2.75rem, 6.4vw, 7rem); text-wrap: balance; }
+.legal-header .type-lede { max-width: 34ch; margin-top: var(--space-5); text-wrap: pretty; }
+.legal-note { margin-top: var(--space-4); color: var(--color-muted); }
+
+.legal-body { max-width: 72ch; padding-block: clamp(2.5rem, 5vw, 5rem) var(--interior-space); }
+.legal-body section + section { margin-top: clamp(2.25rem, 3.5vw, 3.5rem); }
+.legal-body h2 { margin-bottom: var(--space-4); text-wrap: balance; }
+.legal-body p, .legal-body ul { line-height: 1.6; text-wrap: pretty; }
+.legal-body p + p, .legal-body p + ul, .legal-body ul + p { margin-top: var(--space-4); }
+.legal-body ul { display: grid; gap: var(--space-2); padding: 0; list-style: none; }
+.legal-body li { position: relative; padding-left: 1.25em; }
+.legal-body li::before { content: ''; position: absolute; left: 0; top: .8em; width: .6em; height: var(--border-width); background: currentColor; }
+.legal-body a { text-decoration: underline; text-decoration-thickness: var(--border-width); text-underline-offset: .2em; }
+.legal-body a:hover { color: var(--color-muted); }
+.legal-updated { margin-top: clamp(3rem, 5vw, 5rem); padding-top: var(--space-4); border-top: var(--border-width) solid var(--interior-rule); color: var(--color-muted); }
+
+/* A detail the holder has not supplied yet: impossible to miss, never mistaken for real data. */
+.legal-pending { padding: 0 .3em; background: rgb(213 190 151 / .35); color: var(--color-ink); outline: 1px dashed var(--color-gold); outline-offset: 1px; }
+
+@media (max-width: 767px) {
+  .legal-header { padding-top: calc(var(--header-height) + 3rem); }
+}
