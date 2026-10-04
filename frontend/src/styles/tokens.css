@@ -95,6 +95,8 @@
   --color-faint: #aaa9a4;
   --color-line: #bec3bd;
   --color-white: #fffcf7;
+  /* Brand champagne, from the logo's SELECT (GP Select_v4_8.png). */
+  --color-gold: #d5be97;
   --color-placeholder: #e7e9e6;
   --border-width: 1px;
   --radius-pill: 999px;

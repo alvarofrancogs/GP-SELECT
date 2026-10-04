@@ -1,24 +1,23 @@
-/* Start-up screen: charcoal, the brand mark and a quiet counter. It lifts like a curtain (GSAP, see Preloader.tsx). */
+/* Start-up screen in the logo's own colours: warm white, the GP monogram in black and SELECT in champagne.
+   The two pieces travel in from either side and meet in the final logo; then the screen lifts like a
+   curtain (GSAP, see Preloader.tsx). */
 .preloader {
   position: fixed;
   inset: 0;
   z-index: var(--z-preloader);
   display: grid;
   place-items: center;
-  background: var(--color-dark);
-  color: var(--color-paper);
+  background: var(--color-white);
+  color: var(--color-ink);
   will-change: transform;
 }
-.preloader__brand {
-  font-family: var(--font-family);
-  font-stretch: var(--type-lede-width);
-  font-size: clamp(1.6rem, 3.2vw, 3.4rem);
-  font-weight: 300;
-  letter-spacing: .2em;
-  line-height: 1;
-  white-space: nowrap;
-  animation: preloader-brand 600ms var(--ease-cinematic) both;
-}
+/* Same proportions as the artwork (1827 × 317 of ink); each piece sits where it does in the original. */
+.preloader__logo { position: relative; width: clamp(15rem, 44vw, 34rem); aspect-ratio: 1827 / 317; }
+.preloader__logo img { position: absolute; display: block; height: auto; }
+.preloader__gp { left: 0; top: 0; width: 28.736%;
+  animation: preloader-gp 500ms var(--ease-out) both; }
+.preloader__select { left: 33.771%; top: 11.672%; width: 66.229%;
+  animation: preloader-select 500ms var(--ease-out) 30ms both; }
 .preloader__meter {
   position: absolute;
   left: var(--page-gutter);
@@ -34,16 +33,18 @@
   font-weight: var(--type-ui-weight);
   letter-spacing: .14em;
   font-variant-numeric: tabular-nums;
-  opacity: .7;
+  color: var(--color-muted);
 }
-.preloader__line { display: block; height: var(--border-width); background: rgb(255 252 247 / .18); }
-.preloader__line > span { display: block; height: 100%; background: var(--color-paper); transform: scaleX(0); transform-origin: left; }
+.preloader__line { display: block; height: var(--border-width); background: rgb(16 17 18 / .1); }
+.preloader__line > span { display: block; height: 100%; background: var(--color-gold); transform: scaleX(0); transform-origin: left; }
 
 /* A reload in the same tab: the same entrance in half the time (see Preloader.tsx). */
-.preloader--quick .preloader__brand { animation-duration: 300ms; }
+.preloader--quick .preloader__gp, .preloader--quick .preloader__select { animation-duration: 250ms; animation-delay: 0s; }
 
-@keyframes preloader-brand { from { opacity: 0; filter: blur(14px); transform: translateY(10px); } to { opacity: 1; filter: blur(0); transform: none; } }
+/* Each piece covers about a fifth of the logo's width on its way in (translate is relative to the piece). */
+@keyframes preloader-gp { from { opacity: 0; filter: blur(10px); transform: translateX(-76%); } to { opacity: 1; filter: blur(0); transform: none; } }
+@keyframes preloader-select { from { opacity: 0; filter: blur(10px); transform: translateX(33%); } to { opacity: 1; filter: blur(0); transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .preloader__brand { animation: none; }
+  .preloader__gp, .preloader__select { animation: none; }
 }
