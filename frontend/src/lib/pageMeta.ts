@@ -74,7 +74,7 @@ export function getStaticPageMeta(path: string, siteUrl?: string): PageMeta {
         '@type': 'AutoDealer', name: 'GP SELECT',
         description: meta.description,
         ...(siteUrl ? { url: `${siteUrl}/` } : {}),
-        logo: assetUrl('/assets/seo/logo.svg', siteUrl),
+        logo: assetUrl('/assets/seo/logo.png', siteUrl),
         areaServed: [
           { '@type': 'Country', name: 'España' },
           { '@type': 'AdministrativeArea', name: 'Región de Murcia' },
