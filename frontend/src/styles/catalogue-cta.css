@@ -22,7 +22,7 @@
   display: block;
   border-radius: var(--radius-small);
   color: var(--cta-ink);
-  transition: color 350ms var(--ease-out);
+  transition: color 350ms var(--ease-out), opacity 250ms var(--ease-out);
   animation: catalogue-cta-in 600ms var(--ease-cinematic) 400ms backwards;
 }
 /* Paper and bright sky: paper glass with ink type. */

@@ -132,6 +132,7 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - `CatalogueCta`: el glass se adapta al lenguaje de la web: esquinas `--radius-small`, filete de 1 px, sin brillos ni sombra pesada, flecha en su propia celda tras un filete (hover: celda rellena). Mantiene tono claro/oscuro, magnetismo y reflejo.
 - Cambio de idioma: fundido de 260 ms con View Transitions (`LanguageSwitcher.tsx`, `global.css`); sin soporte o con reduced-motion, cambio directo.
 - «GP SELECT» (header y footer) en la Home: `lib/scrollToTop.ts`, scroll nativo con GSAP (power3.inOut, 0,45–0,95 s), interrumpible con rueda, touch o tecla; reduced-motion = salto. Desde otra ruta navega a la Home como antes.
+- Menú móvil (<1200 px, pedido por el usuario): telón de papel a pantalla completa con `clip-path` (cae 640 ms, sube 420 ms), enlaces grandes que suben por máscara con stagger de 60 ms, filetes que se dibujan, flecha SVG (gira en la página actual) y ubicación abajo. Icono de dos líneas que pasa a X en dos tiempos. Abierto: scroll bloqueado (`html.menu-open`), `inert` detrás y CTA oculto. Reduced-motion: sin transiciones ni retardos. Escritorio intacto. QA 320/390/768, Escape, navegación desde el menú.
 - QA 1440/390 con API real (pruebasGP): tonos del CTA en todas las escenas, rewind de 10 628 px en ~0,85 s, interrupción, ES↔EN a mitad de pin, reduced-motion. Ojo en QA automatizada: con la pestaña en segundo plano rAF y las view transitions se congelan (falsos positivos).
 
 ### GEO-1 · contenido legible sin JS = PASS (04-10-2026, tag `geo-1-pass`)

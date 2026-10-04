@@ -1,12 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useLanguage } from '../i18n/useLanguage';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { scrollToTop } from '../lib/scrollToTop';
+import { footerCopy } from '../i18n/footerCopy';
+
+// Matches the curtain's closing transition in global.css: the page stays locked until it has lifted.
+const MENU_CLOSE_MS = 420;
+// Everything behind the open menu: out of the tab order and the accessibility tree while it covers them.
+const BEHIND_MENU = '#main-content, .site-footer, .catalogue-cta, .skip-link';
 
 export function Header() {
-  const { copy } = useLanguage();
+  const { copy, locale } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
+  // Stays true while the curtain lifts, so the header keeps its menu colours until it is gone.
+  const [menuShown, setMenuShown] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const { pathname } = useLocation();
@@ -62,6 +71,28 @@ export function Header() {
   }, [pathname]);
 
   useEffect(() => {
+    if (menuOpen) {
+      setMenuShown(true);
+      return;
+    }
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const timer = window.setTimeout(() => setMenuShown(false), reduced ? 0 : MENU_CLOSE_MS);
+    return () => window.clearTimeout(timer);
+  }, [menuOpen]);
+
+  // While the menu covers the page: no scrolling behind it and nothing behind it reachable by keyboard.
+  useEffect(() => {
+    if (!menuShown) return;
+    const behind = Array.from(document.querySelectorAll<HTMLElement>(BEHIND_MENU));
+    document.documentElement.classList.add('menu-open');
+    behind.forEach((element) => { element.inert = true; });
+    return () => {
+      document.documentElement.classList.remove('menu-open');
+      behind.forEach((element) => { element.inert = false; });
+    };
+  }, [menuShown]);
+
+  useEffect(() => {
     if (!menuOpen) return;
     function handleEscape(event: KeyboardEvent) {
       if (event.key === 'Escape') {
@@ -81,7 +112,7 @@ export function Header() {
   }, [menuOpen]);
 
   return (
-    <header ref={headerRef} className={`site-header${menuOpen ? ' site-header--open' : ''}`}>
+    <header ref={headerRef} className={`site-header${menuShown ? ' site-header--menu' : ''}${menuOpen ? ' site-header--open' : ''}`}>
       <div className="header-inner">
         <nav className="header-nav" aria-label={copy.nav.label}>
           {links.map((link) => <NavLink key={link.to} className="nav-link" to={link.to}>{link.label}</NavLink>)}
@@ -96,17 +127,30 @@ export function Header() {
         <div className="header-actions">
           <LanguageSwitcher />
           <button className="menu-toggle" ref={menuButton} type="button" aria-expanded={menuOpen}
-            aria-controls={menuOpen ? 'mobile-navigation' : undefined} aria-label={menuOpen ? copy.common.close : copy.common.menu}
+            aria-controls="mobile-navigation" aria-label={menuOpen ? copy.common.close : copy.common.menu}
             onClick={() => setMenuOpen((open) => !open)}>
-            <span aria-hidden="true">{menuOpen ? '−' : '+'}</span>
+            <span className="menu-toggle__icon" aria-hidden="true"><span /><span /></span>
           </button>
         </div>
       </div>
-      {menuOpen ? (
-        <nav id="mobile-navigation" className="mobile-nav" aria-label={copy.nav.label}>
-          {links.map((link) => <NavLink key={link.to} to={link.to} onClick={() => setMenuOpen(false)}>{link.label}</NavLink>)}
-        </nav>
-      ) : null}
+      {/* Always rendered so it can open and close as a curtain; hidden (and unfocusable) while closed. */}
+      <nav id="mobile-navigation" className="mobile-nav" aria-label={copy.nav.label}>
+        <ul className="mobile-nav__list">
+          {links.map((link, index) => (
+            <li key={link.to} className="mobile-nav__item" style={{ '--i': index } as CSSProperties}>
+              <NavLink className="mobile-nav__link" to={link.to} onClick={() => setMenuOpen(false)}>
+                <span className="mobile-nav__mask"><span className="mobile-nav__label">{link.label}</span></span>
+                <span className="mobile-nav__mask" aria-hidden="true">
+                  <svg className="mobile-nav__arrow" viewBox="0 0 16 19" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 18C7 18.5523 7.44772 19 8 19C8.55228 19 9 18.5523 9 18H7ZM8.70711 0.292893C8.31658 -0.0976311 7.68342 -0.0976311 7.29289 0.292893L0.928932 6.65685C0.538408 7.04738 0.538408 7.68054 0.928932 8.07107C1.31946 8.46159 1.95262 8.46159 2.34315 8.07107L8 2.41421L13.6569 8.07107C14.0474 8.46159 14.6805 8.46159 15.0711 8.07107C15.4616 7.68054 15.4616 7.04738 15.0711 6.65685L8.70711 0.292893ZM9 18L9 1H7L7 18H9Z" />
+                  </svg>
+                </span>
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+        <p className="mobile-nav__meta">{footerCopy[locale].location}</p>
+      </nav>
     </header>
   );
 }

@@ -52,7 +52,17 @@ dialog { overscroll-behavior: contain; }
 /* Touch targets of at least 24 px without moving the type: the brand grows an invisible hit area. */
 .header-brand::after { content: ''; position: absolute; inset: -.375rem -.25rem; }
 .language-switcher button[aria-pressed='true'] { opacity: 1; text-decoration: underline; text-underline-offset: .35em; }
-.menu-toggle { display: none; border: 0; background: none; font-size: var(--text-h2); padding: var(--space-2); line-height: 1; }
+.menu-toggle { display: none; border: 0; background: none; padding: var(--space-3); margin-right: calc(var(--space-3) * -1); color: inherit; }
+/* Two rules that cross into an X; drawn, not a glyph. */
+.menu-toggle__icon { position: relative; display: block; width: 1.5rem; height: .75rem; }
+/* Two steps, so it never passes through a chevron: open = meet, then turn; close = turn back, then part. */
+.menu-toggle__icon span { position: absolute; left: 0; right: 0; height: 1.5px; background: currentColor;
+  transition: rotate 200ms var(--ease-in-out), translate 180ms var(--ease-in-out) 180ms; }
+.menu-toggle__icon span:first-child { top: 0; }
+.menu-toggle__icon span:last-child { bottom: 0; }
+.site-header--open .menu-toggle__icon span { transition: translate 180ms var(--ease-in-out), rotate 220ms var(--ease-in-out) 160ms; }
+.site-header--open .menu-toggle__icon span:first-child { translate: 0 calc(.375rem - .75px); rotate: 45deg; }
+.site-header--open .menu-toggle__icon span:last-child { translate: 0 calc(-.375rem + .75px); rotate: -45deg; }
 .mobile-nav { display: none; }
 .button { min-height: var(--button-height); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-6); padding: var(--space-4) var(--space-6); border-radius: 0; border: var(--border-width) solid transparent; font-family: var(--font-family); font-stretch: var(--type-ui-width); font-size: var(--text-nav); font-weight: var(--type-ui-weight); letter-spacing: var(--type-ui-tracking); line-height: var(--type-ui-leading); text-transform: none; transition: background var(--duration-ui), color var(--duration-ui); }
 .button:disabled { opacity: .6; cursor: wait; }
@@ -74,8 +84,47 @@ dialog { overscroll-behavior: contain; }
   .header-nav { display: none; }
   .header-brand { left: var(--page-gutter); transform: none; }
   .menu-toggle { display: block; }
-  .site-header--open { mix-blend-mode: normal; color: var(--color-ink); background: var(--color-paper); }
-  .mobile-nav { display: grid; gap: var(--space-5); max-height: calc(100dvh - var(--header-height)); overflow-y: auto; padding: var(--space-6) var(--page-gutter) var(--space-7); border-bottom: var(--border-width) solid var(--color-line); font-size: var(--text-h2); letter-spacing: var(--tracking-body); }
+  /* Mobile menu: a paper curtain that drops over the page (the site's own scene-handoff gesture), then the
+     links rise through their masks and the rules draw in. It lifts faster than it falls. */
+  .site-header.site-header--open, .site-header.site-header--menu, .site-header.site-header--menu[data-tone] { mix-blend-mode: normal; color: var(--color-ink); text-shadow: none; }
+  .site-header--menu button { text-shadow: none; }
+  .mobile-nav {
+    position: fixed; inset: 0; z-index: -1;
+    display: flex; flex-direction: column;
+    padding: calc(var(--header-height) + var(--space-4)) var(--page-gutter) max(var(--space-7), calc(env(safe-area-inset-bottom) + var(--space-5)));
+    overflow-y: auto; overscroll-behavior: contain;
+    background: var(--color-paper); color: var(--color-ink);
+    visibility: hidden;
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path 420ms var(--ease-in-out), visibility 0s 420ms;
+  }
+  .site-header--open .mobile-nav { visibility: visible; clip-path: inset(0); transition: clip-path 640ms var(--ease-cinematic), visibility 0s; }
+  .mobile-nav__list { margin: 0; padding: 0; list-style: none; }
+  .mobile-nav__item { position: relative; }
+  /* Rules draw from the left, one per row, a beat ahead of the row's label. */
+  .mobile-nav__item::after, .mobile-nav__item:first-child::before { content: ''; position: absolute; left: 0; right: 0; height: var(--border-width); background: var(--color-line); transform: scaleX(0); transform-origin: left; transition: transform 240ms var(--ease-in-out); }
+  .mobile-nav__item::after { bottom: 0; }
+  .mobile-nav__item:first-child::before { top: 0; }
+  .site-header--open .mobile-nav__item::after, .site-header--open .mobile-nav__item:first-child::before { transform: scaleX(1); transition: transform 800ms var(--ease-cinematic) calc(160ms + var(--i) * 60ms); }
+  .mobile-nav__link { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding-block: clamp(1.1rem, 3.2vh, 1.6rem); font-family: var(--font-family); font-stretch: var(--width-display); font-size: clamp(1.75rem, 8.6vw, 3rem); font-weight: var(--type-title-weight); letter-spacing: -.035em; line-height: 1; }
+  .mobile-nav__link:focus-visible { outline: 2px solid var(--color-ink); outline-offset: -2px; }
+  /* Masks: the label and arrow travel inside their own line box; the padding keeps descenders. */
+  .mobile-nav__mask { display: block; overflow: hidden; padding-block: .1em; margin-block: -.1em; }
+  .mobile-nav__label, .mobile-nav__arrow { display: block; transform: translateY(115%); transition: transform 260ms var(--ease-in-out); }
+  .site-header--open :is(.mobile-nav__label, .mobile-nav__arrow) { transform: none; transition: transform 760ms var(--ease-cinematic) calc(200ms + var(--i) * 60ms); }
+  .mobile-nav__arrow { width: .5em; height: .6em; fill: currentColor; }
+  /* The arrow points up-right; on the current page and on hover it turns to point across. */
+  .mobile-nav__arrow path { transform-origin: center; transform-box: fill-box; rotate: 45deg; opacity: .4; transition: rotate 450ms var(--ease-cinematic), opacity 300ms var(--ease-out); }
+  .mobile-nav__link.active .mobile-nav__arrow path { rotate: 90deg; opacity: 1; }
+  .mobile-nav__link:active .mobile-nav__label { color: var(--color-muted); }
+  .mobile-nav__meta { margin-top: auto; padding-top: var(--space-7); font-family: var(--font-family); font-stretch: var(--type-ui-width); font-size: .9375rem; color: var(--color-muted); opacity: 0; transition: opacity 200ms var(--ease-out); }
+  .site-header--open .mobile-nav__meta { opacity: 1; transition: opacity 500ms var(--ease-out) 520ms; }
+  /* Nothing scrolls behind the curtain, and the global CTA steps aside. */
+  html.menu-open { overflow: hidden; scrollbar-gutter: stable; }
+  html.menu-open .catalogue-cta { opacity: 0; pointer-events: none; }
+}
+@media (max-width: 1199px) and (hover: hover) and (pointer: fine) {
+  .mobile-nav__link:hover .mobile-nav__arrow path { rotate: 90deg; opacity: 1; }
 }
 @media (max-width: 767px) {
   .header-actions { gap: var(--space-3); }
@@ -91,4 +140,6 @@ dialog { overscroll-behavior: contain; }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 260ms; animation-timing-function: var(--ease-out); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0s !important; animation-duration: 0s !important; }
+  /* The menu's staggered delays would still hold it (and its links) on screen with zero-length transitions. */
+  .site-header, .site-header *, .site-header *::before, .site-header *::after { transition-delay: 0s !important; }
 }
