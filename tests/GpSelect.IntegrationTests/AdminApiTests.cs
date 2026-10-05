@@ -84,6 +84,52 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Ready_image_with_deleted_objects_returns_404_on_public_and_admin_routes()
+    {
+        var vehicle = await CreateVehicle();
+        var imageId = await UploadImage(vehicle.Id);
+        await Json(await Patch(vehicle.Id, new { priceEur = 50000m }));
+        await Json(await SetStatus(vehicle.Id, "ComingSoon"));
+        using var anonymous = api.Anonymous();
+        var publicBase = $"/api/public/vehicles/{vehicle.Slug}/images/{imageId}";
+        var adminBase = $"/api/admin/vehicles/{vehicle.Id}/images/{imageId}";
+
+        foreach (var variant in new[] { "card", "detail" })
+        {
+            using var response = await anonymous.GetAsync($"{publicBase}/{variant}");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(TimeSpan.FromDays(1), response.Headers.CacheControl?.MaxAge);
+        }
+
+        using (var scope = api.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
+            var image = await db.Images.SingleAsync(x => x.Id == imageId);
+            Assert.Equal(ImageState.Ready, image.State);
+            var storage = scope.ServiceProvider.GetRequiredService<IObjectStorage>();
+            Assert.IsType<FileObjectStorage>(storage);
+            await storage.DeleteAsync(image.CardKey!, CancellationToken.None);
+            await storage.DeleteAsync(image.DetailKey!, CancellationToken.None);
+        }
+
+        foreach (var (client, path) in new[]
+        {
+            (anonymous, $"{publicBase}/card"),
+            (anonymous, $"{publicBase}/detail"),
+            (admin, $"{adminBase}/card"),
+            (admin, $"{adminBase}/detail"),
+            (admin, $"/api/admin/vehicles/{vehicle.Id}/preview/images/{imageId}/detail")
+        })
+        {
+            using var response = await client.GetAsync(path);
+            var problem = await Problem(response, HttpStatusCode.NotFound);
+            Assert.Equal(404, problem.GetProperty("status").GetInt32());
+            Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+            Assert.Null(response.Headers.CacheControl);
+        }
+    }
+
+    [Fact]
     public async Task Status_endpoint_rejects_numeric_strings_and_the_list_keeps_working()
     {
         var (id, _) = await CreateVehicle();

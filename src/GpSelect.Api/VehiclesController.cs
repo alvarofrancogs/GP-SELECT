@@ -130,7 +130,7 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
     {
         var image = await db.Images.AsNoTracking().SingleOrDefaultAsync(x => x.Id == imageId && x.VehicleUnitId == id && x.State == ImageState.Ready);
         if (image is null || image.DetailKey is null) return NotFound();
-        return File(await storage.OpenReadAsync(image.DetailKey, HttpContext.RequestAborted), "image/jpeg");
+        return await StoredImages.Serve(this, storage, image.DetailKey);
     }
 
     private ObjectResult DomainProblem(DomainException e) => DomainProblems.Create(this, e);

@@ -41,7 +41,8 @@ public sealed class ImageProcessingWorker(IServiceScopeFactory scopes, IObjectSt
                     .SetProperty(x => x.Error, (string?)null), ct);
                 return;
             }
-            await using var original = await storage.OpenReadAsync(image.OriginalKey, ct);
+            await using var original = await storage.OpenReadAsync(image.OriginalKey, ct)
+                ?? throw new FileNotFoundException("Original image object is missing", image.OriginalKey);
             await using var input = await ImagePipeline.ReadBoundedAsync(original, ImagePipeline.MaxUploadBytes, ct);
             using var source = await ImagePipeline.DecodeAsync(input, image.MimeType, ct);
             var rendered = await ImagePipeline.RenderAsync(source, ct);

@@ -157,7 +157,13 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - **JS:** `manualChunks` separa `react` (69 kB gzip), `gsap` (45), `router` (32) y la web (37): las librerías quedan en caché entre despliegues y desaparece el aviso de >500 kB. El total no baja.
 - **Ficha:** `VehiclePublicDto` añade `cardImages` (versión de 800 px, mismo orden que `images`; aditivo). Miniaturas con la card, foto principal con `srcset` card/detail y `sizes`. Las diapositivas ocultas están apiladas en pantalla y el `lazy` nativo las cargaba todas a 2400 px: ahora solo se carga la visible y sus vecinas, y cada una se queda cargada. Con 8 fotos en escritorio: 3 detail + 8 card en vez de 8 detail; en móvil (DPR 2), 2 card (~100 kB) en vez de ~760 kB.
 - Verificación: 105/105 unitarios, 70/70 de integración, typecheck, lint y build; pruebasGP a 1440/390 (galería con 8 fotos simuladas, navegación y swipe, Home completa con scroll y vuelta arriba, ficha servida por la API con los nuevos chunks), sin errores JS.
-- **Sigue pendiente (motion, no tocado):** TBT en móvil por el montaje de los pins (Style & Layout ~1,3 s con CPU ×4) y CLS ~3 durante el scroll de la Home. Un objeto que falta en el almacenamiento sigue dando 500 (backend).
+- **Sigue pendiente (motion, no tocado):** TBT en móvil por el montaje de los pins (Style & Layout ~1,3 s con CPU ×4) y CLS ~3 durante el scroll de la Home. ~~Un objeto que falta en el almacenamiento sigue dando 500~~: resuelto en STORAGE-404.
+
+### STORAGE-404 = PASS (05-10-2026, rama `fix/storage-404`, tag `storage-404-pass`)
+
+- `IObjectStorage.OpenReadAsync` devuelve `Stream?`: `null` si el objeto no existe (File: fichero o carpeta; S3: 404/`NoSuchKey`), como `HeadAsync`. Cualquier otro error sigue lanzando.
+- `StoredImages.Serve` (API) sirve las imágenes de los 4 endpoints (card/detail públicos, card/detail del admin y la vista previa): si falta el objeto, 404 con ProblemDetails, un warning con la clave y sin `Cache-Control`. El caché de un día solo se pone en las respuestas correctas. El worker trata un original que falta como cualquier fallo de procesado (sin cambios).
+- Implementación de Astra (worktree sobre una base antigua; Opus lo portó a `feat/perf-1`). Verificación: build 0 avisos, 105/105 unitarios, 73/73 de integración (3 nuevos).
 
 ### SEO-2 · fichas y sitemap desde el servidor = PASS (05-10-2026, tag `seo-2-pass`)
 

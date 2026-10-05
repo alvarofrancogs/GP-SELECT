@@ -191,7 +191,7 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
         var x = await db.Images.AsNoTracking().SingleOrDefaultAsync(x => x.Id == imageId && x.VehicleUnitId == vehicleId && x.State == ImageState.Ready);
         if (x is null || x.CardKey is null)
             return NotFound();
-        return File(await storage.OpenReadAsync(x.CardKey, HttpContext.RequestAborted), "image/jpeg");
+        return await StoredImages.Serve(this, storage, x.CardKey);
     }
 
     [HttpGet("{imageId:guid}/detail")]
@@ -200,7 +200,7 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
         var x = await db.Images.AsNoTracking().SingleOrDefaultAsync(x => x.Id == imageId && x.VehicleUnitId == vehicleId && x.State == ImageState.Ready);
         if (x is null || x.DetailKey is null)
             return NotFound();
-        return File(await storage.OpenReadAsync(x.DetailKey, HttpContext.RequestAborted), "image/jpeg");
+        return await StoredImages.Serve(this, storage, x.DetailKey);
     }
 
     /// <summary>The cover is the first photo: making an image the cover moves it to the front.</summary>
