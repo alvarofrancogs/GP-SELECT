@@ -7,8 +7,10 @@
   --car-height: 58%;
   position: relative;
   z-index: 0;
+  overflow-x: clip;
 }
-.car-handoff__pin { position: relative; height: 100svh; overflow: hidden; isolation: isolate; background: var(--color-paper); }
+/* See the ScrollTrigger pin clipping note in scenes.css. */
+.car-handoff__pin { position: relative; height: 100svh; display: flow-root; clip-path: inset(0); isolation: isolate; background: var(--color-paper); }
 .car-handoff__panel { position: absolute; inset: 0; }
 
 /* The world stays still while the car moves: only the weather changes. */

@@ -1,11 +1,13 @@
-.scroll-scene { position: relative; background: var(--color-paper); }
+.scroll-scene { position: relative; background: var(--color-paper); overflow-x: clip; }
 .scroll-scene.process-scene[data-motion='scroll'] { margin-block-end: calc(-100svh - 75vh); }
 /* The incoming process reaches the top exactly at the end of the hero pin. */
 .scroll-scene.hero-scene[data-motion='scroll'] { margin-block-end: -100svh; }
 .hero-scene[data-motion='scroll'] + .process-scene { background: transparent; }
 /* The curtain arrives with a soft, tall edge instead of a hard line: a gradient above the section, over the darkened hero. */
 .scroll-scene.process-scene[data-motion='scroll']::before { content: ''; position: absolute; z-index: 1; left: 0; right: 0; bottom: 100%; height: 32svh; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--color-dark)); }
-.scroll-scene__pin { position: relative; height: 100svh; overflow: hidden; isolation: isolate; }
+/* Avoid overflow: hidden on ScrollTrigger pins: Chrome counts each pin/unpin as a full-screen layout shift.
+   The section clips the X axis; clip-path preserves the visual crop and flow-root preserves the BFC. */
+.scroll-scene__pin { position: relative; height: 100svh; display: flow-root; clip-path: inset(0); isolation: isolate; }
 .scene-background { position: absolute; inset: 0; z-index: var(--z-background); }
 .hero-scene .scene-background { bottom: -3%; }
 .asset-slot { position: relative; width: 100%; height: 100%; }

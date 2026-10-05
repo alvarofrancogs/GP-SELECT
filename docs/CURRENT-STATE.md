@@ -157,7 +157,16 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - **JS:** `manualChunks` separa `react` (69 kB gzip), `gsap` (45), `router` (32) y la web (37): las librerías quedan en caché entre despliegues y desaparece el aviso de >500 kB. El total no baja.
 - **Ficha:** `VehiclePublicDto` añade `cardImages` (versión de 800 px, mismo orden que `images`; aditivo). Miniaturas con la card, foto principal con `srcset` card/detail y `sizes`. Las diapositivas ocultas están apiladas en pantalla y el `lazy` nativo las cargaba todas a 2400 px: ahora solo se carga la visible y sus vecinas, y cada una se queda cargada. Con 8 fotos en escritorio: 3 detail + 8 card en vez de 8 detail; en móvil (DPR 2), 2 card (~100 kB) en vez de ~760 kB.
 - Verificación: 105/105 unitarios, 70/70 de integración, typecheck, lint y build; pruebasGP a 1440/390 (galería con 8 fotos simuladas, navegación y swipe, Home completa con scroll y vuelta arriba, ficha servida por la API con los nuevos chunks), sin errores JS.
-- **Sigue pendiente (motion, no tocado):** TBT en móvil por el montaje de los pins (Style & Layout ~1,3 s con CPU ×4) y CLS ~3 durante el scroll de la Home. ~~Un objeto que falta en el almacenamiento sigue dando 500~~: resuelto en STORAGE-404.
+- ~~TBT y CLS del motion de la Home~~: ver PERF-2. ~~Un objeto que falta en el almacenamiento sigue dando 500~~: resuelto en STORAGE-404.
+
+### PERF-2 · CLS del scroll de la Home = PASS (05-10-2026, rama `feat/perf-2-motion`, tag `perf-2-pass`)
+
+- **Causa:** `overflow: hidden` en los elementos que fija ScrollTrigger (`.scroll-scene__pin`, `.car-handoff__pin`). Chrome contaba cada paso de `fixed` a su sitio en el pin-spacer como un layout shift de pantalla completa (rect previo vacío → pantalla entera): 3 entradas de ~1,0, CLS 2,93 (390) y 2,82 (1440). Con `overflow: clip` pasa igual; con `overflow: visible` desaparece, pero sale scroll horizontal (el coche del hero mide 146–291 % del ancho).
+- **Cambio (solo CSS):** los pins recortan con `clip-path: inset(0)` (+ `display: flow-root`, que conserva el BFC) y la sección recorta solo el eje X con `overflow-x: clip` (el degradado `::before` del telón de Process sobresale por arriba y no se corta). **No volver a poner `overflow: hidden` en un pin.**
+- **Resultado:** CLS 0 al bajar y al subir a 390 y 1440; 0 px de desborde horizontal con y sin reduced-motion; 93 capturas de la Home (390/1440) y 43 con reduced-motion idénticas píxel a píxel a las de antes; ES↔EN a mitad de pin, vuelta arriba con el logo (velo a 0), interrupción y menú móvil OK, sin errores. Lighthouse móvil (mediana de 3): 79, LCP 4,43 s, TBT 165 ms, CLS 0.
+- **TBT (medido, sin cambio):** al cargar hay un único `ScrollTrigger.refresh()` (43–98 ms con CPU ×4). La tarea larga inicial (370–520 ms) es el primer layout de toda la Home (lo fuerza el `scrollTo` de `SiteLayout`, que se lleva la cuenta pero se haría igual en el primer frame), GSAP montando las escenas y el render de React. Sin ganancia segura sin cambiar cuándo se montan las escenas.
+- Diagnóstico y QA de Opus (el sandbox de Astra no tiene navegador); Astra implementó el CSS.
+- **Fallo previo encontrado (no causado por PERF-2, sin arreglar):** si se cambia de idioma con Process en pantalla, el header (logo, ES/EN, menú) se queda en negro sobre fondo oscuro y no se corrige al seguir con el scroll. Reproducido igual en el build anterior.
 
 ### STORAGE-404 = PASS (05-10-2026, rama `fix/storage-404`, tag `storage-404-pass`)
 
