@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/bin
+**/obj
+src
+tests
+docs
+.git
+.vs
+.claude
+*.mp4
+GP Select_v4_8.png

@@ -1,0 +1,137 @@
+# GP SELECT: automatic HTTPS, the static web, and proxies to the API and to photo storage.
+# The routing mirrors the build's preview rules (frontend/build/seoPlugin.ts).
+{
+	email {$ACME_EMAIL}
+	{$CADDY_EXTRA_GLOBAL}
+}
+
+(security) {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+}
+
+{$DOMAIN} {
+	import security
+	encode zstd gzip
+	root * /srv
+
+	# Hashed build files never change; other assets can be replaced; pages are always revalidated.
+	@hashed path_regexp ^/assets/[^/]+-[A-Za-z0-9_-]{8}\.(js|css|woff2)$
+	@assets {
+		path /assets/*
+		not path_regexp ^/assets/[^/]+-[A-Za-z0-9_-]{8}\.(js|css|woff2)$
+	}
+	@pages not path /assets/* /api/*
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+	header @assets Cache-Control "public, max-age=604800"
+	header @pages Cache-Control "no-cache"
+
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+
+	@servicios path /servicios /servicios/
+	handle @servicios {
+		redir * /importacion{?query} 308
+	}
+
+	@admin path /admin /admin/*
+	handle @admin {
+		rewrite * /admin/index.html
+		file_server
+	}
+
+	# SEO-2: the API fills each vehicle page's metadata (SeoController). If it fails, the plain SPA loads the vehicle itself.
+	@vehicle path_regexp vehicle (?i)^/vehiculos/([^/]+)/?$
+	handle @vehicle {
+		reverse_proxy api:8080 {
+			rewrite /seo/vehiculos/{re.vehicle.1}
+			@unavailable status 5xx
+			handle_response @unavailable {
+				rewrite * /spa.html
+				file_server
+			}
+		}
+	}
+
+	# The live sitemap comes from the inventory; the build's static one covers an API failure.
+	handle /sitemap.xml {
+		reverse_proxy api:8080 {
+			rewrite /seo/sitemap.xml
+			@unavailable status 404 5xx
+			handle_response @unavailable {
+				file_server
+			}
+		}
+	}
+
+	handle {
+		try_files {path} {path}/index.html
+		file_server
+	}
+
+	handle_errors {
+		# The API is down (the proxy could not reach it): vehicle pages still work as the plain SPA.
+		@vehicle_down {
+			path_regexp (?i)^/vehiculos/[^/]+/?$
+			expression {err.status_code} >= 500
+		}
+		handle @vehicle_down {
+			rewrite * /spa.html
+			file_server {
+				status 200
+			}
+		}
+		# Same for the sitemap: the build's static copy.
+		@sitemap_down {
+			path /sitemap.xml
+			expression {err.status_code} >= 500
+		}
+		handle @sitemap_down {
+			file_server {
+				status 200
+			}
+		}
+		@missing expression {err.status_code} == 404
+		handle @missing {
+			rewrite * /404.html
+			file_server
+		}
+	}
+}
+
+# Self-hosted photo storage (SeaweedFS): the admin's browser uploads originals here with URLs signed by the API.
+{$S3_SITE} {
+	import security
+	request_body {
+		max_size 25MB
+	}
+	@preflight method OPTIONS
+	handle @preflight {
+		header Access-Control-Allow-Origin "https://{$DOMAIN}"
+		header Access-Control-Allow-Methods "PUT"
+		header Access-Control-Allow-Headers "Content-Type"
+		header Access-Control-Max-Age "3600"
+		respond 204
+	}
+	handle {
+		header >Access-Control-Allow-Origin "https://{$DOMAIN}"
+		reverse_proxy seaweedfs:8333
+	}
+}
+
+# Internal only (not published): the API reads the page template for vehicle pages from here.
+http://:8080 {
+	root * /srv
+	@template path /spa.html
+	handle @template {
+		file_server
+	}
+	respond 404
+}

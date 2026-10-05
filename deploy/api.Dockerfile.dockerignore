@@ -1,0 +1,12 @@
+**/bin
+**/obj
+**/node_modules
+frontend
+tests
+docs
+deploy
+.git
+.vs
+.claude
+*.mp4
+*.png

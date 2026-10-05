@@ -65,6 +65,10 @@ Formatos aceptados: JPEG, PNG y WebP. El tamaño máximo es de 20 MiB por imagen
 
 La API pública solo expone información de catálogo, precio, slug y URLs de imágenes preparadas.
 
+## Despliegue
+
+Producción con Docker en un servidor (Caddy con HTTPS, API, PostgreSQL, almacenamiento S3 y copias diarias): ver `deploy/README.md`.
+
 ## Configuración
 
 Configura las siguientes variables o sus equivalentes en `appsettings.json`:

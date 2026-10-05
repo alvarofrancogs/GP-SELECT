@@ -1,7 +1,9 @@
 using System.Net;
 using GpSelect.Api;
+using GpSelect.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace GpSelect.IntegrationTests;
@@ -106,5 +108,32 @@ public sealed class ProductionReadinessTests
         });
         var error = Assert.ThrowsAny<Exception>(() => factory.CreateClient());
         Assert.Contains("Admin:", error.GetBaseException().Message);
+    }
+
+    [Fact]
+    public void Production_refuses_to_start_without_a_data_protection_key_path()
+    {
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Production");
+            builder.UseSetting("Security:AllowedOrigin", "https://www.example.test");
+            builder.UseSetting("Admin:Email", "admin@example.test");
+            builder.UseSetting("Admin:PasswordHash", "hash");
+            builder.UseSetting("DataProtection:KeysPath", "");
+        });
+        var error = Assert.ThrowsAny<Exception>(() => factory.CreateClient());
+        Assert.Contains("DataProtection:KeysPath", error.GetBaseException().Message);
+    }
+
+    [Fact]
+    public async Task Upload_urls_are_signed_for_the_public_storage_address()
+    {
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Storage:Endpoint"] = "http://minio:9000", ["Storage:PublicEndpoint"] = "https://s3.example.test",
+            ["Storage:AccessKey"] = "key", ["Storage:SecretKey"] = "secret", ["Storage:Bucket"] = "gpselect",
+        }).Build();
+        var url = new Uri(await new S3ObjectStorage(config).CreateUploadUrlAsync("quarantine/a.jpg", "image/jpeg", CancellationToken.None));
+        Assert.Equal(("https", "s3.example.test", "/gpselect/quarantine/a.jpg"), (url.Scheme, url.Host, url.AbsolutePath));
     }
 }

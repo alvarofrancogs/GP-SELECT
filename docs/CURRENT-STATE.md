@@ -47,7 +47,7 @@ Plan en `docs/superpowers/plans/2026-10-02-backend-hardening.md`. Sin migracione
 
 - **Concurrencia:** `complete` puede crear dos jobs; publicar mientras se borra la portada; superar las 30 fotos con intents simultáneos.
 - **S3:** la URL firmada no limita el tamaño (el worker ya rechaza más de 20 MiB, pero el objeto se queda en el bucket); no hay limpieza de huérfanos, de intents abandonados (bloquean cupo) ni de registros de idempotencia.
-- **Sesiones:** no se revocan al cambiar contraseña o email; claves de Data Protection sin persistencia definida (**decidirlo antes del despliegue**).
+- **Sesiones:** no se revocan al cambiar contraseña o email. ~~Claves de Data Protection sin persistencia~~: resuelto en INFRA-1 (`DataProtection__KeysPath`, obligatoria en Production).
 - **Login:** sin límite agregado entre IP; un hash de contraseña mal formado solo falla al hacer login.
 - **Listados sin paginar:** el catálogo se trunca a 100.
 - **Índices:** faltan `Images(VehicleUnitId)` completo e `Images(OriginalKey)`.
@@ -58,7 +58,7 @@ Plan en `docs/superpowers/plans/2026-10-02-backend-hardening.md`. Sin migracione
 - **Validación:** los 400 de cuerpo inválido incluyen un error espurio `"r"` del model binding (no tocar `SuppressImplicitRequiredAttribute…`, que quitaría los [Required] implícitos).
 - **Admin:** se puede archivar con una subida en curso; la foto queda pendiente y bloquea Guardar hasta Descartar tras recuperar. Deshabilitar archivar mientras hay subida/cambios.
 - **Slugs:** ß, ø, æ, ł, đ se pierden («Straße» → `stra-e`).
-- **Otros:** objeto ausente → 500 en vez de 404; equipamiento con validación cuadrática; aviso ICC de ImageSharp 3.1.11 sin CVE; SSH.NET solo en los tests.
+- **Otros:** ~~objeto ausente → 500~~ (resuelto en STORAGE-404); equipamiento con validación cuadrática; aviso ICC de ImageSharp 3.1.11 sin CVE; SSH.NET solo en los tests.
 
 ### UI Simplification Pass — aprobado expresamente por el usuario
 
@@ -114,7 +114,7 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - **LEGAL / PRIVACY:** páginas hechas (05-10-2026: `/aviso-legal`, `/privacidad`, `/cookies`, enlaces en el footer y primera capa RGPD bajo el formulario). **Faltan los datos del titular** en `frontend/src/config/legal.ts` (titular, NIF/CIF, domicilio, email y plazo de conservación; opcionales: teléfono y datos registrales). Hasta entonces se ven como «Pendiente» y el build avisa. Textos pendientes de revisión por un profesional legal.
 - **EMAIL PROVIDER:** sin adaptador de `IEnquiryNotifier`.
 - **RECIPIENT MAILBOX:** `Enquiries__NotificationEmail` sin definir.
-- **DOMAIN / DEPLOY:** más adelante (`Security__AllowedOrigin`).
+- **DOMAIN / DEPLOY:** infraestructura lista y probada en local (INFRA-1, `deploy/`). Falta contratar el servidor y el dominio y elegir el almacenamiento de fotos: SeaweedFS propio o un S3 externo como R2 o B2.
 - **SEO:** SEO-1, GEO-1 y SEO-2 PASS. Pendiente: GEO-2 (FAQ, espera datos del usuario), Google Business Profile (fuera del código) y dominio para activar `VITE_SITE_URL` y `Seo__SiteUrl`.
 - **FINAL USER PHOTOGRAPHY / ASSETS:** fotos reales del usuario para sustituir los slots provisionales.
 
@@ -158,6 +158,36 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - **Ficha:** `VehiclePublicDto` añade `cardImages` (versión de 800 px, mismo orden que `images`; aditivo). Miniaturas con la card, foto principal con `srcset` card/detail y `sizes`. Las diapositivas ocultas están apiladas en pantalla y el `lazy` nativo las cargaba todas a 2400 px: ahora solo se carga la visible y sus vecinas, y cada una se queda cargada. Con 8 fotos en escritorio: 3 detail + 8 card en vez de 8 detail; en móvil (DPR 2), 2 card (~100 kB) en vez de ~760 kB.
 - Verificación: 105/105 unitarios, 70/70 de integración, typecheck, lint y build; pruebasGP a 1440/390 (galería con 8 fotos simuladas, navegación y swipe, Home completa con scroll y vuelta arriba, ficha servida por la API con los nuevos chunks), sin errores JS.
 - ~~TBT y CLS del motion de la Home~~: ver PERF-2. ~~Un objeto que falta en el almacenamiento sigue dando 500~~: resuelto en STORAGE-404.
+
+### INFRA-1 · despliegue en producción = PASS (05-10-2026, rama `feat/infra-1`, tag `infra-1-pass`)
+
+- `deploy/`: `docker-compose.yml` con estos servicios:
+  - Caddy: HTTPS automático, la web compilada, el proxy a la API y las cabeceras de seguridad. Los ficheros con hash llevan caché `immutable`; el resto de assets, 7 días; las páginas, `no-cache`.
+  - API en Production, con IP fija del proxy para `Security__TrustedProxies` y 1 GB de memoria.
+  - PostgreSQL 16.
+  - Copia diaria con `pg_dump`, que conserva 14 días.
+  - Almacenamiento S3 propio opcional: SeaweedFS 4.08, perfil `self-hosted-storage`, con bucket privado y una clave limitada a él.
+  - Guía en `deploy/README.md`.
+- Las reglas de Caddy son las del preview y nginx:
+  - Ficheros y después `/<ruta>/index.html`.
+  - `/admin/*` sirve el HTML del admin.
+  - `/vehiculos/<slug>` va a la API, con fallback a `spa.html` si la API falla o está caída.
+  - `/sitemap.xml` en vivo, con el estático como fallback.
+  - `/servicios` redirige con 308 a `/importacion`, conservando la query.
+  - El resto responde con un 404 real.
+- **MinIO ya no publica imágenes de Docker:** por eso el almacenamiento propio es SeaweedFS. También vale cualquier S3 externo configurado solo desde `.env`.
+- **Código:**
+  - `DataProtection__KeysPath` (obligatoria en Production) guarda en un volumen las claves de la cookie de sesión.
+  - `Storage__PublicEndpoint` hace que las URLs de subida se firmen para la dirección pública del almacenamiento, mientras la API lo usa por la red interna.
+  - 2 tests nuevos.
+- **Verificación local en modo producción** (`gpselect.127.0.0.1.nip.io`, certificados locales de Caddy):
+  - Login del admin, creación del vehículo y subida de la foto con URL firmada a SeaweedFS a través de Caddy, con CORS real desde el navegador. El worker la procesa hasta `Ready`. Es **la primera vez que se prueba el camino S3 de punta a punta**.
+  - Publicación; imágenes card y detail servidas; la ficha generada por el servidor sale con título, OG y `Car` + `Offer`; el sitemap incluye el vehículo; la consulta responde 202.
+  - Sesión válida tras reiniciar la API.
+  - Con la API caída, la ficha se sirve como SPA y el sitemap estático responde 200.
+  - Volcado y restauración en una base nueva.
+  - Cabeceras y cachés comprobadas.
+  - Build 0 avisos, 105/105 unitarios y 75/75 de integración.
 
 ### PERF-2 · CLS del scroll de la Home = PASS (05-10-2026, rama `feat/perf-2-motion`, tag `perf-2-pass`)
 

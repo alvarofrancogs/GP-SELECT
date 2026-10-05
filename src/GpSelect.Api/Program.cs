@@ -1,4 +1,4 @@
-using System.Globalization; using System.Threading.RateLimiting; using GpSelect.Api; using GpSelect.Infrastructure; using Microsoft.AspNetCore.Authentication.Cookies; using Microsoft.AspNetCore.HttpOverrides; using Microsoft.AspNetCore.Mvc; using Microsoft.EntityFrameworkCore;
+using System.Globalization; using System.Threading.RateLimiting; using GpSelect.Api; using GpSelect.Infrastructure; using Microsoft.AspNetCore.Authentication.Cookies; using Microsoft.AspNetCore.DataProtection; using Microsoft.AspNetCore.HttpOverrides; using Microsoft.AspNetCore.Mvc; using Microsoft.EntityFrameworkCore;
 var builder=WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(o=>o.AddServerHeader=false);
 var production=builder.Environment.IsProduction();
@@ -6,6 +6,11 @@ var allowedOrigin=builder.Configuration["Security:AllowedOrigin"];
 if(SecurityConfig.AllowedOriginError(allowedOrigin,production) is { } originError) throw new InvalidOperationException(originError);
 if(!string.IsNullOrWhiteSpace(allowedOrigin)) builder.Services.AddCors(options=>options.AddDefaultPolicy(policy=>policy.WithOrigins(allowedOrigin).WithMethods("GET","POST","PUT","PATCH","DELETE").WithHeaders("Accept","Content-Type","Idempotency-Key","X-Correlation-ID").AllowCredentials()));
 if(production&&(string.IsNullOrWhiteSpace(builder.Configuration["Admin:Email"])||string.IsNullOrWhiteSpace(builder.Configuration["Admin:PasswordHash"]))) throw new InvalidOperationException("Admin:Email and Admin:PasswordHash are required in Production.");
+// The admin session cookie is encrypted with the Data Protection key ring: kept on a volume, it survives restarts and deploys.
+var keysPath=builder.Configuration["DataProtection:KeysPath"];
+if(production&&string.IsNullOrWhiteSpace(keysPath)) throw new InvalidOperationException("DataProtection:KeysPath is required in Production; without it every restart signs the admin out.");
+var dataProtection=builder.Services.AddDataProtection().SetApplicationName("GpSelect");
+if(!string.IsNullOrWhiteSpace(keysPath)) dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
 // Behind a reverse proxy the socket address is the proxy's: trust X-Forwarded-For only from the proxies listed here.
 if(!SecurityConfig.TryParseTrustedProxies(builder.Configuration["Security:TrustedProxies"],out var trustedProxies)) throw new InvalidOperationException("Security:TrustedProxies must be a comma-separated list of IP addresses.");
 if(trustedProxies.Count>0) builder.Services.Configure<ForwardedHeadersOptions>(o=>{o.ForwardedHeaders=ForwardedHeaders.XForwardedFor|ForwardedHeaders.XForwardedProto;o.KnownNetworks.Clear();o.KnownProxies.Clear();foreach(var proxy in trustedProxies)o.KnownProxies.Add(proxy);});

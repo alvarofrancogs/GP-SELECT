@@ -1,5 +1,7 @@
 # GP SELECT — backend: puesta en marcha y contrato
 
+Despliegue en producción (Docker, HTTPS, almacenamiento y copias): `deploy/README.md`.
+
 Backend .NET 8 (`src/`), EF Core y PostgreSQL. No hay `appsettings*.json` en `GpSelect.Api`: toda la configuración entra por variables de entorno (o user-secrets). Verificado el 30-09-2026 con Postgres 16 en Docker, la API y el proxy de Vite.
 
 ## Configuración
@@ -18,6 +20,8 @@ Backend .NET 8 (`src/`), EF Core y PostgreSQL. No hay `appsettings*.json` en `Gp
 | `Storage__Provider` | vacío → `File` automático en Development | `S3` (obligatorio) |
 | `Storage__Root` | opcional (por defecto `uploads/` junto al binario) | — |
 | `Storage__Endpoint`, `__AccessKey`, `__SecretKey`, `__Bucket` | — | obligatorias con S3 |
+| `Storage__PublicEndpoint` | — | opcional: dirección pública del almacenamiento cuando la API lo alcanza por una interna (`http://seaweedfs:8333`); las URLs de subida se firman para ella |
+| `DataProtection__KeysPath` | vacío (claves por defecto) | **obligatoria**: carpeta persistente (volumen) de las claves que cifran la cookie de sesión; sin ella cada reinicio cerraría la sesión del admin |
 
 ### `Security__AllowedOrigin` (importante)
 

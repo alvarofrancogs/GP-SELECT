@@ -11,3 +11,5 @@ obj/
 .env.*
 *.user
 *.mp4
+!.env.example
+deploy/backups/
