@@ -32,10 +32,10 @@ function homeContent(): string {
     + section(es.process.title, `<ol>${es.process.steps.map((step) =>
       `<li>${heading(3, step.word)}${paragraph(step.title)}${paragraph(step.description)}</li>`).join('')}</ol>`)
     + section(`${es.carHandoff.states[0].left} ${es.carHandoff.states[0].right}`,
-      paragraph(es.carHandoff.states[0].description)
+      paragraph(es.carHandoff.states[0].description) + paragraph(es.carHandoff.states[0].fact)
       + es.carHandoff.states.slice(1).map((state, index) =>
         (index === 1 ? paragraph(es.carHandoff.interlude) : '')
-        + heading(3, `${state.left} ${state.right}`) + paragraph(state.description)).join(''))
+        + heading(3, `${state.left} ${state.right}`) + paragraph(state.description) + paragraph(state.fact)).join(''))
     + section(`${services.title} ${services.titleFine}`, paragraph(services.description)
       + rows(services.items.map((item) => ({ title: item.title, body: item.description }))))
     // Inventory is live: include its fixed heading, never a guessed vehicle or availability state.

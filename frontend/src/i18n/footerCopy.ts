@@ -8,12 +8,12 @@ interface FooterCopy {
 
 export const footerCopy: Record<Locale, FooterCopy> = {
   es: {
-    description: 'Vehículos excepcionales. Una perspectiva europea.',
+    description: 'Selección e importación de coches europeos.',
     location: 'Murcia · Clientes en toda España',
     navigation: 'Explorar GP SELECT',
   },
   en: {
-    description: 'Exceptional vehicles. A European perspective.',
+    description: 'European car sourcing and import.',
     location: 'Murcia · Clients throughout Spain',
     navigation: 'Explore GP SELECT',
   },

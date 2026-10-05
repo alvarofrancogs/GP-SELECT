@@ -22,9 +22,9 @@
 .hero-title > span:last-child { font-size: var(--hero-size-right); }
 .scene-description { position: absolute; z-index: var(--z-content); left: calc(var(--page-gutter) + var(--space-2)); max-width: 25ch; font-size: var(--text-body); font-weight: var(--weight-body); letter-spacing: var(--tracking-body); line-height: var(--leading-body); }
 .hero-description { top: 52%; max-width: none; white-space: pre-line; font-family: var(--font-family); font-stretch: var(--width-extended); font-size: var(--hero-copy-size); font-weight: var(--weight-extended-copy); line-height: var(--hero-copy-leading); letter-spacing: var(--hero-copy-tracking); }
-/* The asset is the original 2023 px crop plus a long motion smear on its tail (fading out at the far end), so the
-   car still fills the frame after it has driven left. The first 106% is exactly the approved framing. */
-.hero-media { position: absolute; z-index: var(--z-media); left: -2%; width: 146.9%; top: 47%; aspect-ratio: 2803 / 777; transform-origin: 50.5% 70%; }
+/* The asset is the whole car, rear included, cropped to its bounding box, so the box top is the roofline: it
+   sits at 54%, the height of the approved mockup. The left edge stays off screen (it is the cropped nose). */
+.hero-media { position: absolute; z-index: var(--z-media); left: -2%; width: 160%; top: 54%; aspect-ratio: 4236 / 1069; transform-origin: 50.5% 70%; }
 .hero-media .asset-slot img { object-fit: cover; object-position: left bottom; }
 .hero-media .asset-slot__caption { left: auto; right: 22%; bottom: 34%; color: #d5d8d8; }
 .hero-scene .asset-slot--background .asset-slot__caption { display: none; }
@@ -52,7 +52,7 @@
 @media (min-width: 768px) and (max-width: 1199px) {
   .hero-title { top: 33%; }
   .hero-description { top: 47%; max-width: calc(100% - var(--page-gutter) * 2); }
-  .hero-media { left: -15%; width: 214.8%; top: 59%; }
+  .hero-media { left: -15%; width: 234%; top: 64%; }
   .process-detail { max-width: 18ch; }
 }
 @media (max-width: 767px) {
@@ -60,15 +60,16 @@
   .hero-title > span:last-child { align-self: flex-end; }
   .hero-description { top: 49%; max-width: calc(100% - var(--page-gutter) * 2); }
   .scene-description { left: var(--page-gutter); }
-  .hero-media { left: -55%; width: 291%; top: 65%; }
+  .hero-media { left: -55%; width: 317%; top: 69%; }
   .hero-media .asset-slot__caption { right: 37%; bottom: 30%; font-size: .5rem; }
   .asset-slot--background .asset-slot__caption { top: calc(var(--header-height) + var(--space-4)); }
   .process-intro { top: 19%; flex-direction: column; gap: var(--space-4); }
   .process-intro h2 { font-size: .8333rem; }
-  .process-words { top: 35%; }
-  .process-words li { min-height: 10vh; gap: var(--space-2); }
+  .process-words { top: 31%; }
+  /* The detail sits under its word in small type, so each step reads as more than a single word. */
+  .process-words li { flex-direction: column; align-items: flex-start; justify-content: center; min-height: 13vh; gap: var(--space-1); }
   .process-word { font-size: clamp(1.667rem, 7.333vw, 3.333rem); }
-  .process-detail { display: none; }
+  .process-detail { gap: 2px; width: auto; max-width: 34ch; margin-left: 0; font-size: .75rem; }
 }
 @media (max-height: 599px) {
   .scroll-scene[data-motion='static'] .scroll-scene__pin { min-height: 640px; }

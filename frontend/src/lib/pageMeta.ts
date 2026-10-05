@@ -16,23 +16,23 @@ export interface PageMeta {
 export const staticPageMeta: Record<string, PageMeta> = {
   '/': {
     title: 'GP SELECT · Selección e importación de coches en Murcia',
-    description: 'Selección e importación de vehículos premium europeos desde Murcia para clientes de toda España. Conoce GP SELECT, nuestro catálogo y cómo trabajamos.',
+    description: 'Buscamos en Europa el coche que quieres, revisamos cada opción y coordinamos la compra y la importación. Desde Murcia, para clientes de toda España.',
   },
   '/vehiculos': {
-    title: 'Vehículos premium europeos · Catálogo de GP SELECT',
-    description: 'Explora el catálogo de vehículos de GP SELECT y consulta las fotos y los datos de cada unidad. Desde Murcia, trabajamos con clientes de toda España.',
+    title: 'Coches europeos en venta · Catálogo de GP SELECT',
+    description: 'Catálogo de coches europeos de GP SELECT, con fotos y datos de cada unidad. Si no está el que buscas, lo buscamos en Europa. Murcia y toda España.',
   },
   '/importacion': {
-    title: 'Importación de vehículos europeos en Murcia · GP SELECT',
-    description: 'Cuéntanos qué coche buscas. En GP SELECT buscamos y comparamos opciones en Europa y analizamos la información disponible, desde Murcia para toda España.',
+    title: 'Importar un coche de Alemania o de Europa · GP SELECT',
+    description: 'Cómo te ayudamos a importar un coche europeo: definimos la búsqueda, comparamos unidades, revisamos su documentación y coordinamos la compra.',
   },
   '/nosotros': {
-    title: 'Sobre GP SELECT · Selección de vehículos desde Murcia',
-    description: 'Conoce GP SELECT y nuestra forma de seleccionar vehículos europeos: criterio, información clara y trato directo, desde Murcia para clientes de toda España.',
+    title: 'Sobre GP SELECT · Selección de coches europeos en Murcia',
+    description: 'Cómo elegimos los coches que te proponemos: primero escuchamos, después comparamos y te contamos lo que sabemos de cada uno y lo que no. Desde Murcia.',
   },
   '/contacto': {
-    title: 'Contacto GP SELECT · Tu próximo vehículo desde Murcia',
-    description: '¿Te interesa un vehículo o buscas una opción en Europa? Cuéntanos qué necesitas. GP SELECT tiene base en Murcia y trabaja con clientes de toda España.',
+    title: 'Contacto · Cuéntanos qué coche buscas · GP SELECT',
+    description: 'Pregúntanos por un coche del catálogo o cuéntanos cuál quieres encontrar en Europa. GP SELECT trabaja desde Murcia con clientes de toda España.',
   },
 };
 
@@ -84,6 +84,7 @@ export function assetUrl(path: string, siteUrl?: string): string {
 
 export function getStaticPageMeta(path: string, siteUrl?: string): PageMeta {
   const meta = { ...staticPageMeta[path], path };
+  if (path === '/importacion') return { ...meta, jsonLd: importServiceJsonLd(siteUrl) };
   if (path !== '/') return meta;
   return {
     ...meta,
@@ -110,6 +111,23 @@ export function getStaticPageMeta(path: string, siteUrl?: string): PageMeta {
         ...(siteUrl ? { url: `${siteUrl}/` } : {}),
       }],
     },
+  };
+}
+
+// Describes only what the Import page itself states; no prices, durations or guarantees.
+function importServiceJsonLd(siteUrl?: string): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org', '@type': 'Service',
+    name: 'Búsqueda e importación de coches europeos',
+    serviceType: 'Importación de vehículos',
+    description: staticPageMeta['/importacion'].description,
+    ...(siteUrl ? { url: `${siteUrl}/importacion` } : {}),
+    provider: {
+      '@type': 'AutoDealer', name: 'GP SELECT',
+      ...(siteUrl ? { url: `${siteUrl}/` } : {}),
+      address: { '@type': 'PostalAddress', addressLocality: 'Murcia', addressRegion: 'Región de Murcia', addressCountry: 'ES' },
+    },
+    areaServed: { '@type': 'Country', name: 'España' },
   };
 }
 

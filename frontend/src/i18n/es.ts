@@ -3,7 +3,7 @@ import type { Dictionary } from './types';
 export const es: Dictionary = {
   vehicles: {
     "title": "Vehículos",
-    "lede": "Una selección con carácter. Otra forma de encontrar tu próximo coche.",
+    "lede": "El catálogo de GP SELECT: coches europeos con las fotografías y los datos de cada unidad.",
     "singular": "vehículo",
     "plural": "vehículos",
     "filters": "Filtros",
@@ -31,19 +31,19 @@ export const es: Dictionary = {
     "sold": "Vendido",
     "showMore": "Ver más",
     "empty": "Ningún vehículo coincide con tu búsqueda.",
-    "search": "Lo buscamos por ti",
-    "closing": "¿No está aquí? Lo buscamos en Europa.",
-    "find": "Encontrar mi coche",
+    "search": "Pedir una búsqueda",
+    "closing": "Si el coche que quieres no está aquí, lo buscamos en Europa.",
+    "find": "Pedir una búsqueda",
     "loading": "Cargando vehículos…",
     "error": "No hemos podido cargar los vehículos.",
     "detailError": "No hemos podido cargar este vehículo.",
     "retry": "Volver a intentar",
     "back": "Vehículos",
     "notFound": "Este vehículo no está en el catálogo",
-    "emptyCatalogue": "Estamos preparando la próxima selección.",
+    "emptyCatalogue": "Ahora mismo no hay vehículos en el catálogo.",
     "soldNotice": "Este vehículo ya no está disponible.",
     "soldAlternative": "Buscar una alternativa",
-    "request": "Solicitar información",
+    "request": "Consultar este vehículo",
     "whatsapp": "Hablar por WhatsApp",
     "registration": "Primera matriculación",
     "power": "Potencia",
@@ -55,9 +55,9 @@ export const es: Dictionary = {
     "exteriorColour": "Color exterior",
     "interiorColour": "Color interior",
     "history": "Historial",
-    "importTitle": "Tu próxima historia puede empezar en Europa.",
-    "importBody": "Buscamos en el mercado europeo la configuración que quieres y te acompañamos durante la compra y la importación.",
-    "importLink": "Conocer el servicio de importación",
+    "importTitle": "¿Buscas otra configuración?",
+    "importBody": "Buscamos en el mercado europeo una unidad con el motor, el equipamiento y el presupuesto que tienes en mente, y te acompañamos en la compra y la importación.",
+    "importLink": "Cómo funciona la importación",
     "gallery": "Galería del vehículo",
     "previous": "Imagen anterior",
     "next": "Imagen siguiente",
@@ -90,14 +90,14 @@ export const es: Dictionary = {
   interiors: {
     about: {
       title: 'Nosotros',
-      lede: 'GP SELECT selecciona vehículos premium europeos para cada cliente. Trabajamos a partir de una conversación: qué quieres conducir, cómo lo vas a usar y qué es importante para ti.',
+      lede: 'GP SELECT busca y selecciona vehículos premium europeos para cada cliente, desde Murcia y para toda España. Trabajamos a partir de una conversación: qué quieres conducir, cómo lo vas a usar y qué es importante para ti.',
       why: {
         title: 'Comprar bien un coche no debería ser una búsqueda a solas.',
-        body: 'Encontrar un vehículo premium en Europa suele empezar con cientos de anuncios y poca información contrastada. GP SELECT existe para cambiar ese punto de partida: alguien que entiende lo que buscas, compara por ti y te explica con claridad lo que tienes delante antes de que decidas. Nuestro trabajo es ayudarte a elegir mejor, no más rápido.',
+        body: 'Encontrar un vehículo premium en Europa suele empezar con cientos de anuncios y poca información contrastada. GP SELECT existe para cambiar ese punto de partida: alguien que entiende lo que buscas, compara por ti y te explica con claridad lo que tienes delante antes de que decidas.',
       },
       audience: {
         title: 'Con quién trabajamos',
-        intro: 'Personas que valoran su tiempo y prefieren decidir con información, no con prisa. No hace falta saber de coches; basta con saber qué esperas de uno.',
+        intro: 'No hace falta saber de coches; basta con saber qué esperas de uno.',
         rows: [
           { title: 'Si ya sabes qué coche quieres', body: 'Te ayudamos a encontrar la unidad adecuada y a valorar si de verdad lo es.' },
           { title: 'Si todavía no lo tienes claro', body: 'Lo definimos contigo a partir de cómo conduces, de tu presupuesto y de lo que te importa.' },
@@ -105,26 +105,26 @@ export const es: Dictionary = {
       },
       approach: {
         title: 'Preferimos proponerte pocos coches, bien elegidos, que muchos sin criterio.',
-        body: 'Nuestro objetivo no es que compres cualquier coche, sino el adecuado. Si una unidad no convence, te lo diremos, aunque eso signifique seguir buscando.',
+        body: 'Si una unidad no nos convence, te lo decimos, aunque eso signifique seguir buscando.',
         rows: [
-          { title: 'Escuchamos antes de proponer.', body: 'La búsqueda empieza por ti, no por lo que haya disponible.' },
+          { title: 'Escuchamos antes de proponer.', body: 'Partimos de lo que necesitas y después miramos qué hay en el mercado.' },
           { title: 'Decimos lo que sabemos, y lo que no.', body: 'Si falta información sobre un coche, lo sabrás antes de decidir.' },
           { title: 'Hablamos claro.', body: 'Sin tecnicismos innecesarios: si algo importa, te explicamos por qué.' },
-          { title: 'La decisión es tuya.', body: 'Te damos criterio y contexto, sin prisas ni presión.' },
+          { title: 'La decisión es tuya.', body: 'Te explicamos cada opción y tú decides si sigues adelante.' },
         ],
       },
       closing: 'Cuéntanos qué buscas.',
-      closingNote: 'Son unas pocas preguntas sobre lo que buscas y no te comprometen a nada.',
-      cta: 'Empezar cuestionario',
+      closingNote: 'Es un formulario breve y no te compromete a nada.',
+      cta: 'Pedir una búsqueda',
       secondary: 'Cómo funciona la importación',
       images: { opening: 'Vehículo en contexto · fotografía pendiente', detail: 'Detalle · fotografía pendiente' },
     },
     import: {
       "title": "Importación",
-      "lede": "Te ayudamos a encontrar en el mercado europeo el coche que buscas: definimos contigo qué necesitas, comparamos opciones, analizamos la información disponible y te acompañamos durante el proceso de compra e importación.",
+      "lede": "Si el coche que quieres está en Alemania o en otro país europeo, te ayudamos a encontrarlo y a comprarlo: definimos contigo la búsqueda, comparamos unidades, analizamos la información de cada una y coordinamos la compra y la importación.",
       "define": {
         "title": "Primero, qué buscas.",
-        "body": "Una buena búsqueda empieza por definirla bien. Antes de mirar anuncios, concretamos contigo:",
+        "body": "Antes de mirar anuncios, concretamos contigo:",
         "items": [
           "Modelo y motorización",
           "Configuración y equipamiento imprescindible",
@@ -132,18 +132,18 @@ export const es: Dictionary = {
           "Kilometraje y antigüedad aceptables",
           "Uso previsto y prioridades"
         ],
-        "detail": "Con eso, la búsqueda deja de ser una lista de anuncios y pasa a ser una comparación con criterio."
+        "detail": "Con esa base descartamos desde el principio lo que no encaja."
       },
       "search": {
         "title": "Buscar y descartar.",
-        "body": "Buscamos en el mercado europeo unidades que respondan a esa definición y descartamos las que no encajan: una especificación distinta, un precio que no se sostiene frente a opciones comparables o información insuficiente para valorarla. Lo que llega a ti es una selección corta, no un listado."
+        "body": "Buscamos en el mercado europeo unidades que respondan a esa definición y descartamos las que no encajan: una especificación distinta, un precio que no se sostiene frente a opciones comparables o información insuficiente para valorarla. Te llega una selección corta."
       },
       "analysis": {
         "title": "Leer cada opción.",
         "body": "Antes de avanzar con una unidad revisamos la información disponible: especificación, fotografías, el historial y la documentación que aporte el vendedor, la procedencia y el precio frente al mercado. Te explicamos lo que sabemos, lo que no y qué convendría confirmar antes de decidir."
       },
       "support": {
-        "title": "Contigo hasta el cierre.",
+        "title": "Contigo en la compra y la importación.",
         "body": "Cuando eliges una unidad, coordinamos contigo los siguientes pasos de la compra y la importación: qué se necesita en cada momento, con quién hay que hablar y qué queda pendiente. Cada operación es distinta, así que los detalles se concretan caso por caso, antes de que te comprometas.",
         "detail": "Nuestro papel es que tomes cada decisión con la información delante."
       },
@@ -154,13 +154,13 @@ export const es: Dictionary = {
       },
       "closing": "Empieza por contarnos qué buscas.",
       "closingBody": "No necesitas haber elegido un modelo. Con tus preferencias y tu presupuesto, empezamos a definir la búsqueda.",
-      "cta": "Empezar cuestionario",
+      "cta": "Pedir una búsqueda",
       "secondary": "Tengo un coche concreto en mente"
     },
     contact: {
-      title: 'Contacto', lede: 'Hablemos sobre tu próximo vehículo.',
+      title: 'Contacto', lede: 'Pregúntanos por un coche del catálogo o cuéntanos cuál quieres encontrar en Europa.',
       pathsLabel: '¿Cómo empezamos?', vehiclePath: 'Sé qué coche quiero', searchPath: 'Quiero que GP SELECT me ayude a encontrarlo',
-      vehicleIntro: 'Dinos qué vehículo te interesa y qué te gustaría saber. Empezamos por ahí.',
+      vehicleIntro: 'Dinos qué vehículo te interesa y qué te gustaría saber. Si tienes claro el modelo pero no una unidad concreta, elige la otra opción.',
       searchIntro: 'Cuéntanos qué buscas: cómo conduces, qué modelos te gustan y qué presupuesto tienes en mente. No necesitas haber elegido un vehículo.',
       formTitle: 'Tu consulta', fields: { name: 'Nombre', phone: 'Teléfono', email: 'Email', vehicle: 'Vehículo de interés', message: 'Mensaje' },
       optional: 'opcional', requiredHint: 'Todos los campos son obligatorios salvo los indicados como opcionales.',
@@ -183,33 +183,36 @@ export const es: Dictionary = {
     services: 'Servicios', about: 'Nosotros', contact: 'Contacto', admin: 'Administración',
   },
   hero: {
-    left: 'Selección', right: 'Exclusiva',
-    description: 'Deportivos europeos seleccionados\npor su diseño atemporal\ny una búsqueda a tu medida.',
+    left: 'Selección', right: 'Europea',
+    description: 'Buscamos en Europa el coche\nque quieres y te acompañamos\nen su compra e importación.',
   },
   carHandoff: {
     states: [
-      { left: 'Ingeniería', right: 'Alemana', description: 'Precisión alemana.\nCarácter inconfundible.' },
-      { left: 'Potencia', right: 'Control', description: 'Toda la potencia,\nsiempre bajo control.' },
-      { left: 'Visión', right: 'Global', description: 'Vehículos premium,\nseleccionados en toda Europa.' },
+      { left: 'Mercado', right: 'Alemán', description: 'El mercado de ocasión alemán\ntriplica al español.',
+        fact: 'En 2024 cambiaron de dueño 6,48 millones de turismos usados en Alemania y 2,11 millones en España. Fuentes: KBA; Ganvam y Faconauto.' },
+      { left: 'Potencia', right: 'Control', description: 'Revisamos motorización, caja\ny equipamiento de cada unidad.',
+        fact: 'Un mismo modelo cambia mucho según el país y el año: motores, cajas de cambio y paquetes de equipamiento distintos.' },
+      { left: 'Toda', right: 'Europa', description: 'Comparamos unidades de distintos\npaíses con el mismo criterio.',
+        fact: 'Entre países de la UE no hay aranceles. Al matricularlo en España se paga el impuesto de matriculación, que depende de las emisiones de CO₂. Fuente: Agencia Tributaria.' },
     ],
     carA: 'BMW M4 · vista cenital',
     carCutaway: 'BMW M4 · vista técnica de la mecánica',
-    interlude: 'Ingeniería,\npor dentro y por fuera.',
+    interlude: 'Lo que no sale\nen el anuncio.',
   },
   process: {
-    title: 'Cada detalle. Cada decisión.',
+    title: 'Cómo trabajamos cada búsqueda',
     steps: [
-      { word: 'Buscamos', title: 'El punto de partida', description: 'Un vehículo que encaje contigo.' },
-      { word: 'Analizamos', title: 'La atención al detalle', description: 'Cada detalle cuenta antes de elegir.' },
-      { word: 'Seleccionamos', title: 'Nuestro criterio', description: 'Sólo lo que cumple nuestras expectativas.' },
-      { word: 'Acompañamos', title: 'El siguiente capítulo', description: 'Tu próximo coche, con confianza.' },
+      { word: 'Buscamos', title: 'En toda Europa', description: 'Unidades que encajan con tu uso y tu presupuesto.' },
+      { word: 'Analizamos', title: 'Antes de proponer', description: 'Especificación, historial, documentación y precio.' },
+      { word: 'Seleccionamos', title: 'Pocas unidades', description: 'Solo te proponemos las que pasan ese filtro.' },
+      { word: 'Acompañamos', title: 'Compra e importación', description: 'Coordinamos contigo cada paso y lo que queda pendiente.' },
     ],
   },
   common: {
     scroll: 'Desliza para descubrir', temporaryAsset: 'Recurso provisional',
     backHome: 'Volver al inicio', prototype: 'Vista previa · Fase 3',
     menu: 'Abrir menú', close: 'Cerrar menú', skipContent: 'Saltar al contenido',
-    missingAsset: 'Imagen definitiva pendiente', heroAsset: 'Vehículo · vista lateral',
+    missingAsset: 'Imagen definitiva pendiente', heroAsset: 'Porsche · vista lateral',
     backgroundAsset: 'Fondo fotográfico pendiente', catalogue: 'Ver catálogo', loading: 'Cargando',
   },
   notFound: {

@@ -3,7 +3,7 @@ import type { Dictionary } from './types';
 export const en: Dictionary = {
   vehicles: {
     "title": "Vehicles",
-    "lede": "A selection with character. A different way to find your next car.",
+    "lede": "The GP SELECT catalogue: European cars, with photographs and details for each one.",
     "singular": "vehicle",
     "plural": "vehicles",
     "filters": "Filters",
@@ -31,19 +31,19 @@ export const en: Dictionary = {
     "sold": "Sold",
     "showMore": "Show more",
     "empty": "No vehicles match your search.",
-    "search": "Let us look for it",
-    "closing": "Not here? We will look for it in Europe.",
-    "find": "Find my car",
+    "search": "Request a search",
+    "closing": "If the car you want isn't here, we'll look for it in Europe.",
+    "find": "Request a search",
     "loading": "Loading vehicles…",
     "error": "We could not load the vehicles.",
     "detailError": "We could not load this vehicle.",
     "retry": "Try again",
     "back": "Vehicles",
     "notFound": "This vehicle is not in the catalogue",
-    "emptyCatalogue": "We are preparing the next selection.",
+    "emptyCatalogue": "There are no cars in the catalogue right now.",
     "soldNotice": "This vehicle is no longer available.",
     "soldAlternative": "Find an alternative",
-    "request": "Request information",
+    "request": "Enquire about this car",
     "whatsapp": "Talk on WhatsApp",
     "registration": "First registration",
     "power": "Power",
@@ -55,9 +55,9 @@ export const en: Dictionary = {
     "exteriorColour": "Exterior colour",
     "interiorColour": "Interior colour",
     "history": "History",
-    "importTitle": "Your next story could begin in Europe.",
-    "importBody": "We search the European market for the configuration you want and support you through the purchase and import.",
-    "importLink": "Explore our import service",
+    "importTitle": "Looking for a different spec?",
+    "importBody": "We search the European market for a car with the engine, equipment and budget you have in mind, and guide you through buying and importing it.",
+    "importLink": "How import works",
     "gallery": "Vehicle gallery",
     "previous": "Previous image",
     "next": "Next image",
@@ -90,41 +90,41 @@ export const en: Dictionary = {
   interiors: {
     about: {
       title: 'About us',
-      lede: 'GP SELECT selects premium European vehicles for each client. We work from a conversation: what you want to drive, how you will use it and what matters to you.',
+      lede: 'GP SELECT sources premium European cars for each client, from Murcia, for buyers across Spain. We work from a conversation: what you want to drive, how you will use it and what matters to you.',
       why: {
         title: 'Buying the right car shouldn’t be a search on your own.',
-        body: 'Finding a premium car in Europe usually starts with hundreds of listings and little reliable information. GP SELECT exists to change that starting point: someone who understands what you are looking for, compares options for you and clearly explains what is in front of you before you decide. Our job is to help you choose better, not faster.',
+        body: 'Finding a premium car in Europe usually starts with hundreds of listings and little reliable information. GP SELECT exists to change that starting point: someone who understands what you are looking for, compares options for you and clearly explains what is in front of you before you decide.',
       },
       audience: {
         title: 'Who we work with',
-        intro: 'People who value their time and would rather decide with information than in a hurry. You don’t need to know about cars, just what you expect from one.',
+        intro: 'You don’t need to know about cars, just what you expect from one.',
         rows: [
-          { title: 'If you already know which car you want', body: 'We help you find the right example and judge whether it really is the right one.' },
+          { title: 'If you already know which car you want', body: 'We help you find the right example and judge whether it is the right one.' },
           { title: 'If you are not sure yet', body: 'We define it with you, based on how you drive, your budget and what matters to you.' },
         ],
       },
       approach: {
-        title: 'We would rather suggest a few well-chosen cars than many without judgement.',
-        body: 'Our aim is not for you to buy any car, but the right one. If a car doesn’t convince us, we will tell you, even if that means searching further.',
+        title: 'We would rather show you a few well-chosen cars than a long list.',
+        body: 'If a car doesn’t convince us, we tell you, even if that means searching further.',
         rows: [
-          { title: 'We listen before we suggest.', body: 'The search starts with you, not with whatever happens to be available.' },
+          { title: 'We listen before we suggest.', body: 'We start from what you need, then look at what the market has.' },
           { title: 'We say what we know, and what we don’t.', body: 'If information about a car is missing, you will know before you decide.' },
           { title: 'We speak plainly.', body: 'No needless jargon: if something matters, we explain why.' },
-          { title: 'The decision is yours.', body: 'We give you judgement and context, without rush or pressure.' },
+          { title: 'The decision is yours.', body: 'We explain each option and you decide whether to go ahead.' },
         ],
       },
       closing: 'Tell us what you’re looking for.',
-      closingNote: 'It’s a few questions about what you’re looking for, and it commits you to nothing.',
-      cta: 'Start questionnaire',
+      closingNote: 'It’s a short form and it commits you to nothing.',
+      cta: 'Request a search',
       secondary: 'How import works',
       images: { opening: 'Vehicle in context · photography pending', detail: 'Detail · photography pending' },
     },
     import: {
       "title": "Import",
-      "lede": "We help you find the car you are looking for in the European market: we define what you need with you, compare options, review the information available and support you through the purchase and import process.",
+      "lede": "If the car you want is in Germany or elsewhere in Europe, we help you find it and buy it: we set the brief with you, compare cars, review the information on each one and coordinate the purchase and import.",
       "define": {
         "title": "First, what you're looking for.",
-        "body": "A good search starts with a clear brief. Before looking at any listing, we agree with you on:",
+        "body": "Before looking at any listing, we agree with you on:",
         "items": [
           "Model and engine",
           "Specification and must-have equipment",
@@ -132,18 +132,18 @@ export const en: Dictionary = {
           "Acceptable mileage and age",
           "Intended use and priorities"
         ],
-        "detail": "With that, the search stops being a list of adverts and becomes a comparison with clear criteria."
+        "detail": "With that brief we rule out what doesn't fit from the start."
       },
       "search": {
         "title": "Search, then narrow down.",
-        "body": "We look for cars in the European market that match that brief and rule out those that don't: a different specification, a price that doesn't hold up against comparable options, or too little information to judge them. What reaches you is a short selection, not a list."
+        "body": "We look for cars in the European market that match that brief and rule out those that don't: a different specification, a price that doesn't hold up against comparable options, or too little information to judge them. You receive a short list."
       },
       "analysis": {
-        "title": "Read every option.",
+        "title": "A close look at each car.",
         "body": "Before moving forward with a car, we review the information available: specification, photographs, any history and documents the seller provides, where it comes from and its price against the market. We explain what we know, what we don't, and what would be worth confirming before you decide."
       },
       "support": {
-        "title": "With you until completion.",
+        "title": "With you through purchase and import.",
         "body": "When you choose a car, we coordinate the next steps of the purchase and import with you: what is needed at each stage, who needs to be involved and what is still pending. Every transaction is different, so the details are agreed case by case, before you commit.",
         "detail": "Our role is to make sure you take every decision with the information in front of you."
       },
@@ -154,13 +154,13 @@ export const en: Dictionary = {
       },
       "closing": "Start by telling us what you're looking for.",
       "closingBody": "You don't need to have chosen a model. With your preferences and budget, we start defining the search.",
-      "cta": "Start questionnaire",
+      "cta": "Request a search",
       "secondary": "I have a specific car in mind"
     },
     contact: {
-      title: 'Contact', lede: 'Let’s talk about your next vehicle.',
+      title: 'Contact', lede: 'Ask about a car in our stock, or tell us which one you want us to find in Europe.',
       pathsLabel: 'Where shall we start?', vehiclePath: 'I know which car I want', searchPath: 'I want GP SELECT to help me find it',
-      vehicleIntro: 'Tell us which vehicle interests you and what you would like to know. We will start there.',
+      vehicleIntro: 'Tell us which vehicle interests you and what you would like to know. If you know the model but not a specific car, choose the other option.',
       searchIntro: 'Tell us what you are looking for: how you drive, the models you like and the budget you have in mind. You do not need to have chosen a vehicle.',
       formTitle: 'Your enquiry', fields: { name: 'Name', phone: 'Phone', email: 'Email', vehicle: 'Vehicle of interest', message: 'Message' },
       optional: 'optional', requiredHint: 'All fields are required unless marked optional.',
@@ -182,33 +182,36 @@ export const en: Dictionary = {
     services: 'Services', about: 'About', contact: 'Contact', admin: 'Administration',
   },
   hero: {
-    left: 'Curated', right: 'Luxury',
-    description: 'Curated European sports cars\nwith a focus on timeless design\nand bespoke sourcing.',
+    left: 'Sourced', right: 'in Europe',
+    description: 'We search Europe for the car\nyou want and guide you through\nbuying and importing it.',
   },
   carHandoff: {
     states: [
-      { left: 'German', right: 'Performance', description: 'German precision.\nUnmistakable character.' },
-      { left: 'Power', right: 'Control', description: 'All the power,\nalways under control.' },
-      { left: 'Global', right: 'Vision', description: 'Premium vehicles,\nsourced across Europe.' },
+      { left: 'German', right: 'Market', description: 'Germany’s used-car market\nis three times Spain’s.',
+        fact: 'In 2024, 6.48 million used cars changed hands in Germany and 2.11 million in Spain. Sources: KBA; Ganvam and Faconauto.' },
+      { left: 'Power', right: 'Control', description: 'We review the engine, gearbox\nand equipment of every car.',
+        fact: 'The same model varies a lot by country and year: different engines, gearboxes and option packs.' },
+      { left: 'Across', right: 'Europe', description: 'We compare cars from different\ncountries against the same brief.',
+        fact: 'There are no customs duties between EU countries. Registering the car in Spain means paying registration tax, set by its CO₂ emissions. Source: Spanish Tax Agency.' },
     ],
     carA: 'BMW M4 · top view',
     carCutaway: 'BMW M4 · technical cutaway',
-    interlude: 'Engineering,\ninside and out.',
+    interlude: 'What the listing\ndoesn’t show.',
   },
   process: {
-    title: 'Every detail. Every decision.',
+    title: 'How we run every search',
     steps: [
-      { word: 'Search', title: 'The starting point', description: 'A vehicle that is right for you.' },
-      { word: 'Analyse', title: 'Attention to detail', description: 'Every detail matters before choosing.' },
-      { word: 'Select', title: 'Our standard', description: 'Only what meets our expectations.' },
-      { word: 'Guide', title: 'The next chapter', description: 'Your next car, with confidence.' },
+      { word: 'Search', title: 'Across Europe', description: 'Cars that fit how you drive and what you spend.' },
+      { word: 'Analyse', title: 'Before we suggest', description: 'Specification, history, documents and price.' },
+      { word: 'Select', title: 'A short list', description: 'We only put forward the cars that pass.' },
+      { word: 'Guide', title: 'Purchase & import', description: 'We coordinate each step with you and what is still pending.' },
     ],
   },
   common: {
     scroll: 'Scroll to discover', temporaryAsset: 'Temporary asset',
     backHome: 'Back to home', prototype: 'Preview · Phase 3',
     menu: 'Open menu', close: 'Close menu', skipContent: 'Skip to content',
-    missingAsset: 'Final image pending', heroAsset: 'Vehicle · side view',
+    missingAsset: 'Final image pending', heroAsset: 'Porsche · side view',
     backgroundAsset: 'Photographic background pending', catalogue: 'View catalogue', loading: 'Loading',
   },
   notFound: {

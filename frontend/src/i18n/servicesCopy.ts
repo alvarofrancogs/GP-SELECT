@@ -12,27 +12,27 @@ interface ServicesCopy {
 
 export const servicesCopy: Record<Locale, ServicesCopy> = {
   es: {
-    title: 'Más que',
-    titleFine: 'un coche.',
-    description: 'Te acompañamos desde la búsqueda hasta la compra, para que disfrutes de tu vehículo sin fronteras.',
+    title: 'Búsqueda',
+    titleFine: 'e importación.',
+    description: 'Comprar un coche en otro país europeo obliga a comparar anuncios, leer documentación en otro idioma y coordinar la importación. Hacemos ese trabajo contigo, desde Murcia y para clientes de toda España.',
     image: 'Fotografía de servicios pendiente',
     items: [
-      { id: 'sourcing', title: 'Búsqueda en toda Europa', description: 'Definimos contigo el vehículo que buscas y localizamos opciones en el mercado europeo según tus preferencias y presupuesto.', image: 'Fotografía de búsqueda en Europa pendiente' },
-      { id: 'inspection', title: 'Análisis de cada opción', description: 'Revisamos la especificación, la documentación y el historial disponibles de cada vehículo antes de que tomes una decisión.', image: 'Fotografía de análisis pendiente' },
-      { id: 'import', title: 'Compra e importación', description: 'Coordinamos contigo los pasos de la compra y la importación: qué se necesita en cada momento y qué queda pendiente.', image: 'Fotografía de importación pendiente' },
-      { id: 'transparency', title: 'Un proceso transparente', description: 'Sabes en todo momento qué se sabe de cada coche, qué falta y qué queda por confirmar.', image: 'Fotografía del acompañamiento al cliente pendiente' },
+      { id: 'sourcing', title: 'Búsqueda por encargo', description: 'Partimos de lo que necesitas: modelo, motorización, equipamiento, kilometraje y presupuesto. Con eso buscamos unidades en el mercado europeo.', image: 'Fotografía de búsqueda en Europa pendiente' },
+      { id: 'inspection', title: 'Análisis de cada unidad', description: 'Revisamos la especificación, las fotografías, el historial y la documentación que aporta el vendedor, y comparamos el precio con unidades similares.', image: 'Fotografía de análisis pendiente' },
+      { id: 'import', title: 'Compra e importación', description: 'Cuando eliges una unidad, coordinamos contigo los pasos de la compra y la importación: qué hace falta en cada momento y qué queda pendiente.', image: 'Fotografía de importación pendiente' },
+      { id: 'transparency', title: 'Información antes de decidir', description: 'Antes de que te comprometas, sabes qué información hay de cada coche, quién la aporta, qué falta y qué conviene comprobar.', image: 'Fotografía del acompañamiento al cliente pendiente' },
     ],
   },
   en: {
-    title: 'More than',
-    titleFine: 'a car.',
-    description: 'We guide you from the search to the purchase, so you can enjoy your vehicle without borders.',
+    title: 'Sourcing',
+    titleFine: 'and import.',
+    description: 'Buying a car in another European country means comparing listings, reading paperwork in another language and coordinating the import. We do that work with you, from Murcia, for clients across Spain.',
     image: 'Services photography pending',
     items: [
-      { id: 'sourcing', title: 'Sourcing across Europe', description: 'We define what you are looking for together and source options across the European market to suit your preferences and budget.', image: 'European sourcing photography pending' },
-      { id: 'inspection', title: 'Every option analysed', description: 'We review each vehicle’s specification, documents and available history before you make your decision.', image: 'Analysis photography pending' },
-      { id: 'import', title: 'Purchase & import', description: 'We coordinate the purchase and import steps with you: what is needed at each stage and what is still pending.', image: 'Import photography pending' },
-      { id: 'transparency', title: 'Transparent process', description: 'At every stage you know what is known about each car, what is missing and what still needs confirming.', image: 'Client guidance photography pending' },
+      { id: 'sourcing', title: 'Sourcing to your brief', description: 'We start from what you need: model, engine, equipment, mileage and budget. Then we search the European market for cars that match.', image: 'European sourcing photography pending' },
+      { id: 'inspection', title: 'Every car reviewed', description: 'We review the specification, photographs, history and documents the seller provides, and compare the price with similar cars.', image: 'Analysis photography pending' },
+      { id: 'import', title: 'Purchase & import', description: 'Once you choose a car, we coordinate the purchase and import steps with you: what is needed at each stage and what is still pending.', image: 'Import photography pending' },
+      { id: 'transparency', title: 'The facts before you commit', description: 'Before you commit, you know what information there is on each car, who provided it, what is missing and what is worth checking.', image: 'Client guidance photography pending' },
     ],
   },
 };

@@ -51,7 +51,7 @@
 .vehicle-specs dt { color: var(--color-muted); }
 .vehicle-specs dd { margin: 0; overflow-wrap: anywhere; }
 .vehicle-detail__data .vehicle-specs { margin-block: 2rem; }
-/* "Solicitar información": a touch larger than the global button text. */
+/* The detail CTA: a touch larger than the global button text. */
 .vehicle-detail .button { font-size: clamp(.875rem, 1vw, 1rem); }
 .vehicle-detail__data .button { width: 100%; }
 .vehicle-detail__data > .editorial-link { margin-top: 1.5rem; font-size: .75rem; }

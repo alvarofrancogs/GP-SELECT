@@ -4,7 +4,7 @@ import { useCarHandoffScene } from '../hooks/useCarHandoffScene';
 import { useLanguage } from '../i18n/useLanguage';
 import '../styles/car-handoff.css';
 
-type HandoffState = { left: string; right: string; description: string };
+type HandoffState = { left: string; right: string; description: string; fact: string };
 // Each state places its lettering differently: around the car, stacked in one lane, or stacked in the other.
 type Layout = 'split' | 'left' | 'right';
 
@@ -17,7 +17,11 @@ function HandoffText({ state, name, layout, titleId }: { state: HandoffState; na
         <span data-word><span data-line>{state.left}</span></span>
         <span data-word><span data-line>{state.right}</span></span>
       </Heading>
-      <p className="scene-description hero-description" data-line>{state.description}</p>
+      {/* The fact sits inside the animated line, so it enters and leaves with its description. */}
+      <p className="scene-description hero-description" data-line>
+        {state.description}
+        <span className="car-handoff__fact">{state.fact}</span>
+      </p>
     </div>
   );
 }

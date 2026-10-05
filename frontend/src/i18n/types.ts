@@ -141,7 +141,8 @@ export interface Dictionary {
   };
   hero: { left: string; right: string; description: string };
   carHandoff: {
-    states: { left: string; right: string; description: string }[];
+    /** `fact`: a small supporting figure or detail with its public source; never a claim about GP SELECT. */
+    states: { left: string; right: string; description: string; fact: string }[];
     carA: string;
     carCutaway: string;
     /** Line shown while the scan reveals the car's insides. */

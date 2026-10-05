@@ -13,23 +13,23 @@ interface FeaturedCopy {
 
 export const featuredCopy: Record<Locale, FeaturedCopy> = {
   es: {
-    title: 'Vehículos',
-    titleFine: 'excepcionales.',
+    title: 'Ahora',
+    titleFine: 'en catálogo.',
     view: 'Ver vehículo',
     pause: 'Pausar rotación',
     position: (current, total) => `Vehículo ${current} de ${total}`,
     loading: 'Cargando la selección…',
-    empty: 'Estamos preparando la próxima selección.',
+    empty: 'Ahora mismo no hay vehículos en el catálogo.',
     error: 'No se ha podido cargar el vehículo. Puedes intentarlo de nuevo más tarde.',
   },
   en: {
-    title: 'Premium',
-    titleFine: 'vehicles.',
+    title: 'In our',
+    titleFine: 'catalogue.',
     view: 'View vehicle',
     pause: 'Pause rotation',
     position: (current, total) => `Vehicle ${current} of ${total}`,
     loading: 'Loading the selection…',
-    empty: 'We are preparing the next selection.',
+    empty: 'There are no cars in the catalogue right now.',
     error: 'The vehicle could not be loaded. Please try again later.',
   },
 };
