@@ -35,9 +35,9 @@ export function CarHandoffScene() {
       <div ref={pinRef} className="car-handoff__pin" data-handoff-target="process">
         <div className="car-handoff__panel">
           <div className="car-handoff__world" data-handoff-world>
-            <AssetSlot asset={sceneAssets.handoffBright} label={copy.common.backgroundAsset} background />
+            <AssetSlot asset={sceneAssets.handoffBright} label={copy.common.backgroundAsset} background priority="low" />
             <div className="car-handoff__overcast" data-handoff-overcast>
-              <AssetSlot asset={sceneAssets.handoffOvercast} label={copy.common.backgroundAsset} background />
+              <AssetSlot asset={sceneAssets.handoffOvercast} label={copy.common.backgroundAsset} background priority="low" />
             </div>
           </div>
           {/* The first headline sits under the car, so the car drives over it. */}
@@ -46,20 +46,20 @@ export function CarHandoffScene() {
               and a soft curtain lifts the photograph off from tail to nose. */}
           <div className="car-handoff__car" data-car>
             <div className="car-handoff__layer">
-              <AssetSlot asset={sceneAssets.carCutaway} label={text.carCutaway} />
+              <AssetSlot asset={sceneAssets.carCutaway} label={text.carCutaway} priority="low" />
             </div>
             <div className="car-handoff__layer car-handoff__photo" data-car-photo>
-              <AssetSlot asset={sceneAssets.carA} label={text.carA} />
+              <AssetSlot asset={sceneAssets.carA} label={text.carA} priority="low" />
             </div>
           </div>
         </div>
         <div className="car-handoff__panel car-handoff__panel--overcast">
           <div className="car-handoff__world car-handoff__world--static" aria-hidden="true">
-            <AssetSlot asset={sceneAssets.handoffOvercast} label={copy.common.backgroundAsset} background />
+            <AssetSlot asset={sceneAssets.handoffOvercast} label={copy.common.backgroundAsset} background priority="low" />
           </div>
           <div className="car-handoff__car car-handoff__car--static" aria-hidden="true">
             <div className="car-handoff__layer">
-              <AssetSlot asset={sceneAssets.carCutaway} label="" />
+              <AssetSlot asset={sceneAssets.carCutaway} label="" priority="low" />
             </div>
           </div>
           <HandoffText state={stateB} name="b" layout="left" />

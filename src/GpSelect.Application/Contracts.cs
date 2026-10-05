@@ -33,19 +33,26 @@ public sealed record VehiclePublicCardDto(string Slug, string Make, string Model
 public sealed record VehiclePublicDto(string Slug, string Make, string Model, string? Variant, int Year, int? Month, decimal? PriceEur,
     int? MileageKm, int? PowerHp, string? FuelType, string? Transmission, string? BodyType, string? Drivetrain, string? ExteriorColour,
     string? Interior, string? Description, string? History, string? Provenance, IReadOnlyList<string> Equipment,
-    IReadOnlyList<VehicleSpecification> CustomSpecifications, VehicleStatus Status, IReadOnlyList<string> Images);
+    IReadOnlyList<VehicleSpecification> CustomSpecifications, VehicleStatus Status, IReadOnlyList<string> Images,
+    IReadOnlyList<string> CardImages);
 
 public static class PublicMapping
 {
     private static string Base(VehicleUnit v) => $"/api/public/vehicles/{Uri.EscapeDataString(v.PublicSlug)}/images";
 
-    public static VehiclePublicDto Map(VehicleUnit v, IEnumerable<VehicleImage> images) => new(
-        v.PublicSlug, v.Make, v.Model, v.Variant, v.FirstRegistrationYear, v.FirstRegistrationMonth, v.PriceEur,
-        v.MileageKm, v.PowerHp, v.FuelType, v.Transmission, v.BodyType, v.Drivetrain, v.ExteriorColour,
-        v.Interior, v.Description, v.History, v.Provenance, VehicleContent.ReadEquipment(v.EquipmentJson),
-        VehicleContent.ReadSpecifications(v.CustomSpecificationsJson), v.Status,
-        VehicleGallery.InPublicOrder(images.Where(x => x.State == ImageState.Ready && !x.IsStaged && x.DetailKey is not null))
-            .Select(x => $"{Base(v)}/{x.Id}/detail").ToList());
+    // CardImages holds the 800 px version of each photo, in the same order as Images (thumbnails, small screens).
+    public static VehiclePublicDto Map(VehicleUnit v, IEnumerable<VehicleImage> images)
+    {
+        var gallery = VehicleGallery.InPublicOrder(images.Where(x => x.State == ImageState.Ready && !x.IsStaged
+            && x.DetailKey is not null && x.CardKey is not null)).ToList();
+        return new(
+            v.PublicSlug, v.Make, v.Model, v.Variant, v.FirstRegistrationYear, v.FirstRegistrationMonth, v.PriceEur,
+            v.MileageKm, v.PowerHp, v.FuelType, v.Transmission, v.BodyType, v.Drivetrain, v.ExteriorColour,
+            v.Interior, v.Description, v.History, v.Provenance, VehicleContent.ReadEquipment(v.EquipmentJson),
+            VehicleContent.ReadSpecifications(v.CustomSpecificationsJson), v.Status,
+            gallery.Select(x => $"{Base(v)}/{x.Id}/detail").ToList(),
+            gallery.Select(x => $"{Base(v)}/{x.Id}/card").ToList());
+    }
 
     public static VehiclePublicCardDto MapCard(VehicleUnit v, IEnumerable<VehicleImage> images) => new(
         v.PublicSlug, v.Make, v.Model, v.Variant, v.FirstRegistrationYear, v.FirstRegistrationMonth, v.PriceEur,

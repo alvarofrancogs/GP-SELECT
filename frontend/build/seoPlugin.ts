@@ -5,6 +5,11 @@ import { adminMeta, escapeHtml, getStaticPageMeta, legalPageMeta, notFoundMeta, 
 import { missingLegalFields } from '../src/config/legal';
 import type { PageMeta } from '../src/lib/pageMeta';
 import { readableHead, renderLlmsText, renderReadableContent } from './readableContent';
+import { sceneAssets } from '../src/assets/sceneAssets';
+
+// The home's first view: its photographs download alongside the script instead of after it renders.
+const homePreload = [sceneAssets.heroBackground.src, sceneAssets.heroCar.src]
+  .map((src) => `<link rel="preload" as="image" href="${src}" fetchpriority="high" />\n  `).join('');
 
 /** Static reading views and metadata, retaining the SPA's built asset references. */
 export function seoPlugin(rawSiteUrl?: string): Plugin {
@@ -83,7 +88,7 @@ export function seoPlugin(rawSiteUrl?: string): Plugin {
         await mkdir(resolve(target, '..'), { recursive: true });
         // The markers let the API replace exactly this block (VehicleSeo.cs).
         const html = template.replace('<title>GP SELECT</title>', `<!--page-meta-->\n    ${renderPageHead(meta, siteUrl)}\n    <!--/page-meta-->`)
-          .replace('</head>', `${content || readable ? readableHead : ''}\n  </head>`)
+          .replace('</head>', `${file === 'index.html' ? homePreload : ''}${content || readable ? readableHead : ''}\n  </head>`)
           .replace('<div id="root"></div>', `<div id="root">${content}</div>`);
         await writeFile(target, html);
       }

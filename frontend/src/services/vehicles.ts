@@ -22,8 +22,10 @@ export function fromPublicCard(dto: VehiclePublicCardDto): VehicleSummary {
 }
 
 export function fromPublicDetail(dto: VehiclePublicDto): VehicleDetail {
+  const summary = fromPublicCard(dto);
   return {
-    ...fromPublicCard(dto), drivetrain: dto.drivetrain ?? null, exteriorColour: dto.exteriorColour ?? null,
+    ...summary, images: summary.images?.map((image, index) => ({ ...image, smallSrc: dto.cardImages?.[index] })) ?? null,
+    drivetrain: dto.drivetrain ?? null, exteriorColour: dto.exteriorColour ?? null,
     interiorColour: dto.interior ?? null, provenance: dto.provenance ?? null, history: dto.history ?? null,
     description: dto.description ?? null, equipment: dto.equipment?.length ? dto.equipment : null,
     customSpecifications: dto.customSpecifications?.length ? dto.customSpecifications : null,

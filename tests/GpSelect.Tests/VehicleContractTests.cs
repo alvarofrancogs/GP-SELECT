@@ -549,6 +549,8 @@ public class VehicleContractTests
         var first = ReadyImage(v, 0);
         var dto = PublicMapping.Map(v, new[] { first, cover });
         Assert.EndsWith($"{cover.Id}/detail", dto.Images[0]);
+        Assert.Equal(new[] { cover.Id, first.Id }, dto.CardImages.Select(x => Guid.Parse(x.Split('/')[^2])));
+        Assert.All(dto.CardImages, x => Assert.EndsWith("/card", x));
         Assert.Equal((510, "Trasera", "Un propietario"), (dto.PowerHp!.Value, dto.Drivetrain, dto.History));
         Assert.Equal("Techo de carbono", Assert.Single(dto.Equipment));
     }

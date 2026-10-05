@@ -2,6 +2,8 @@ import type { VehiclePublicCardDto } from './inventory';
 
 export interface VehicleImage {
   src: string;
+  /** The same photo at 800 px (API card variant), for thumbnails and small screens. */
+  smallSrc?: string;
   fit: 'cover' | 'contain';
   alt: string | null;
   temporary: boolean;
@@ -47,4 +49,6 @@ export interface VehiclePublicDto extends VehiclePublicCardDto {
   provenance: string | null;
   equipment: string[];
   customSpecifications: { label: string; value: string }[];
+  /** Same order as images. Optional so a response from an older API still renders. */
+  cardImages?: string[];
 }

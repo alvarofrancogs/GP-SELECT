@@ -102,9 +102,9 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - Datos imposibles según el contrato (`NaN`, `images: null`): sin hardening adicional.
 - Guard síncrono opcional del Admin frente a eventos sintéticos (doble envío por eventos disparados por script).
 - `/#criterio` no hace scroll al ancla por navegación interna.
-- Miniaturas de la galería cargan la imagen grande (P2 previo).
+- ~~Miniaturas de la galería cargan la imagen grande~~: resuelto en PERF-1.
 - Imagen que falta en el almacenamiento → 500 en vez de 404 (P2 previo).
-- Bundle público > 500 kB (P2 previo).
+- ~~Bundle público > 500 kB~~: dividido en chunks en PERF-1 (el total sigue igual).
 - CLS ~3 en el scroll de la Home por los pins de GSAP (métrica, sin saltos visibles; decidir en SEO/rendimiento).
 - `hero-car.webp` lleva una cola sintética hasta tener foto ancha en alta resolución (la versión HQ de prueba queda fuera del repo).
 - El resto de P2/P3 ya registrados más abajo siguen vigentes.
@@ -150,6 +150,14 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - Contenido como datos en `src/i18n/legalCopy.ts` (español, versión vinculante; en EN una nota lo indica), renderizado por `pages/Legal.tsx` y por el build (HTML propio con contenido legible y `noindex,follow`, fuera del sitemap). Datos del titular en `src/config/legal.ts`: nunca inventarlos; si faltan, se marcan «Pendiente» y `seoPlugin` avisa en el build.
 - Reflejan lo que hace el código: formulario (nombre y email obligatorios; teléfono, vehículo y mensaje), IP en los registros del servidor, base jurídica art. 6.1.b (consulta) y 6.1.f (seguridad), solo almacenamiento técnico (`gp-select.locale.v1`, `gp-select.preloader.seen`, cookie de sesión del Admin) y, por tanto, sin banner de cookies (art. 22.2 LSSI). **Si se añade analítica, email o algún proveedor, actualizar los textos.**
 - Formulario: primera capa RGPD bajo el botón (responsable = titular o, si falta, la marca). El envío en producción sigue desactivado hasta tener los datos legales, el proveedor de email y el buzón.
+
+### PERF-1 · rendimiento = PASS (05-10-2026, rama `feat/perf-1`, tag `perf-1-pass`)
+
+- **Home:** el build precarga `hero-sky` y `hero-car` (solo en `index.html`, tomadas de `sceneAssets`) y `AssetSlot` acepta `priority`: `high` en el hero, `low` en las 4 imágenes de `CarHandoffScene`. Lighthouse móvil (mediana de 3, preview local): LCP 6,46 s → 4,44 s, puntuación 70 → 78; FCP, TBT y CLS sin cambios. Escritorio ya estaba en 95.
+- **JS:** `manualChunks` separa `react` (69 kB gzip), `gsap` (45), `router` (32) y la web (37): las librerías quedan en caché entre despliegues y desaparece el aviso de >500 kB. El total no baja.
+- **Ficha:** `VehiclePublicDto` añade `cardImages` (versión de 800 px, mismo orden que `images`; aditivo). Miniaturas con la card, foto principal con `srcset` card/detail y `sizes`. Las diapositivas ocultas están apiladas en pantalla y el `lazy` nativo las cargaba todas a 2400 px: ahora solo se carga la visible y sus vecinas, y cada una se queda cargada. Con 8 fotos en escritorio: 3 detail + 8 card en vez de 8 detail; en móvil (DPR 2), 2 card (~100 kB) en vez de ~760 kB.
+- Verificación: 105/105 unitarios, 70/70 de integración, typecheck, lint y build; pruebasGP a 1440/390 (galería con 8 fotos simuladas, navegación y swipe, Home completa con scroll y vuelta arriba, ficha servida por la API con los nuevos chunks), sin errores JS.
+- **Sigue pendiente (motion, no tocado):** TBT en móvil por el montaje de los pins (Style & Layout ~1,3 s con CPU ×4) y CLS ~3 durante el scroll de la Home. Un objeto que falta en el almacenamiento sigue dando 500 (backend).
 
 ### SEO-2 · fichas y sitemap desde el servidor = PASS (05-10-2026, tag `seo-2-pass`)
 

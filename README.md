@@ -59,7 +59,7 @@ Formatos aceptados: JPEG, PNG y WebP. El tamaño máximo es de 20 MiB por imagen
 | Método | Ruta | Función |
 |---|---|---|
 | `GET` | `/api/public/vehicles` | Lista hasta 100 vehículos en estado `ComingSoon` o `Available`. |
-| `GET` | `/api/public/vehicles/{slug}` | Devuelve el detalle público de un vehículo mediante su slug. |
+| `GET` | `/api/public/vehicles/{slug}` | Devuelve el detalle público de un vehículo mediante su slug. `images` lleva las URLs detail y `cardImages` las card de las mismas fotos, en el mismo orden. |
 | `GET` | `/api/public/vehicles/{slug}/images/{imageId}/card` | Sirve la imagen card pública preparada. |
 | `GET` | `/api/public/vehicles/{slug}/images/{imageId}/detail` | Sirve la imagen detail pública preparada. |
 
