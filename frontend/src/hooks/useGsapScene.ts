@@ -150,6 +150,9 @@ export function useGsapScene(kind: SceneKind, id: string) {
           timeline.eventCallback('onUpdate', publishTone);
           darken?.eventCallback('onUpdate', publishTone);
           publishTone();
+          // Pins revert during refresh, and a finished timeline will not update again.
+          ScrollTrigger.addEventListener('refresh', publishTone);
+          return () => ScrollTrigger.removeEventListener('refresh', publishTone);
         }
 
         if (kind === 'process' && words.length) {
