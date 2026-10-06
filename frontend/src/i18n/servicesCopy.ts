@@ -14,7 +14,7 @@ export const servicesCopy: Record<Locale, ServicesCopy> = {
   es: {
     title: 'Búsqueda',
     titleFine: 'e importación.',
-    description: 'Comprar un coche en otro país europeo obliga a comparar anuncios, leer documentación en otro idioma y coordinar la importación. Hacemos ese trabajo contigo, desde Murcia y para clientes de toda España.',
+    description: 'Comprar un coche en otro país europeo obliga a comparar anuncios, leer documentación en otro idioma y coordinar la importación. Hacemos ese trabajo contigo, desde Murcia, para clientes de España y Europa.',
     image: 'Fotografía de servicios pendiente',
     items: [
       { id: 'sourcing', title: 'Búsqueda por encargo', description: 'Partimos de lo que necesitas: modelo, motorización, equipamiento, kilometraje y presupuesto. Con eso buscamos unidades en el mercado europeo.', image: 'Fotografía de búsqueda en Europa pendiente' },
@@ -26,7 +26,7 @@ export const servicesCopy: Record<Locale, ServicesCopy> = {
   en: {
     title: 'Sourcing',
     titleFine: 'and import.',
-    description: 'Buying a car in another European country means comparing listings, reading paperwork in another language and coordinating the import. We do that work with you, from Murcia, for clients across Spain.',
+    description: 'Buying a car in another European country means comparing listings, reading paperwork in another language and coordinating the import. We do that work with you, from Murcia, for clients in Spain and across Europe.',
     image: 'Services photography pending',
     items: [
       { id: 'sourcing', title: 'Sourcing to your brief', description: 'We start from what you need: model, engine, equipment, mileage and budget. Then we search the European market for cars that match.', image: 'European sourcing photography pending' },

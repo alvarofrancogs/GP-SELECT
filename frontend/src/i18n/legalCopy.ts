@@ -41,7 +41,7 @@ export const legalPages: Record<LegalDoc, LegalPageCopy> = {
     title: 'Aviso legal',
     lede: 'Quién es el titular de esta web y en qué condiciones puedes usarla.',
     sections: [
-      { heading: 'Titular de la web', blocks: [holderBlock, { p: ['GP SELECT tiene su base en Murcia y atiende a clientes de toda España.'] }] },
+      { heading: 'Titular de la web', blocks: [holderBlock, { p: ['GP SELECT tiene su base en Murcia y atiende a clientes de España y del resto de Europa.'] }] },
       { heading: 'Objeto', blocks: [{ p: ['Esta web informa sobre el servicio de GP SELECT: la selección de vehículos premium europeos, su catálogo y el acompañamiento durante la compra y la importación. También permite enviar consultas mediante el formulario de contacto.'] }] },
       { heading: 'Condiciones de uso', blocks: [{ p: ['Al navegar por la web te comprometes a usarla de buena fe y conforme a la ley. No está permitido usarla con fines ilícitos, intentar acceder a sus zonas restringidas ni alterar su funcionamiento.'] }] },
       { heading: 'Información de los vehículos', blocks: [{ p: ['Publicamos la información de cada vehículo de buena fe, a partir de los datos de los que disponemos. Puede contener errores o cambiar sin previo aviso, y no constituye una oferta vinculante: las condiciones de cualquier operación se concretan contigo antes de que te comprometas.'] }] },

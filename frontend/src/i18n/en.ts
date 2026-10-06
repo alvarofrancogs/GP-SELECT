@@ -90,7 +90,7 @@ export const en: Dictionary = {
   interiors: {
     about: {
       title: 'About us',
-      lede: 'GP SELECT sources premium European cars for each client, from Murcia, for buyers across Spain. We work from a conversation: what you want to drive, how you will use it and what matters to you.',
+      lede: 'GP SELECT sources premium European cars for each client, from Murcia, across Spain and Europe. We work from a conversation: what you want to drive, how you will use it and what matters to you.',
       why: {
         title: 'Buying the right car shouldn’t be a search on your own.',
         body: 'Finding a premium car in Europe usually starts with hundreds of listings and little reliable information. GP SELECT exists to change that starting point: someone who understands what you are looking for, compares options for you and clearly explains what is in front of you before you decide.',

@@ -16,11 +16,11 @@ export interface PageMeta {
 export const staticPageMeta: Record<string, PageMeta> = {
   '/': {
     title: 'GP SELECT · Selección e importación de coches en Murcia',
-    description: 'Buscamos en Europa el coche que quieres, revisamos cada opción y coordinamos la compra y la importación. Desde Murcia, para clientes de toda España.',
+    description: 'Buscamos en Europa el coche que quieres, revisamos cada opción y coordinamos la compra y la importación. Desde Murcia, para clientes de España y Europa.',
   },
   '/vehiculos': {
     title: 'Coches europeos en venta · Catálogo de GP SELECT',
-    description: 'Catálogo de coches europeos de GP SELECT, con fotos y datos de cada unidad. Si no está el que buscas, lo buscamos en Europa. Murcia y toda España.',
+    description: 'Catálogo de coches europeos de GP SELECT, con fotos y datos de cada unidad. Si no está el que buscas, lo buscamos. Desde Murcia, para España y Europa.',
   },
   '/importacion': {
     title: 'Importar un coche de Alemania o de Europa · GP SELECT',
@@ -32,7 +32,7 @@ export const staticPageMeta: Record<string, PageMeta> = {
   },
   '/contacto': {
     title: 'Contacto · Cuéntanos qué coche buscas · GP SELECT',
-    description: 'Pregúntanos por un coche del catálogo o cuéntanos cuál quieres encontrar en Europa. GP SELECT trabaja desde Murcia con clientes de toda España.',
+    description: 'Pregúntanos por un coche del catálogo o cuéntanos cuál quieres encontrar en Europa. GP SELECT trabaja desde Murcia con clientes de España y Europa.',
   },
 };
 
@@ -98,6 +98,7 @@ export function getStaticPageMeta(path: string, siteUrl?: string): PageMeta {
         areaServed: [
           { '@type': 'Country', name: 'España' },
           { '@type': 'AdministrativeArea', name: 'Región de Murcia' },
+          { '@type': 'Continent', name: 'Europa' },
         ],
         address: {
           '@type': 'PostalAddress', addressLocality: 'Murcia',
@@ -127,7 +128,7 @@ function importServiceJsonLd(siteUrl?: string): Record<string, unknown> {
       ...(siteUrl ? { url: `${siteUrl}/` } : {}),
       address: { '@type': 'PostalAddress', addressLocality: 'Murcia', addressRegion: 'Región de Murcia', addressCountry: 'ES' },
     },
-    areaServed: { '@type': 'Country', name: 'España' },
+    areaServed: [{ '@type': 'Country', name: 'España' }, { '@type': 'Continent', name: 'Europa' }],
   };
 }
 
@@ -140,7 +141,7 @@ export function getVehiclePageMeta(vehicle: VehicleDetail, siteUrl?: string): Pa
   const publicPrice = vehicle.availability !== 'sold' && vehicle.priceEur !== null && vehicle.priceEur > 0;
   return {
     title: `${identity} · Vehículos europeos · GP SELECT`,
-    description: `Consulta las fotos y los datos de este ${identity} en GP SELECT. Selección de vehículos europeos desde Murcia para clientes de toda España.`,
+    description: `Consulta las fotos y los datos de este ${identity} en GP SELECT. Selección de vehículos europeos desde Murcia para clientes de España y Europa.`,
     path, image, imageAlt: identity,
     jsonLd: {
       '@context': 'https://schema.org', '@type': 'Car', name: identity,
@@ -174,7 +175,7 @@ export function escapeHtml(value: string): string {
 export function renderPageHead(meta: PageMeta, siteUrl?: string): string {
   const canonical = siteUrl && meta.path ? `${siteUrl}${meta.path}` : undefined;
   const image = assetUrl(meta.image || '/assets/seo/og-default.jpg', siteUrl);
-  const imageAlt = meta.image ? meta.imageAlt || meta.title : 'GP SELECT · Murcia · Clientes en toda España';
+  const imageAlt = meta.image ? meta.imageAlt || meta.title : 'GP SELECT · Murcia · Clientes en España y Europa';
   const tags: string[] = [];
   const addMeta = (attribute: 'name' | 'property', key: string, value: string) => {
     tags.push(`<meta data-page-meta ${attribute}="${key}" content="${escapeHtml(value)}">`);

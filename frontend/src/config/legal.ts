@@ -21,11 +21,11 @@ export interface LegalConfig {
 }
 
 export const legalConfig: LegalConfig = {
-  holder: null,
-  taxId: null,
+  holder: 'Miguel Reverte Peñalver',
+  taxId: '49442146N',
   address: null,
   email: null,
-  phone: null,
+  phone: '+34 661 631 555',
   registry: null,
   retention: null,
   updated: '5 de octubre de 2026',

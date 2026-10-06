@@ -16,7 +16,7 @@ public static class VehicleSeo
     public const string EmptyRoot = "<div id=\"root\"></div>";
 
     public const string DefaultImage = "/assets/seo/og-default.jpg";
-    private const string Location = "Murcia · Clientes en toda España";
+    private const string Location = "Murcia · Clientes en España y Europa";
 
     public static string Identity(VehiclePublicDto v) => $"{v.Make} {v.Model} ({v.Year})";
     public static string Path(VehiclePublicDto v) => $"/vehiculos/{Uri.EscapeDataString(v.Slug)}";
@@ -53,7 +53,7 @@ public static class VehicleSeo
         };
         return Render(
             title: $"{identity} · Vehículos europeos · GP SELECT",
-            description: $"Consulta las fotos y los datos de este {identity} en GP SELECT. Selección de vehículos europeos desde Murcia para clientes de toda España.",
+            description: $"Consulta las fotos y los datos de este {identity} en GP SELECT. Selección de vehículos europeos desde Murcia para clientes de España y Europa.",
             robots: "index,follow", canonical: url, image: image, imageAlt: identity, siteUrl, jsonLd);
     }
 
@@ -110,7 +110,7 @@ public static class VehicleSeo
         string? siteUrl, Dictionary<string, object?>? jsonLd)
     {
         var shareImage = Absolute(image ?? DefaultImage, siteUrl);
-        var shareAlt = image is null ? "GP SELECT · Murcia · Clientes en toda España" : imageAlt ?? title;
+        var shareAlt = image is null ? "GP SELECT · Murcia · Clientes en España y Europa" : imageAlt ?? title;
         var tags = new List<string> { $"<title data-page-meta>{E(title)}</title>" };
         void Meta(string attribute, string key, string value) => tags.Add($"<meta data-page-meta {attribute}=\"{key}\" content=\"{E(value)}\">");
         Meta("name", "description", description);

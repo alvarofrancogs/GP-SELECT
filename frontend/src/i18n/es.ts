@@ -90,7 +90,7 @@ export const es: Dictionary = {
   interiors: {
     about: {
       title: 'Nosotros',
-      lede: 'GP SELECT busca y selecciona vehículos premium europeos para cada cliente, desde Murcia y para toda España. Trabajamos a partir de una conversación: qué quieres conducir, cómo lo vas a usar y qué es importante para ti.',
+      lede: 'GP SELECT busca y selecciona vehículos premium europeos para cada cliente, desde Murcia y para toda España y Europa. Trabajamos a partir de una conversación: qué quieres conducir, cómo lo vas a usar y qué es importante para ti.',
       why: {
         title: 'Comprar bien un coche no debería ser una búsqueda a solas.',
         body: 'Encontrar un vehículo premium en Europa suele empezar con cientos de anuncios y poca información contrastada. GP SELECT existe para cambiar ese punto de partida: alguien que entiende lo que buscas, compara por ti y te explica con claridad lo que tienes delante antes de que decidas.',
