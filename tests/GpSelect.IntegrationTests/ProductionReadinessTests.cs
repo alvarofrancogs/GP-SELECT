@@ -40,7 +40,7 @@ public sealed class ProductionReadinessTests
             builder.UseEnvironment("Production");
             builder.UseSetting("Security:AllowedOrigin", "https://www.example.test");
             builder.UseSetting("Admin:Email", "admin@example.test");
-            builder.UseSetting("Admin:PasswordHash", "hash");
+            builder.UseSetting("Admin:PasswordHash", new Microsoft.AspNetCore.Identity.PasswordHasher<object>().HashPassword(null!, "Test-only-9"));
             builder.UseSetting("DataProtection:KeysPath", "unused-keys");
             builder.UseSetting("Enquiries:Enabled", "true");
             builder.UseSetting("Smtp:Host", "smtp.example.test");
@@ -173,7 +173,7 @@ public sealed class ProductionReadinessTests
             builder.UseEnvironment("Production");
             builder.UseSetting("Security:AllowedOrigin", "https://www.example.test");
             builder.UseSetting("Admin:Email", "admin@example.test");
-            builder.UseSetting("Admin:PasswordHash", "hash");
+            builder.UseSetting("Admin:PasswordHash", new Microsoft.AspNetCore.Identity.PasswordHasher<object>().HashPassword(null!, "Test-only-9"));
             builder.UseSetting("DataProtection:KeysPath", "");
         });
         var error = Assert.ThrowsAny<Exception>(() => factory.CreateClient());
@@ -188,7 +188,7 @@ public sealed class ProductionReadinessTests
             ["Storage:Endpoint"] = "http://minio:9000", ["Storage:PublicEndpoint"] = "https://s3.example.test",
             ["Storage:AccessKey"] = "key", ["Storage:SecretKey"] = "secret", ["Storage:Bucket"] = "gpselect",
         }).Build();
-        var url = new Uri(await new S3ObjectStorage(config).CreateUploadUrlAsync("quarantine/a.jpg", "image/jpeg", CancellationToken.None));
+        var url = new Uri(await new S3ObjectStorage(config).CreateUploadUrlAsync("quarantine/a.jpg", "image/jpeg", 1234, CancellationToken.None));
         Assert.Equal(("https", "s3.example.test", "/gpselect/quarantine/a.jpg"), (url.Scheme, url.Host, url.AbsolutePath));
     }
 }

@@ -47,8 +47,9 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
     [HttpPost("{id:guid}/status")]
     public async Task<IActionResult> ChangeStatus(Guid id, StatusChangeRequest r)
     {
-        var v = await db.Vehicles.FindAsync(id); if (v is null) return NotFound();
-        try { v.ChangeStatus(r.Status!.Value, await db.Images.Where(x => x.VehicleUnitId == id).ToListAsync(), r.ShowWhenSold); await db.SaveChangesAsync(); return Ok(await Map(v)); }
+        await using var tx = await db.Database.BeginTransactionAsync();
+        var v = await db.LockVehicleAsync(id); if (v is null) return NotFound();
+        try { v.ChangeStatus(r.Status!.Value, await db.Images.Where(x => x.VehicleUnitId == id).ToListAsync(), r.ShowWhenSold); await db.SaveChangesAsync(); await tx.CommitAsync(); return Ok(await Map(v)); }
         catch (DomainException e) { return DomainProblem(e); }
     }
 
@@ -58,7 +59,7 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
     public async Task<IActionResult> Save(Guid id, SaveVehicleRequest r)
     {
         await using var tx = await db.Database.BeginTransactionAsync();
-        var v = await db.Vehicles.FindAsync(id); if (v is null) return NotFound();
+        var v = await db.LockVehicleAsync(id); if (v is null) return NotFound();
         var images = await db.Images.Where(x => x.VehicleUnitId == id && x.State != ImageState.Deleted).ToListAsync();
         var oldCover = images.FirstOrDefault(x => x.IsCover)?.Id;
         var removed = new List<VehicleImage>();
@@ -70,6 +71,8 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
             var target = r.Status?.Status;
             var leaves = target is not null && !VehicleVisibility.IsInCatalogue(target.Value, r.Status!.ShowWhenSold ?? v.ShowWhenSold);
             if (leaves) v.ChangeStatus(target!.Value, images, r.Status!.ShowWhenSold);
+            // Sold has no price requirement; validate its final cover after applying the gallery.
+            else if (target == VehicleStatus.Sold) v.ChangeStatus(VehicleStatus.Draft, images);
             if (r.Changes is not null) v.Apply(r.Changes);
             if (r.Gallery is not null)
             {
@@ -103,8 +106,9 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
     [HttpPost("{id:guid}/publish")]
     public async Task<IActionResult> Publish(Guid id, [FromBody] PublishRequest? request)
     {
-        var v = await db.Vehicles.FindAsync(id); if (v is null) return NotFound();
-        try { v.Publish(await db.Images.Where(x => x.VehicleUnitId == id).ToListAsync(), request?.Target ?? VehicleStatus.ComingSoon); await db.SaveChangesAsync(); return Ok(await Map(v)); }
+        await using var tx = await db.Database.BeginTransactionAsync();
+        var v = await db.LockVehicleAsync(id); if (v is null) return NotFound();
+        try { v.Publish(await db.Images.Where(x => x.VehicleUnitId == id).ToListAsync(), request?.Target ?? VehicleStatus.ComingSoon); await db.SaveChangesAsync(); await tx.CommitAsync(); return Ok(await Map(v)); }
         catch (DomainException e) { return DomainProblem(e); }
     }
 

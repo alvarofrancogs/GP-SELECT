@@ -8,7 +8,10 @@ public sealed partial class SlugGenerator: GpSelect.Application.ISlugGenerator
 {
     public string Generate(string make, string model)
     {
-        var decomposed = $"{make} {model}".ToLowerInvariant().Normalize(NormalizationForm.FormD);
+        var transliterated = $"{make} {model}".ToLowerInvariant()
+            .Replace("ß", "ss").Replace("ẞ", "ss").Replace("ø", "o").Replace("æ", "ae")
+            .Replace("œ", "oe").Replace("ł", "l").Replace("đ", "d").Replace("þ", "th");
+        var decomposed = transliterated.Normalize(NormalizationForm.FormD);
         var withoutMarks = new StringBuilder();
         foreach (var c in decomposed)
             if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)

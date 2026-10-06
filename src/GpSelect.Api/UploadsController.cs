@@ -26,6 +26,8 @@ public sealed class UploadsController(GpSelectDbContext db, IObjectStorage stora
             return Conflict();
         if (Request.ContentLength is null or < 1 or > ImagePipeline.MaxUploadBytes)
             return Problem(statusCode: 413, title: "Image exceeds 20 MiB limit");
+        if (Request.ContentLength != image.SizeBytes)
+            return Problem(statusCode: 413, title: "Declared size does not match intent");
         var mime = Request.ContentType?.Split(';')[0].Trim();
         if (!Allowed.Contains(mime, StringComparer.OrdinalIgnoreCase) || !string.Equals(mime, image.MimeType, StringComparison.OrdinalIgnoreCase))
             return Problem(statusCode: 415, title: "Declared MIME type does not match intent");

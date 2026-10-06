@@ -6,6 +6,7 @@ var allowedOrigin=builder.Configuration["Security:AllowedOrigin"];
 if(SecurityConfig.AllowedOriginError(allowedOrigin,production) is { } originError) throw new InvalidOperationException(originError);
 if(!string.IsNullOrWhiteSpace(allowedOrigin)) builder.Services.AddCors(options=>options.AddDefaultPolicy(policy=>policy.WithOrigins(allowedOrigin).WithMethods("GET","POST","PUT","PATCH","DELETE").WithHeaders("Accept","Content-Type","Idempotency-Key","X-Correlation-ID").AllowCredentials()));
 if(production&&(string.IsNullOrWhiteSpace(builder.Configuration["Admin:Email"])||string.IsNullOrWhiteSpace(builder.Configuration["Admin:PasswordHash"]))) throw new InvalidOperationException("Admin:Email and Admin:PasswordHash are required in Production.");
+if(production&&SecurityConfig.PasswordHashError(builder.Configuration["Admin:PasswordHash"]) is { } hashError) throw new InvalidOperationException(hashError);
 // The admin session cookie is encrypted with the Data Protection key ring: kept on a volume, it survives restarts and deploys.
 var keysPath=builder.Configuration["DataProtection:KeysPath"];
 if(production&&string.IsNullOrWhiteSpace(keysPath)) throw new InvalidOperationException("DataProtection:KeysPath is required in Production; without it every restart signs the admin out.");

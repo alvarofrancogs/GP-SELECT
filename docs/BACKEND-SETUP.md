@@ -82,6 +82,7 @@ dotnet run hash-password.cs -- "tu-contraseña"
 ```
 
 El resultado (`AQAAAAIAAYagAAAAE…`) va en `Admin__PasswordHash`. Entre comillas simples en bash: contiene `/` y `+`.
+En Production se valida al arrancar: base64, marcador v3 (`0x01`), cabecera, salt y subkey válidos. El error identifica la clave de configuración sin mostrar su valor.
 
 ## Desarrollo local, paso a paso
 
@@ -112,6 +113,7 @@ El Admin está en `http://127.0.0.1:5173/admin`. Hay que abrirlo con la misma di
 
 - Frontend y API bajo el **mismo origen**; `Security__AllowedOrigin` = ese origen exacto (esquema + host + puerto, sin barra final).
 - `Storage__Provider=S3`. La subida es un `PUT` firmado desde el navegador: el bucket necesita CORS que permita `PUT` con `Content-Type` desde `AllowedOrigin`.
+- La firma SigV4 incluye `Content-Type` y `Content-Length` igual a `sizeBytes` del intent. R2 y SeaweedFS validan las cabeceras firmadas; el navegador envía el tamaño del archivo automáticamente (no fijar `Content-Length` desde JavaScript). Un proxy o proveedor que retire/cambie esa cabecera rechazará la firma: verificar un PUT del tamaño declarado y otro mayor al cambiar de proveedor. El almacenamiento File comprueba el tamaño en sus endpoints locales; `complete` mantiene la comprobación de metadatos.
 - Las migraciones se aplican al arrancar en Production.
 - HTTPS: la API no redirige ni envía HSTS. TLS, la redirección de HTTP a HTTPS y HSTS corresponden al proxy o al hosting. La cookie ya lleva `Secure` fuera de Development.
 - Cabeceras: la API envía `X-Content-Type-Options: nosniff` y no envía `Server`. El HTML de la web lo sirve el hosting: HSTS, `Content-Security-Policy` (o `X-Frame-Options`/`frame-ancestors`, sobre todo para `/admin`) y `Referrer-Policy` se configuran en el proxy o el hosting cuando exista.

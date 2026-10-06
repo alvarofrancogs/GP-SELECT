@@ -23,7 +23,7 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
     {
         // Newest first, sold vehicles kept on show after everything still for sale.
         var vehicles = await db.Vehicles.AsNoTracking().Where(Listed).OrderBy(x => x.Status == VehicleStatus.Sold)
-            .ThenByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id).Take(100).ToListAsync(ct);
+            .ThenByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id).Take(VehicleQueryLimits.MaxVehicles).ToListAsync(ct);
         var ids = vehicles.Select(x => x.Id).ToList();
         var images = (await db.Images.AsNoTracking().Where(x => ids.Contains(x.VehicleUnitId)).ToListAsync(ct)).ToLookup(x => x.VehicleUnitId);
         return Ok(vehicles.Select(v => PublicMapping.MapCard(v, images[v.Id])).ToList());

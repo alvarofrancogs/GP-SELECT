@@ -45,19 +45,19 @@ Plan en `docs/superpowers/plans/2026-10-02-backend-hardening.md`. Sin migracione
 
 **Deuda abierta del backend:**
 
-- **Concurrencia:** `complete` puede crear dos jobs; publicar mientras se borra la portada; superar las 30 fotos con intents simultáneos.
-- **S3:** la URL firmada no limita el tamaño (el worker ya rechaza más de 20 MiB, pero el objeto se queda en el bucket); no hay limpieza de huérfanos, de intents abandonados (bloquean cupo) ni de registros de idempotencia.
+- ~~**Concurrencia:** `complete` puede crear dos jobs; publicar mientras se borra la portada; superar las 30 fotos con intents simultáneos.~~
+- **S3:** ~~la URL firmada no limita el tamaño~~ (INFRA-2: `Content-Length` firmado) ~~e intents abandonados e idempotencia sin limpiar~~ (PROD-READINESS). Sigue abierto: huérfanos desconocidos del bucket (habría que listarlo).
 - ~~**Sesiones:** no se revocan al cambiar contraseña o email~~: resuelto en PROD-READINESS. ~~Claves de Data Protection sin persistencia~~: resuelto en INFRA-1 (`DataProtection__KeysPath`, obligatoria en Production).
-- **Login:** sin límite agregado entre IP; un hash de contraseña mal formado solo falla al hacer login.
-- **Listados sin paginar:** el catálogo se trunca a 100.
+- **Login:** sin límite agregado entre IP; ~~un hash de contraseña mal formado solo falla al hacer login~~.
+- ~~**Listados sin paginar:** el catálogo se trunca a 100.~~
 - ~~**Índices:** faltan `Images(VehicleUnitId)` completo e `Images(OriginalKey)`~~: resuelto en PROD-READINESS.
 - **Jobs:** la recuperación de jobs caducados consume intentos; el outbox puede reenviar un aviso; la cancelación del futuro proveedor de email.
-- **Estados:** Available → Sold con `showWhenSold` + precio 0 en el mismo guardado sigue dando `price_zero`.
+- ~~**Estados:** Available → Sold con `showWhenSold` + precio 0 en el mismo guardado sigue dando `price_zero`.~~
 - ~~**Imágenes:** las fotos pequeñas se amplían al generar `detail`~~: resuelto en PROD-READINESS.
 - **Memoria:** el peor caso por job ronda 0,7 GB (40 MP, PNG de 16 bits); dar ~1 GB al contenedor o usar `DecoderOptions.TargetSize`.
 - **Validación:** los 400 de cuerpo inválido incluyen un error espurio `"r"` del model binding (no tocar `SuppressImplicitRequiredAttribute…`, que quitaría los [Required] implícitos).
 - **Admin:** se puede archivar con una subida en curso; la foto queda pendiente y bloquea Guardar hasta Descartar tras recuperar. Deshabilitar archivar mientras hay subida/cambios.
-- **Slugs:** ß, ø, æ, ł, đ se pierden («Straße» → `stra-e`).
+- ~~**Slugs:** ß, ø, æ, ł, đ se pierden («Straße» → `stra-e`).~~
 - **Otros:** ~~objeto ausente → 500~~ (resuelto en STORAGE-404); equipamiento con validación cuadrática; aviso ICC de ImageSharp 3.1.11 sin CVE; SSH.NET solo en los tests.
 
 ### UI Simplification Pass — aprobado expresamente por el usuario
@@ -203,6 +203,14 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - `IObjectStorage.OpenReadAsync` devuelve `Stream?`: `null` si el objeto no existe (File: fichero o carpeta; S3: 404/`NoSuchKey`), como `HeadAsync`. Cualquier otro error sigue lanzando.
 - `StoredImages.Serve` (API) sirve las imágenes de los 4 endpoints (card/detail públicos, card/detail del admin y la vista previa): si falta el objeto, 404 con ProblemDetails, un warning con la clave y sin `Cache-Control`. El caché de un día solo se pone en las respuestas correctas. El worker trata un original que falta como cualquier fallo de procesado (sin cambios).
 - Implementación de Astra (worktree sobre una base antigua; Opus lo portó a `feat/perf-1`). Verificación: build 0 avisos, 105/105 unitarios, 73/73 de integración (3 nuevos).
+
+### INFRA-2 · copias externas y deuda del backend = PASS (06-10-2026, rama `feat/infra-2`, tag `infra-2-pass`)
+
+- **Copias fuera del servidor:** servicio `offsite` (perfil `offsite-backup`, rclone 1.70.3, configuración solo por variables `RCLONE_CONFIG_OFFSITE_*`): dumps a `<bucket>/db/` con 30 días, y con SeaweedFS las fotos a `photos/` con `--backup-dir` en `photos-history/`. Arranca 15 min tras el stack; el log dice el paso que falla, sin salida del proveedor; rechaza un `OFFSITE_BUCKET` igual al de fotos. Probado contra un S3 independiente.
+- **Logs:** `json-file` 10 MB × 3 en todos los servicios. **Redirección:** `REDIRECT_DOMAINS` → 308 a `DOMAIN` conservando ruta y query.
+- **Backend:** catálogo hasta 500 (constante compartida); Vendido con precio 0 en un guardado; `Content-Length` firmado en la subida S3 (SigV4; un PUT mayor da 403); índice único `ImageJobs(ImageId)` (migración `UniqueImageJobPerImage`) y bloqueo del coche en intent, completar, portada, quitar, reordenar, publicar, estado y guardado; slugs con ß/ø/æ/œ/ł/đ/þ; `Admin__PasswordHash` mal formado falla al arrancar en Production.
+- **Admin:** «Archivar vehículo» desactivado con cambios sin guardar o fotos en curso, con aviso.
+- **Verificación:** Astra (high) implementó; Opus corrigió el script de copias (paso del fallo, retraso inicial, bucket repetido) y la documentación, y verificó: build 0/0, 113/113 unitarios, 127/127 integración, sin cambios de modelo; stack de producción con copias, redirección, logs, firma de tamaño, Vendido y slug. Gemini: 10/10 en el admin a 1440/390.
 
 ### PROD-READINESS · backend y contacto = PASS (06-10-2026, rama `feat/prod-readiness`, tag `prod-readiness-pass`)
 

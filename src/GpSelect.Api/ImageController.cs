@@ -6,6 +6,7 @@ using GpSelect.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace GpSelect.Api;
 
@@ -36,7 +37,7 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
     /// <summary>Null when the vehicle's photos can change; otherwise the response to send (404, or 409 archived).</summary>
     async Task<IActionResult?> RefuseUnlessEditable(Guid vehicleId)
     {
-        var vehicle = await db.Vehicles.AsNoTracking().SingleOrDefaultAsync(x => x.Id == vehicleId);
+        var vehicle = await db.LockVehicleAsync(vehicleId);
         if (vehicle is null)
             return NotFound();
         try
@@ -57,6 +58,7 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
             return Problem(statusCode: 415, title: "Unsupported image format");
         if (request.SizeBytes is < 1 or > ImagePipeline.MaxUploadBytes)
             return Problem(statusCode: 413, title: "Image exceeds 20 MiB limit");
+        await using var tx = await db.Database.BeginTransactionAsync();
         var refusal = await RefuseUnlessEditable(vehicleId);
         if (refusal is not null)
             return refusal;
@@ -77,7 +79,7 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
         var result = new
         {
             imageId = image.Id,
-            uploadUrl = await storage.CreateUploadUrlAsync(image.OriginalKey, request.MimeType, HttpContext.RequestAborted),
+            uploadUrl = await storage.CreateUploadUrlAsync(image.OriginalKey, request.MimeType, request.SizeBytes, HttpContext.RequestAborted),
             expiresInSeconds = 900
         };
         db.IdempotencyRecords.Add(new()
@@ -88,17 +90,8 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
             StatusCode = 200,
             ResponseJson = JsonSerializer.Serialize(result)
         });
-        try
-        {
-            await db.SaveChangesAsync();
-        }
-        catch (DbUpdateException)
-        {
-            var race = await db.IdempotencyRecords.SingleOrDefaultAsync(x => x.Operation == op && x.Key == key);
-            if (race is not null)
-                return Replay(hash, race);
-            throw;
-        }
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
         return Ok(result);
     }
 
@@ -123,6 +116,8 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
             return Conflict();
         if (Request.ContentLength is null or < 1 or > ImagePipeline.MaxUploadBytes)
             return Problem(statusCode: 413, title: "Image exceeds 20 MiB limit");
+        if (Request.ContentLength != image.SizeBytes)
+            return Problem(statusCode: 413, title: "Declared size does not match intent");
         var mime = Request.ContentType?.Split(';')[0].Trim();
         if (!Allowed.Contains(mime, StringComparer.OrdinalIgnoreCase) || !string.Equals(mime, image.MimeType, StringComparison.OrdinalIgnoreCase))
             return Problem(statusCode: 415, title: "Declared MIME type does not match intent");
@@ -133,6 +128,7 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
     [HttpPost("{imageId:guid}/complete")]
     public async Task<IActionResult> Complete(Guid vehicleId, Guid imageId)
     {
+        await using var tx = await db.Database.BeginTransactionAsync();
         var refusal = await RefuseUnlessEditable(vehicleId);
         if (refusal is not null)
             return refusal;
@@ -152,7 +148,7 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
             var meta = await storage.HeadAsync(image.OriginalKey, HttpContext.RequestAborted);
             if (meta is null || meta.SizeBytes < 1 || meta.SizeBytes > ImagePipeline.MaxUploadBytes || meta.SizeBytes != image.SizeBytes || !string.Equals(meta.ContentType, image.MimeType, StringComparison.OrdinalIgnoreCase))
                 return Problem(statusCode: 409, title: "Uploaded object is missing or invalid");
-            if (!await db.ImageJobs.AnyAsync(x => x.ImageId == image.Id && (x.State == ImageJobState.Queued || x.State == ImageJobState.Processing)))
+            if (!await db.ImageJobs.AnyAsync(x => x.ImageId == image.Id))
                 db.ImageJobs.Add(ImageProcessingJob.Create(image.Id));
         }
         var state = image.State switch
@@ -174,7 +170,16 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
             StatusCode = status,
             ResponseJson = JsonSerializer.Serialize(result)
         });
-        await db.SaveChangesAsync();
+        try
+        {
+            await db.SaveChangesAsync();
+            await tx.CommitAsync();
+        }
+        catch (DbUpdateException e) when (e.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "IX_ImageJobs_ImageId" })
+        {
+            // Another completion already queued this image; the unique index is the final guard.
+            await tx.RollbackAsync();
+        }
         return new JsonResult(result) { StatusCode = status };
     }
 
@@ -207,10 +212,10 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
     [HttpPost("{imageId:guid}/cover")]
     public async Task<IActionResult> Cover(Guid vehicleId, Guid imageId)
     {
+        await using var tx = await db.Database.BeginTransactionAsync();
         var refusal = await RefuseUnlessEditable(vehicleId);
         if (refusal is not null)
             return refusal;
-        await using var tx = await db.Database.BeginTransactionAsync();
         var active = await db.Images.Where(x => x.VehicleUnitId == vehicleId && x.State != ImageState.Deleted).ToListAsync();
         var x = active.FirstOrDefault(x => x.Id == imageId);
         if (x is null)
@@ -227,10 +232,10 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
     [HttpPost("{imageId:guid}/remove")]
     public async Task<IActionResult> Remove(Guid vehicleId, Guid imageId)
     {
+        await using var tx = await db.Database.BeginTransactionAsync();
         var refusal = await RefuseUnlessEditable(vehicleId);
         if (refusal is not null)
             return refusal;
-        await using var tx = await db.Database.BeginTransactionAsync();
         var vehicle = await db.Vehicles.FindAsync(vehicleId);
         if (vehicle is null)
             return NotFound();
@@ -272,10 +277,10 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
         var ids = request.ImageIds;
         if (ids.Count > 30 || ids.Distinct().Count() != ids.Count)
             return Problem(statusCode: 400, title: "Invalid image order");
+        await using var tx = await db.Database.BeginTransactionAsync();
         var refusal = await RefuseUnlessEditable(vehicleId);
         if (refusal is not null)
             return refusal;
-        await using var tx = await db.Database.BeginTransactionAsync();
         var images = await db.Images.Where(x => x.VehicleUnitId == vehicleId && x.State != ImageState.Deleted).ToListAsync();
         VehicleImage? cover;
         try

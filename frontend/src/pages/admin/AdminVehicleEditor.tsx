@@ -77,6 +77,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
   const processing = !archived && (uploading || uploadState === 'working' || images.some((image) => image.state === 'Processing'));
   const incomplete = !archived && (pendingUploads || visibleImages.some((image) => image.state === 'PendingUpload'));
   const working = save.kind === 'saving' || save.kind === 'discarding';
+  const archiveLocked = dirty || uploading || processing || working;
 
   const blocker = useBlocker(({ currentLocation, nextLocation }) => !archived && (dirty || uploading || processing || working) && (currentLocation.pathname !== nextLocation.pathname || currentLocation.search !== nextLocation.search || currentLocation.hash !== nextLocation.hash));
   useEffect(() => {
@@ -327,7 +328,10 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
       <h2 id="archive-title" className="admin-section__title">{adminCopy.archive.title}</h2>
       <div>
         <p className="admin-field__hint">{adminCopy.archive.body}</p>
-        <button type="button" className="admin-link admin-link--danger" onClick={() => setArchiveOpen(true)}>{text.archiveAction}</button>
+        {/* Archiving makes the vehicle read-only: an upload or unsaved change would be stranded. */}
+        <button type="button" className="admin-link admin-link--danger" disabled={archiveLocked} aria-describedby={archiveLocked ? 'archive-locked' : undefined}
+          onClick={() => setArchiveOpen(true)}>{text.archiveAction}</button>
+        {archiveLocked ? <p id="archive-locked" className="admin-field__hint">{text.archiveLocked}</p> : null}
       </div>
     </section>}
 

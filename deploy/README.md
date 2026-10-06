@@ -11,11 +11,13 @@ Un servidor con Docker y un solo comando. Todo se ha probado en local en modo pr
 | `db` | PostgreSQL 16. |
 | `seaweedfs` + `storage-setup` | Almacenamiento S3 propio (opcional, perfil `self-hosted-storage`). Crea el bucket privado y una clave para la API limitada a ese bucket. |
 | `backup` | Un volcado diario de la base de datos en `deploy/backups/`. Conserva 14 días. |
+| `offsite` | Copia diaria a un bucket externo independiente (perfil `offsite-backup`): dumps y, con SeaweedFS, fotos con historial. |
 
 ## Requisitos
 
 - Un servidor Linux con Docker y el plugin `docker compose`. Con 2 GB de RAM basta: la API tiene un límite de 1 GB porque procesar una foto muy grande ocupa unos 0,7 GB.
 - Un dominio con un registro DNS **A** apuntando al servidor (`gpselect.es`).
+- Dominios secundarios: `REDIRECT_DOMAINS=gpselect.es, www.gpselect.es, www.gpselect.com` si `DOMAIN=gpselect.com`. Cada nombre necesita un registro **A** al servidor; Caddy obtiene sus certificados y redirige con 308, conservando ruta y query. No incluir el dominio principal ni el de S3. Vacío desactiva estas redirecciones.
 - Si usas el almacenamiento propio, un segundo registro **A** para las subidas (`s3.gpselect.es`).
 - Los puertos 80 y 443 abiertos.
 
@@ -61,7 +63,7 @@ La API aplica sola las migraciones nuevas. Los volúmenes (base de datos, fotos,
   `docker compose exec backup sh -c 'pg_dump -Fc -f /backups/manual-$(date +%Y%m%d-%H%M).dump'`
 - **Fotos con la opción A:**
   `docker run --rm -v gpselect_storage-data:/data -v "$PWD/backups:/b" alpine tar czf /b/fotos-$(date +%Y%m%d).tgz -C /data .`
-- **Fuera del servidor:** las copias que se quedan en el mismo servidor no protegen si se pierde el servidor. Hay que copiar `deploy/backups/` a otro sitio con regularidad, por ejemplo con `rclone` a otro almacenamiento.
+- **Fuera del servidor:** activar la copia opcional de abajo; los volúmenes y dumps locales no sobreviven a la pérdida del servidor.
 - **Restaurar la base de datos** (se sobrescribe el contenido actual):
 
 ```bash
@@ -69,6 +71,46 @@ docker compose stop api
 docker compose exec backup sh -c 'pg_restore --clean --if-exists -d gpselect /backups/<archivo>.dump'
 docker compose start api
 ```
+
+### Copia externa opcional (R2)
+
+1. Crear en Cloudflare R2 un bucket privado **separado** del de fotos, por ejemplo `gpselect-backups`. Crear un [token R2](https://developers.cloudflare.com/r2/api/tokens/) con **Object Read & Write**, limitado solo a ese bucket. No reutilizar las claves de la API.
+2. Rellenar `OFFSITE_BUCKET` y `RCLONE_CONFIG_OFFSITE_ENDPOINT` (`https://<account-id>.r2.cloudflarestorage.com`), `RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID` y `RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY`. `RCLONE_CONFIG_OFFSITE_PROVIDER` vale `Cloudflare` por defecto; admite otro proveedor S3 compatible. No hay archivo `rclone.conf`.
+3. En `.env`, usar `COMPOSE_PROFILES=self-hosted-storage,offsite-backup` con SeaweedFS, o `COMPOSE_PROFILES=offsite-backup` con fotos externas. Usar esta variable también al ejecutar los comandos de abajo: el script la lee para decidir si copia las fotos.
+4. Ejecutar `docker compose up -d offsite`. Empieza 15 minutos después de arrancar (`OFFSITE_START_DELAY`, en segundos), detrás del dump diario, y después cada 24 h. `OFFSITE_KEEP_DAYS` conserva 30 días de dumps por defecto. Si falla, el log indica el paso (`config`, `dumps`, `db-copy`, `db-retention` o `photos`); `docker compose restart offsite` lo reintenta tras el retraso. `OFFSITE_BUCKET` no puede ser el bucket de las fotos.
+
+Los dumps van a `db/` (solo `.dump`, nunca `.part`); las fotos propias a `photos/`. El [sync con backup-dir](https://rclone.org/docs/#backup-dir-dir) mueve versiones sustituidas o borradas a `photos-history/<fecha-UTC>/`, fuera del espejo. Ese historial no se purga automáticamente. Con fotos externas se omite esta copia: las conserva el proveedor fuera del servidor; configurar allí su protección frente a borrados accidentales.
+
+Comprobar un `SUCCESS` por ejecución y los objetos remotos; un `FAILED` no expone respuestas del proveedor ni credenciales. Si falla, revisar endpoint, token, bucket y conectividad. Restaurar periódicamente en un entorno de prueba. Todos los servicios rotan sus logs (`json-file`, 10 MB × 3).
+
+```bash
+docker compose logs --tail=5 offsite
+docker compose exec offsite sh -c 'rclone lsf "offsite:$OFFSITE_BUCKET/db"'
+docker compose exec offsite sh -c 'rclone check /backups "offsite:$OFFSITE_BUCKET/db" --include "*.dump" --one-way'
+# Solo con SeaweedFS:
+docker compose exec offsite sh -c 'rclone check "source:$S3_BUCKET" "offsite:$OFFSITE_BUCKET/photos" --one-way'
+```
+
+Para recuperar una BD, descargar el dump (el montaje del servicio habitual es de solo lectura) y ejecutar el `pg_restore` de arriba. Los comandos se ejecutan desde `deploy/`; sustituir `<archivo>.dump` por el nombre elegido:
+
+```bash
+docker compose run --rm --no-deps -v "$PWD/backups:/restore" --entrypoint /bin/sh offsite \
+  -c 'rclone copyto "offsite:$OFFSITE_BUCKET/db/<archivo>.dump" "/restore/<archivo>.dump"'
+```
+
+Para recuperar fotos en una instalación SeaweedFS ya inicializada, parar API y copia externa mientras se restaura. El espejo es la última copia correcta; el historial contiene solo versiones retiradas, no snapshots completos. Para deshacer un borrado, copiar su clave concreta desde la carpeta fechada elegida (conservar la ruta relativa a `photos/`):
+
+```bash
+docker compose stop api offsite
+docker compose run --rm --no-deps --entrypoint /bin/sh offsite \
+  -c 'rclone copy "offsite:$OFFSITE_BUCKET/photos" "source:$S3_BUCKET"'
+# Opcional: recuperar un objeto retirado o sustituido, después de copiar el espejo.
+docker compose run --rm --no-deps --entrypoint /bin/sh offsite \
+  -c 'rclone copyto "offsite:$OFFSITE_BUCKET/photos-history/<fecha-UTC>/<clave>" "source:$S3_BUCKET/<clave>"'
+docker compose start api offsite
+```
+
+Elegir un dump compatible con las fotos recuperadas: restaurar solo el objeto no revierte una eliminación en la BD. La copia diaria de fotos y el dump no forman un snapshot atómico.
 
 ## Formulario de contacto
 

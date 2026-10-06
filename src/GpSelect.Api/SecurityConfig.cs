@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
@@ -19,6 +20,22 @@ public static partial class SecurityConfig
         if (production && (uri.IsLoopback || uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)))
             return "Security:AllowedOrigin cannot be a local address in Production.";
         return null;
+    }
+
+    public static string? PasswordHashError(string? hash)
+    {
+        const string error = "Admin:PasswordHash must be a valid base64 ASP.NET Identity v3 password hash.";
+        if (string.IsNullOrWhiteSpace(hash)) return error;
+        byte[] bytes;
+        try { bytes = Convert.FromBase64String(hash); }
+        catch (FormatException) { return error; }
+        // v3: marker, PRF, iteration count, salt length (big endian), salt and subkey.
+        if (bytes.Length < 13 || bytes[0] != 0x01) return error;
+        var prf = BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(1, 4));
+        var iterations = BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(5, 4));
+        var saltLength = BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(9, 4));
+        return prf > 2 || iterations is 0 or > int.MaxValue || saltLength < 16 ||
+            saltLength > bytes.Length - 13 || bytes.Length - 13 - saltLength < 16 ? error : null;
     }
 
     /// <summary>The login limit is per client address, never per a value the client sends.

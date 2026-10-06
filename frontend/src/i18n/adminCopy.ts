@@ -111,6 +111,7 @@ export const adminCopy = {
     fixErrors: 'Revisa los campos marcados.',
     preview: 'Vista previa',
     archiveAction: 'Archivar vehículo',
+    archiveLocked: 'Guarda o descarta los cambios, y espera a que terminen las fotos, antes de archivar.',
     requiredNote: 'Solo marca, modelo y año son obligatorios.',
     archivedNotice: 'Vehículo archivado: oculto en la web y en el listado. Recupéralo para editarlo o publicarlo.',
     updated: 'Actualizado',

@@ -2,9 +2,16 @@
 # Start or update: docker compose up -d --build   (from this folder, with .env filled in)
 name: gpselect
 
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   # HTTPS (Let's Encrypt), the built web, and the proxies to the API and to MinIO.
   web:
+    logging: *logging
     build:
       context: ..
       dockerfile: deploy/web.Dockerfile
@@ -15,6 +22,7 @@ services:
       DOMAIN: ${DOMAIN}
       # Upload site for self-hosted storage; without one, an address that never matches.
       S3_SITE: ${S3_DOMAIN:-http://storage.disabled.invalid}
+      REDIRECT_DOMAINS: ${REDIRECT_DOMAINS:-http://redirect.disabled.invalid}
       ACME_EMAIL: ${ACME_EMAIL:?}
       CADDY_EXTRA_GLOBAL: ${CADDY_EXTRA_GLOBAL:-}
     ports:
@@ -33,6 +41,7 @@ services:
     restart: unless-stopped
 
   api:
+    logging: *logging
     build:
       context: ..
       dockerfile: deploy/api.Dockerfile
@@ -76,6 +85,7 @@ services:
     restart: unless-stopped
 
   db:
+    logging: *logging
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: gpselect
@@ -94,6 +104,7 @@ services:
   # Self-hosted S3 storage (profile self-hosted-storage): SeaweedFS with one key for the API, limited to its bucket.
   # With an external provider (Cloudflare R2, Backblaze B2…) leave the profile off and set S3_ENDPOINT in .env.
   seaweedfs:
+    logging: *logging
     image: chrislusf/seaweedfs:4.08
     profiles: [self-hosted-storage]
     environment:
@@ -120,6 +131,7 @@ services:
 
   # Creates the bucket once (safe to repeat) and exits.
   storage-setup:
+    logging: *logging
     image: chrislusf/seaweedfs:4.08
     profiles: [self-hosted-storage]
     environment:
@@ -141,8 +153,9 @@ services:
         condition: service_healthy
     restart: "no"
 
-  # Daily database dump to ./backups, keeping BACKUP_KEEP_DAYS days. Copy them off the server too (README).
+  # Daily database dump to ./backups, keeping BACKUP_KEEP_DAYS days.
   backup:
+    logging: *logging
     image: postgres:16-alpine
     environment:
       PGHOST: db
@@ -158,6 +171,39 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
+
+  # Independent off-site bucket; all rclone remotes come from environment variables.
+  offsite:
+    image: rclone/rclone:1.70.3
+    logging: *logging
+    profiles: [offsite-backup]
+    environment:
+      COMPOSE_PROFILES: ${COMPOSE_PROFILES:-}
+      OFFSITE_BUCKET: ${OFFSITE_BUCKET:-}
+      OFFSITE_KEEP_DAYS: ${OFFSITE_KEEP_DAYS:-30}
+      OFFSITE_START_DELAY: ${OFFSITE_START_DELAY:-900}
+      RCLONE_CONFIG: /dev/null
+      RCLONE_CONFIG_OFFSITE_TYPE: s3
+      RCLONE_CONFIG_OFFSITE_PROVIDER: ${RCLONE_CONFIG_OFFSITE_PROVIDER:-Cloudflare}
+      RCLONE_CONFIG_OFFSITE_ENDPOINT: ${RCLONE_CONFIG_OFFSITE_ENDPOINT:-}
+      RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID: ${RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID:-}
+      RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY: ${RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY:-}
+      RCLONE_CONFIG_OFFSITE_NO_CHECK_BUCKET: "true"
+      RCLONE_CONFIG_SOURCE_TYPE: s3
+      RCLONE_CONFIG_SOURCE_PROVIDER: SeaweedFS
+      RCLONE_CONFIG_SOURCE_ENDPOINT: http://seaweedfs:8333
+      RCLONE_CONFIG_SOURCE_ACCESS_KEY_ID: ${S3_ACCESS_KEY}
+      RCLONE_CONFIG_SOURCE_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
+      RCLONE_CONFIG_SOURCE_NO_CHECK_BUCKET: "true"
+      S3_BUCKET: ${S3_BUCKET:-gpselect}
+    volumes:
+      - ./offsite.sh:/offsite.sh:ro
+      - ./backups:/backups:ro
+    entrypoint: ["/bin/sh", "/offsite.sh"]
+    networks: [internal]
+    depends_on:
+      - backup
     restart: unless-stopped
 
 networks:
