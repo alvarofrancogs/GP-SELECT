@@ -30,12 +30,14 @@ interface ImageUploaderProps {
   onBusyChange: (busy: boolean) => void;
   /** Local uploads not yet settled on the server: still in flight, or failed and waiting for retry or removal. */
   onPendingChange: (state: 'none' | 'working' | 'failed') => void;
+  /** Uploads sent and completed, waiting for the server to process them: the only photos worth polling for. */
+  onQueuedChange: (queued: boolean) => void;
   onImageAdded: (image: AdminImage) => void;
   onOrderChange: (ids: string[]) => void;
   onRemove: (id: string) => void;
 }
 
-export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChange, onPendingChange, onImageAdded, onOrderChange, onRemove }: ImageUploaderProps) {
+export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChange, onPendingChange, onQueuedChange, onImageAdded, onOrderChange, onRemove }: ImageUploaderProps) {
   const text = adminCopy.photos;
   const [uploads, setUploads] = useState<Upload[]>([]);
   const uploadsRef = useRef<Upload[]>([]);
@@ -55,7 +57,8 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
     setUploads(next);
     onBusyChange(next.some((upload) => upload.phase === 'waiting' || upload.phase === 'uploading'));
     onPendingChange(next.some((upload) => upload.phase === 'failed') ? 'failed' : next.length ? 'working' : 'none');
-  }, [onBusyChange, onPendingChange]);
+    onQueuedChange(next.some((upload) => upload.phase === 'queued'));
+  }, [onBusyChange, onPendingChange, onQueuedChange]);
   const patch = useCallback((key: string, changes: Partial<Upload>) => {
     commit(uploadsRef.current.map((u) => u.key === key ? { ...u, ...changes } : u));
   }, [commit]);

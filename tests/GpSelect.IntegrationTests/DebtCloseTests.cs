@@ -113,4 +113,15 @@ public sealed class DebtCloseTests(ApiFactory api) : IClassFixture<ApiFactory>
         db.Enquiries.Remove(await db.Enquiries.SingleAsync(x => x.Id == enquiry.Id));
         await db.SaveChangesAsync();
     }
+
+    [Fact]
+    public async Task An_unreadable_body_reports_the_real_field_without_the_parameter_name()
+    {
+        var body = new StringContent("{\"make\":\"BMW\",\"model\":{\"x\":1},\"firstRegistrationYear\":2024}", System.Text.Encoding.UTF8, "application/json");
+        var response = await api.Admin.PostAsync("/api/admin/vehicles", body);
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
+        var errors = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("errors");
+        Assert.True(errors.TryGetProperty("$.model", out _));
+        Assert.False(errors.TryGetProperty("r", out _));
+    }
 }

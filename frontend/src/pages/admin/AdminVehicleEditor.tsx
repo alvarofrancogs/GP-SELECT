@@ -55,6 +55,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
   const [save, setSave] = useState<SaveState>({ kind: 'idle' });
   const [uploading, setUploading] = useState(false);
   const [uploadState, setUploadState] = useState<'none' | 'working' | 'failed'>('none');
+  const [queued, setQueued] = useState(false);
   const pendingUploads = uploadState !== 'none';
   const [images, setImages] = useState(initial.images);
   const [removed, setRemoved] = useState<string[]>([]);
@@ -102,7 +103,10 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
   }, [initial.id]);
 
   useEffect(() => {
-    if (archived || working || !images.some((image) => image.state === 'Processing' || image.state === 'PendingUpload')) return;
+    // A PendingUpload photo only changes once this tab has sent it; one left behind (a failed upload, another tab)
+    // would otherwise keep the editor asking every 1.5 s for nothing.
+    const changing = images.some((image) => image.state === 'Processing' || (image.state === 'PendingUpload' && (queued || uploading)));
+    if (archived || working || !changing) return;
     const version = galleryVersion.current;
     const timer = window.setTimeout(() => {
       void reload().catch((failure) => {
@@ -111,7 +115,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
       });
     }, 1500);
     return () => window.clearTimeout(timer);
-  }, [archived, images, working, reload, save]);
+  }, [archived, images, working, reload, save, queued, uploading]);
 
   const imageAdded = useCallback((image: AdminImage) => {
     setImages((current) => current.some((item) => item.id === image.id) ? current : [...current, image]);
@@ -126,7 +130,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     setRemoved([]);
     setStatus(updated.status === 'Archived' ? 'Draft' : updated.status);
     setShowWhenSold(updated.showWhenSold);
-    setUploadState('none');
+    setUploadState('none'); setQueued(false);
     setUploading(false);
     setUploaderKey((key) => key + 1);
     setErrors({});
@@ -138,7 +142,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     galleryVersion.current += 1;
     setSave({ kind: 'discarding' });
     setUploaderKey((key) => key + 1);
-    setUploadState('none');
+    setUploadState('none'); setQueued(false);
     try {
       // Remove only staged images; saved images have only been removed from the local draft.
       for (const image of images.filter((item) => item.isStaged)) {
@@ -316,7 +320,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
 
     <Section id="photos" title={text.sections.photos}>
       <ImageUploader key={uploaderKey} vehicleId={vehicle.id} images={visibleImages} reload={reload}
-        disabled={archived || working} onBusyChange={setUploading} onPendingChange={setUploadState} onImageAdded={imageAdded}
+        disabled={archived || working} onBusyChange={setUploading} onPendingChange={setUploadState} onQueuedChange={setQueued} onImageAdded={imageAdded}
         onOrderChange={(ids) => {
           setImages((current) => [...ids.map((id) => current.find((image) => image.id === id)!), ...current.filter((image) => !ids.includes(image.id))]);
           setSave({ kind: 'idle' });
