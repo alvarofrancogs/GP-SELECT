@@ -12,6 +12,61 @@ namespace GpSelect.IntegrationTests;
 public sealed class ProductionReadinessTests
 {
     [Theory]
+    [InlineData("Smtp:Security", "None")]
+    [InlineData("Smtp:Port", "0")]
+    [InlineData("Smtp:Port", "invalid")]
+    public void Invalid_smtp_options_fail_without_echoing_values(string key, string value)
+    {
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Smtp:Host"] = "smtp.example.test", ["Smtp:From"] = "sender@example.test",
+            ["Enquiries:NotificationEmail"] = "recipient@example.test", [key] = value
+        }).Build();
+        Assert.Contains(key, Assert.Throws<InvalidOperationException>(() => SmtpEnquiryNotifier.ValidateConfiguration(config, true)).Message);
+    }
+
+    [Fact]
+    public void Disabled_form_does_not_require_smtp()
+        => SmtpEnquiryNotifier.ValidateConfiguration(new ConfigurationBuilder().Build(), true);
+
+    [Theory]
+    [InlineData("Smtp:Host")]
+    [InlineData("Smtp:From")]
+    [InlineData("Enquiries:NotificationEmail")]
+    public void Enabled_form_requires_smtp_in_production(string missingKey)
+    {
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Production");
+            builder.UseSetting("Security:AllowedOrigin", "https://www.example.test");
+            builder.UseSetting("Admin:Email", "admin@example.test");
+            builder.UseSetting("Admin:PasswordHash", "hash");
+            builder.UseSetting("DataProtection:KeysPath", "unused-keys");
+            builder.UseSetting("Enquiries:Enabled", "true");
+            builder.UseSetting("Smtp:Host", "smtp.example.test");
+            builder.UseSetting("Smtp:From", "sender@example.test");
+            builder.UseSetting("Enquiries:NotificationEmail", "recipient@example.test");
+            builder.UseSetting(missingKey, "");
+        });
+        var error = Assert.ThrowsAny<Exception>(() => factory.CreateClient());
+        Assert.Contains(missingKey, error.GetBaseException().Message);
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("-1")]
+    public void Retention_must_be_at_least_one_day(string days)
+    {
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Development");
+            builder.UseSetting("Enquiries:RetentionDays", days);
+        });
+        var error = Assert.ThrowsAny<Exception>(() => factory.CreateClient());
+        Assert.Contains("Enquiries:RetentionDays", error.GetBaseException().Message);
+    }
+
+    [Theory]
     [InlineData("https://www.example.test", true, null)]
     [InlineData("https://www.example.test:8443", true, null)]
     [InlineData("http://127.0.0.1:5173", false, null)]

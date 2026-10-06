@@ -16,7 +16,12 @@ Backend .NET 10 (`src/`), EF Core y PostgreSQL. No hay `appsettings*.json` en `G
 | `Admin__Email` | cualquier email | **obligatoria**: el del administrador |
 | `Admin__PasswordHash` | hash generado (ver abajo) | **obligatoria**: hash generado |
 | `Enquiries__Enabled` | `true` para probar el formulario | `false` (o vacío) **hasta tener los textos legales**; después `true` |
-| `Enquiries__NotificationEmail` | opcional | buzón que recibe el aviso de cada consulta (pendiente de definir) |
+| `Enquiries__NotificationEmail` | obligatorio con SMTP | obligatorio al activar el formulario; buzón receptor |
+| `Enquiries__RetentionDays` | `30`, mínimo `1` | igual; borrado horario por fecha de recepción, aunque no se entregase el aviso |
+| `Smtp__Host`, `Smtp__From` | Host activa el notificador; From es la dirección remitente | obligatorios al activar el formulario; remitente autorizado por el proveedor |
+| `Smtp__Port` | `587` | puerto del proveedor |
+| `Smtp__Username`, `Smtp__Password` | credenciales SMTP | igual; pueden quedar vacíos para un relay sin autenticación |
+| `Smtp__Security` | `StartTls` | `StartTls` o `SslOnConnect` (normalmente puerto `465`) |
 | `Storage__Provider` | vacío → `File` automático en Development | `S3` (obligatorio) |
 | `Storage__Root` | opcional (por defecto `uploads/` junto al binario) | — |
 | `Storage__Endpoint`, `__AccessKey`, `__SecretKey`, `__Bucket` | — | obligatorias con S3 |
@@ -47,16 +52,18 @@ Flujo: formulario → `POST /api/public/enquiries` → la consulta se guarda en 
 
 - **Campos:** exactamente los del formulario: `intent` (`Vehicle` | `Search`), `name` (2–200), `email` (≤ 200), `phone` (opcional, 7–15 dígitos, ≤ 30), `vehicle` (obligatorio con `Vehicle`, ≤ 200) y `message` (10–5000). Se rechazan los caracteres de control. No se guardan IP ni otros datos. Además: `CreatedAt` (indexado, para aplicar una retención) y el estado técnico del aviso (`NotificationStatus` `Pending`/`Sent`/`Failed`, intentos, próximo intento y `NotifiedAt`). No hay estado comercial ni CRM.
 - **Errores:** 400 con `code` y `field`; 413 si el cuerpo pasa de 32 KB; 415 si no es JSON; **503 `enquiries_unavailable`** si `Enquiries__Enabled` no es `true`; 429 `rate_limited` al pasar de 5 envíos por 10 minutos por cliente (misma clave que el login, con `Security__TrustedProxies`).
-- **Email desacoplado:** el puerto es `IEnquiryNotifier` (Infrastructure). **No hay ningún adaptador implementado: el proveedor está por decidir.** Sin adaptador, las consultas quedan `Pending` y la API avisa al arrancar; en cuanto se registre uno, el worker envía también las pendientes. Reintentos a 1 min, 5 min, 30 min, 2 h y 12 h; al sexto intento, `Failed` (la consulta sigue guardada). Los logs solo llevan el id de la consulta y el tipo de error. Supone una sola instancia de la API.
+- **Email desacoplado:** `IEnquiryNotifier` usa MailKit cuando existe `Smtp__Host`: texto plano desde «GP SELECT» y Reply-To del cliente. Sin SMTP, las consultas quedan `Pending`; Production rechaza activar el formulario sin Host, From y destinatario. Reintentos a 1 min, 5 min, 30 min, 2 h y 12 h; al sexto intento, `Failed`. Los logs no incluyen direcciones ni contenido. Supone una sola instancia de la API.
 - **Leer las consultas hoy** (sin pantalla en el Admin): `SELECT "CreatedAt","Intent","Name","Email","Phone","Vehicle","Message" FROM "Enquiries" ORDER BY "CreatedAt" DESC;`
 - **Frontend:** envía solo si se ha compilado con `VITE_ENQUIRIES_ENABLED=true`. Por defecto no: el build de producción ni siquiera incluye la llamada, y el formulario avisa de que la consulta no se envía. En desarrollo siempre envía.
-- **LEGAL/PRIVACY DECISION REQUIRED BEFORE PUBLIC RELEASE:** responsable del tratamiento, base jurídica, texto informativo o de consentimiento junto al formulario y plazo de conservación. Nada de esto está definido ni inventado. Hasta entonces, `Enquiries__Enabled` y `VITE_ENQUIRIES_ENABLED` deben quedarse sin activar en producción. La retención se podrá aplicar con un borrado por `CreatedAt`, sin rehacer nada.
+- **Antes de activar el formulario:** completar y revisar los textos legales. La base de datos elimina consultas pasados 30 días por `CreatedAt` (configurable), independientemente del aviso. Esta limpieza no borra correos ya entregados ni copias de seguridad, que tienen su propia conservación.
 
 `X-Correlation-ID` del cliente solo se reutiliza si tiene como máximo 64 caracteres `[A-Za-z0-9._-]`; si no, se genera uno nuevo.
 
 ### Cookie de sesión
 
-`HttpOnly`, `SameSite=Strict`; `Secure` siempre fuera de Development (en Development, igual que la petición). Sin duración configurada: rige la predeterminada de ASP.NET Core. Las rutas `/api` sin sesión devuelven 401 (no redirigen). Un único administrador (`Admin__Email` + `Admin__PasswordHash`), rol `Admin`.
+`HttpOnly`, `SameSite=Strict`; `Secure` siempre fuera de Development (en Development, igual que la petición). Caducidad deslizante de 14 días. Cada petición valida una huella de las credenciales: cambiar email o hash invalida las cookies existentes, también las anteriores a esta implementación. Las rutas `/api` sin sesión devuelven 401 (no redirigen). Un único administrador (`Admin__Email` + `Admin__PasswordHash`), rol `Admin`.
+
+El mantenimiento horario elimina intents sin completar de más de 24 h y registros de idempotencia de más de 48 h. Conserva staging completado y fotos de archivados. Reintenta borrar objetos de imágenes marcadas Deleted; no enumera el bucket para buscar huérfanos desconocidos. Las imágenes anteriores a la migración reciben 24 h de margen desde el despliegue.
 
 ### Generar `Admin__PasswordHash`
 

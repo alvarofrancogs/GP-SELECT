@@ -47,13 +47,13 @@ Plan en `docs/superpowers/plans/2026-10-02-backend-hardening.md`. Sin migracione
 
 - **Concurrencia:** `complete` puede crear dos jobs; publicar mientras se borra la portada; superar las 30 fotos con intents simultáneos.
 - **S3:** la URL firmada no limita el tamaño (el worker ya rechaza más de 20 MiB, pero el objeto se queda en el bucket); no hay limpieza de huérfanos, de intents abandonados (bloquean cupo) ni de registros de idempotencia.
-- **Sesiones:** no se revocan al cambiar contraseña o email. ~~Claves de Data Protection sin persistencia~~: resuelto en INFRA-1 (`DataProtection__KeysPath`, obligatoria en Production).
+- ~~**Sesiones:** no se revocan al cambiar contraseña o email~~: resuelto en PROD-READINESS. ~~Claves de Data Protection sin persistencia~~: resuelto en INFRA-1 (`DataProtection__KeysPath`, obligatoria en Production).
 - **Login:** sin límite agregado entre IP; un hash de contraseña mal formado solo falla al hacer login.
 - **Listados sin paginar:** el catálogo se trunca a 100.
-- **Índices:** faltan `Images(VehicleUnitId)` completo e `Images(OriginalKey)`.
+- ~~**Índices:** faltan `Images(VehicleUnitId)` completo e `Images(OriginalKey)`~~: resuelto en PROD-READINESS.
 - **Jobs:** la recuperación de jobs caducados consume intentos; el outbox puede reenviar un aviso; la cancelación del futuro proveedor de email.
 - **Estados:** Available → Sold con `showWhenSold` + precio 0 en el mismo guardado sigue dando `price_zero`.
-- **Imágenes:** las fotos pequeñas se amplían al generar `detail` (ResizeMode.Max: 1600×1000 → 2400×1500); valorar no ampliar.
+- ~~**Imágenes:** las fotos pequeñas se amplían al generar `detail`~~: resuelto en PROD-READINESS.
 - **Memoria:** el peor caso por job ronda 0,7 GB (40 MP, PNG de 16 bits); dar ~1 GB al contenedor o usar `DecoderOptions.TargetSize`.
 - **Validación:** los 400 de cuerpo inválido incluyen un error espurio `"r"` del model binding (no tocar `SuppressImplicitRequiredAttribute…`, que quitaría los [Required] implícitos).
 - **Admin:** se puede archivar con una subida en curso; la foto queda pendiente y bloquea Guardar hasta Descartar tras recuperar. Deshabilitar archivar mientras hay subida/cambios.
@@ -112,7 +112,7 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 ### Remaining release blockers (no invalidan el PASS técnico de 3C)
 
 - **LEGAL / PRIVACY:** páginas hechas (05-10-2026: `/aviso-legal`, `/privacidad`, `/cookies`, enlaces en el footer y primera capa RGPD bajo el formulario). Titular (Miguel Reverte Peñalver, autónomo), NIF y teléfono puestos el 06-10-2026; **faltan domicilio fiscal, email (será `info@gpselect.com`) y plazo de conservación (propuesto: 12 meses)** en `frontend/src/config/legal.ts`. Hasta entonces se ven como «Pendiente» y el build avisa. Textos pendientes de revisión por un profesional legal.
-- **EMAIL PROVIDER:** sin adaptador de `IEnquiryNotifier`.
+- **EMAIL PROVIDER:** adaptador SMTP hecho (PROD-READINESS); falta elegir proveedor y poner sus credenciales.
 - **RECIPIENT MAILBOX:** `Enquiries__NotificationEmail` sin definir.
 - **DOMAIN / DEPLOY:** infraestructura lista y probada en local (INFRA-1, `deploy/`). Falta contratar el servidor y el dominio y elegir el almacenamiento de fotos: SeaweedFS propio o un S3 externo como R2 o B2.
 - **SEO:** SEO-1, GEO-1 y SEO-2 PASS. Pendiente: GEO-2 (FAQ, espera datos del usuario), Google Business Profile (fuera del código) y dominio para activar `VITE_SITE_URL` y `Seo__SiteUrl`.
@@ -203,6 +203,16 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - `IObjectStorage.OpenReadAsync` devuelve `Stream?`: `null` si el objeto no existe (File: fichero o carpeta; S3: 404/`NoSuchKey`), como `HeadAsync`. Cualquier otro error sigue lanzando.
 - `StoredImages.Serve` (API) sirve las imágenes de los 4 endpoints (card/detail públicos, card/detail del admin y la vista previa): si falta el objeto, 404 con ProblemDetails, un warning con la clave y sin `Cache-Control`. El caché de un día solo se pone en las respuestas correctas. El worker trata un original que falta como cualquier fallo de procesado (sin cambios).
 - Implementación de Astra (worktree sobre una base antigua; Opus lo portó a `feat/perf-1`). Verificación: build 0 avisos, 105/105 unitarios, 73/73 de integración (3 nuevos).
+
+### PROD-READINESS · backend y contacto = PASS (06-10-2026, rama `feat/prod-readiness`, tag `prod-readiness-pass`)
+
+- **Email:** `SmtpEnquiryNotifier` (MailKit 4.18.1) implementa `IEnquiryNotifier`; se registra con `Smtp__Host`. Variables `SMTP_*` en `deploy/.env.example` y `docker-compose.yml`. Production no arranca con el formulario activo sin Host, From y `Enquiries__NotificationEmail`. Envío real sin probar: se probará con el proveedor definitivo.
+- **Retención:** `BackendMaintenanceWorker` (cada hora) borra consultas con más de `Enquiries__RetentionDays` (30) aunque el aviso no se entregase. El buzón de Miguel guarda el plazo de `legal.ts` (`retention`, propuesto 12 meses); las copias de la BD, 14 días. Privacidad lo explica así.
+- **Limpieza:** intents sin completar > 24 h (fila y objeto), idempotencia > 48 h, objetos de imágenes `Deleted` durante 24 h desde la primera limpieza (`StorageCleanedAt`). Sin listar el bucket: los huérfanos desconocidos siguen abiertos.
+- **Sesión:** huella de email + hash en la cookie; cambiar cualquiera invalida las sesiones (comprobado en el stack real: 401).
+- **Fotos:** las derivadas nunca superan el original (640×336 queda igual). Migración `AddImageIndexesAndCreatedAt`: `CreatedAt` y `StorageCleanedAt` en Images, índices `Images(VehicleUnitId)` y `Images(OriginalKey)`.
+- **Frontend:** WhatsApp con el número de Miguel (`wa.me/34661631555`) en Contacto y fichas; sin `--configLoader runner`.
+- **Verificación:** Astra implementó (sin NuGet ni Docker en su sandbox); Opus corrigió un test (CRLF de MIME), pidió `StorageCleanedAt` y verificó: build 0/0, 110/110 unitarios, 100/100 integración, sin cambios de modelo pendientes; stack de producción local con mantenimiento, foto pequeña y cambio de contraseña. Gemini: 18/18 checks (WhatsApp ES/EN, privacidad, regresión) a 1440/390.
 
 ### .NET 10 = PASS (06-10-2026, rama `chore/dotnet-10`, tag `dotnet-10-pass`)
 

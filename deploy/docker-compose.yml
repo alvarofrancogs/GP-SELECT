@@ -54,6 +54,13 @@ services:
       Seo__SiteUrl: https://${DOMAIN}
       Enquiries__Enabled: ${ENQUIRIES_ENABLED:-false}
       Enquiries__NotificationEmail: ${ENQUIRIES_NOTIFICATION_EMAIL:-}
+      Enquiries__RetentionDays: ${ENQUIRIES_RETENTION_DAYS:-30}
+      Smtp__Host: ${SMTP_HOST:-}
+      Smtp__Port: ${SMTP_PORT:-587}
+      Smtp__Username: ${SMTP_USERNAME:-}
+      Smtp__Password: ${SMTP_PASSWORD:-}
+      Smtp__From: ${SMTP_FROM:-}
+      Smtp__Security: ${SMTP_SECURITY:-StartTls}
       Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: Warning
     volumes:
       - api-keys:/data/keys

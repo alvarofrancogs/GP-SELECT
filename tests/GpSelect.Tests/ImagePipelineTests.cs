@@ -13,6 +13,21 @@ namespace GpSelect.Tests;
 
 public class ImagePipelineTests
 {
+    [Theory]
+    [InlineData(40, 20, 40, 20, 40, 20)]
+    [InlineData(20, 40, 20, 40, 20, 40)]
+    [InlineData(1600, 1000, 800, 500, 1600, 1000)]
+    [InlineData(3200, 2400, 800, 600, 2400, 1800)]
+    public async Task Render_fits_the_target_without_enlarging(int width, int height, int cardWidth, int cardHeight, int detailWidth, int detailHeight)
+    {
+        using var source = new Image<Rgb24>(width, height);
+        var rendered = await ImagePipeline.RenderAsync(source, CancellationToken.None);
+        using var card = rendered.Card;
+        using var detail = rendered.Detail;
+        Assert.Equal(new Size(cardWidth, cardHeight), Image.Identify(card).Size);
+        Assert.Equal(new Size(detailWidth, detailHeight), Image.Identify(detail).Size);
+    }
+
     [Fact]
     public async Task ReadBounded_copies_a_non_seekable_stream_into_a_rewound_buffer()
     {

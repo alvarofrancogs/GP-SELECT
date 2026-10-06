@@ -157,6 +157,8 @@ public sealed class VehicleUnit
 
 public sealed class VehicleImage
 {
+    public DateTimeOffset CreatedAt { get; private set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? StorageCleanedAt { get; private set; }
     private VehicleImage() { }
     public Guid Id { get; private set; } = Guid.NewGuid(); public Guid VehicleUnitId { get; private set; }
     public string OriginalKey { get; private set; } = ""; public string? CardKey { get; private set; } public string? DetailKey { get; private set; }

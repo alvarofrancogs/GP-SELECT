@@ -72,7 +72,18 @@ docker compose start api
 
 ## Formulario de contacto
 
-Viene desactivado (`ENQUIRIES_ENABLED=false`) hasta tener tres cosas: los datos legales en `frontend/src/config/legal.ts`, el proveedor de email y el buzón (`ENQUIRIES_NOTIFICATION_EMAIL`). Para activarlo se pone `true` y se ejecuta `docker compose up -d --build`: hay que recompilar la web.
+Viene desactivado (`ENQUIRIES_ENABLED=false`). Completar los datos legales y configurar un proveedor SMTP (Brevo, Zoho, Google Workspace, etc.) con estos valores en `.env`:
+
+| Variable | Valor |
+|---|---|
+| `SMTP_HOST`, `SMTP_FROM` | servidor SMTP y dirección remitente autorizada |
+| `SMTP_PORT` | `587` por defecto; usar el puerto del proveedor |
+| `SMTP_USERNAME`, `SMTP_PASSWORD` | credenciales SMTP del proveedor |
+| `SMTP_SECURITY` | `StartTls` por defecto, o `SslOnConnect` (normalmente `465`) |
+| `ENQUIRIES_NOTIFICATION_EMAIL` | buzón receptor; Reply-To será el cliente |
+| `ENQUIRIES_RETENTION_DAYS` | `30` por defecto, mínimo `1`; afecta a PostgreSQL, no al buzón ni a backups |
+
+Después poner `ENQUIRIES_ENABLED=true` y ejecutar `docker compose up -d --build` para recompilar la web. En Production el API rechaza el arranque del formulario activo sin Host, From o destinatario. El mantenimiento borra consultas caducadas cada hora, incluso si su aviso no se entregó.
 
 ## Comprobaciones rápidas
 

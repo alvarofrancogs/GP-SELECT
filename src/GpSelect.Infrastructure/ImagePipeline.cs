@@ -69,8 +69,8 @@ public static class ImagePipeline
 
     public static async Task<(MemoryStream Card, MemoryStream Detail)> RenderAsync(Image source, CancellationToken ct)
     {
-        using var card = source.Clone(x => x.Resize(new ResizeOptions { Size = new Size(800, 600), Mode = ResizeMode.Max }));
-        using var detail = source.Clone(x => x.Resize(new ResizeOptions { Size = new Size(2400, 1800), Mode = ResizeMode.Max }));
+        using var card = source.Clone(x => x.Resize(new ResizeOptions { Size = new Size(Math.Min(800, source.Width), Math.Min(600, source.Height)), Mode = ResizeMode.Max }));
+        using var detail = source.Clone(x => x.Resize(new ResizeOptions { Size = new Size(Math.Min(2400, source.Width), Math.Min(1800, source.Height)), Mode = ResizeMode.Max }));
         var cardStream = new MemoryStream();
         var detailStream = new MemoryStream();
         try

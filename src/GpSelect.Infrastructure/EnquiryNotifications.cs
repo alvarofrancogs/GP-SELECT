@@ -25,7 +25,7 @@ public sealed record EnquiryNotification(Guid EnquiryId, string Subject, string 
         e.Email);
 }
 
-/// <summary>Delivery port. No provider is chosen yet: an adapter (SMTP or an HTTP API) implements this once one is decided.</summary>
+/// <summary>Delivery port, implemented by the optional SMTP adapter.</summary>
 public interface IEnquiryNotifier
 {
     Task SendAsync(EnquiryNotification notification, CancellationToken ct);

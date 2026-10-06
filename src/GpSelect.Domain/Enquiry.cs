@@ -7,7 +7,7 @@ public enum EnquiryIntent { Vehicle, Search }
 public enum EnquiryNotificationStatus { Pending, Sent, Failed }
 
 /// <summary>A contact-form enquiry. The stored row is the source of truth; the email notification is best effort.
-/// CreatedAt exists so a retention policy can delete old rows once it is defined.</summary>
+/// Rows are deleted after Enquiries:RetentionDays (30 days by default), regardless of notification status.</summary>
 public sealed class Enquiry
 {
     public const int NameMin = 2, NameMax = 200, EmailMax = 200, PhoneMax = 30, VehicleMin = 2, VehicleMax = 200, MessageMin = 10, MessageMax = 5000;
