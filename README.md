@@ -1,6 +1,6 @@
 ﻿# GP SELECT — Backend
 
-Copia independiente del backend de GP SELECT. El proyecto está construido con **.NET 8**, **ASP.NET Core Web API**, **Entity Framework Core** y **PostgreSQL**.
+Copia independiente del backend de GP SELECT. El proyecto está construido con **.NET 10**, **ASP.NET Core Web API**, **Entity Framework Core** y **PostgreSQL**.
 
 ## Estructura
 
@@ -86,7 +86,7 @@ En producción se exige almacenamiento S3-compatible y se aplican las migracione
 
 ## Ejecutar
 
-Requisitos: .NET 8 SDK y PostgreSQL 14+.
+Requisitos: .NET 10 SDK y PostgreSQL 14+.
 
 ```powershell
 dotnet restore

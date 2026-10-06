@@ -38,7 +38,7 @@ services:
       dockerfile: deploy/api.Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__Default: Host=db;Database=gpselect;Username=gpselect;Password=${DB_PASSWORD:?}
+      ConnectionStrings__Default: Host=db;Database=gpselect;Username=gpselect;Password=${DB_PASSWORD:?};GSS Encryption Mode=Disable
       Security__AllowedOrigin: https://${DOMAIN}
       Security__TrustedProxies: 172.30.0.10
       Admin__Email: ${ADMIN_EMAIL:?}

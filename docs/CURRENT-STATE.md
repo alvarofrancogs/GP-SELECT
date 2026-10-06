@@ -204,6 +204,13 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - `StoredImages.Serve` (API) sirve las imágenes de los 4 endpoints (card/detail públicos, card/detail del admin y la vista previa): si falta el objeto, 404 con ProblemDetails, un warning con la clave y sin `Cache-Control`. El caché de un día solo se pone en las respuestas correctas. El worker trata un original que falta como cualquier fallo de procesado (sin cambios).
 - Implementación de Astra (worktree sobre una base antigua; Opus lo portó a `feat/perf-1`). Verificación: build 0 avisos, 105/105 unitarios, 73/73 de integración (3 nuevos).
 
+### .NET 10 = PASS (06-10-2026, rama `chore/dotnet-10`, tag `dotnet-10-pass`)
+
+- .NET 8 pierde soporte el 10-11-2026. `net10.0` centralizado en `Directory.Build.props`; EF Core 10.0.12, Npgsql 10.0.3, `Mvc.Testing`/`Hosting.Abstractions` 10.0.12, herramientas de test al día, `dotnet-ef` 10.0.12 como herramienta local (`dotnet-tools.json`). Swashbuckle eliminado (sin uso). ImageSharp y AWSSDK.S3 sin cambios.
+- Código: `KnownNetworks` → `KnownIPNetworks` (obsoleto en ASP.NET Core 10) y el constructor de `PostgreSqlBuilder` con imagen (Testcontainers 4.15). Imágenes Docker `sdk`/`aspnet` 10.0.
+- Npgsql 9+ negocia cifrado GSS por defecto y la imagen de .NET 10 no trae `libgssapi_krb5`: `GSS Encryption Mode=Disable` en la cadena de conexión de `docker-compose.yml` (sin Kerberos).
+- Astra implementó (su sandbox no tenía NuGet ni Docker); Opus verificó: build 0 warnings, 105/105 unitarios, 75/75 integración, sin cambios pendientes de modelo, snippet del hash OK. Stack de producción local (Caddy + API + Postgres + SeaweedFS): migraciones desde cero, claves como usuario `app`, login, alta, subida S3, procesado, publicación, ficha del servidor, sitemap, 404 y sesión tras reiniciar; 0 errores en logs. Gemini (READ-ONLY): 20/20 checks de navegador a 1440/390.
+
 ### SEO-2 · fichas y sitemap desde el servidor = PASS (05-10-2026, tag `seo-2-pass`)
 
 - `SeoController` (API): `GET /seo/vehiculos/{slug}` devuelve el `spa.html` del frontend con el head del vehículo (title, description, canonical, OG con su foto, JSON-LD `Car` + `Offer` si no está vendido y tiene precio) y su contenido legible en `#root` (GEO), con `max-age=60`. Inexistente o no público → 404 + `noindex`. Sin plantilla o sin marcadores → 503. `GET /seo/sitemap.xml`: rutas estáticas + vehículos listados con `lastmod`.

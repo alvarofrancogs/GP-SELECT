@@ -13,7 +13,7 @@ var dataProtection=builder.Services.AddDataProtection().SetApplicationName("GpSe
 if(!string.IsNullOrWhiteSpace(keysPath)) dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
 // Behind a reverse proxy the socket address is the proxy's: trust X-Forwarded-For only from the proxies listed here.
 if(!SecurityConfig.TryParseTrustedProxies(builder.Configuration["Security:TrustedProxies"],out var trustedProxies)) throw new InvalidOperationException("Security:TrustedProxies must be a comma-separated list of IP addresses.");
-if(trustedProxies.Count>0) builder.Services.Configure<ForwardedHeadersOptions>(o=>{o.ForwardedHeaders=ForwardedHeaders.XForwardedFor|ForwardedHeaders.XForwardedProto;o.KnownNetworks.Clear();o.KnownProxies.Clear();foreach(var proxy in trustedProxies)o.KnownProxies.Add(proxy);});
+if(trustedProxies.Count>0) builder.Services.Configure<ForwardedHeadersOptions>(o=>{o.ForwardedHeaders=ForwardedHeaders.XForwardedFor|ForwardedHeaders.XForwardedProto;o.KnownIPNetworks.Clear();o.KnownProxies.Clear();foreach(var proxy in trustedProxies)o.KnownProxies.Add(proxy);});
 var connection=builder.Configuration.GetConnectionString("Default");
 if(string.IsNullOrWhiteSpace(connection)) throw new InvalidOperationException("ConnectionStrings:Default is required; configure it explicitly in every environment.");
 builder.Services.AddDbContext<GpSelectDbContext>(o=>o.UseNpgsql(connection));

@@ -24,7 +24,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     public const string AdminEmail = "admin@gpselect.test";
     public const string AdminPassword = "Integration-Only-9";
 
-    private readonly PostgreSqlContainer database = new PostgreSqlBuilder().WithImage("postgres:16-alpine").Build();
+    private readonly PostgreSqlContainer database = new PostgreSqlBuilder("postgres:16-alpine").Build();
     private readonly string storageRoot = Path.Combine(Path.GetTempPath(), "gpselect-it-" + Guid.NewGuid().ToString("N"));
     public SqlLog Sql { get; } = new();
 

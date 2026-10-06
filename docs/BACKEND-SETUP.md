@@ -2,7 +2,7 @@
 
 Despliegue en producción (Docker, HTTPS, almacenamiento y copias): `deploy/README.md`.
 
-Backend .NET 8 (`src/`), EF Core y PostgreSQL. No hay `appsettings*.json` en `GpSelect.Api`: toda la configuración entra por variables de entorno (o user-secrets). Verificado el 30-09-2026 con Postgres 16 en Docker, la API y el proxy de Vite.
+Backend .NET 10 (`src/`), EF Core y PostgreSQL. No hay `appsettings*.json` en `GpSelect.Api`: toda la configuración entra por variables de entorno (o user-secrets). Verificado el 30-09-2026 con Postgres 16 en Docker, la API y el proxy de Vite.
 
 ## Configuración
 
@@ -64,7 +64,7 @@ Formato `PasswordHasher` de ASP.NET Core Identity. Con el SDK de .NET 10 (ya ins
 
 ```csharp
 // hash-password.cs — guárdalo fuera del repositorio
-#:package Microsoft.Extensions.Identity.Core@8.0.20
+#:package Microsoft.Extensions.Identity.Core@10.0.12
 using Microsoft.AspNetCore.Identity;
 var password = args.Length > 0 ? args[0] : throw new ArgumentException("Usage: dotnet run hash-password.cs -- <password>");
 Console.WriteLine(new PasswordHasher<object>().HashPassword(null!, password));
@@ -83,6 +83,7 @@ El resultado (`AQAAAAIAAYagAAAAE…`) va en `Admin__PasswordHash`. Entre comilla
 docker run -d --name gpselect-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=gpselect -p 55432:5432 postgres:16-alpine
 
 # 2. Migraciones (en Development no se aplican solas)
+dotnet tool restore
 ConnectionStrings__Default="Host=localhost;Port=55432;Database=gpselect;Username=postgres;Password=postgres" \
   dotnet ef database update --project src/GpSelect.Infrastructure --startup-project src/GpSelect.Infrastructure
 
