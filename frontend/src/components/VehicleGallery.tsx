@@ -68,7 +68,8 @@ export function VehicleGallery({ images, name }: { images: VehicleImage[]; name:
     {images.length > 1 ? <div className="vehicle-gallery__thumbnails">{images.map((image, index) =>
       <button type="button" key={`${image.src}-${index}`} aria-current={active === index ? 'true' : undefined}
         aria-label={`${text.image} ${index + 1}`} onClick={() => select(index)}>
-        <img src={image.smallSrc ?? image.src} alt="" style={{ objectFit: image.fit }} width={image.width ?? 150} height={image.height ?? 100} loading="lazy" onError={() => fail(image.src)} />
+        <img src={image.smallSrc ?? image.src} alt="" style={{ objectFit: image.fit }} width={image.width ?? 150} height={image.height ?? 100} loading="lazy"
+          onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }} />
       </button>)}</div> : null}
     <dialog className="vehicle-gallery__dialog" ref={dialog} aria-label={`${text.gallery} · ${name}`}>
       <div className="vehicle-gallery__dialog-top type-ui"><p>{name}</p><button type="button" className="editorial-link" autoFocus onClick={() => dialog.current?.close()}>{text.close} ×</button></div>

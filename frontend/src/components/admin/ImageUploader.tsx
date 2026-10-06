@@ -15,6 +15,8 @@ interface Upload {
   preview: string;
   imageId: string | null;
   uploadUrl: string | null;
+  /** When the signed upload URL stops working (ms since epoch); a retry after it asks for a new one. */
+  expiresAt: number | null;
   phase: 'waiting' | 'uploading' | 'queued' | 'failed';
   progress: number;
   error: string | null;
@@ -92,7 +94,8 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
           if (!imageId || !uploadUrl) {
             const intent = await adminApi.imageIntent(vehicleId, upload.file);
             ({ imageId, uploadUrl } = intent);
-            patch(upload.key, { imageId, uploadUrl });
+            // A minute of margin: the PUT of a large photo on a slow line can outlast the signature.
+            patch(upload.key, { imageId, uploadUrl, expiresAt: Date.now() + (intent.expiresInSeconds - 60) * 1000 });
             onImageAdded({ id: imageId, state: 'PendingUpload', cardUrl: null, detailUrl: null,
               isCover: false, isStaged: true, sortOrder: 0, failureReason: null });
           }
@@ -123,12 +126,22 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
       else if (room <= 0) refused.push(`${file.name}: ${text.limit}`);
       else {
         room -= 1;
-        accepted.push({ key: crypto.randomUUID(), file, preview: URL.createObjectURL(file), imageId: null, uploadUrl: null, phase: 'waiting', progress: 0, error: null });
+        accepted.push({ key: crypto.randomUUID(), file, preview: URL.createObjectURL(file), imageId: null, uploadUrl: null, expiresAt: null, phase: 'waiting', progress: 0, error: null });
       }
     }
     setRejected(refused);
     if (!accepted.length) return;
     commit([...uploadsRef.current, ...accepted]);
+    void pump();
+  }
+
+  function retry(upload: Upload) {
+    // An expired signature would fail forever: start over with a new intent and drop the old pending photo.
+    if (upload.expiresAt !== null && Date.now() > upload.expiresAt) {
+      if (upload.imageId) onRemove(upload.imageId);
+      patch(upload.key, { imageId: null, uploadUrl: null, expiresAt: null });
+    }
+    patch(upload.key, { phase: 'waiting', error: null });
     void pump();
   }
 
@@ -230,7 +243,7 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
             {image.state === 'Ready' && image.id !== coverId ? <button type="button" className="admin-action" disabled={!canReorder}
               onClick={() => move(index, 0)}>{text.makeCover}<span className="sr-only">, {label}</span></button> : null}
             {local?.phase === 'failed' ? <button type="button" className="admin-action"
-              onClick={() => { patch(local.key, { phase: 'waiting', error: null }); void pump(); }}>{text.retry}</button> : null}
+              onClick={() => retry(local)}>{text.retry}</button> : null}
             <button type="button" className="admin-action" disabled={local?.phase === 'uploading' || local?.phase === 'waiting'}
               onClick={() => local ? discard(local) : onRemove(image.id)}>{text.remove}<span className="sr-only">, {label}</span></button>
           </div>}
@@ -247,7 +260,7 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
         {upload.phase === 'failed' && !disabled ? <>
           <p className="admin-field__error">{upload.error}</p>
           <div className="admin-photo__actions">
-            <button type="button" className="admin-action" onClick={() => { patch(upload.key, { phase: 'waiting', error: null }); void pump(); }}>{text.retry}</button>
+            <button type="button" className="admin-action" onClick={() => retry(upload)}>{text.retry}</button>
             <button type="button" className="admin-action" onClick={() => void discard(upload)}>{text.dismiss}</button>
           </div>
         </> : null}

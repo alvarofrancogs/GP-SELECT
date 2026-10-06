@@ -56,7 +56,9 @@ export function VehicleDetailView({ vehicle, back, className = '' }: { vehicle: 
   const name = `${vehicle.make} ${vehicle.model}`;
   const sold = vehicle.availability === 'sold';
   // A sold vehicle cannot be requested: the call to action looks for an alternative.
-  const contactUrl = sold ? qualificationUrl({ intent: 'search', source: 'vehicle-sold' }) : `/contacto?${new URLSearchParams({ vehiculo: vehicle.slug, intent: 'vehicle' })}`;
+  // The form shows this text in its vehicle field (and the enquiry email carries it): a readable name, not the slug.
+  const label = `${name}${vehicle.variant ? ` ${vehicle.variant}` : ''} (${vehicle.firstRegistrationYear})`;
+  const contactUrl = sold ? qualificationUrl({ intent: 'search', source: 'vehicle-sold' }) : `/contacto?${new URLSearchParams({ vehiculo: label, intent: 'vehicle' })}`;
   const cta = sold ? text.soldAlternative : text.request;
   const core = [
     { label: text.registration, value: formatRegistration(vehicle.firstRegistrationYear, vehicle.firstRegistrationMonth, locale) },

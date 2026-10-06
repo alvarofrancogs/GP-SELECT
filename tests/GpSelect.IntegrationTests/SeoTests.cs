@@ -100,6 +100,8 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
 
         // Readable without JavaScript, and vehicle text can never break out of the page.
         Assert.Contains("<h1>BMW M4</h1>", html);
+        // The contact link carries the readable name the form shows, not the slug.
+        Assert.Contains("/contacto?vehiculo=BMW%20M4%20%282023%29&amp;intent=vehicle", html);
         Assert.Contains("<dd>12.500 km</dd>", html);
         Assert.Contains("<li>Asientos M Carbon</li>", html);
         Assert.DoesNotContain("<script>alert(1)</script>", html);

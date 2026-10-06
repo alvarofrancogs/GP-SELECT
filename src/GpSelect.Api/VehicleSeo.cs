@@ -92,7 +92,8 @@ public static class VehicleSeo
         if (v.History is { Length: > 0 }) html.Append($"<section><h2>Historial</h2><p>{E(v.History)}</p></section>");
         if (v.Equipment.Count > 0) html.Append($"<section><h2>Equipamiento</h2><ul>{string.Concat(v.Equipment.Select(x => $"<li>{E(x)}</li>"))}</ul></section>");
         if (v.Status != VehicleStatus.Sold)
-            html.Append($"<p><a href=\"/contacto?vehiculo={Uri.EscapeDataString(v.Slug)}&amp;intent=vehicle\">Solicitar información</a></p>");
+            // Same readable vehicle name the SPA puts in the contact form (frontend/src/pages/VehicleDetail.tsx).
+            html.Append($"<p><a href=\"/contacto?vehiculo={Uri.EscapeDataString($"{v.Make} {v.Model}{(v.Variant is { Length: > 0 } ? $" {v.Variant}" : "")} ({v.Year})")}&amp;intent=vehicle\">Solicitar información</a></p>");
         html.Append($"</main><footer><p>{E(Location)}</p><nav><ul>");
         foreach (var (href, label) in new[] { ("/", "GP SELECT"), ("/vehiculos", "Vehículos"), ("/importacion", "Importación"), ("/nosotros", "Nosotros"), ("/contacto", "Contacto") })
             html.Append($"<li><a href=\"{href}\">{E(label)}</a></li>");

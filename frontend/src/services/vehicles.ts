@@ -49,7 +49,7 @@ export function prefetchVehicles(): Promise<unknown> {
   return list.catch(() => { prefetched = null; });
 }
 
-/** The API lists newest first by creation date (max 100, no filter or pagination). */
+/** The API lists newest first by creation date (max 500, no filter or pagination). */
 export function listVehicles(signal?: AbortSignal): Promise<VehicleSummary[]> {
   if (prefetched && Date.now() - prefetched.at < PREFETCH_TTL) {
     const { list } = prefetched;
