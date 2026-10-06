@@ -36,7 +36,9 @@ public sealed class SmtpEnquiryNotifier(IConfiguration config) : IEnquiryNotifie
 
     public static MimeMessage BuildMessage(EnquiryNotification notification, string from, string recipient)
     {
-        var message = new MimeMessage();
+        // Delivery is at-least-once (a crash between sending and saving resends): a stable Message-ID lets mail clients
+        // recognise the duplicate.
+        var message = new MimeMessage { MessageId = $"{notification.EnquiryId:N}@enquiry.gpselect" };
         message.From.Add(new MailboxAddress("GP SELECT", from));
         message.To.Add(MailboxAddress.Parse(recipient));
         message.ReplyTo.Add(MailboxAddress.Parse(notification.ReplyTo));

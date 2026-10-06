@@ -19,7 +19,8 @@ public sealed class ImageProcessingWorker(IServiceScopeFactory scopes, IObjectSt
     private async Task ProcessOne(CancellationToken ct)
     {
         using var scope = scopes.CreateScope(); var db = scope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
-          var leaseCutoff = DateTimeOffset.UtcNow.AddMinutes(-10); await db.ImageJobs.Where(x => x.State == ImageJobState.Processing && (x.ClaimedAt == null || x.ClaimedAt < leaseCutoff)).ExecuteUpdateAsync(u => u.SetProperty(x => x.State, ImageJobState.Queued).SetProperty(x => x.ClaimedAt, (DateTimeOffset?)null).SetProperty(x => x.NextAttemptAt, DateTimeOffset.UtcNow), ct); var candidate = await db.ImageJobs.Where(x => x.State == ImageJobState.Queued && x.NextAttemptAt <= DateTimeOffset.UtcNow).OrderBy(x => x.CreatedAt).Select(x=>x.Id).FirstOrDefaultAsync(ct);
+          await RecoverStaleAsync(db, DateTimeOffset.UtcNow, ct);
+          var candidate = await db.ImageJobs.Where(x => x.State == ImageJobState.Queued && x.NextAttemptAt <= DateTimeOffset.UtcNow).OrderBy(x => x.CreatedAt).Select(x=>x.Id).FirstOrDefaultAsync(ct);
          if (candidate == Guid.Empty) return;
           var claimedAt = DateTimeOffset.UtcNow; var claimed=await db.ImageJobs.Where(x=>x.Id==candidate&&x.State==ImageJobState.Queued&&x.NextAttemptAt<=DateTimeOffset.UtcNow).ExecuteUpdateAsync(s=>s.SetProperty(x=>x.State,ImageJobState.Processing).SetProperty(x=>x.Attempts,x=>x.Attempts+1).SetProperty(x=>x.ClaimedAt,claimedAt),ct);
          if(claimed==0)return;
@@ -70,6 +71,18 @@ public sealed class ImageProcessingWorker(IServiceScopeFactory scopes, IObjectSt
             await db.SaveGalleryAsync(VehicleGallery.EnsureCover(siblings), ct);
             await tx.CommitAsync(ct);
          } catch (Exception ex) { logger.LogError(ex, "Image processing failed for {ImageId}", image.Id); await FailAsync(db, image.Id, job.Id, ex.Message, ct); }
+    }
+
+    /// <summary>A run whose lease expired died with the process; it did not fail. Its attempt is given back and its
+    /// image released, so the retry starts clean instead of failing on an image left Processing.</summary>
+    public static async Task RecoverStaleAsync(GpSelectDbContext db, DateTimeOffset now, CancellationToken ct)
+    {
+        var leaseCutoff = now.AddMinutes(-10);
+        var stale = db.ImageJobs.Where(x => x.State == ImageJobState.Processing && (x.ClaimedAt == null || x.ClaimedAt < leaseCutoff));
+        await db.Images.Where(i => i.State == ImageState.Processing && stale.Any(j => j.ImageId == i.Id))
+            .ExecuteUpdateAsync(u => u.SetProperty(x => x.State, ImageState.PendingUpload), ct);
+        await stale.ExecuteUpdateAsync(u => u.SetProperty(x => x.State, ImageJobState.Queued).SetProperty(x => x.ClaimedAt, (DateTimeOffset?)null)
+            .SetProperty(x => x.NextAttemptAt, now).SetProperty(x => x.Attempts, x => x.Attempts > 0 ? x.Attempts - 1 : 0), ct);
     }
 
     public static async Task FailAsync(GpSelectDbContext db, Guid imageId, Guid jobId, string reason, CancellationToken ct)

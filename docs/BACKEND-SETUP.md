@@ -63,7 +63,7 @@ Flujo: formulario → `POST /api/public/enquiries` → la consulta se guarda en 
 
 `HttpOnly`, `SameSite=Strict`; `Secure` siempre fuera de Development (en Development, igual que la petición). Caducidad deslizante de 14 días. Cada petición valida una huella de las credenciales: cambiar email o hash invalida las cookies existentes, también las anteriores a esta implementación. Las rutas `/api` sin sesión devuelven 401 (no redirigen). Un único administrador (`Admin__Email` + `Admin__PasswordHash`), rol `Admin`.
 
-El mantenimiento horario elimina intents sin completar de más de 24 h y registros de idempotencia de más de 48 h. Conserva staging completado y fotos de archivados. Reintenta borrar objetos de imágenes marcadas Deleted; no enumera el bucket para buscar huérfanos desconocidos. Las imágenes anteriores a la migración reciben 24 h de margen desde el despliegue.
+Login: 5 intentos por minuto por IP y 30 cada 10 minutos en total. El mantenimiento horario elimina intents sin completar de más de 24 h y registros de idempotencia de más de 48 h. Una vez al día barre `quarantine/` y `vehicles/` y borra los objetos de más de 48 h que ninguna foto viva referencia. Un job cuyo worker murió vuelve a la cola sin gastar intento. Los avisos de consulta son «al menos una vez»: llevan un Message-ID fijo por consulta para que el correo detecte un reenvío. Conserva staging completado y fotos de archivados. Reintenta borrar objetos de imágenes marcadas Deleted; no enumera el bucket para buscar huérfanos desconocidos. Las imágenes anteriores a la migración reciben 24 h de margen desde el despliegue.
 
 ### Generar `Admin__PasswordHash`
 

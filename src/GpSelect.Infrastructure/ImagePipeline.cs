@@ -8,6 +8,7 @@ namespace GpSelect.Infrastructure;
 public static class ImagePipeline
 {
     public const long MaxUploadBytes = 20 * 1024 * 1024;
+    const int DecodeBox = 2400;
 
     public static async Task<MemoryStream> ReadBoundedAsync(Stream source, long maxBytes, CancellationToken ct)
     {
@@ -50,6 +51,10 @@ public static class ImagePipeline
         if (info.Width > 10000 || info.Height > 10000 || (long)info.Width * info.Height > 40000000)
             throw new InvalidDataException("Image dimensions exceed policy");
 
+        // Decode no larger than the biggest derivative needs (a 40 MP JPEG is scaled while decoding, saving most of the
+        // ~0.7 GB peak). The box is square because EXIF orientation may still swap width and height.
+        if (info.Width > DecodeBox || info.Height > DecodeBox)
+            options = new DecoderOptions { MaxFrames = 1, Configuration = Configuration.Default, TargetSize = new Size(DecodeBox, DecodeBox) };
         input.Position = 0;
         var source = await Image.LoadAsync(options, input, ct);
         try

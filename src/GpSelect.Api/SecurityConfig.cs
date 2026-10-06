@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
+using System.Threading.RateLimiting;
 
 namespace GpSelect.Api;
 
@@ -37,6 +38,16 @@ public static partial class SecurityConfig
         return prf > 2 || iterations is 0 or > int.MaxValue || saltLength < 16 ||
             saltLength > bytes.Length - 13 || bytes.Length - 13 - saltLength < 16 ? error : null;
     }
+
+    public const int LoginGlobalPermits = 30;
+    public static readonly TimeSpan LoginGlobalWindow = TimeSpan.FromMinutes(10);
+
+    /// <summary>All login attempts together, on top of the per-address limit: an attacker spread over many addresses
+    /// still gets only a few dozen guesses per window. The admin is never locked out for longer than one window.</summary>
+    public static PartitionedRateLimiter<HttpContext> LoginGlobalLimiter(int permits = LoginGlobalPermits) => PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+        HttpMethods.IsPost(ctx.Request.Method) && ctx.Request.Path.Equals("/api/admin/auth/login", StringComparison.OrdinalIgnoreCase)
+            ? RateLimitPartition.GetFixedWindowLimiter("login-all", _ => new() { PermitLimit = permits, Window = LoginGlobalWindow, QueueLimit = 0 })
+            : RateLimitPartition.GetNoLimiter("other"));
 
     /// <summary>The login limit is per client address, never per a value the client sends.
     /// IPv6 clients are grouped by /64, the block a single subscriber usually controls.</summary>

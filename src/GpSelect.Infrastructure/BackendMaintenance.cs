@@ -75,18 +75,58 @@ public sealed class BackendMaintenance(GpSelectDbContext db, IObjectStorage stor
             }
         }
     }
+
+    /// <summary>Deletes stored objects no live image row points to. Only the two prefixes the API writes, and only objects
+    /// older than 48 hours, so an upload or a processing run in flight is never touched.</summary>
+    public async Task SweepOrphansAsync(DateTimeOffset now, CancellationToken ct)
+    {
+        var rows = await db.Images.AsNoTracking().Where(x => x.State != ImageState.Deleted)
+            .Select(x => new { x.Id, x.VehicleUnitId, x.OriginalKey, x.CardKey, x.DetailKey }).ToListAsync(ct);
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        var folders = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var row in rows)
+        {
+            keys.Add(row.OriginalKey);
+            if (row.CardKey is not null) keys.Add(row.CardKey);
+            if (row.DetailKey is not null) keys.Add(row.DetailKey);
+            folders.Add($"vehicles/{row.VehicleUnitId}/{row.Id}/");
+        }
+        var olderThan = now.AddHours(-48);
+        var orphans = new List<string>();
+        foreach (var prefix in new[] { "quarantine/", "vehicles/" })
+            await foreach (var item in storage.ListAsync(prefix, ct))
+            {
+                if (item.LastModified >= olderThan || keys.Contains(item.Key)) continue;
+                // Derivatives live in a folder per image: vehicles/{vehicleId}/{imageId}/card.jpg.
+                var slash = item.Key.LastIndexOf('/');
+                if (slash > 0 && folders.Contains(item.Key[..(slash + 1)])) continue;
+                orphans.Add(item.Key);
+            }
+        // Deleted after listing: removing files while a directory is enumerated is not reliable.
+        foreach (var key in orphans) await storage.DeleteAsync(key, ct);
+        logger.LogInformation("Storage sweep deleted {Count} orphaned objects", orphans.Count);
+    }
 }
 
 public sealed class BackendMaintenanceWorker(IServiceScopeFactory scopes, ILogger<BackendMaintenanceWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        DateTimeOffset? lastSweep = null;
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 using var scope = scopes.CreateScope();
-                await scope.ServiceProvider.GetRequiredService<BackendMaintenance>().RunAsync(DateTimeOffset.UtcNow, stoppingToken);
+                var maintenance = scope.ServiceProvider.GetRequiredService<BackendMaintenance>();
+                var now = DateTimeOffset.UtcNow;
+                await maintenance.RunAsync(now, stoppingToken);
+                // Listing the whole bucket is the expensive part: once a day is enough.
+                if (lastSweep is null || now - lastSweep >= TimeSpan.FromDays(1))
+                {
+                    lastSweep = now;
+                    await maintenance.SweepOrphansAsync(now, stoppingToken);
+                }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

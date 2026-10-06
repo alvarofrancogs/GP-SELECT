@@ -46,19 +46,19 @@ Plan en `docs/superpowers/plans/2026-10-02-backend-hardening.md`. Sin migracione
 **Deuda abierta del backend:**
 
 - ~~**Concurrencia:** `complete` puede crear dos jobs; publicar mientras se borra la portada; superar las 30 fotos con intents simultáneos.~~
-- **S3:** ~~la URL firmada no limita el tamaño~~ (INFRA-2: `Content-Length` firmado) ~~e intents abandonados e idempotencia sin limpiar~~ (PROD-READINESS). Sigue abierto: huérfanos desconocidos del bucket (habría que listarlo).
+- ~~**S3:** URL firmada sin límite de tamaño (INFRA-2), intents abandonados e idempotencia (PROD-READINESS), huérfanos desconocidos del bucket (DEBT-CLOSE: barrido diario)~~.
 - ~~**Sesiones:** no se revocan al cambiar contraseña o email~~: resuelto en PROD-READINESS. ~~Claves de Data Protection sin persistencia~~: resuelto en INFRA-1 (`DataProtection__KeysPath`, obligatoria en Production).
-- **Login:** sin límite agregado entre IP; ~~un hash de contraseña mal formado solo falla al hacer login~~.
+- ~~**Login:** sin límite agregado entre IP (DEBT-CLOSE: 30 intentos / 10 min en total); hash mal formado (INFRA-2)~~.
 - ~~**Listados sin paginar:** el catálogo se trunca a 100.~~
 - ~~**Índices:** faltan `Images(VehicleUnitId)` completo e `Images(OriginalKey)`~~: resuelto en PROD-READINESS.
-- **Jobs:** la recuperación de jobs caducados consume intentos; el outbox puede reenviar un aviso; la cancelación del futuro proveedor de email.
+- ~~**Jobs:** la recuperación de jobs caducados consume intentos; el outbox puede reenviar un aviso; la cancelación del proveedor de email~~ (DEBT-CLOSE: la recuperación devuelve el intento y libera la foto; Message-ID estable; cancelar no cuenta como fallo). El aviso sigue siendo «al menos una vez».
 - ~~**Estados:** Available → Sold con `showWhenSold` + precio 0 en el mismo guardado sigue dando `price_zero`.~~
 - ~~**Imágenes:** las fotos pequeñas se amplían al generar `detail`~~: resuelto en PROD-READINESS.
-- **Memoria:** el peor caso por job ronda 0,7 GB (40 MP, PNG de 16 bits); dar ~1 GB al contenedor o usar `DecoderOptions.TargetSize`.
+- ~~**Memoria:** ~0,7 GB por job con 40 MP~~ (DEBT-CLOSE: `DecoderOptions.TargetSize` 2400; medido 183 MB de pico en el stack de producción).
 - **Validación:** los 400 de cuerpo inválido incluyen un error espurio `"r"` del model binding (no tocar `SuppressImplicitRequiredAttribute…`, que quitaría los [Required] implícitos).
-- **Admin:** se puede archivar con una subida en curso; la foto queda pendiente y bloquea Guardar hasta Descartar tras recuperar. Deshabilitar archivar mientras hay subida/cambios.
+- ~~**Admin:** se puede archivar con una subida en curso~~ (INFRA-2: botón desactivado con cambios o fotos en curso).
 - ~~**Slugs:** ß, ø, æ, ł, đ se pierden («Straße» → `stra-e`).~~
-- **Otros:** ~~objeto ausente → 500~~ (resuelto en STORAGE-404); equipamiento con validación cuadrática; aviso ICC de ImageSharp 3.1.11 sin CVE; SSH.NET solo en los tests.
+- **Otros:** ~~objeto ausente → 500~~ (STORAGE-404); ~~equipamiento con validación cuadrática; ImageSharp 3.1.11~~ (DEBT-CLOSE: lineal, 3.1.12); SSH.NET solo llega como dependencia de los tests (Testcontainers), no a la API.
 
 ### UI Simplification Pass — aprobado expresamente por el usuario
 
@@ -203,6 +203,17 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - `IObjectStorage.OpenReadAsync` devuelve `Stream?`: `null` si el objeto no existe (File: fichero o carpeta; S3: 404/`NoSuchKey`), como `HeadAsync`. Cualquier otro error sigue lanzando.
 - `StoredImages.Serve` (API) sirve las imágenes de los 4 endpoints (card/detail públicos, card/detail del admin y la vista previa): si falta el objeto, 404 con ProblemDetails, un warning con la clave y sin `Cache-Control`. El caché de un día solo se pone en las respuestas correctas. El worker trata un original que falta como cualquier fallo de procesado (sin cambios).
 - Implementación de Astra (worktree sobre una base antigua; Opus lo portó a `feat/perf-1`). Verificación: build 0 avisos, 105/105 unitarios, 73/73 de integración (3 nuevos).
+
+### DEBT-CLOSE · deuda abierta del backend = PASS (06-10-2026, rama `feat/backend-debt-close`, tag `debt-close-pass`)
+
+- Astra sin cuota de Codex hasta el 07-10 03:04: lo implementó Opus. Gemini no fue necesario (sin cambios visibles).
+- **Huérfanos:** `IObjectStorage.ListAsync` (S3 paginado y File); `SweepOrphansAsync` una vez al día borra en `quarantine/` y `vehicles/` lo que ninguna foto viva referencia (original, derivadas o su carpeta) y tiene más de 48 h.
+- **Login:** limitador global además del de IP: 30 intentos / 10 min en total (`Security__LoginGlobalPermits`, solo para tests).
+- **Memoria:** decodificación con `TargetSize` 2400×2400 (cuadrado por la orientación EXIF); 40 MP → pico de 183 MB medido.
+- **Reintentos:** `RecoverStaleAsync` devuelve el intento y pasa la foto de Processing a PendingUpload; Message-ID `{id}@enquiry.gpselect`; cancelar el envío no cuenta como fallo (test).
+- **Otros:** equipamiento con `HashSet` y corte al superar el máximo; ImageSharp 3.1.12.
+- **Verificación:** build 0/0, 117/117 unitarios, 131/131 integración, sin cambios de modelo; stack de producción: barrido contra SeaweedFS, foto de 40 MP procesada (2400×1798 / 800×599).
+- **Sigue abierto (decidido no tocar):** error espurio `"r"` del model binding.
 
 ### INFRA-2 · copias externas y deuda del backend = PASS (06-10-2026, rama `feat/infra-2`, tag `infra-2-pass`)
 

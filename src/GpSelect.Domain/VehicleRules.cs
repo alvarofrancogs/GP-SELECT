@@ -117,13 +117,15 @@ public static class VehicleContent
     {
         if (items is null) return null;
         var clean = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var item in items)
         {
             var text = VehicleRules.ShortText(item, VehicleRules.EquipmentItemMax, "equipment");
-            if (text is not null && !clean.Contains(text, StringComparer.OrdinalIgnoreCase)) clean.Add(text);
+            if (text is not null && seen.Add(text)) clean.Add(text);
+            // Stop at the first item over the limit instead of cleaning an arbitrarily long list.
+            if (clean.Count > VehicleRules.EquipmentMaxItems)
+                throw new DomainException("too_many", $"equipment allows at most {VehicleRules.EquipmentMaxItems} items", "equipment");
         }
-        if (clean.Count > VehicleRules.EquipmentMaxItems)
-            throw new DomainException("too_many", $"equipment allows at most {VehicleRules.EquipmentMaxItems} items", "equipment");
         return clean.Count == 0 ? null : JsonSerializer.Serialize(clean, Json);
     }
 

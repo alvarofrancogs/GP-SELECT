@@ -36,6 +36,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Security:AllowedOrigin", AllowedOrigin);
         builder.UseSetting("Admin:Email", AdminEmail);
         builder.UseSetting("Admin:PasswordHash", new PasswordHasher<object>().HashPassword(null!, AdminPassword));
+        // Every test in a class shares this host and logs in many times; the global cap has its own test.
+        builder.UseSetting("Security:LoginGlobalPermits", "100000");
         builder.UseSetting("Storage:Provider", "File");
         builder.UseSetting("Storage:Root", storageRoot);
         builder.UseSetting("Security:TrustedProxies", TrustedProxy);
