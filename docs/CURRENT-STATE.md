@@ -55,7 +55,7 @@ Plan en `docs/superpowers/plans/2026-10-02-backend-hardening.md`. Sin migracione
 - ~~**Estados:** Available → Sold con `showWhenSold` + precio 0 en el mismo guardado sigue dando `price_zero`.~~
 - ~~**Imágenes:** las fotos pequeñas se amplían al generar `detail`~~: resuelto en PROD-READINESS.
 - ~~**Memoria:** ~0,7 GB por job con 40 MP~~ (DEBT-CLOSE: `DecoderOptions.TargetSize` 2400; medido 183 MB de pico en el stack de producción).
-- **Validación:** los 400 de cuerpo inválido incluyen un error espurio `"r"` del model binding (no tocar `SuppressImplicitRequiredAttribute…`, que quitaría los [Required] implícitos).
+- ~~**Validación:** los 400 de cuerpo inválido incluían un error espurio `"r"`~~ (FINAL REVIEW: `BodyBindingErrors` lo quita cuando ya hay un error `$…` del JSON; `SuppressImplicitRequiredAttribute…` sigue sin tocar).
 - ~~**Admin:** se puede archivar con una subida en curso~~ (INFRA-2: botón desactivado con cambios o fotos en curso).
 - ~~**Slugs:** ß, ø, æ, ł, đ se pierden («Straße» → `stra-e`).~~
 - **Otros:** ~~objeto ausente → 500~~ (STORAGE-404); ~~equipamiento con validación cuadrática; ImageSharp 3.1.11~~ (DEBT-CLOSE: lineal, 3.1.12); SSH.NET solo llega como dependencia de los tests (Testcontainers), no a la API.
@@ -116,6 +116,7 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - **RECIPIENT MAILBOX:** `Enquiries__NotificationEmail` sin definir.
 - **DOMAIN / DEPLOY:** infraestructura lista y probada en local (INFRA-1, `deploy/`). Falta contratar el servidor y el dominio y elegir el almacenamiento de fotos: SeaweedFS propio o un S3 externo como R2 o B2.
 - **SEO:** SEO-1, GEO-1 y SEO-2 PASS. Pendiente: GEO-2 (FAQ, espera datos del usuario), Google Business Profile (fuera del código) y dominio para activar `VITE_SITE_URL` y `Seo__SiteUrl`.
+- **PENDIENTE · CONTENT-SECURITY-POLICY (decisión del usuario, 07-10-2026):** Caddy no envía `Content-Security-Policy` (sí HSTS, `X-Frame-Options DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`). Añadirla al montar el servidor: el build tiene scripts inline (`html.js` y JSON-LD) que necesitan hashes o nonce; probar Home, admin, subida a S3 y WhatsApp tras activarla.
 - **FINAL USER PHOTOGRAPHY / ASSETS:** fotos reales del usuario para sustituir los slots provisionales.
 
 ### SEO-1 · base técnica = PASS (04-10-2026, tag `seo-1-pass`)
@@ -210,8 +211,8 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - **Corregido:** `robots.txt` bloqueaba `/api/public/` (fotos de los coches y catálogo renderizado por Googlebot): ahora `Allow: /api/public/` antes de `Disallow: /api`. La API pública enviaba el precio de los vendidos (y contaba en los filtros): ahora `null`. `source-map-js` (dependencia de build) actualizado; producción: 0 vulnerabilidades npm y NuGet.
 - **Frontend (pasada completa de Opus):** el enlace a Contacto desde una ficha (SPA y página del servidor) llevaba el slug con su hash al campo «Vehículo» y al email: ahora el nombre legible («Porsche 911 Carrera S (2021)»). Reintentar una subida con la URL firmada caducada (15 min) fallaba siempre con 403: ahora pide un intent nuevo y retira la foto pendiente anterior (probado simulando el fallo y el reloj). Una miniatura rota ya no marca como rota la foto grande.
 - **Verificación:** build 0/0, 118/118 unitarios, 131/131 integración (SeoTests comprueba el enlace legible), lint y build del frontend; navegador: ficha → Contacto con el nombre, reintento caducado → foto lista y guardado limpio.
-- **P3 anotado:** el editor consulta cada 1,5 s mientras haya una foto pendiente de subir.
-- **P3 anotado, sin tocar:** no hay `Content-Security-Policy` en Caddy (hay `X-Frame-Options DENY`, `nosniff`, HSTS y `Referrer-Policy`); añadirla exige hashes de los scripts inline del build.
+- ~~**P3:** el editor consultaba cada 1,5 s mientras hubiera una foto pendiente~~: ahora solo con fotos en proceso o subidas ya enviadas en esta pestaña (`onQueuedChange`); probado: 0 consultas con solo una subida fallida y la siguiente llega a Ready sola. Error espurio `"r"` resuelto (`BodyBindingErrors`, test de integración).
+- **CSP:** anotada como PENDIENTE en «Remaining release blockers».
 
 ### DEBT-CLOSE · deuda abierta del backend = PASS (06-10-2026, rama `feat/backend-debt-close`, tag `debt-close-pass`)
 
@@ -222,7 +223,7 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - **Reintentos:** `RecoverStaleAsync` devuelve el intento y pasa la foto de Processing a PendingUpload; Message-ID `{id}@enquiry.gpselect`; cancelar el envío no cuenta como fallo (test).
 - **Otros:** equipamiento con `HashSet` y corte al superar el máximo; ImageSharp 3.1.12.
 - **Verificación:** build 0/0, 117/117 unitarios, 131/131 integración, sin cambios de modelo; stack de producción: barrido contra SeaweedFS, foto de 40 MP procesada (2400×1798 / 800×599).
-- **Sigue abierto (decidido no tocar):** error espurio `"r"` del model binding.
+- ~~**Sigue abierto (decidido no tocar):** error espurio `"r"` del model binding~~: resuelto en FINAL REVIEW.
 
 ### INFRA-2 · copias externas y deuda del backend = PASS (06-10-2026, rama `feat/infra-2`, tag `infra-2-pass`)
 
