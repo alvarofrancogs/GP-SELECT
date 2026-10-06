@@ -1,3 +1,4 @@
+using GpSelect.Application;
 using GpSelect.Domain;
 using GpSelect.Infrastructure;
 using SixLabors.ImageSharp;
@@ -62,5 +63,16 @@ public class DebtCloseUnitTests
         var huge = Enumerable.Range(0, 200_000).Select(i => (string?)$"Item {i}").ToList();
         var error = Assert.Throws<DomainException>(() => VehicleContent.WriteEquipment(huge));
         Assert.Equal("too_many", error.Code);
+    }
+
+    [Fact]
+    public void A_sold_vehicle_publishes_no_price()
+    {
+        var vehicle = VehicleUnit.Create("BMW", "M3", 2022, 3, "price-test");
+        vehicle.Apply(new UpdateVehicleRequest { PriceEur = 89900m });
+        Assert.Equal(89900m, PublicMapping.MapCard(vehicle, []).PriceEur);
+        vehicle.ChangeStatus(VehicleStatus.Sold, [], showWhenSold: false);
+        Assert.Null(PublicMapping.MapCard(vehicle, []).PriceEur);
+        Assert.Null(PublicMapping.Map(vehicle, []).PriceEur);
     }
 }

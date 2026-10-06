@@ -92,7 +92,8 @@ export function seoPlugin(rawSiteUrl?: string): Plugin {
           .replace('<div id="root"></div>', `<div id="root">${content}</div>`);
         await writeFile(target, html);
       }
-      const robots = `# One group covers all bots, including AI; bot-specific groups would override these Disallow rules.\nUser-agent: *\nDisallow: /admin\nDisallow: /api\n${siteUrl ? `\nSitemap: ${siteUrl}/sitemap.xml\n` : ''}`;
+      // The public API stays crawlable: the catalogue renders from it and the vehicle photos are served from it.
+      const robots = `# One group covers all bots, including AI; bot-specific groups would override these Disallow rules.\nUser-agent: *\nAllow: /api/public/\nDisallow: /admin\nDisallow: /api\n${siteUrl ? `\nSitemap: ${siteUrl}/sitemap.xml\n` : ''}`;
       await writeFile(resolve(outDir, 'robots.txt'), robots);
       await writeFile(resolve(outDir, 'llms.txt'), renderLlmsText(siteUrl));
       if (siteUrl) {

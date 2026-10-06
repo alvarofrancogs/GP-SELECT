@@ -141,7 +141,7 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 ### GEO-1 · contenido legible sin JS = PASS (04-10-2026, tag `geo-1-pass`)
 
 - `frontend/build/readableContent.ts`: el build mete en `#root` de las 5 rutas estáticas y de `404.html` un HTML semántico (h1/h2/h3, listas, enlaces internos y footer) generado desde los mismos diccionarios ES que la SPA. Sin SSR del árbol React. Un script inline pone `html.js` y oculta ese bloque; `createRoot` lo sustituye antes de `DOMContentLoaded`, así que con JS nunca se ve.
-- `robots.txt` con un único grupo `*` (un grupo por bot anularía los `Disallow`). `/llms.txt` con resumen, ubicación, ledes de Nosotros e Importación y enlaces. JSON-LD de la home en `@graph`: `AutoDealer` (con `description` y `sameAs` desde `contactConfig.sameAs`, vacío hasta tener perfiles verificados) + `WebSite`.
+- `robots.txt` con un único grupo `*` (un grupo por bot anularía los `Disallow`); desde FINAL REVIEW, `Allow: /api/public/`. `/llms.txt` con resumen, ubicación, ledes de Nosotros e Importación y enlaces. JSON-LD de la home en `@graph`: `AutoDealer` (con `description` y `sameAs` desde `contactConfig.sameAs`, vacío hasta tener perfiles verificados) + `WebSite`.
 - QA: typecheck, lint y build OK con y sin `VITE_SITE_URL`; sin JS a 1440/390, cada ruta legible y sin desborde; h1/h2 estáticos = SPA; red lenta con JS sin destello; sin excepciones JS. Astra hizo la implementación y su QA; Opus cerró la verificación (se le acabó el saldo a Astra) y añadió los ledes a `llms.txt`.
 - **Siguiente:** GEO-2 (FAQ con `FAQPage` en Importación) espera datos del usuario; SEO-2 espera hosting; rellenar `sameAs` al crear perfiles.
 
@@ -203,6 +203,13 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - `IObjectStorage.OpenReadAsync` devuelve `Stream?`: `null` si el objeto no existe (File: fichero o carpeta; S3: 404/`NoSuchKey`), como `HeadAsync`. Cualquier otro error sigue lanzando.
 - `StoredImages.Serve` (API) sirve las imágenes de los 4 endpoints (card/detail públicos, card/detail del admin y la vista previa): si falta el objeto, 404 con ProblemDetails, un warning con la clave y sin `Cache-Control`. El caché de un día solo se pone en las respuestas correctas. El worker trata un original que falta como cualquier fallo de procesado (sin cambios).
 - Implementación de Astra (worktree sobre una base antigua; Opus lo portó a `feat/perf-1`). Verificación: build 0 avisos, 105/105 unitarios, 73/73 de integración (3 nuevos).
+
+### FINAL REVIEW · revisión global = PASS (07-10-2026, rama `fix/final-review`, tag `final-review-pass`)
+
+- Revisores, todos READ-ONLY: Opus (frontend y backend), Gemini 3.8 Flash High (backend y deploy, 55 archivos: 0 P0–P2; un P3 descartado, `Image.IdentifyAsync` no devuelve null en ImageSharp 3) y Gemini 3.1 Pro High (frontend; sin hallazgos, cobertura corta). En headless, `--effort` choca con los modelos `-high` (ya son el máximo) y cualquier comando no permitido aborta la ejecución: pedir solo lectura de archivos.
+- **Corregido:** `robots.txt` bloqueaba `/api/public/` (fotos de los coches y catálogo renderizado por Googlebot): ahora `Allow: /api/public/` antes de `Disallow: /api`. La API pública enviaba el precio de los vendidos (y contaba en los filtros): ahora `null`. `source-map-js` (dependencia de build) actualizado; producción: 0 vulnerabilidades npm y NuGet.
+- **Verificación:** build 0/0, 118/118 unitarios, 131/131 integración, lint y build del frontend.
+- **P3 anotado, sin tocar:** no hay `Content-Security-Policy` en Caddy (hay `X-Frame-Options DENY`, `nosniff`, HSTS y `Referrer-Policy`); añadirla exige hashes de los scripts inline del build.
 
 ### DEBT-CLOSE · deuda abierta del backend = PASS (06-10-2026, rama `feat/backend-debt-close`, tag `debt-close-pass`)
 

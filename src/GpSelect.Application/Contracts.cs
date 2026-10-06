@@ -39,6 +39,8 @@ public sealed record VehiclePublicDto(string Slug, string Make, string Model, st
 public static class PublicMapping
 {
     private static string Base(VehicleUnit v) => $"/api/public/vehicles/{Uri.EscapeDataString(v.PublicSlug)}/images";
+    // A sold vehicle's price is never shown, so it is not published either (nor counted in the catalogue's price filters).
+    private static decimal? PublicPrice(VehicleUnit v) => v.Status == VehicleStatus.Sold ? null : v.PriceEur;
 
     // CardImages holds the 800 px version of each photo, in the same order as Images (thumbnails, small screens).
     public static VehiclePublicDto Map(VehicleUnit v, IEnumerable<VehicleImage> images)
@@ -46,7 +48,7 @@ public static class PublicMapping
         var gallery = VehicleGallery.InPublicOrder(images.Where(x => x.State == ImageState.Ready && !x.IsStaged
             && x.DetailKey is not null && x.CardKey is not null)).ToList();
         return new(
-            v.PublicSlug, v.Make, v.Model, v.Variant, v.FirstRegistrationYear, v.FirstRegistrationMonth, v.PriceEur,
+            v.PublicSlug, v.Make, v.Model, v.Variant, v.FirstRegistrationYear, v.FirstRegistrationMonth, PublicPrice(v),
             v.MileageKm, v.PowerHp, v.FuelType, v.Transmission, v.BodyType, v.Drivetrain, v.ExteriorColour,
             v.Interior, v.Description, v.History, v.Provenance, VehicleContent.ReadEquipment(v.EquipmentJson),
             VehicleContent.ReadSpecifications(v.CustomSpecificationsJson), v.Status,
@@ -55,7 +57,7 @@ public static class PublicMapping
     }
 
     public static VehiclePublicCardDto MapCard(VehicleUnit v, IEnumerable<VehicleImage> images) => new(
-        v.PublicSlug, v.Make, v.Model, v.Variant, v.FirstRegistrationYear, v.FirstRegistrationMonth, v.PriceEur,
+        v.PublicSlug, v.Make, v.Model, v.Variant, v.FirstRegistrationYear, v.FirstRegistrationMonth, PublicPrice(v),
         v.MileageKm, v.PowerHp, v.FuelType, v.Transmission, v.BodyType, v.Status,
         VehicleGallery.InPublicOrder(images.Where(x => x.State == ImageState.Ready && !x.IsStaged && x.CardKey is not null))
             .Select(x => $"{Base(v)}/{x.Id}/card").ToList());
