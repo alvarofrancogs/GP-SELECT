@@ -10,7 +10,7 @@ interface ContactConfig {
 
 // Verified business channels only. Shared by the client and the SEO build.
 export const contactConfig: ContactConfig = {
-  whatsapp: null,
+  whatsapp: '34661631555',
   phone: null,
   email: null,
   sameAs: [],

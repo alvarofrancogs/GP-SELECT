@@ -245,7 +245,7 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - **3C.4 · Limpieza** (`a6ba78d`):
   - desinstaladas `@fontsource-variable/inter` e `inter-tight`;
   - objetivos táctiles de al menos 24 px (marca, ES/EN, enlaces del footer, enlaces editoriales), sin mover la tipografía;
-  - `--configLoader runner` se mantiene mientras se use Codex.
+  - ~~`--configLoader runner` se mantiene mientras se use Codex~~: retirado el 06-10-2026.
 - **3C.5 · Calibración:**
   - el hero coincide con el mockup (titular a ~40 % de la altura, encuadre del coche);
   - Servicios e Importación difieren del mockup por decisiones ya aprobadas (migración tipográfica de la HOME, página de Importación de 2G);
@@ -503,7 +503,7 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - 1F · Car handoff: `.scene-cta` no se reutilizó (añade `min-width` al botón); z-index locales sin simplificar. ~~Assets provisionales~~: sustituidos en 3C.1 (contrato: WebP RGBA 1200×1800, coche en el 75 % central, sombra integrada).
 - ~~P1 · Header: banda sólida crema durante el handoff del hero~~ — resuelto en HOME HANDOFF FIX.
 - P2 · Hero: más profundidad o parallax del cielo (hoy solo −3 %).
-- P2 · `frontend/package.json`: revertir `--configLoader runner` (solo hace falta dentro del sandbox de Codex).
+- ~~P2 · `frontend/package.json`: revertir `--configLoader runner`~~: hecho el 06-10-2026.
 - ~~P2 · Desinstalar `@fontsource-variable/inter` e `inter-tight`~~: hecho en 3C.4.
 - Con Archivo, «Performance» (BMW) y «EUROPEAN PERFORMANCE» quedan pegados a sus slots de coche. Calibrarlo por escena.
 - Calibración por escena contra los mockups: tamaños, posiciones, responsive fino, máscaras y blur.
