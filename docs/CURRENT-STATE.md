@@ -208,7 +208,9 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 
 - Revisores, todos READ-ONLY: Opus (frontend y backend), Gemini 3.8 Flash High (backend y deploy, 55 archivos: 0 P0–P2; un P3 descartado, `Image.IdentifyAsync` no devuelve null en ImageSharp 3) y Gemini 3.1 Pro High (frontend; sin hallazgos, cobertura corta). En headless, `--effort` choca con los modelos `-high` (ya son el máximo) y cualquier comando no permitido aborta la ejecución: pedir solo lectura de archivos.
 - **Corregido:** `robots.txt` bloqueaba `/api/public/` (fotos de los coches y catálogo renderizado por Googlebot): ahora `Allow: /api/public/` antes de `Disallow: /api`. La API pública enviaba el precio de los vendidos (y contaba en los filtros): ahora `null`. `source-map-js` (dependencia de build) actualizado; producción: 0 vulnerabilidades npm y NuGet.
-- **Verificación:** build 0/0, 118/118 unitarios, 131/131 integración, lint y build del frontend.
+- **Frontend (pasada completa de Opus):** el enlace a Contacto desde una ficha (SPA y página del servidor) llevaba el slug con su hash al campo «Vehículo» y al email: ahora el nombre legible («Porsche 911 Carrera S (2021)»). Reintentar una subida con la URL firmada caducada (15 min) fallaba siempre con 403: ahora pide un intent nuevo y retira la foto pendiente anterior (probado simulando el fallo y el reloj). Una miniatura rota ya no marca como rota la foto grande.
+- **Verificación:** build 0/0, 118/118 unitarios, 131/131 integración (SeoTests comprueba el enlace legible), lint y build del frontend; navegador: ficha → Contacto con el nombre, reintento caducado → foto lista y guardado limpio.
+- **P3 anotado:** el editor consulta cada 1,5 s mientras haya una foto pendiente de subir.
 - **P3 anotado, sin tocar:** no hay `Content-Security-Policy` en Caddy (hay `X-Frame-Options DENY`, `nosniff`, HSTS y `Referrer-Policy`); añadirla exige hashes de los scripts inline del build.
 
 ### DEBT-CLOSE · deuda abierta del backend = PASS (06-10-2026, rama `feat/backend-debt-close`, tag `debt-close-pass`)
