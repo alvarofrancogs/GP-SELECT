@@ -133,6 +133,8 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - Cambio de idioma sin saltos de tamaño: `--hero-size` es el mismo en ES y EN (el valor que tenía ES; fuera `:root:lang(es)`). Los titulares de `CarHandoff` se reajustan en un `useLayoutEffect` por idioma, antes de la captura de la view transition (antes conservaban el tamaño del idioma anterior y saltaban al acabar el fundido).
 - Header: «GP SELECT» pasa a ser el logo real (`/assets/seo/logo.svg` como máscara sobre `currentColor`), así conserva el `mix-blend-mode` y los tonos por escena; el halo del tono oscuro del hero va como `drop-shadow`.
 - Preloader: solo logo y telón; fuera la barra y el contador.
+- Cambio de idioma sin View Transitions: solo el texto se funde (160 ms fuera, cambio, 280 ms dentro; clases `lang-out`/`lang-in` en `<html>`); fotos, coches y fondos no se mueven. El fundido de página completa mostraba los dos idiomas superpuestos a mitad.
+- Logo del header un poco más pequeño (7,8 em); el footer usa el mismo logo (`.brand-logo`). El CTA «Ver catálogo» no aparece en `/contacto` (tapaba el formulario).
 
 ### UI: CTA, idioma y marca (04-10-2026, pedido por el usuario, pendiente de su visto bueno)
 

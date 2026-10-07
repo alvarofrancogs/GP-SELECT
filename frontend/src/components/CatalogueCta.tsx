@@ -19,7 +19,8 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
   const { pathname } = useLocation();
   const linkRef = useRef<HTMLAnchorElement>(null);
   const bodyRef = useRef<HTMLSpanElement>(null);
-  const hidden = pathname.startsWith('/vehiculos');
+  // Not on the catalogue itself, nor over the contact form it would cover.
+  const hidden = pathname.startsWith('/vehiculos') || pathname.toLowerCase().startsWith('/contacto');
 
   useEffect(() => {
     const link = linkRef.current;

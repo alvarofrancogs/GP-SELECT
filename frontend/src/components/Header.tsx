@@ -123,7 +123,7 @@ export function Header() {
           if (pathname === '/') { event.preventDefault(); scrollToTop(); }
         }}>
           {/* The logo's own lettering, painted in the header's colour so it keeps the blend over every scene. */}
-          <span className="header-brand__logo" aria-hidden="true" />
+          <span className="brand-logo" aria-hidden="true" />
         </Link>
         <div className="header-actions">
           <LanguageSwitcher />

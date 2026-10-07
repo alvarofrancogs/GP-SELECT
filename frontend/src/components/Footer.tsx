@@ -28,7 +28,7 @@ export function Footer() {
     <footer className="site-footer">
       <div className="footer-main">
         <div className="footer-identity">
-          <Link className="footer-brand" to="/" onClick={backToTop}>{copy.brand}</Link>
+          <Link className="footer-brand" to="/" onClick={backToTop} aria-label={copy.brand}><span className="brand-logo" aria-hidden="true" /></Link>
           <p>{text.description}</p>
           <p className="footer-location">{text.location}</p>
         </div>
