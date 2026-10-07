@@ -72,9 +72,15 @@ function fitHeadlines(section: HTMLElement) {
   section.style.setProperty('--handoff-side', stacked ? 'none' : `${Math.floor(side)}px`);
 }
 
-export function useCarHandoffScene() {
+export function useCarHandoffScene(locale: string) {
   const sectionRef = useRef<HTMLElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
+
+  // New copy is fitted in the same commit, before the language crossfade takes its snapshot:
+  // waiting for the next refresh left the new words at the old ones' size and then made them jump.
+  useLayoutEffect(() => {
+    if (sectionRef.current) fitHeadlines(sectionRef.current);
+  }, [locale]);
 
   useLayoutEffect(() => {
     const section = sectionRef.current;

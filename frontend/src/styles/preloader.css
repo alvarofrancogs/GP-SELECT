@@ -18,25 +18,6 @@
   animation: preloader-gp 600ms var(--ease-out) both; }
 .preloader__select { left: 33.771%; top: 11.672%; width: 66.229%;
   animation: preloader-select 600ms var(--ease-out) 30ms both; }
-.preloader__meter {
-  position: absolute;
-  left: var(--page-gutter);
-  right: var(--page-gutter);
-  bottom: clamp(1.5rem, 4vh, 3rem);
-  display: grid;
-  gap: var(--space-3);
-}
-.preloader__count {
-  justify-self: end;
-  font-stretch: var(--type-ui-width);
-  font-size: var(--text-nav);
-  font-weight: var(--type-ui-weight);
-  letter-spacing: .14em;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-muted);
-}
-.preloader__line { display: block; height: var(--border-width); background: rgb(16 17 18 / .1); }
-.preloader__line > span { display: block; height: 100%; background: var(--color-gold); transform: scaleX(0); transform-origin: left; }
 
 /* A reload in the same tab: the same entrance in half the time (see Preloader.tsx). */
 .preloader--quick .preloader__gp, .preloader--quick .preloader__select { animation-duration: 300ms; animation-delay: 0s; }

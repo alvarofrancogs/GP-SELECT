@@ -29,9 +29,9 @@ function HandoffText({ state, name, layout, titleId }: { state: HandoffState; na
 /** The BMW seen from above drives in and parks; a soft curtain turns it into its mechanical cutaway
     while the weather closes in, then the scene leaves with the page. */
 export function CarHandoffScene() {
-  const { copy } = useLanguage();
+  const { copy, locale } = useLanguage();
   const text = copy.carHandoff;
-  const { sectionRef, pinRef } = useCarHandoffScene();
+  const { sectionRef, pinRef } = useCarHandoffScene(locale);
   const [stateA, stateB, stateC] = text.states;
 
   return (

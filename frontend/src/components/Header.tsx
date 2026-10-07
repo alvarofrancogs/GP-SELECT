@@ -122,7 +122,8 @@ export function Header() {
           // Already on the Home: rewind to the top instead of reloading the same route.
           if (pathname === '/') { event.preventDefault(); scrollToTop(); }
         }}>
-          {copy.brand}
+          {/* The logo's own lettering, painted in the header's colour so it keeps the blend over every scene. */}
+          <span className="header-brand__logo" aria-hidden="true" />
         </Link>
         <div className="header-actions">
           <LanguageSwitcher />

@@ -45,6 +45,11 @@ dialog { overscroll-behavior: contain; }
 .mobile-nav a.active { text-decoration: underline; text-decoration-thickness: var(--border-width); text-underline-offset: .2em; }
 .header-brand { position: absolute; left: 50.55%; transform: translateX(-50%); display: flex; gap: .4em; white-space: nowrap; font-family: var(--font-family); font-stretch: var(--width-extended); font-size: var(--header-brand-size); font-weight: var(--weight-extended-copy); letter-spacing: var(--header-brand-tracking); line-height: 1; }
 .brand-mark, .brand-name { font-weight: 400; }
+/* The real logo (GP monogram + SELECT) as a mask over currentColor: same blend and tones as the type it replaces. */
+.header-brand__logo { display: block; width: 8.6em; aspect-ratio: 7308 / 1268; background-color: currentColor;
+  -webkit-mask: url('/assets/seo/logo.svg') center / contain no-repeat; mask: url('/assets/seo/logo.svg') center / contain no-repeat; }
+/* A mask clips text-shadow away: the brand gets the same halo as a filter. */
+.site-header[data-tone-scene='hero'][data-tone='dark'] .header-brand { filter: drop-shadow(0 0 1px rgb(9 10 12 / .8)) drop-shadow(0 0 3px rgb(9 10 12 / .5)); }
 .header-actions { margin-left: auto; }
 .language-switcher { display: flex; align-items: center; gap: var(--space-2); padding-left: var(--space-6); border-left: var(--border-width) solid currentColor; }
 .language-switcher button { border: 0; background: none; padding: var(--space-1); font-family: var(--font-family); font-stretch: var(--width-extended); font-size: var(--header-nav-size); opacity: .55; }
@@ -88,6 +93,7 @@ dialog { overscroll-behavior: contain; }
      links rise through their masks and the rules draw in. It lifts faster than it falls. */
   .site-header.site-header--open, .site-header.site-header--menu, .site-header.site-header--menu[data-tone] { mix-blend-mode: normal; color: var(--color-ink); text-shadow: none; }
   .site-header--menu button { text-shadow: none; }
+  .site-header--menu .header-brand { filter: none; }
   .mobile-nav {
     position: fixed; inset: 0; z-index: -1;
     display: flex; flex-direction: column;
