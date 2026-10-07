@@ -4,5 +4,9 @@ namespace GpSelect.Infrastructure;
 public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<GpSelectDbContext>
 {
  public GpSelectDbContext CreateDbContext(string[] args)
- { var b=new DbContextOptionsBuilder<GpSelectDbContext>(); b.UseNpgsql(Environment.GetEnvironmentVariable("ConnectionStrings__Default") ?? "Host=localhost;Database=gpselect;Username=postgres;Password=postgres"); return new GpSelectDbContext(b.Options); }
+ {
+  var connection=Environment.GetEnvironmentVariable("ConnectionStrings__Default");
+  if(string.IsNullOrWhiteSpace(connection)) throw new InvalidOperationException("Set ConnectionStrings__Default before running dotnet ef (see docs/BACKEND-SETUP.md).");
+  var b=new DbContextOptionsBuilder<GpSelectDbContext>(); b.UseNpgsql(connection); return new GpSelectDbContext(b.Options);
+ }
 }

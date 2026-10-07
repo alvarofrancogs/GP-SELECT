@@ -118,7 +118,7 @@ El Admin está en `http://127.0.0.1:5173/admin`. Hay que abrirlo con la misma di
 - HTTPS: la API no redirige ni envía HSTS. TLS, la redirección de HTTP a HTTPS y HSTS corresponden al proxy o al hosting. La cookie ya lleva `Secure` fuera de Development.
 - Cabeceras: la API envía `X-Content-Type-Options: nosniff` y no envía `Server`. El HTML de la web lo sirve el hosting: HSTS, `Content-Security-Policy` (o `X-Frame-Options`/`frame-ancestors`, sobre todo para `/admin`) y `Referrer-Policy` se configuran en el proxy o el hosting cuando exista.
 - Sin Swagger expuesto; los errores 500 son problem details sin traza (la página de excepción detallada solo existe en Development).
-- `DesignTimeDbContextFactory` tiene un fallback a `localhost` que solo usa `dotnet ef` en desarrollo; la API en ejecución exige `ConnectionStrings__Default`.
+- `DesignTimeDbContextFactory` (usado por `dotnet ef`) también exige `ConnectionStrings__Default`; no hay cadena de conexión por defecto en el código.
 - No hay usuarios ni credenciales sembrados: el administrador sale solo de `Admin__Email` y `Admin__PasswordHash`.
 
 ## Tests
