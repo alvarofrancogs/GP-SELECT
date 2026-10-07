@@ -6,6 +6,7 @@ export const adminCopy = {
   area: 'Admin',
   backToSite: 'Volver a la web',
   logout: 'Cerrar sesión',
+  signOutFailed: 'No se pudo cerrar la sesión: sigue abierta en este navegador. Comprueba la conexión y vuelve a intentarlo.',
   checkingSession: 'Comprobando la sesión…',
 
   login: {
@@ -246,6 +247,7 @@ export const adminCopy = {
     reference: 'Referencia',
     required: 'Obligatorio.',
     number: 'Introduce solo cifras.',
+    price: 'Introduce un importe en euros, p. ej. 85.000 o 85.000,50.',
     range: (min: string, max: string) => `Debe estar entre ${min} y ${max}.`,
     tooLong: (max: number) => `Máximo ${max} caracteres.`,
     codes: {

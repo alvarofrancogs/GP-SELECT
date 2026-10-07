@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { adminApi, setUnauthorizedHandler } from '../../services/adminApi';
+import { adminApi, ApiError, setUnauthorizedHandler } from '../../services/adminApi';
 import { adminCopy } from '../../i18n/adminCopy';
 import { AdminAuthContext, useAdminAuth, type AdminAuthState } from './adminAuth';
 
@@ -29,8 +29,12 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     setState(session ? { status: 'authenticated', email: session.email } : { status: 'anonymous', expired: false });
   }, []);
 
+  /** Rejects when the server could not confirm it: the HttpOnly cookie may still be valid, so the session stays. */
   const signOut = useCallback(async () => {
-    try { await adminApi.logout(); } catch { /* The cookie may already be gone; the client state is cleared anyway. */ }
+    try { await adminApi.logout(); } catch (error) {
+      // 401: the session was already gone, which is the outcome asked for.
+      if (!(error instanceof ApiError && error.status === 401)) throw error;
+    }
     setState({ status: 'anonymous', expired: false });
   }, []);
 

@@ -2,6 +2,7 @@ using GpSelect.Api;
 using GpSelect.Domain;
 using GpSelect.Infrastructure;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,18 +53,21 @@ public sealed class DebtCloseTests(ApiFactory api) : IClassFixture<ApiFactory>
     public async Task Global_login_limit_counts_every_address_together_and_only_logins()
     {
         using var limiter = SecurityConfig.LoginGlobalLimiter();
-        static HttpContext Request(string method, string path, string ip)
+        // Routing has already chosen the endpoint when the limiter runs; the login is the one with the "login" policy.
+        var login = new Endpoint(null, new EndpointMetadataCollection(new EnableRateLimitingAttribute("login")), "login");
+        var me = new Endpoint(null, new EndpointMetadataCollection(), "me");
+        static HttpContext Request(Endpoint? endpoint, string ip)
         {
             var context = new DefaultHttpContext();
-            context.Request.Method = method; context.Request.Path = path;
+            context.SetEndpoint(endpoint);
             context.Connection.RemoteIpAddress = System.Net.IPAddress.Parse(ip);
             return context;
         }
         for (var i = 0; i < SecurityConfig.LoginGlobalPermits; i++)
-            Assert.True((await limiter.AcquireAsync(Request("POST", "/api/admin/auth/login", $"203.0.113.{i}"))).IsAcquired);
-        Assert.False((await limiter.AcquireAsync(Request("POST", "/api/admin/auth/login", "198.51.100.1"))).IsAcquired);
-        Assert.True((await limiter.AcquireAsync(Request("GET", "/api/admin/auth/me", "198.51.100.1"))).IsAcquired);
-        Assert.True((await limiter.AcquireAsync(Request("GET", "/api/public/vehicles", "198.51.100.1"))).IsAcquired);
+            Assert.True((await limiter.AcquireAsync(Request(login, $"203.0.113.{i}"))).IsAcquired);
+        Assert.False((await limiter.AcquireAsync(Request(login, "198.51.100.1"))).IsAcquired);
+        Assert.True((await limiter.AcquireAsync(Request(me, "198.51.100.1"))).IsAcquired);
+        Assert.True((await limiter.AcquireAsync(Request(null, "198.51.100.1"))).IsAcquired);
     }
 
     [Fact]

@@ -14,6 +14,8 @@ export interface AdminImage {
   isStaged: boolean;
   sortOrder: number;
   failureReason: string | null;
+  /** The worker still has a queued, running or retryable job for it: its state will change. */
+  jobPending: boolean;
 }
 
 export interface AdminVehicleRow {

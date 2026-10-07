@@ -4,8 +4,16 @@ namespace GpSelect.Api;
 [ApiController][Route("api/admin/vehicles")][Authorize(Roles="Admin")]
 public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObjectStorage storage) : ControllerBase
 {
-    private async Task<VehicleAdminDto> Map(VehicleUnit v) =>
-        AdminMapping.Map(v, await db.Images.AsNoTracking().Where(x => x.VehicleUnitId == v.Id).ToListAsync());
+    private async Task<VehicleAdminDto> Map(VehicleUnit v)
+    {
+        var images = await db.Images.AsNoTracking().Where(x => x.VehicleUnitId == v.Id).ToListAsync();
+        var ids = images.Select(x => x.Id).ToList();
+        // A queued job also covers a failed photo waiting for its retry.
+        var pendingJobs = await db.ImageJobs.AsNoTracking()
+            .Where(j => ids.Contains(j.ImageId) && (j.State == ImageJobState.Queued || j.State == ImageJobState.Processing))
+            .Select(j => j.ImageId).ToListAsync();
+        return AdminMapping.Map(v, images, pendingJobs.ToHashSet());
+    }
 
     /// <summary>Two queries for the whole list: vehicles, then their active images grouped in memory.</summary>
     [HttpGet]
@@ -33,12 +41,14 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
         catch (DomainException e) { return DomainProblem(e); }
     }
 
-    /// <summary>Merge-patch: only the properties present in the body change; an explicit null clears a clearable field.</summary>
+    /// <summary>Merge-patch: only the properties present in the body change; an explicit null clears a clearable field.
+    /// Validated under the vehicle lock, like publish and save, so a concurrent status change is never missed.</summary>
     [HttpPatch("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateVehicleRequest r)
     {
-        var v = await db.Vehicles.FindAsync(id); if (v is null) return NotFound();
-        try { v.Apply(r); await db.SaveChangesAsync(); return Ok(await Map(v)); }
+        await using var tx = await db.Database.BeginTransactionAsync();
+        var v = await db.LockVehicleAsync(id); if (v is null) return NotFound();
+        try { v.Apply(r); await db.SaveChangesAsync(); await tx.CommitAsync(); return Ok(await Map(v)); }
         catch (DomainException e) { return DomainProblem(e); }
     }
 

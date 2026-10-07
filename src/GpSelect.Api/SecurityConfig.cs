@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GpSelect.Api;
 
@@ -43,9 +44,11 @@ public static partial class SecurityConfig
     public static readonly TimeSpan LoginGlobalWindow = TimeSpan.FromMinutes(10);
 
     /// <summary>All login attempts together, on top of the per-address limit: an attacker spread over many addresses
-    /// still gets only a few dozen guesses per window. The admin is never locked out for longer than one window.</summary>
+    /// still gets only a few dozen guesses per window. The admin is never locked out for longer than one window.
+    /// The login is recognised by the endpoint routing chose (its "login" policy), so every spelling the router
+    /// accepts (trailing slash, any case) shares the same quota.</summary>
     public static PartitionedRateLimiter<HttpContext> LoginGlobalLimiter(int permits = LoginGlobalPermits) => PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
-        HttpMethods.IsPost(ctx.Request.Method) && ctx.Request.Path.Equals("/api/admin/auth/login", StringComparison.OrdinalIgnoreCase)
+        ctx.GetEndpoint()?.Metadata.GetMetadata<EnableRateLimitingAttribute>()?.PolicyName == "login"
             ? RateLimitPartition.GetFixedWindowLimiter("login-all", _ => new() { PermitLimit = permits, Window = LoginGlobalWindow, QueueLimit = 0 })
             : RateLimitPartition.GetNoLimiter("other"));
 
