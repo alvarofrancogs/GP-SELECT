@@ -87,7 +87,7 @@ export function ServicesSection() {
       <div className="services-grid">
         <div className="services-content">
           <h2 id={`${instanceId}-title`} className="services-title">
-            <span>{copy.title}</span>
+            <span>{copy.title}</span>{' '}
             <span className="services-title__fine">{copy.titleFine}</span>
           </h2>
           <p className="services-description">{copy.description}</p>

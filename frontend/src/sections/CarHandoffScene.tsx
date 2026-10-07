@@ -14,7 +14,7 @@ function HandoffText({ state, name, layout, titleId }: { state: HandoffState; na
     <div className="car-handoff__text" data-text={name} data-layout={layout}>
       {/* Same classes as the hero headline: one type recipe, sizes fitted per word. */}
       <Heading id={titleId} className="scene-title hero-title" data-headline>
-        <span data-word><span data-line>{state.left}</span></span>
+        <span data-word><span data-line>{state.left}</span></span>{' '}
         <span data-word><span data-line>{state.right}</span></span>
       </Heading>
       {/* The fact sits inside the animated line, so it enters and leaves with its description. */}

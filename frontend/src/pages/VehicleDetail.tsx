@@ -77,7 +77,7 @@ export function VehicleDetailView({ vehicle, back, className = '' }: { vehicle: 
   const extraImages = vehicle.images?.slice(1) ?? [];
   return <article className={`interior-page vehicle-detail ${className}`.trim()}>
     <header className="vehicle-detail__header">{back}
-      <h1 className="vehicle-detail__title"><span className="type-display">{name}</span>{vehicle.variant ? <span className="type-fine">{vehicle.variant}</span> : null}</h1>
+      <h1 className="vehicle-detail__title"><span className="type-display">{name}</span>{vehicle.variant ? ' ' : null}{vehicle.variant ? <span className="type-fine">{vehicle.variant}</span> : null}</h1>
     </header>
     <div className="vehicle-detail__opening">
       <VehicleGallery images={vehicle.images ?? []} name={name} />
