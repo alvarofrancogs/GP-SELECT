@@ -10,12 +10,13 @@ import { footerCopy } from '../i18n/footerCopy';
 const MENU_CLOSE_MS = 420;
 // Everything behind the open menu: out of the tab order and the accessibility tree while it covers them.
 const BEHIND_MENU = '#main-content, .site-footer, .catalogue-cta, .skip-link';
-// The Home's scroll scenes keep the see-through header; everywhere else it gets a backdrop.
+// The Home's scroll scenes keep the see-through header, always on screen.
 const SCENES = '#hero, #criterio, #coches';
-const TRANSPARENT = 'rgba(0, 0, 0, 0)';
+// Scroll needed in one direction before the header hides or comes back (ignores jitter).
+const QUICK_RETURN_PX = 8;
 
-/** Colour of the full-width surface under the header line, or null over a scene (no backdrop). */
-function surfaceAt(y: number) {
+/** Tone of the full-width surface under the header line, or null over a scene. */
+function surfaceAt(y: number): 'light' | 'dark' | null {
   const width = window.innerWidth;
   const top = document.elementsFromPoint(width / 2, y)
     .find((element) => !element.closest('.site-header, .header-backdrop, .catalogue-cta, .preloader'));
@@ -23,10 +24,11 @@ function surfaceAt(y: number) {
   // Cards and photographs are not surfaces: only a full-width block with a solid colour counts.
   for (let node: Element | null = top; node; node = node.parentElement) {
     if (node.getBoundingClientRect().width < width * 0.9) continue;
-    const colour = getComputedStyle(node).backgroundColor;
-    if (colour !== TRANSPARENT) return colour;
+    const [r, g, b, a = 1] = (getComputedStyle(node).backgroundColor.match(/[\d.]+/g) ?? []).map(Number);
+    if (a === 0 || r === undefined) continue;
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 128 ? 'light' : 'dark';
   }
-  return null;
+  return 'light';
 }
 
 export function Header() {
@@ -89,23 +91,36 @@ export function Header() {
     };
   }, [pathname]);
 
-  // Over the pages' surfaces, text scrolling under the header would cross the logo and the links:
-  // a backdrop in the colour of the surface hides it. The header keeps its blend over the backdrop.
+  // Quick return: reading down the page the header slides away, so text never runs under the logo and
+  // links; any scroll up brings it back over glass. Over the Home's scenes and at the top it stays.
   useEffect(() => {
     const header = headerRef.current;
     const backdrop = backdropRef.current;
     if (!header || !backdrop) return;
     let frame = 0;
+    let lastY = window.scrollY;
+    let goingDown = false;
+    function set(element: HTMLElement, key: 'hidden' | 'glass', value: string | null) {
+      if (value === null) delete element.dataset[key];
+      else if (element.dataset[key] !== value) element.dataset[key] = value;
+    }
     function update() {
       frame = 0;
       if (!header || !backdrop) return;
-      const colour = surfaceAt(header.offsetHeight / 2);
-      if (colour) {
-        backdrop.style.backgroundColor = colour;
-        backdrop.dataset.shown = '';
-      } else {
-        delete backdrop.dataset.shown;
+      const y = window.scrollY;
+      if (Math.abs(y - lastY) >= QUICK_RETURN_PX) {
+        goingDown = y > lastY;
+        lastY = y;
       }
+      const surface = surfaceAt(header.offsetHeight / 2);
+      const pastTop = y > header.offsetHeight;
+      // Never hidden over a scene, at the top or while keyboard focus is in it.
+      const hidden = surface !== null && pastTop && goingDown && !header.contains(document.activeElement);
+      const glass = surface !== null && pastTop ? surface : null;
+      [header, backdrop].forEach((element) => {
+        set(element, 'hidden', hidden ? '' : null);
+        set(element, 'glass', glass);
+      });
     }
     function schedule() {
       if (!frame) frame = requestAnimationFrame(update);
@@ -115,11 +130,17 @@ export function Header() {
     const settle = window.setTimeout(schedule, 600);
     window.addEventListener('scroll', schedule, { passive: true });
     window.addEventListener('resize', schedule);
+    header.addEventListener('focusin', schedule);
     return () => {
       cancelAnimationFrame(frame);
       window.clearTimeout(settle);
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
+      header.removeEventListener('focusin', schedule);
+      [header, backdrop].forEach((element) => {
+        delete element.dataset.hidden;
+        delete element.dataset.glass;
+      });
     };
   }, [pathname]);
 
@@ -166,7 +187,7 @@ export function Header() {
 
   return (
     <>
-      {/* Outside the header: inside it, the backdrop would be blended too. */}
+      {/* The header's glass, outside it: inside, it would be blended too. */}
       <div ref={backdropRef} className="header-backdrop" aria-hidden="true" />
       <header ref={headerRef} className={`site-header${menuShown ? ' site-header--menu' : ''}${menuOpen ? ' site-header--open' : ''}`}>
         <div className="header-inner">

@@ -36,11 +36,22 @@ dialog { overscroll-behavior: contain; }
 .site-header[data-tone-scene='hero'][data-tone='light'] { color: #000; }
 .site-header[data-tone-scene='hero'][data-tone='dark'] { text-shadow: 0 0 1px rgb(9 10 12 / .8), 0 0 3px rgb(9 10 12 / .5), 0 0 .5em rgb(9 10 12 / .3); }
 .site-header[data-tone-scene='hero'][data-tone='dark'] button { text-shadow: inherit; }
-/* Behind the header over the pages' surfaces (Header.tsx): their colour, with a soft lower edge so the text slides under it. */
-.header-backdrop { position: fixed; inset: 0 0 auto; z-index: calc(var(--z-header) - 1); height: calc(var(--header-height) + .75rem); pointer-events: none; opacity: 0;
-  -webkit-mask: linear-gradient(#000 calc(100% - .75rem), transparent); mask: linear-gradient(#000 calc(100% - .75rem), transparent);
-  transition: opacity 250ms var(--ease-out), background-color 250ms var(--ease-out); }
-.header-backdrop[data-shown] { opacity: 1; }
+/* Quick return (Header.tsx): over the pages' content the header slides away while reading down and comes
+   back on the way up over frosted glass, the same glass as the catalogue pill. At the top of a page and over
+   the Home's scenes it stays as it was: always there and see-through. The glass sits outside the header,
+   which is blended. Over the glass the header drops the blend for crisp ink (or white over dark bands). */
+.site-header, .header-backdrop { transition: transform 260ms var(--ease-out); }
+.site-header[data-hidden], .header-backdrop[data-hidden] { transform: translateY(-100%); }
+/* The open menu lives inside the header: never slid away under it. */
+.site-header.site-header--menu[data-hidden] { transform: none; }
+.header-backdrop { position: fixed; inset: 0 0 auto; z-index: calc(var(--z-header) - 1); height: var(--header-height); pointer-events: none; opacity: 0;
+  background: rgb(245 242 236 / .72); box-shadow: inset 0 -1px 0 rgb(16 17 18 / .08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4);
+  transition: opacity 200ms var(--ease-out), transform 260ms var(--ease-out), background-color 200ms var(--ease-out); }
+.header-backdrop[data-glass] { opacity: 1; }
+.header-backdrop[data-glass='dark'] { background: rgb(9 10 12 / .55); box-shadow: inset 0 -1px 0 rgb(255 252 247 / .1); }
+.site-header[data-glass='light'] { mix-blend-mode: normal; color: var(--color-ink); }
+.site-header[data-glass='dark'] { mix-blend-mode: normal; color: var(--color-white); }
 .header-inner { height: var(--header-height); margin-inline: var(--page-gutter); display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
 .header-nav, .header-actions { display: flex; align-items: center; gap: clamp(1rem, 2.9vw, 3.5rem); }
 .header-nav { font-family: var(--font-family); font-stretch: var(--width-nav); font-size: var(--header-nav-size); font-weight: var(--weight-extended-copy); letter-spacing: var(--header-nav-tracking); }
