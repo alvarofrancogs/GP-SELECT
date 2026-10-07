@@ -10,6 +10,24 @@ import { footerCopy } from '../i18n/footerCopy';
 const MENU_CLOSE_MS = 420;
 // Everything behind the open menu: out of the tab order and the accessibility tree while it covers them.
 const BEHIND_MENU = '#main-content, .site-footer, .catalogue-cta, .skip-link';
+// The Home's scroll scenes keep the see-through header; everywhere else it gets a backdrop.
+const SCENES = '#hero, #criterio, #coches';
+const TRANSPARENT = 'rgba(0, 0, 0, 0)';
+
+/** Colour of the full-width surface under the header line, or null over a scene (no backdrop). */
+function surfaceAt(y: number) {
+  const width = window.innerWidth;
+  const top = document.elementsFromPoint(width / 2, y)
+    .find((element) => !element.closest('.site-header, .header-backdrop, .catalogue-cta, .preloader'));
+  if (!top || top.closest(SCENES)) return null;
+  // Cards and photographs are not surfaces: only a full-width block with a solid colour counts.
+  for (let node: Element | null = top; node; node = node.parentElement) {
+    if (node.getBoundingClientRect().width < width * 0.9) continue;
+    const colour = getComputedStyle(node).backgroundColor;
+    if (colour !== TRANSPARENT) return colour;
+  }
+  return null;
+}
 
 export function Header() {
   const { copy, locale } = useLanguage();
@@ -18,6 +36,7 @@ export function Header() {
   const [menuShown, setMenuShown] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
   const links = [
     { to: '/nosotros', label: copy.nav.about },
@@ -70,6 +89,40 @@ export function Header() {
     };
   }, [pathname]);
 
+  // Over the pages' surfaces, text scrolling under the header would cross the logo and the links:
+  // a backdrop in the colour of the surface hides it. The header keeps its blend over the backdrop.
+  useEffect(() => {
+    const header = headerRef.current;
+    const backdrop = backdropRef.current;
+    if (!header || !backdrop) return;
+    let frame = 0;
+    function update() {
+      frame = 0;
+      if (!header || !backdrop) return;
+      const colour = surfaceAt(header.offsetHeight / 2);
+      if (colour) {
+        backdrop.style.backgroundColor = colour;
+        backdrop.dataset.shown = '';
+      } else {
+        delete backdrop.dataset.shown;
+      }
+    }
+    function schedule() {
+      if (!frame) frame = requestAnimationFrame(update);
+    }
+    update();
+    // Fonts, images and pins move the page under a still scroll position while it settles.
+    const settle = window.setTimeout(schedule, 600);
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(settle);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+    };
+  }, [pathname]);
+
   useEffect(() => {
     if (menuOpen) {
       setMenuShown(true);
@@ -112,46 +165,50 @@ export function Header() {
   }, [menuOpen]);
 
   return (
-    <header ref={headerRef} className={`site-header${menuShown ? ' site-header--menu' : ''}${menuOpen ? ' site-header--open' : ''}`}>
-      <div className="header-inner">
-        <nav className="header-nav" aria-label={copy.nav.label}>
-          {links.map((link) => <NavLink key={link.to} className="nav-link" to={link.to}>{link.label}</NavLink>)}
-        </nav>
-        <Link to="/" className="header-brand" aria-label={`${copy.brand} · ${copy.nav.home}`} onClick={(event) => {
-          setMenuOpen(false);
-          // Already on the Home: rewind to the top instead of reloading the same route.
-          if (pathname === '/') { event.preventDefault(); scrollToTop(); }
-        }}>
-          {/* The logo's own lettering, painted in the header's colour so it keeps the blend over every scene. */}
-          <span className="brand-logo" aria-hidden="true" />
-        </Link>
-        <div className="header-actions">
-          <LanguageSwitcher />
-          <button className="menu-toggle" ref={menuButton} type="button" aria-expanded={menuOpen}
-            aria-controls="mobile-navigation" aria-label={menuOpen ? copy.common.close : copy.common.menu}
-            onClick={() => setMenuOpen((open) => !open)}>
-            <span className="menu-toggle__icon" aria-hidden="true"><span /><span /></span>
-          </button>
+    <>
+      {/* Outside the header: inside it, the backdrop would be blended too. */}
+      <div ref={backdropRef} className="header-backdrop" aria-hidden="true" />
+      <header ref={headerRef} className={`site-header${menuShown ? ' site-header--menu' : ''}${menuOpen ? ' site-header--open' : ''}`}>
+        <div className="header-inner">
+          <nav className="header-nav" aria-label={copy.nav.label}>
+            {links.map((link) => <NavLink key={link.to} className="nav-link" to={link.to}>{link.label}</NavLink>)}
+          </nav>
+          <Link to="/" className="header-brand" aria-label={`${copy.brand} · ${copy.nav.home}`} onClick={(event) => {
+            setMenuOpen(false);
+            // Already on the Home: rewind to the top instead of reloading the same route.
+            if (pathname === '/') { event.preventDefault(); scrollToTop(); }
+          }}>
+            {/* The logo's own lettering, painted in the header's colour so it keeps the blend over every scene. */}
+            <span className="brand-logo" aria-hidden="true" />
+          </Link>
+          <div className="header-actions">
+            <LanguageSwitcher />
+            <button className="menu-toggle" ref={menuButton} type="button" aria-expanded={menuOpen}
+              aria-controls="mobile-navigation" aria-label={menuOpen ? copy.common.close : copy.common.menu}
+              onClick={() => setMenuOpen((open) => !open)}>
+              <span className="menu-toggle__icon" aria-hidden="true"><span /><span /></span>
+            </button>
+          </div>
         </div>
-      </div>
-      {/* Always rendered so it can open and close as a curtain; hidden (and unfocusable) while closed. */}
-      <nav id="mobile-navigation" className="mobile-nav" aria-label={copy.nav.label}>
-        <ul className="mobile-nav__list">
-          {links.map((link, index) => (
-            <li key={link.to} className="mobile-nav__item" style={{ '--i': index } as CSSProperties}>
-              <NavLink className="mobile-nav__link" to={link.to} onClick={() => setMenuOpen(false)}>
-                <span className="mobile-nav__mask"><span className="mobile-nav__label">{link.label}</span></span>
-                <span className="mobile-nav__mask" aria-hidden="true">
-                  <svg className="mobile-nav__arrow" viewBox="0 0 16 19" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M7 18C7 18.5523 7.44772 19 8 19C8.55228 19 9 18.5523 9 18H7ZM8.70711 0.292893C8.31658 -0.0976311 7.68342 -0.0976311 7.29289 0.292893L0.928932 6.65685C0.538408 7.04738 0.538408 7.68054 0.928932 8.07107C1.31946 8.46159 1.95262 8.46159 2.34315 8.07107L8 2.41421L13.6569 8.07107C14.0474 8.46159 14.6805 8.46159 15.0711 8.07107C15.4616 7.68054 15.4616 7.04738 15.0711 6.65685L8.70711 0.292893ZM9 18L9 1H7L7 18H9Z" />
-                  </svg>
-                </span>
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-        <p className="mobile-nav__meta">{footerCopy[locale].location}</p>
-      </nav>
-    </header>
+        {/* Always rendered so it can open and close as a curtain; hidden (and unfocusable) while closed. */}
+        <nav id="mobile-navigation" className="mobile-nav" aria-label={copy.nav.label}>
+          <ul className="mobile-nav__list">
+            {links.map((link, index) => (
+              <li key={link.to} className="mobile-nav__item" style={{ '--i': index } as CSSProperties}>
+                <NavLink className="mobile-nav__link" to={link.to} onClick={() => setMenuOpen(false)}>
+                  <span className="mobile-nav__mask"><span className="mobile-nav__label">{link.label}</span></span>
+                  <span className="mobile-nav__mask" aria-hidden="true">
+                    <svg className="mobile-nav__arrow" viewBox="0 0 16 19" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7 18C7 18.5523 7.44772 19 8 19C8.55228 19 9 18.5523 9 18H7ZM8.70711 0.292893C8.31658 -0.0976311 7.68342 -0.0976311 7.29289 0.292893L0.928932 6.65685C0.538408 7.04738 0.538408 7.68054 0.928932 8.07107C1.31946 8.46159 1.95262 8.46159 2.34315 8.07107L8 2.41421L13.6569 8.07107C14.0474 8.46159 14.6805 8.46159 15.0711 8.07107C15.4616 7.68054 15.4616 7.04738 15.0711 6.65685L8.70711 0.292893ZM9 18L9 1H7L7 18H9Z" />
+                    </svg>
+                  </span>
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+          <p className="mobile-nav__meta">{footerCopy[locale].location}</p>
+        </nav>
+      </header>
+    </>
   );
 }

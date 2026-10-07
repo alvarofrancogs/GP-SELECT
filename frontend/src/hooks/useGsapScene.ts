@@ -200,9 +200,16 @@ export function useGsapScene(kind: SceneKind, id: string) {
             duration: (PROCESS_LANDING * 2) / distance,
           }, 0);
           handoffTimeline.to([list, ...ui], { opacity: 0, duration: revealAt - lettersOut }, lettersOut);
+          // The incoming frame shows up under a veil of Process's own dark, then the veil lifts like a
+          // curtain with a soft edge. A plain crossfade from dark to the bright sky went through a
+          // whole screen of flat grey on the way.
           const incoming = document.querySelector('[data-handoff-target="process"]');
           if (incoming) {
-            handoffTimeline.fromTo(incoming, { autoAlpha: 0 }, { autoAlpha: 1, duration: 1 - revealAt }, revealAt);
+            const veil = incoming.querySelector('[data-handoff-veil]');
+            handoffTimeline.fromTo(incoming, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.01 }, revealAt);
+            if (veil) {
+              handoffTimeline.fromTo(veil, { yPercent: 0 }, { yPercent: -100, duration: 1 - revealAt - 0.01, ease: 'power1.inOut' }, revealAt + 0.01);
+            }
           }
         }
       },

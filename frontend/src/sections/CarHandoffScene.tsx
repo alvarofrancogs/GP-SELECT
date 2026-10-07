@@ -72,6 +72,8 @@ export function CarHandoffScene() {
         </div>
         {/* One light over world and cars, so the weather changes the car too. */}
         <div className="car-handoff__grade" data-handoff-grade aria-hidden="true" />
+        {/* Process's dark, lifted off this frame like a curtain when Process hands over (useGsapScene.ts). */}
+        <div className="car-handoff__veil" data-handoff-veil aria-hidden="true" />
       </div>
     </section>
   );

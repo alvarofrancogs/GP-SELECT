@@ -135,6 +135,8 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - Preloader: solo logo y telón; fuera la barra y el contador.
 - Cambio de idioma sin View Transitions: solo el texto se funde (160 ms fuera, cambio, 280 ms dentro; clases `lang-out`/`lang-in` en `<html>`); fotos, coches y fondos no se mueven. El fundido de página completa mostraba los dos idiomas superpuestos a mitad.
 - Logo del header un poco más pequeño (7,8 em); el footer usa el mismo logo (`.brand-logo`). El CTA «Ver catálogo» no aparece en `/contacto` (tapaba el formulario).
+- Fondo del header (`.header-backdrop`, fuera del header para que no se mezcle): fuera de las escenas de la Home toma el color de la superficie de ancho completo bajo la línea del header (papel, banda oscura, footer), con borde inferior suave. En `#hero`, `#criterio` y `#coches` desaparece y el header sigue translúcido.
+- Process → coches: en vez de un fundido de opacidad (pasaba por una pantalla gris entera), el frame entra bajo un velo del oscuro de Process (`[data-handoff-veil]`) que sube como telón con borde suave. El CTA lo trata como superficie oscura.
 
 ### UI: CTA, idioma y marca (04-10-2026, pedido por el usuario, pendiente de su visto bueno)
 

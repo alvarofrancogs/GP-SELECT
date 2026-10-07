@@ -42,6 +42,9 @@
   mask-repeat: no-repeat;
 }
 
+.car-handoff__veil { display: none; position: absolute; inset: 0 0 auto; z-index: 9; height: 125%; pointer-events: none;
+  background: linear-gradient(to bottom, var(--color-dark) 80%, transparent); }
+.car-handoff[data-motion='scroll'] .car-handoff__veil { display: block; }
 .car-handoff__grade { position: absolute; inset: 0; z-index: 7; background: #fff; mix-blend-mode: multiply; pointer-events: none; }
 .car-handoff__text, .car-handoff__interlude { z-index: 8; }
 .car-handoff__text[data-text='a'] { z-index: 2; }

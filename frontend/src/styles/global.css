@@ -36,6 +36,11 @@ dialog { overscroll-behavior: contain; }
 .site-header[data-tone-scene='hero'][data-tone='light'] { color: #000; }
 .site-header[data-tone-scene='hero'][data-tone='dark'] { text-shadow: 0 0 1px rgb(9 10 12 / .8), 0 0 3px rgb(9 10 12 / .5), 0 0 .5em rgb(9 10 12 / .3); }
 .site-header[data-tone-scene='hero'][data-tone='dark'] button { text-shadow: inherit; }
+/* Behind the header over the pages' surfaces (Header.tsx): their colour, with a soft lower edge so the text slides under it. */
+.header-backdrop { position: fixed; inset: 0 0 auto; z-index: calc(var(--z-header) - 1); height: calc(var(--header-height) + .75rem); pointer-events: none; opacity: 0;
+  -webkit-mask: linear-gradient(#000 calc(100% - .75rem), transparent); mask: linear-gradient(#000 calc(100% - .75rem), transparent);
+  transition: opacity 250ms var(--ease-out), background-color 250ms var(--ease-out); }
+.header-backdrop[data-shown] { opacity: 1; }
 .header-inner { height: var(--header-height); margin-inline: var(--page-gutter); display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
 .header-nav, .header-actions { display: flex; align-items: center; gap: clamp(1rem, 2.9vw, 3.5rem); }
 .header-nav { font-family: var(--font-family); font-stretch: var(--width-nav); font-size: var(--header-nav-size); font-weight: var(--weight-extended-copy); letter-spacing: var(--header-nav-tracking); }
