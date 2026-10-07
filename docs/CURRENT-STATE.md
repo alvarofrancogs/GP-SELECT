@@ -205,6 +205,12 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - `StoredImages.Serve` (API) sirve las imágenes de los 4 endpoints (card/detail públicos, card/detail del admin y la vista previa): si falta el objeto, 404 con ProblemDetails, un warning con la clave y sin `Cache-Control`. El caché de un día solo se pone en las respuestas correctas. El worker trata un original que falta como cualquier fallo de procesado (sin cambios).
 - Implementación de Astra (worktree sobre una base antigua; Opus lo portó a `feat/perf-1`). Verificación: build 0 avisos, 105/105 unitarios, 73/73 de integración (3 nuevos).
 
+### HOME SCROLL FIX · coche y Process (07-10-2026, rama `claude/relaxed-cori-td6078`, pendiente de revisión)
+
+- **Coche (CarHandoff):** al cambiar ES↔EN el coche cambiaba de tamaño (1,60 → 1,37 a 1440). La escala inicial se medía con el hueco entre «Mercado / Alemán», que cambia con el idioma (otro `--hero-size` y otras palabras) y se recalculaba en cada refresh. En ES además pisaba «Mercado» (14 px a 1440, 28 px a 1920). Ahora la escala inicial es el carril en el que se ajustan los titulares (`GAP_FACTOR`, 1,3), igual en los dos idiomas. Móvil sin cambios.
+- **Process:** con scroll brusco, el compositor pinta un fotograma antes de que ScrollTrigger fije el pin: Process seguía subiendo y por debajo asomaba el hero, porque la sección era transparente. Ahora la sección es opaca (negro). Además, Process aterriza: las letras llegan 8 vh más abajo y, al fijarse, siguen subiendo y frenan (`power1.out`, a la velocidad del scroll) hasta su sitio, sin parada en seco. La posición final no cambia.
+- **QA:** screencast con CPU ×4 a 1440 y 390, en los dos sentidos; Home píxel a píxel frente a `main` (solo cambian el tramo de entrada de Process y la escala del coche); reduced-motion sin cambios; lint, typecheck y build OK.
+
 ### FINAL REVIEW · revisión global = PASS (07-10-2026, rama `fix/final-review`, tag `final-review-pass`)
 
 - Revisores, todos READ-ONLY: Opus (frontend y backend), Gemini 3.8 Flash High (backend y deploy, 55 archivos: 0 P0–P2; un P3 descartado, `Image.IdentifyAsync` no devuelve null en ImageSharp 3) y Gemini 3.1 Pro High (frontend; sin hallazgos, cobertura corta). En headless, `--effort` choca con los modelos `-high` (ya son el máximo) y cualquier comando no permitido aborta la ejecución: pedir solo lectura de archivos.

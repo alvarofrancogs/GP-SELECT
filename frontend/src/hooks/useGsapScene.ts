@@ -26,6 +26,10 @@ const HERO_DEPTH = 1.06;
 const HERO_TONE = { light: 0.45, dark: 0.44 };
 // The hero is fully darkened by the time Process starts to rise over it (scroll distance, in viewports).
 const HERO_DARKEN_BY = 1.45;
+// Process lands instead of stopping dead: its lettering rises this much lower (in viewports) and, once
+// pinned, keeps rising and slows to rest over twice that scroll. power1.out starts at twice its average
+// speed, so the lettering leaves the scroll at the scroll's own speed, with no hard stop.
+const PROCESS_LANDING = 0.08;
 
 /** Header tone over the hero, from the visible (scrubbed) state of its layers:
     `progress` of the car/titles timeline and `darkness` (opacity) of the dark handoff layer. */
@@ -173,8 +177,9 @@ export function useGsapScene(kind: SceneKind, id: string) {
 
           // CSS overlaps the pins by 75vh. The next scene owns its motion; Process only
           // reveals its frame once its own lettering has left, so the two never overlap.
-          // This handoff follows the scroll without lag: the incoming frame must be opaque
-          // by the time Process unpins, whatever the scroll speed.
+          // This timeline follows the scroll without lag: the landing must match the scroll's
+          // speed, and the incoming frame must be opaque by the time Process unpins, whatever
+          // the scroll speed.
           const lettersOut = 0.72;
           const revealAt = 0.82;
           const handoffTimeline = gsap.timeline({
@@ -189,6 +194,11 @@ export function useGsapScene(kind: SceneKind, id: string) {
           });
           handoffTimeline.to({}, { duration: 1 }, 0);
           const list = words[0].parentElement;
+          handoffTimeline.fromTo([list, ...ui], { y: () => window.innerHeight * PROCESS_LANDING }, {
+            y: 0,
+            ease: 'power1.out',
+            duration: (PROCESS_LANDING * 2) / distance,
+          }, 0);
           handoffTimeline.to([list, ...ui], { opacity: 0, duration: revealAt - lettersOut }, lettersOut);
           const incoming = document.querySelector('[data-handoff-target="process"]');
           if (incoming) {

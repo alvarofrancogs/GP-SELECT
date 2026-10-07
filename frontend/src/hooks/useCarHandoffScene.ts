@@ -15,9 +15,10 @@ const CAR_SHARE = 0.75;
 // Share of the box height above the car's nose.
 const NOSE_INSET = 0.055;
 // The car comes in closer to the camera and shrinks to its parked size as it flies off. Unlike
-// a jet's narrow nose, a car is wide all along, so it starts no wider than the gap between the
-// first headline's words and never covers them (stacked: below the lettering).
-const CAR_FROM = { max: 1.7, stacked: 1.25 };
+// a jet's narrow nose, a car is wide all along, so side by side it starts exactly as wide as the
+// lane the headlines are fitted around (GAP_FACTOR) and never covers them, in every language
+// (stacked: below the lettering). Measuring the words instead made its size change with the language.
+const CAR_FROM = { sideBySide: GAP_FACTOR, stacked: 1.25 };
 // Photograph mask height (% of the box): whole at the start, gone at the end.
 const CURTAIN_FROM = 240;
 // The scene in viewport heights of scroll, after Jesko Jets' jet: it rises with the scroll,
@@ -71,16 +72,6 @@ function fitHeadlines(section: HTMLElement) {
   section.style.setProperty('--handoff-side', stacked ? 'none' : `${Math.floor(side)}px`);
 }
 
-/** Largest start scale that keeps the car inside the measured gap between the first headline's words. */
-function startScale(section: HTMLElement, car: HTMLElement) {
-  if (window.matchMedia(STACKED).matches) return CAR_FROM.stacked;
-  const first = section.querySelector<HTMLElement>('[data-layout="split"] [data-headline]');
-  if (!first) return 1;
-  const [left, right] = first.querySelectorAll<HTMLElement>('[data-word]');
-  const gap = right.getBoundingClientRect().left - left.getBoundingClientRect().right;
-  return Math.max(1, Math.min(CAR_FROM.max, (gap - GAP_MARGIN * 2) / (car.offsetWidth * CAR_SHARE)));
-}
-
 export function useCarHandoffScene() {
   const sectionRef = useRef<HTMLElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
@@ -101,7 +92,7 @@ export function useCarHandoffScene() {
       reduced: '(prefers-reduced-motion: reduce)',
       enoughHeight: '(min-height: 600px)',
     }, (context) => {
-      const { reduced, enoughHeight } = context.conditions!;
+      const { desktop, reduced, enoughHeight } = context.conditions!;
       section.dataset.motion = reduced || !enoughHeight ? 'static' : 'scroll';
       if (reduced || !enoughHeight) {
         // Two still frames: dark lettering over the bright one, white over the overcast one,
@@ -131,11 +122,7 @@ export function useCarHandoffScene() {
       const measureHeader = () => { headerHalf = (document.querySelector('.site-header')?.clientHeight ?? 0) / 2; };
       ScrollTrigger.addEventListener('refreshInit', measureHeader);
       measureHeader();
-      // Measured once per refresh, after the headlines are fitted.
-      let carFrom = 1;
-      const measureCar = () => { carFrom = startScale(section, car); };
-      ScrollTrigger.addEventListener('refreshInit', measureCar);
-      measureCar();
+      const carFrom = desktop ? CAR_FROM.sideBySide : CAR_FROM.stacked;
       // The nose starts just below the frame, with the car at its start scale around its centre.
       const startY = () => vh() - car.offsetTop
         - (car.offsetHeight * (1 - carFrom)) / 2 - car.offsetHeight * carFrom * NOSE_INSET;
@@ -202,7 +189,7 @@ export function useCarHandoffScene() {
       cars.fromTo(car, { y: startY }, { y: 0, duration: () => startY() / vh() }, AT.rise);
       // …while it shrinks slowly, then faster, as it flies away from the camera.
       const [shrinkFrom, shrinkTo] = AT.shrink;
-      cars.fromTo(car, { scale: () => carFrom }, { scale: 1, duration: shrinkTo - shrinkFrom, ease: 'power3.in' }, shrinkFrom);
+      cars.fromTo(car, { scale: carFrom }, { scale: 1, duration: shrinkTo - shrinkFrom, ease: 'power3.in' }, shrinkFrom);
       // Curtain: the photograph's mask shrinks towards the nose and uncovers the cutaway little by little.
       // The mask height is a CSS variable tweened by GSAP (not written by hand), so it is restored
       // correctly whenever ScrollTrigger refreshes: a hand-written onUpdate left the photograph back
@@ -231,7 +218,6 @@ export function useCarHandoffScene() {
 
       return () => {
         ScrollTrigger.removeEventListener('refreshInit', measureHeader);
-        ScrollTrigger.removeEventListener('refreshInit', measureCar);
         photo.style.removeProperty('--curtain');
       };
     }, section);
