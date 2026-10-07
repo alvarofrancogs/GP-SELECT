@@ -25,10 +25,10 @@ export type TextField = keyof typeof textFields;
 
 const numberFields = {
   mileageKm: { min: 0, max: 2_000_000 },
-  priceEur: { min: 0, max: 10_000_000 },
   powerHp: { min: 1, max: 2000 },
 } as const;
-type NumberField = keyof typeof numberFields;
+type NumberField = keyof typeof numberFields | 'priceEur';
+const PRICE_MAX = 10_000_000;
 
 export interface SpecificationRow { key: string; label: string; value: string }
 
@@ -73,6 +73,19 @@ export function parseInteger(value: string): number | null | undefined {
   return Number(compact);
 }
 
+/** Euros with at most two decimals, as the server stores them. Thousands go in groups of three after a dot or a
+ * space (85.000); the decimals after a comma (85.000,50) or after a dot followed by one or two digits, which is
+ * how the server's own value reaches the form (85000.5). Null when empty. */
+export function parsePrice(value: string): number | null | 'invalid' | 'precision' {
+  const raw = value.trim();
+  if (!raw) return null;
+  const match = /^(\d+|\d{1,3}(?:[.\s]\d{3})+)(?:,(\d+)|\.(\d{1,2}))?$/.exec(raw);
+  if (!match) return 'invalid';
+  const decimals = match[2] ?? match[3] ?? '';
+  if (decimals.length > 2) return 'precision';
+  return Number(`${match[1].replace(/[.\s]/g, '')}.${decimals || '0'}`);
+}
+
 export interface PatchResult {
   patch: VehiclePatch;
   errors: Record<string, string>;
@@ -107,6 +120,12 @@ export function buildPatch(saved: AdminVehicle, form: VehicleForm): PatchResult 
     else if (value !== null && (value < min || value > max)) errors[field] = e.range(formatNumber(min), formatNumber(max));
     else if (value !== saved[field]) patch[field] = value;
   }
+
+  const price = parsePrice(form.priceEur);
+  if (price === 'invalid') errors.priceEur = e.price;
+  else if (price === 'precision') errors.priceEur = e.codes.invalid_precision;
+  else if (price !== null && price > PRICE_MAX) errors.priceEur = e.range(formatNumber(0), formatNumber(PRICE_MAX));
+  else if (price !== saved.priceEur) patch.priceEur = price;
 
   for (const [field, { max, long }] of Object.entries(textFields) as [TextField, { max: number; long: boolean }][]) {
     const value = (long ? cleanLong : cleanShort)(form[field]) || null;

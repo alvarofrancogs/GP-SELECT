@@ -247,6 +247,7 @@ export const adminCopy = {
     reference: 'Referencia',
     required: 'Obligatorio.',
     number: 'Introduce solo cifras.',
+    price: 'Introduce un importe en euros, p. ej. 85.000 o 85.000,50.',
     range: (min: string, max: string) => `Debe estar entre ${min} y ${max}.`,
     tooLong: (max: number) => `Máximo ${max} caracteres.`,
     codes: {

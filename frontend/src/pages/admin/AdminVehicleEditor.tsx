@@ -4,7 +4,7 @@ import { adminApi, ApiError } from '../../services/adminApi';
 import type { AdminImage, AdminVehicle, SettableStatus, VehicleSaveRequest } from '../../types/admin';
 import { adminCopy } from '../../i18n/adminCopy';
 import { describeError, errorReference, fieldErrors } from '../../lib/adminErrors';
-import { buildPatch, formSignature, LIMITS, mapServerErrors, parseInteger, textFields, toForm, type TextField, type VehicleForm } from '../../lib/vehicleForm';
+import { buildPatch, formSignature, LIMITS, mapServerErrors, parsePrice, textFields, toForm, type TextField, type VehicleForm } from '../../lib/vehicleForm';
 import { FormField } from '../../components/admin/FormField';
 import { ListEditor } from '../../components/admin/ListEditor';
 import { KeyValueEditor } from '../../components/admin/KeyValueEditor';
@@ -15,7 +15,7 @@ import { ArchiveVehicleDialog } from '../../components/admin/ArchiveVehicleDialo
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { MonthSelect } from '../../components/admin/MonthSelect';
 import { SuggestInput } from '../../components/SuggestInput';
-import { formatPrice } from '../../lib/vehicleFormat';
+import { formatEuros } from '../../lib/adminFormat';
 
 export function AdminVehicleEditor() {
   const { id = '' } = useParams();
@@ -213,11 +213,11 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     </FormField>;
   const numberInput = (name: 'mileageKm' | 'priceEur' | 'powerHp', label: string, unit: string, hint?: string) =>
     <FormField id={`field-${name}`} label={label} error={errors[name]} hint={hint} unit={unit}>
-      {(a11y) => <input {...a11y} value={form[name]} inputMode="numeric" autoComplete="off" onChange={(event) => set(name, event.target.value)} />}
+      {(a11y) => <input {...a11y} value={form[name]} inputMode={name === 'priceEur' ? 'decimal' : 'numeric'} autoComplete="off" onChange={(event) => set(name, event.target.value)} />}
     </FormField>;
 
-  const price = parseInteger(form.priceEur);
-  const priceHint = typeof price === 'number' ? `${formatPrice(price, 'es', '')}. ${f.priceHint}` : f.priceHint;
+  const price = parsePrice(form.priceEur);
+  const priceHint = typeof price === 'number' ? `${formatEuros(price)}. ${f.priceHint}` : f.priceHint;
   const statusMessage = save.kind === 'saving' ? text.saving : save.kind === 'discarding' ? text.discarding
     : save.kind === 'error' ? save.message : processing ? text.processing : incomplete ? text.pendingPhotos
     : save.kind === 'saved' && !dirty ? text.saved : dirty ? text.dirty : text.clean;
