@@ -25,7 +25,8 @@ public sealed record VehicleAdminDto(Guid Id, string Slug, VehicleStatus Status,
     string? BodyType, string? Drivetrain, string? ExteriorColour, string? Interior, string? History, string? Provenance,
     IReadOnlyList<string> Equipment, IReadOnlyList<VehicleSpecification> CustomSpecifications, IReadOnlyList<ImageAdminDto> Images,
     DateTimeOffset UpdatedAt, DateTimeOffset? PublishedAt, bool ShowWhenSold);
-public sealed record ImageAdminDto(Guid Id, ImageState State, string? CardUrl, string? DetailUrl, bool IsCover, int SortOrder, string? FailureReason, bool IsStaged);
+/// <summary><c>JobPending</c>: the worker still has a queued, running or retryable job for the photo, so its state will change.</summary>
+public sealed record ImageAdminDto(Guid Id, ImageState State, string? CardUrl, string? DetailUrl, bool IsCover, int SortOrder, string? FailureReason, bool IsStaged, bool JobPending);
 
 // Public contracts. Internal fields (InternalReference, Vin, InternalNotes, PurchaseCostEur) never appear here.
 public sealed record VehiclePublicCardDto(string Slug, string Make, string Model, string? Variant, int Year, int? Month, decimal? PriceEur,
@@ -67,9 +68,9 @@ public static class AdminMapping
 {
     private static string Base(VehicleUnit v) => $"/api/admin/vehicles/{v.Id}/images";
 
-    public static ImageAdminDto MapImage(VehicleUnit v, VehicleImage x) => new(x.Id, x.State,
+    public static ImageAdminDto MapImage(VehicleUnit v, VehicleImage x, bool jobPending = false) => new(x.Id, x.State,
         x.State == ImageState.Ready ? $"{Base(v)}/{x.Id}/card" : null,
-        x.State == ImageState.Ready ? $"{Base(v)}/{x.Id}/detail" : null, x.IsCover, x.SortOrder, x.FailureReason, x.IsStaged);
+        x.State == ImageState.Ready ? $"{Base(v)}/{x.Id}/detail" : null, x.IsCover, x.SortOrder, x.FailureReason, x.IsStaged, jobPending);
 
     /// <summary>Images must already be loaded for this vehicle (one grouped query for the whole list).</summary>
     public static VehicleAdminListDto MapList(VehicleUnit v, IEnumerable<VehicleImage> images)
@@ -82,11 +83,12 @@ public static class AdminMapping
             active.Count, active.Count(x => x.State == ImageState.Ready), v.UpdatedAt, v.PublishedAt, v.ShowWhenSold);
     }
 
-    public static VehicleAdminDto Map(VehicleUnit v, IEnumerable<VehicleImage> images) => new(v.Id, v.PublicSlug, v.Status, v.Make, v.Model,
+    /// <param name="pendingJobs">Images the worker still has a queued or running job for.</param>
+    public static VehicleAdminDto Map(VehicleUnit v, IEnumerable<VehicleImage> images, IReadOnlySet<Guid>? pendingJobs = null) => new(v.Id, v.PublicSlug, v.Status, v.Make, v.Model,
         v.FirstRegistrationYear, v.FirstRegistrationMonth, v.PriceEur, v.InternalReference, v.Description, v.MileageKm, v.PowerHp, v.Variant,
         v.FuelType, v.Transmission, v.BodyType, v.Drivetrain, v.ExteriorColour, v.Interior, v.History, v.Provenance,
         VehicleContent.ReadEquipment(v.EquipmentJson), VehicleContent.ReadSpecifications(v.CustomSpecificationsJson),
         // Same order as the public site (cover first), so what the admin sees is what gets published.
-        VehicleGallery.InPublicOrder(images.Where(x => x.State != ImageState.Deleted)).Select(x => MapImage(v, x)).ToList(),
+        VehicleGallery.InPublicOrder(images.Where(x => x.State != ImageState.Deleted)).Select(x => MapImage(v, x, pendingJobs?.Contains(x.Id) == true)).ToList(),
         v.UpdatedAt, v.PublishedAt, v.ShowWhenSold);
 }

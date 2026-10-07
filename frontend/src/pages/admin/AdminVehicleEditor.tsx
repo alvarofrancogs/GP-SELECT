@@ -75,7 +75,8 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     || JSON.stringify(visibleImages.map((image) => image.id)) !== JSON.stringify(vehicle.images.filter((image) => !image.isStaged).map((image) => image.id));
   const statusDirty = status !== vehicle.status || (status === 'Sold' && showWhenSold !== vehicle.showWhenSold);
   const dirty = !archived && (formSignature(form) !== savedSignature || galleryDirty || statusDirty || pendingUploads);
-  const processing = !archived && (uploading || uploadState === 'working' || images.some((image) => image.state === 'Processing'));
+  const processing = !archived && (uploading || uploadState === 'working'
+    || images.some((image) => image.state === 'Processing' || (image.state === 'PendingUpload' && image.jobPending)));
   const incomplete = !archived && (pendingUploads || visibleImages.some((image) => image.state === 'PendingUpload'));
   const working = save.kind === 'saving' || save.kind === 'discarding';
   const archiveLocked = dirty || uploading || processing || working;
@@ -103,9 +104,11 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
   }, [initial.id]);
 
   useEffect(() => {
-    // A PendingUpload photo only changes once this tab has sent it; one left behind (a failed upload, another tab)
-    // would otherwise keep the editor asking every 1.5 s for nothing.
-    const changing = images.some((image) => image.state === 'Processing' || (image.state === 'PendingUpload' && (queued || uploading)));
+    // The server says which photos the worker still has a job for (queued, running or waiting for a retry), so a
+    // reload keeps following them. A PendingUpload photo without one only changes once this tab sends it; one left
+    // behind (a failed upload, another tab) would otherwise keep the editor asking every 1.5 s for nothing.
+    const changing = images.some((image) => image.state === 'Processing' || image.jobPending
+      || (image.state === 'PendingUpload' && (queued || uploading)));
     if (archived || working || !changing) return;
     const version = galleryVersion.current;
     const timer = window.setTimeout(() => {

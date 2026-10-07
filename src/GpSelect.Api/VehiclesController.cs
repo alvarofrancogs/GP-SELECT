@@ -4,8 +4,16 @@ namespace GpSelect.Api;
 [ApiController][Route("api/admin/vehicles")][Authorize(Roles="Admin")]
 public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObjectStorage storage) : ControllerBase
 {
-    private async Task<VehicleAdminDto> Map(VehicleUnit v) =>
-        AdminMapping.Map(v, await db.Images.AsNoTracking().Where(x => x.VehicleUnitId == v.Id).ToListAsync());
+    private async Task<VehicleAdminDto> Map(VehicleUnit v)
+    {
+        var images = await db.Images.AsNoTracking().Where(x => x.VehicleUnitId == v.Id).ToListAsync();
+        var ids = images.Select(x => x.Id).ToList();
+        // A queued job also covers a failed photo waiting for its retry.
+        var pendingJobs = await db.ImageJobs.AsNoTracking()
+            .Where(j => ids.Contains(j.ImageId) && (j.State == ImageJobState.Queued || j.State == ImageJobState.Processing))
+            .Select(j => j.ImageId).ToListAsync();
+        return AdminMapping.Map(v, images, pendingJobs.ToHashSet());
+    }
 
     /// <summary>Two queries for the whole list: vehicles, then their active images grouped in memory.</summary>
     [HttpGet]

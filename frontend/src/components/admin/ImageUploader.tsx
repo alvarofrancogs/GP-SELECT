@@ -100,7 +100,7 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
             // A minute of margin: the PUT of a large photo on a slow line can outlast the signature.
             patch(upload.key, { imageId, uploadUrl, expiresAt: Date.now() + (intent.expiresInSeconds - 60) * 1000 });
             onImageAdded({ id: imageId, state: 'PendingUpload', cardUrl: null, detailUrl: null,
-              isCover: false, isStaged: true, sortOrder: 0, failureReason: null });
+              isCover: false, isStaged: true, sortOrder: 0, failureReason: null, jobPending: false });
           }
           await uploadImage(uploadUrl, upload.file, (progress) => patch(upload.key, { progress }));
           await adminApi.completeImage(vehicleId, imageId);
@@ -213,7 +213,7 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
           : image.state === 'Failed' ? text.failed
           : image.state === 'Processing' ? text.processing
           : local ? (local.phase === 'queued' ? text.queued : local.phase === 'failed' ? local.error : text.uploading(Math.round(local.progress * 100)))
-          : text.incomplete;
+          : image.jobPending ? text.queued : text.incomplete;
         const src = image.cardUrl ?? local?.preview ?? null;
         const label = text.photo(index + 1);
         return <li key={image.id} className="admin-photo" data-state={image.state} data-dragging={dragging === image.id || undefined}
