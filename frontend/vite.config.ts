@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => ({
   },
   server: {
     proxy: {
-      '/api': { target: 'http://localhost:5000', changeOrigin: false },
+      '/api': { target: process.env.API_PROXY_TARGET ?? 'http://localhost:5000', changeOrigin: false },
     },
   },
 }));

@@ -1,0 +1,79 @@
+# GP SELECT on your own computer with only Docker installed (no .NET or Node needed).
+# Start: docker compose -f docker-compose.dev.yml up   ·   then open http://127.0.0.1:5173
+# Admin: http://127.0.0.1:5173/admin with admin@gpselect.local / gpselect-local (local use only).
+# Production uses deploy/docker-compose.yml instead.
+name: gpselect-dev
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: gpselect
+      # Local only: the database is not published outside Docker, so it needs no password.
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d gpselect"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # Copies the backend out of the (read-only) repo, applies the migrations and starts the API.
+  api:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    working_dir: /app
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:5000
+      ConnectionStrings__Default: Host=db;Database=gpselect;Username=postgres
+      Security__AllowedOrigin: http://127.0.0.1:5173
+      Admin__Email: admin@gpselect.local
+      Admin__PasswordHash: AQAAAAIAAYagAAAAEGmxAzyeOII0VyaoMXggyJLs2oKL9KPkk5GLqmrsvzav3r3YzqZ2wbFFE6gxyfbTTQ==
+      Enquiries__Enabled: "true"
+      Storage__Root: /data/uploads
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        rm -rf /app/src
+        cp -r /repo/GpSelect.sln /repo/Directory.Build.props /repo/dotnet-tools.json /repo/src /app/
+        find src -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} +
+        dotnet tool restore
+        dotnet restore src/GpSelect.Api
+        dotnet ef database update --project src/GpSelect.Infrastructure --startup-project src/GpSelect.Infrastructure
+        exec dotnet run --project src/GpSelect.Api --no-launch-profile
+    volumes:
+      - .:/repo:ro
+      - nuget:/root/.nuget
+      - uploads:/data/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    image: node:22-alpine
+    working_dir: /app
+    environment:
+      API_PROXY_TARGET: http://api:5000
+      # File changes made on Windows/macOS do not reach the container otherwise.
+      CHOKIDAR_USEPOLLING: "true"
+    command: sh -c "npm ci --no-audit --no-fund && exec npm run dev -- --host 0.0.0.0 --port 5173 --strictPort"
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ./frontend:/app
+      # Linux packages stay inside Docker, not in your frontend/node_modules.
+      - /app/node_modules
+      - npm:/root/.npm
+    depends_on:
+      - api
+
+volumes:
+  db-data:
+  nuget:
+  uploads:
+  npm:
