@@ -2,7 +2,6 @@
 .scroll-scene.process-scene[data-motion='scroll'] { margin-block-end: calc(-100svh - 75vh); }
 /* The incoming process reaches the top exactly at the end of the hero pin. */
 .scroll-scene.hero-scene[data-motion='scroll'] { margin-block-end: -100svh; }
-.hero-scene[data-motion='scroll'] + .process-scene { background: transparent; }
 /* The curtain arrives with a soft, tall edge instead of a hard line: a gradient above the section, over the darkened hero. */
 .scroll-scene.process-scene[data-motion='scroll']::before { content: ''; position: absolute; z-index: 1; left: 0; right: 0; bottom: 100%; height: 32svh; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--color-dark)); }
 /* Avoid overflow: hidden on ScrollTrigger pins: Chrome counts each pin/unpin as a full-screen layout shift.
@@ -32,6 +31,7 @@
 .scene-handoff--dark { background: var(--color-dark); }
 .scene-handoff--light { background: var(--color-placeholder); }
 .hero-handoff { z-index: 2; background: linear-gradient(180deg, var(--color-dark) 0%, var(--color-handoff-mid) 55%, var(--color-handoff-edge) 100%); }
+/* Opaque on purpose: if a hard scroll outruns the pin for a frame, dark shows under Process, never the hero behind it. */
 /* Shared box and centre anchor keep the 1px source difference below a rendered pixel. */
 .process-scene { color: var(--color-paper); background: var(--color-dark); }
 .process-background { background: var(--color-dark); }
