@@ -84,6 +84,10 @@ dotnet run hash-password.cs -- "tu-contraseña"
 El resultado (`AQAAAAIAAYagAAAAE…`) va en `Admin__PasswordHash`. Entre comillas simples en bash: contiene `/` y `+`.
 En Production se valida al arrancar: base64, marcador v3 (`0x01`), cabecera, salt y subkey válidos. El error identifica la clave de configuración sin mostrar su valor.
 
+## Desarrollo local solo con Docker
+
+Sin instalar .NET ni Node: `docker compose -f docker-compose.dev.yml up` desde la raíz del repo y abrir `http://127.0.0.1:5173`. Levanta PostgreSQL, aplica las migraciones, arranca la API en Development y la web con Vite. Admin en `http://127.0.0.1:5173/admin` con `admin@gpselect.local` / `gpselect-local` (solo local). La primera vez tarda unos minutos (descarga de imágenes y paquetes). Para parar: `Ctrl+C`; para borrar también los datos: `docker compose -f docker-compose.dev.yml down -v`.
+
 ## Desarrollo local, paso a paso
 
 ```bash
