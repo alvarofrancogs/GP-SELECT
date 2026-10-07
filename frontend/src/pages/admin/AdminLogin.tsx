@@ -20,12 +20,20 @@ export function AdminLogin() {
   const inFlight = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const signingOut = routeState.signOut === true;
+  const [signOutFailed, setSignOutFailed] = useState(false);
+  const [signOutAttempt, setSignOutAttempt] = useState(0);
 
   useEffect(() => {
     if (!signingOut) return;
-    void signOut().then(() => navigate(location.pathname, { replace: true, state: null }));
-  }, [signingOut, signOut, navigate, location.pathname]);
+    let ignore = false;
+    signOut().then(() => navigate(location.pathname, { replace: true, state: null }), () => { if (!ignore) setSignOutFailed(true); });
+    return () => { ignore = true; };
+  }, [signingOut, signOut, navigate, location.pathname, signOutAttempt]);
 
+  if (signingOut && signOutFailed) return <div className="admin-state" role="alert">
+    <p className="type-ui">{adminCopy.signOutFailed}</p>
+    <button type="button" className="admin-link" onClick={() => { setSignOutFailed(false); setSignOutAttempt((n) => n + 1); }}>{adminCopy.errors.retry}</button>
+  </div>;
   if (signingOut || state.status === 'checking') return <p className="admin-state type-ui" role="status">{adminCopy.checkingSession}</p>;
   if (state.status === 'authenticated') return <Navigate to={routeState.from ?? '/admin'} replace />;
 

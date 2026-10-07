@@ -6,6 +6,7 @@ export const adminCopy = {
   area: 'Admin',
   backToSite: 'Volver a la web',
   logout: 'Cerrar sesión',
+  signOutFailed: 'No se pudo cerrar la sesión: sigue abierta en este navegador. Comprueba la conexión y vuelve a intentarlo.',
   checkingSession: 'Comprobando la sesión…',
 
   login: {
