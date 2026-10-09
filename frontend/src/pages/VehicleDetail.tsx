@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { siteUrl, usePageMeta } from '../lib/usePageMeta';
 import { getVehiclePageMeta, notFoundMeta } from '../lib/pageMeta';
 import type { CSSProperties, ReactNode } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { EditorialMedia } from '../components/EditorialMedia';
 import { VehicleGallery } from '../components/VehicleGallery';
 import { VehicleSpecs } from '../components/VehicleSpecs';
 import { useLanguage } from '../i18n/useLanguage';
 import { contactConfig, showContactPreview } from '../config/contact';
-import { getVehicle } from '../services/vehicles';
+import { consumeInitialVehicle, getInitialVehicle, getVehicle } from '../services/vehicles';
 import type { VehicleDetail as Vehicle } from '../types/vehicle';
 import { formatKm, formatPower, formatPrice, formatRegistration, translateValue } from '../lib/vehicleFormat';
 import { qualificationUrl } from '../lib/qualification';
@@ -25,15 +25,19 @@ export function VehicleDetail() {
 function VehicleDetailContent({ slug }: { slug: string }) {
   const { copy } = useLanguage();
   const text = copy.vehicles;
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const { key } = useLocation();
+  const [initialVehicle] = useState(() => getInitialVehicle(slug, key));
+  const [vehicle, setVehicle] = useState<Vehicle | null>(initialVehicle);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(initialVehicle ? 'ready' : 'loading');
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
+    consumeInitialVehicle();
+    if (initialVehicle && attempt === 0) return;
     const request = new AbortController();
     getVehicle(slug, request.signal).then((data) => { setVehicle(data); setStatus('ready'); },
       () => { if (!request.signal.aborted) setStatus('error'); });
     return () => request.abort();
-  }, [slug, attempt]);
+  }, [slug, attempt, initialVehicle]);
   usePageMeta(status === 'ready' && vehicle ? getVehiclePageMeta(vehicle, siteUrl) : {
     ...notFoundMeta,
     title: status === 'ready' ? 'Vehículo no encontrado · GP SELECT' : 'Ficha de vehículo · GP SELECT',

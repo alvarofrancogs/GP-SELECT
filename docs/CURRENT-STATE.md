@@ -117,6 +117,7 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - **DOMAIN / DEPLOY:** infraestructura lista y probada en local (INFRA-1, `deploy/`). Falta contratar el servidor y el dominio y elegir el almacenamiento de fotos: SeaweedFS propio o un S3 externo como R2 o B2.
 - **SEO:** SEO-1, GEO-1 y SEO-2 PASS. Pendiente: GEO-2 (FAQ, espera datos del usuario), Google Business Profile (fuera del código) y dominio para activar `VITE_SITE_URL` y `Seo__SiteUrl`.
 - **PENDIENTE · CONTENT-SECURITY-POLICY (decisión del usuario, 07-10-2026):** Caddy no envía `Content-Security-Policy` (sí HSTS, `X-Frame-Options DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`). Añadirla al montar el servidor: el build tiene scripts inline (`html.js` y JSON-LD) que necesitan hashes o nonce; probar Home, admin, subida a S3 y WhatsApp tras activarla.
+- **PENDIENTE · SEC-IMAGESHARP (detectado el 09-10-2026, tarea independiente, antes del despliegue):** `SixLabors.ImageSharp` 3.1.12 (`GpSelect.Infrastructure.csproj`) tiene una vulnerabilidad moderada publicada (GHSA-wmxv-xphr-5c9g; el build da NU1902). Es preexistente y no es de la Fase A SEO. Actualizar a la versión corregida, revisar el changelog y repetir los tests del procesado de imágenes y una subida real desde el Admin.
 - **FINAL USER PHOTOGRAPHY / ASSETS:** fotos reales del usuario para sustituir los slots provisionales.
 
 ### SEO-1 · base técnica = PASS (04-10-2026, tag `seo-1-pass`)
@@ -266,6 +267,20 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - Código: `KnownNetworks` → `KnownIPNetworks` (obsoleto en ASP.NET Core 10) y el constructor de `PostgreSqlBuilder` con imagen (Testcontainers 4.15). Imágenes Docker `sdk`/`aspnet` 10.0.
 - Npgsql 9+ negocia cifrado GSS por defecto y la imagen de .NET 10 no trae `libgssapi_krb5`: `GSS Encryption Mode=Disable` en la cadena de conexión de `docker-compose.yml` (sin Kerberos).
 - Astra implementó (su sandbox no tenía NuGet ni Docker); Opus verificó: build 0 warnings, 105/105 unitarios, 75/75 integración, sin cambios pendientes de modelo, snippet del hash OK. Stack de producción local (Caddy + API + Postgres + SeaweedFS): migraciones desde cero, claves como usuario `app`, login, alta, subida S3, procesado, publicación, ficha del servidor, sitemap, 404 y sesión tras reiniciar; 0 errores en logs. Gemini (READ-ONLY): 20/20 checks de navegador a 1440/390.
+
+### SEO Fase A · auditoría `docs/SEO-AUDIT.md` (09-10-2026, rama `feat/seo-phase-a`, sin commit, pendiente de revisión del usuario)
+
+- **Ficha:** `SeoController` embebe el DTO público en `#vehicle-data`; al entrar directo, React arranca con él (sin pantalla de carga ni segunda petición). CLS 0,16 → ≤ 0,0002 (390/1440/1920). Fallback `spa.html`: carga a `100svh`.
+- **Head y JSON-LD de la ficha** con datos reales (title con km, description con km/CV/cambio/procedencia). `@graph` Car + BreadcrumbList; `Offer` solo Available (InStock) y ComingSoon (PreOrder), con `seller` `#organization`; sin `Offer` en Reserved/Sold; sin `itemCondition` ni color interior (los datos no lo permiten). Home/Importación con `@id` `#organization`/`#website` y `telephone` (WhatsApp verificado). Paridad TS ↔ C# en `tests/fixtures/vehicle-seo.json` (Vitest + xUnit).
+- **Catálogo sin JS:** `GET /seo/vehiculos` rellena `<!--vehicle-list-->` del `vehiculos/index.html` del build (mismo origen que `Seo:TemplateUrl`; el head no se duplica). **Despliegue (cualquier proxy):** `/vehiculos` → API `/seo/vehiculos` con fallback al estático ante 404/5xx o API caída; el sitio interno debe servir también `/vehiculos/index.html`.
+- **URLs:** `map` en Caddy: barra final, `index.html` y mayúsculas de las páginas conocidas → un único 301 a la canónica (query conservada; el slug no se toca). `/servicios` sigue en 308. El preview replica la regla (`canonicalPagePath`).
+- **Sitemap:** `lastmod` solo en `/vehiculos` (último cambio de un coche publicado alguna vez) y en las fichas (`UpdatedAt`); las demás estáticas sin `lastmod`. `Vehicle.Apply()` sin cambios.
+- **Pendientes registrados tras la Fase A:**
+  - **SEC-IMAGESHARP** (ver release blockers).
+  - **Dominio:** `deploy/.env.example` dice `DOMAIN=gpselect.es`, pero el principal decidido es `gpselect.com` (`.es` → redirección); confirmar también `www.` en `REDIRECT_DOMAINS`.
+  - **CLS ocasional del catálogo:** `/vehiculos` dio 0,077 en una carga en frío de cinco a 1440 (resto 0,0014). Causa: el estado de carga del listado empuja `.vehicle-closing`. Preexistente.
+  - **Coherencia del fallback con la API caída:** Caddy sirve `spa.html` (200, `index,follow`, title genérico) para cualquier `/vehiculos/<slug>`, también inexistente. Con la API activa el 404 `noindex` llega intacto (verificado con Caddy real). Decidir si con la API caída conviene un 503 o un `noindex` temporal. Preexistente (T5 de la auditoría).
+  - **`lastmod` y fotos:** cambiar solo fotos (portada, orden, borrado) no actualiza `UpdatedAt`; corregirlo cambiaría el orden del listado del Admin (decisión del usuario).
 
 ### SEO-2 · fichas y sitemap desde el servidor = PASS (05-10-2026, tag `seo-2-pass`)
 

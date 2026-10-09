@@ -21,39 +21,100 @@ public static class VehicleSeo
     public static string Identity(VehiclePublicDto v) => $"{v.Make} {v.Model} ({v.Year})";
     public static string Path(VehiclePublicDto v) => $"/vehiculos/{Uri.EscapeDataString(v.Slug)}";
 
-    /// <summary>Only a vehicle still for sale with a real price carries an offer, as on the client.</summary>
+    /// <summary>Visible price in the readable body; reserved vehicles retain their price.</summary>
     public static bool HasPublicPrice(VehiclePublicDto v) => v.Status != VehicleStatus.Sold && v.PriceEur is > 0;
 
     /// <summary>Fills the template; null when the template was not built with the expected markers.</summary>
-    public static string? Fill(string template, string head, string body)
+    public static string? Fill(string template, string head, string body, VehiclePublicDto? data = null)
     {
         var start = template.IndexOf(HeadStart, StringComparison.Ordinal);
         var end = template.IndexOf(HeadEnd, StringComparison.Ordinal);
         var root = template.IndexOf(EmptyRoot, StringComparison.Ordinal);
         if (start < 0 || end < start || root < 0) return null;
+        var script = "";
+        if (data is not null)
+        {
+            // Escape after serialization, even if the API later uses a relaxed encoder.
+            var json = JsonSerializer.Serialize(data, DataOptions)
+                .Replace("<", "\\u003C").Replace(">", "\\u003E").Replace("&", "\\u0026");
+            script = $"<script type=\"application/json\" id=\"vehicle-data\">{json}</script>";
+        }
         return template[..(start + HeadStart.Length)] + "\n    " + head + "\n    " + template[end..root]
-            + $"<div id=\"root\">{body}</div>" + template[(root + EmptyRoot.Length)..];
+            + $"<div id=\"root\">{body}</div>" + script + template[(root + EmptyRoot.Length)..];
     }
 
     public static string Head(VehiclePublicDto v, string? siteUrl)
     {
         var identity = Identity(v);
+        var name = string.Join(" ", new[] { v.Make, v.Model, v.Variant }.Where(x => !string.IsNullOrEmpty(x)));
+        var kmText = v.MileageKm is { } mileage ? $"{mileage.ToString("#,0", Spanish)} km" : null;
+        var facts = new List<string>();
+        if (kmText is not null) facts.Add(kmText);
+        if (v.PowerHp is { } hp) facts.Add($"{hp.ToString("#,0", Spanish)} CV");
+        if (!string.IsNullOrEmpty(v.Transmission)) facts.Add($"cambio {v.Transmission.ToLower(Spanish)}");
+        var factList = facts.Count > 1 ? string.Join(", ", facts.Take(facts.Count - 1)) + " y " + facts[^1] : string.Join("", facts);
+        var titleIdentity = name + (v.Year != 0 ? $" ({v.Year})" : "");
+        var fullTitle = $"{titleIdentity} · {kmText} · GP SELECT";
+        var title = kmText is not null && fullTitle.Length <= 65 ? fullTitle : $"{titleIdentity} · GP SELECT";
+        var description = $"{(v.Status == VehicleStatus.Sold ? "Vendido: " : "")}{name}{(v.Year != 0 ? $" de {v.Year}" : "")}{(facts.Count > 0 ? " con " + factList : "")}."
+            + (!string.IsNullOrEmpty(v.Provenance) ? $" Procedencia: {v.Provenance}." : "")
+            + " Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.";
         var url = siteUrl is null ? null : siteUrl + Path(v);
         var image = v.Images.FirstOrDefault();
-        var jsonLd = new Dictionary<string, object?>
+        var seller = new Dictionary<string, object?> { ["@type"] = "AutoDealer", ["name"] = "GP SELECT" };
+        if (siteUrl is not null) seller["@id"] = siteUrl + "/#organization";
+        var offer = new Dictionary<string, object?>
         {
-            ["@context"] = "https://schema.org", ["@type"] = "Car", ["name"] = identity,
+            ["@type"] = "Offer", ["price"] = v.PriceEur, ["priceCurrency"] = "EUR",
+            ["availability"] = v.Status == VehicleStatus.Available ? "https://schema.org/InStock" : "https://schema.org/PreOrder",
+            ["seller"] = seller,
+        };
+        if (url is not null) offer["url"] = url;
+        var car = new Dictionary<string, object?>
+        {
+            ["@type"] = "Car", ["name"] = identity,
             ["brand"] = new Dictionary<string, object?> { ["@type"] = "Brand", ["name"] = v.Make }, ["model"] = v.Model,
             // The year is the first registration, not a model year.
-            ["dateVehicleFirstRegistration"] = v.Year.ToString(CultureInfo.InvariantCulture),
+            ["dateVehicleFirstRegistration"] = v.Year != 0 ? v.Year.ToString(CultureInfo.InvariantCulture) : null,
             ["url"] = url, ["image"] = image is null ? null : Absolute(image, siteUrl), ["description"] = v.Description,
             ["mileageFromOdometer"] = v.MileageKm is { } km ? new Dictionary<string, object?> { ["@type"] = "QuantitativeValue", ["value"] = km, ["unitCode"] = "KMT" } : null,
             ["fuelType"] = v.FuelType, ["vehicleTransmission"] = v.Transmission, ["color"] = v.ExteriorColour,
-            ["offers"] = HasPublicPrice(v) ? new Dictionary<string, object?> { ["@type"] = "Offer", ["price"] = v.PriceEur, ["priceCurrency"] = "EUR", ["url"] = url } : null,
+            ["bodyType"] = v.BodyType,
+            ["driveWheelConfiguration"] = v.Drivetrain switch
+            {
+                "Integral" => "https://schema.org/AllWheelDriveConfiguration",
+                "Trasera" => "https://schema.org/RearWheelDriveConfiguration",
+                "Delantera" => "https://schema.org/FrontWheelDriveConfiguration",
+                _ => null,
+            },
+            ["vehicleEngine"] = v.PowerHp is { } power ? new Dictionary<string, object?>
+            {
+                ["@type"] = "EngineSpecification",
+                ["enginePower"] = new Dictionary<string, object?> { ["@type"] = "QuantitativeValue", ["value"] = power, ["unitText"] = "CV" },
+            } : null,
+            ["offers"] = (v.Status is VehicleStatus.Available or VehicleStatus.ComingSoon) && v.PriceEur is > 0 ? offer : null,
+        };
+        var graph = new List<object> { car.Where(x => x.Value is not null && x.Value is not "").ToDictionary(x => x.Key, x => x.Value) };
+        if (siteUrl is not null)
+            graph.Add(new Dictionary<string, object?>
+            {
+                ["@type"] = "BreadcrumbList",
+                ["itemListElement"] = new[]
+                {
+                    (Name: "Inicio", Url: siteUrl + "/"),
+                    (Name: "Vehículos", Url: siteUrl + "/vehiculos"),
+                    (Name: identity, Url: url!),
+                }.Select((x, index) => new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem", ["position"] = index + 1, ["name"] = x.Name, ["item"] = x.Url,
+                }).ToArray(),
+            });
+        var jsonLd = new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org", ["@graph"] = graph,
         };
         return Render(
-            title: $"{identity} · Vehículos europeos · GP SELECT",
-            description: $"Consulta las fotos y los datos de este {identity} en GP SELECT. Selección de vehículos europeos desde Murcia para clientes de España y Europa.",
+            title: title, description: description,
             robots: "index,follow", canonical: url, image: image, imageAlt: identity, siteUrl, jsonLd);
     }
 
@@ -103,7 +164,7 @@ public static class VehicleSeo
     private static readonly CultureInfo Spanish = CultureInfo.GetCultureInfo("es-ES");
     private static string Price(decimal value) => $"{value.ToString("#,0", Spanish)} €";
     // Same escaping as the client's escapeHtml: accented text stays readable in the source.
-    private static string E(string value) => value.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;")
+    internal static string E(string value) => value.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;")
         .Replace("\"", "&quot;").Replace("'", "&#39;");
     private static string Absolute(string path, string? siteUrl) => siteUrl is null ? path : siteUrl + path;
 
@@ -143,6 +204,15 @@ public static class VehicleSeo
             tags.Add($"<script data-page-meta type=\"application/ld+json\">{json}</script>");
         }
         return string.Join("\n    ", tags);
+    }
+
+    // The same JSON the public API returns, so the client maps it with fromPublicDetail.
+    private static readonly JsonSerializerOptions DataOptions = CreateDataOptions();
+    private static JsonSerializerOptions CreateDataOptions()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        ApiJsonOptions.Configure(options);
+        return options;
     }
 
     private static readonly JsonSerializerOptions JsonLdOptions = new() { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull };

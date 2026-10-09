@@ -99,6 +99,7 @@ export function renderReadableContent(path: string): string {
     case '/contacto': content = contactContent(); break;
     case '/vehiculos':
       content = introduction(es.vehicles.title, es.vehicles.lede)
+        + '<!--vehicle-list--><!--/vehicle-list-->'
         + section(es.vehicles.closing, link(qualificationUrl({ intent: 'import', source: 'vehicles' }), es.vehicles.find));
       break;
     case legalPaths['aviso-legal']: content = legalContent('aviso-legal'); break;

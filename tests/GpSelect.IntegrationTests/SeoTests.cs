@@ -3,6 +3,9 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using GpSelect.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace GpSelect.IntegrationTests;
@@ -85,14 +88,19 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
-        Assert.Contains("<title data-page-meta>BMW M4 (2023) · Vehículos europeos · GP SELECT</title>", html);
+        const string dataScript = "<script type=\"application/json\" id=\"vehicle-data\">";
+        Assert.Contains(dataScript, html);
+        var dataStart = html.IndexOf(dataScript, StringComparison.Ordinal) + dataScript.Length;
+        using var data = JsonDocument.Parse(html[dataStart..html.IndexOf("</script>", dataStart, StringComparison.Ordinal)]);
+        Assert.Equal(slug, data.RootElement.GetProperty("slug").GetString());
+        Assert.Contains("<title data-page-meta>BMW M4 (2023) · 12.500 km · GP SELECT</title>", html);
         Assert.Contains($"<link data-page-meta rel=\"canonical\" href=\"{ApiFactory.SiteUrl}/vehiculos/{slug}\">", html);
         Assert.Contains($"property=\"og:image\" content=\"{ApiFactory.SiteUrl}/api/public/vehicles/{slug}/images/{image}/detail\"", html);
         Assert.Contains("content=\"index,follow\"", html);
         // The template's placeholder title is gone; the markers stay for the next fill.
         Assert.DoesNotContain("<title data-page-meta>GP SELECT</title>", html);
 
-        var ld = JsonLd(html);
+        var ld = JsonLd(html).GetProperty("@graph")[0];
         Assert.Equal("Car", ld.GetProperty("@type").GetString());
         Assert.Equal("Brand", ld.GetProperty("brand").GetProperty("@type").GetString());
         Assert.Equal(86900, ld.GetProperty("offers").GetProperty("price").GetDecimal());
@@ -118,7 +126,7 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         var html = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.False(JsonLd(html).TryGetProperty("offers", out _));
+        Assert.False(JsonLd(html).GetProperty("@graph")[0].TryGetProperty("offers", out _));
         Assert.Contains("Este vehículo ya no está disponible.", html);
         Assert.DoesNotContain("Solicitar información", html);
     }
@@ -132,6 +140,7 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
             var response = await api.Anonymous().GetAsync($"/seo/vehiculos/{slug}");
             var html = await response.Content.ReadAsStringAsync();
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            Assert.DoesNotContain("id=\"vehicle-data\"", html);
             Assert.Contains("content=\"noindex\"", html);
             Assert.Contains("<div id=\"root\"></div>", html);
         }
@@ -156,16 +165,103 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
     [Fact]
     public async Task Sitemap_lists_the_static_routes_and_the_listed_vehicles_only()
     {
-        var (_, listed, _) = await PublishedVehicle();
+        var (listedId, listed, _) = await PublishedVehicle();
         var (_, draft) = await CreateVehicle();
+        // A vehicle that left the catalogue still dates the catalogue page, but is not listed itself.
+        var (archivedId, archived, _) = await PublishedVehicle();
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/admin/vehicles/{archivedId}/archive", null)).StatusCode);
+        // Fixed dates, later than anything other tests in this class create.
+        await SetUpdatedAt(listedId, new DateTimeOffset(2099, 3, 4, 10, 0, 0, TimeSpan.Zero));
+        await SetUpdatedAt(archivedId, new DateTimeOffset(2099, 5, 6, 23, 30, 0, TimeSpan.Zero));
         var response = await api.Anonymous().GetAsync("/seo/sitemap.xml");
         var xml = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("application/xml", response.Content.Headers.ContentType?.MediaType);
-        foreach (var path in new[] { "/", "/vehiculos", "/importacion", "/nosotros", "/contacto" })
-            Assert.Contains($"<loc>{ApiFactory.SiteUrl}{path}</loc>", xml);
-        Assert.Contains($"<loc>{ApiFactory.SiteUrl}/vehiculos/{listed}</loc><lastmod>{DateTime.UtcNow:yyyy-MM-dd}</lastmod>", xml);
+        // Only the catalogue has a real content date among the static routes.
+        foreach (var path in new[] { "/", "/importacion", "/nosotros", "/contacto" })
+            Assert.Contains($"<url><loc>{ApiFactory.SiteUrl}{path}</loc></url>", xml);
+        Assert.Contains($"<loc>{ApiFactory.SiteUrl}/vehiculos</loc><lastmod>2099-05-06</lastmod>", xml);
+        Assert.Contains($"<loc>{ApiFactory.SiteUrl}/vehiculos/{listed}</loc><lastmod>2099-03-04</lastmod>", xml);
         Assert.DoesNotContain(draft, xml);
+        Assert.DoesNotContain(archived, xml);
+    }
+
+    private async Task SetUpdatedAt(Guid id, DateTimeOffset at)
+    {
+        using var scope = api.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
+        await db.Vehicles.Where(x => x.Id == id).ExecuteUpdateAsync(x => x.SetProperty(v => v.UpdatedAt, at));
+    }
+
+    [Fact]
+    public async Task Catalogue_links_only_listed_vehicles_in_public_list_order_and_preserves_the_template()
+    {
+        var (availableId, available, _) = await PublishedVehicle();
+        await Json(await admin.PatchAsync($"/api/admin/vehicles/{availableId}",
+            JsonContent.Create(new { make = "BMW <&>", model = "M4 <&>", variant = "Competition <&>" })));
+        var (_, draft) = await CreateVehicle();
+        var (archivedId, archived, _) = await PublishedVehicle();
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/admin/vehicles/{archivedId}/archive", null)).StatusCode);
+        var (hiddenId, hidden, _) = await PublishedVehicle();
+        await Json(await SetStatus(hiddenId, "Sold"));
+        var (soldId, sold, _) = await PublishedVehicle();
+        await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{soldId}/status", new { status = "Sold", showWhenSold = true }));
+
+        var response = await api.Anonymous().GetAsync("/seo/vehiculos?marca=BMW");
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("utf-8", response.Content.Headers.ContentType?.CharSet);
+        Assert.True(response.Headers.CacheControl?.Public);
+        Assert.Equal(TimeSpan.FromSeconds(60), response.Headers.CacheControl?.MaxAge);
+        Assert.Contains($"<a href=\"/vehiculos/{available}\">BMW &lt;&amp;&gt; M4 &lt;&amp;&gt; Competition &lt;&amp;&gt; (2023)</a>", html);
+        Assert.Contains($"<a href=\"/vehiculos/{sold}\">BMW M4 (2023)</a> · Vendido", html);
+        foreach (var slug in new[] { draft, archived, hidden }) Assert.DoesNotContain($"/vehiculos/{slug}\"", html);
+
+        var cards = await Json(await api.Anonymous().GetAsync("/api/public/vehicles"));
+        var links = System.Text.RegularExpressions.Regex.Matches(html, "<li><a href=\"/vehiculos/([^\"]+)\">");
+        Assert.Equal(cards.EnumerateArray().Select(x => Uri.EscapeDataString(x.GetProperty("slug").GetString()!)),
+            links.Select(x => x.Groups[1].Value));
+        var empty = System.Text.RegularExpressions.Regex.Replace(html,
+            "(?<=<!--vehicle-list-->)[\\s\\S]*?(?=<!--/vehicle-list-->)", "");
+        Assert.Equal(ApiFactory.FixedSpaTemplate.CatalogueShell, empty);
+    }
+
+    [Fact]
+    public async Task Empty_catalogue_keeps_the_markers_empty()
+    {
+        // A separate database keeps this independent of the shared fixture's published vehicles.
+        var emptyApi = new ApiFactory();
+        try
+        {
+            await emptyApi.InitializeAsync();
+            var response = await emptyApi.Anonymous().GetAsync("/seo/vehiculos");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(ApiFactory.FixedSpaTemplate.CatalogueShell, await response.Content.ReadAsStringAsync());
+        }
+        finally { await ((IAsyncLifetime)emptyApi).DisposeAsync(); }
+    }
+
+    [Fact]
+    public async Task Catalogue_without_a_usable_template_returns_503()
+    {
+        try
+        {
+            foreach (var html in new string?[] { null, ApiFactory.FixedSpaTemplate.Shell })
+            {
+                api.Template.CatalogueHtml = html;
+                Assert.Equal(HttpStatusCode.ServiceUnavailable, (await api.Anonymous().GetAsync("/seo/vehiculos")).StatusCode);
+            }
+        }
+        finally { api.Template.CatalogueHtml = ApiFactory.FixedSpaTemplate.CatalogueShell; }
+    }
+
+    [Fact]
+    public async Task Catalogue_without_template_url_is_off()
+    {
+        using var disabled = api.WithWebHostBuilder(builder => builder.UseSetting("Seo:TemplateUrl", ""));
+        using var client = disabled.CreateClient();
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/seo/vehiculos")).StatusCode);
     }
 }

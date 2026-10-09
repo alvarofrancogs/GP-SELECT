@@ -37,7 +37,7 @@
 .vehicle-state__links { display: flex; flex-wrap: wrap; gap: 1.5rem 3rem; }
 
 .vehicle-detail { padding-top: calc(var(--header-height) + clamp(2rem, 4vw, 5rem)); }
-.vehicle-detail--state { min-height: 85svh; }
+.vehicle-detail--state { min-height: 100svh; }
 .vehicle-detail__header > .editorial-link { font-size: .8rem; }
 .vehicle-detail__title { display: flex; align-items: baseline; justify-content: space-between; gap: 3vw; margin-block: clamp(2.5rem, 5vw, 6rem) 2rem; }
 .vehicle-detail__title > .type-display { max-width: 68%; font-size: clamp(2.5rem, 5.8vw, 7.5rem); overflow-wrap: anywhere; }

@@ -32,6 +32,22 @@
 	header @assets Cache-Control "public, max-age=604800"
 	header @pages Cache-Control "no-cache"
 
+	# Public page variants go straight to their canonical URL; vehicle slug case is preserved.
+	map {path} {canonical} {
+		~(?i)^/index\.html/?$ /
+		~(?i)^/vehiculos(?:/index\.html)?/?$ /vehiculos
+		~(?i)^/importacion(?:/index\.html)?/?$ /importacion
+		~(?i)^/nosotros(?:/index\.html)?/?$ /nosotros
+		~(?i)^/contacto(?:/index\.html)?/?$ /contacto
+		~(?i)^/aviso-legal(?:/index\.html)?/?$ /aviso-legal
+		~(?i)^/privacidad(?:/index\.html)?/?$ /privacidad
+		~(?i)^/cookies(?:/index\.html)?/?$ /cookies
+		~(?i)^/vehiculos/([a-z0-9-]+)(?:/index\.html)?/?$ /vehiculos/${1}
+		default {path}
+	}
+	@needsRedirect expression `{canonical} != {path}`
+	redir @needsRedirect {canonical}{?query} 301
+
 	handle /api/* {
 		reverse_proxy api:8080
 	}
@@ -45,6 +61,20 @@
 	handle @admin {
 		rewrite * /admin/index.html
 		file_server
+	}
+
+	# Live catalogue links, retaining the build's static page on API failure.
+	handle /vehiculos {
+		reverse_proxy api:8080 {
+			rewrite /seo/vehiculos
+			@unavailable status 404 5xx
+			handle_response @unavailable {
+				rewrite * /vehiculos/index.html
+				file_server {
+					status 200
+				}
+			}
+		}
 	}
 
 	# SEO-2: the API fills each vehicle page's metadata (SeoController). If it fails, the plain SPA loads the vehicle itself.
@@ -77,6 +107,16 @@
 	}
 
 	handle_errors {
+		@catalogue_down {
+			path /vehiculos
+			expression {err.status_code} >= 500
+		}
+		handle @catalogue_down {
+			rewrite * /vehiculos/index.html
+			file_server {
+				status 200
+			}
+		}
 		# The API is down (the proxy could not reach it): vehicle pages still work as the plain SPA.
 		@vehicle_down {
 			path_regexp (?i)^/vehiculos/[^/]+/?$
@@ -134,7 +174,7 @@
 # Internal only (not published): the API reads the page template for vehicle pages from here.
 http://:8080 {
 	root * /srv
-	@template path /spa.html
+	@template path /spa.html /vehiculos/index.html
 	handle @template {
 		file_server
 	}

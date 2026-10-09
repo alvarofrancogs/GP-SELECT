@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security;
 using System.Text;
 using GpSelect.Application;
+using GpSelect.Domain;
 using GpSelect.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,37 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
 {
     // The SPA's static routes (frontend/src/lib/pageMeta.ts, staticPageMeta).
     private static readonly string[] StaticPaths = ["/", "/vehiculos", "/importacion", "/nosotros", "/contacto"];
+
+    [HttpGet("seo/vehiculos")]
+    public async Task<IActionResult> Catalogue(CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(config["Seo:TemplateUrl"])) return NotFound();
+        var html = await template.GetAsync("vehiculos/index.html", ct);
+        const string open = "<!--vehicle-list-->";
+        const string close = "<!--/vehicle-list-->";
+        var start = html?.IndexOf(open, StringComparison.Ordinal) ?? -1;
+        var end = start < 0 ? -1 : html!.IndexOf(close, start + open.Length, StringComparison.Ordinal);
+        if (end < 0) return StatusCode(StatusCodes.Status503ServiceUnavailable);
+
+        var vehicles = await db.Vehicles.AsNoTracking().Where(PublicVehiclesController.Listed)
+            .OrderBy(x => x.Status == VehicleStatus.Sold).ThenByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id).Take(VehicleQueryLimits.MaxVehicles).ToListAsync(ct);
+        var list = new StringBuilder();
+        if (vehicles.Count > 0)
+        {
+            list.Append("<ul>");
+            foreach (var v in vehicles)
+            {
+                var name = $"{v.Make} {v.Model}{(v.Variant is { Length: > 0 } ? $" {v.Variant}" : "")} ({v.FirstRegistrationYear})";
+                list.Append($"<li><a href=\"/vehiculos/{Uri.EscapeDataString(v.PublicSlug)}\">{VehicleSeo.E(name)}</a>"
+                    + (v.Status == VehicleStatus.Sold ? " · Vendido" : "") + "</li>");
+            }
+            list.Append("</ul>");
+        }
+        var page = html![..(start + open.Length)] + list + html[end..];
+        Response.Headers.CacheControl = "public,max-age=60";
+        return Content(page, "text/html; charset=utf-8");
+    }
 
     [HttpGet("seo/vehiculos/{slug}")]
     public async Task<IActionResult> Vehicle(string slug, CancellationToken ct)
@@ -37,7 +69,7 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
         {
             var images = await db.Images.AsNoTracking().Where(x => x.VehicleUnitId == vehicle.Id).ToListAsync(ct);
             var dto = PublicMapping.Map(vehicle, images);
-            page = VehicleSeo.Fill(html, VehicleSeo.Head(dto, SiteUrl()), VehicleSeo.Body(dto));
+            page = VehicleSeo.Fill(html, VehicleSeo.Head(dto, SiteUrl()), VehicleSeo.Body(dto), dto);
         }
         if (page is null)
         {
@@ -57,16 +89,24 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
         // The listed vehicles only: a sold one kept off the list is reachable by its link but not promoted.
         var vehicles = await db.Vehicles.AsNoTracking().Where(PublicVehiclesController.Listed)
             .OrderByDescending(x => x.UpdatedAt).Select(x => new { x.PublicSlug, x.UpdatedAt }).ToListAsync(ct);
+        // The catalogue changes whenever a vehicle that was ever public changes, including when it leaves the list.
+        // The other static pages carry no lastmod: no real content date exists for them.
+        var catalogueChanged = await db.Vehicles.AsNoTracking().Where(x => x.PublishedAt != null)
+            .MaxAsync(x => (DateTimeOffset?)x.UpdatedAt, ct);
         var xml = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
         foreach (var path in StaticPaths)
-            xml.Append($"  <url><loc>{SecurityElement.Escape(site + path)}</loc></url>\n");
+            xml.Append($"  <url><loc>{SecurityElement.Escape(site + path)}</loc>"
+                + (path == "/vehiculos" && catalogueChanged is { } changed ? LastMod(changed) : "") + "</url>\n");
         foreach (var v in vehicles)
             xml.Append($"  <url><loc>{SecurityElement.Escape($"{site}/vehiculos/{Uri.EscapeDataString(v.PublicSlug)}")}</loc>"
-                + $"<lastmod>{v.UpdatedAt.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}</lastmod></url>\n");
+                + LastMod(v.UpdatedAt) + "</url>\n");
         xml.Append("</urlset>\n");
         Response.Headers.CacheControl = "public,max-age=300";
         return Content(xml.ToString(), "application/xml; charset=utf-8");
     }
+
+    private static string LastMod(DateTimeOffset at) =>
+        $"<lastmod>{at.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}</lastmod>";
 
     /// <summary>The public origin (https://domain, no path), or null when not configured or malformed.</summary>
     private string? SiteUrl()

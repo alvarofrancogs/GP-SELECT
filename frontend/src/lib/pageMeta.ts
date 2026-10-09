@@ -93,7 +93,7 @@ export function getStaticPageMeta(path: string, siteUrl?: string): PageMeta {
       '@graph': [{
         '@type': 'AutoDealer', name: 'GP SELECT',
         description: meta.description,
-        ...(siteUrl ? { url: `${siteUrl}/` } : {}),
+        ...(siteUrl ? { '@id': `${siteUrl}/#organization`, url: `${siteUrl}/` } : {}),
         logo: assetUrl('/assets/seo/logo.png', siteUrl),
         areaServed: [
           { '@type': 'Country', name: 'España' },
@@ -104,12 +104,17 @@ export function getStaticPageMeta(path: string, siteUrl?: string): PageMeta {
           '@type': 'PostalAddress', addressLocality: 'Murcia',
           addressRegion: 'Región de Murcia', addressCountry: 'ES',
         },
-        ...(contactConfig.phone ? { telephone: contactConfig.phone } : {}),
+        // The verified WhatsApp number is the business phone until a separate one exists.
+        ...(contactConfig.phone || contactConfig.whatsapp ? {
+          telephone: contactConfig.phone || `+${contactConfig.whatsapp}`,
+        } : {}),
         ...(contactConfig.email ? { email: contactConfig.email } : {}),
         ...(contactConfig.sameAs.length ? { sameAs: contactConfig.sameAs } : {}),
       }, {
         '@type': 'WebSite', name: 'GP SELECT', inLanguage: 'es-ES',
-        ...(siteUrl ? { url: `${siteUrl}/` } : {}),
+        ...(siteUrl ? {
+          '@id': `${siteUrl}/#website`, url: `${siteUrl}/`, publisher: { '@id': `${siteUrl}/#organization` },
+        } : {}),
       }],
     },
   };
@@ -125,7 +130,7 @@ function importServiceJsonLd(siteUrl?: string): Record<string, unknown> {
     ...(siteUrl ? { url: `${siteUrl}/importacion` } : {}),
     provider: {
       '@type': 'AutoDealer', name: 'GP SELECT',
-      ...(siteUrl ? { url: `${siteUrl}/` } : {}),
+      ...(siteUrl ? { '@id': `${siteUrl}/#organization`, url: `${siteUrl}/` } : {}),
       address: { '@type': 'PostalAddress', addressLocality: 'Murcia', addressRegion: 'Región de Murcia', addressCountry: 'ES' },
     },
     areaServed: [{ '@type': 'Country', name: 'España' }, { '@type': 'Continent', name: 'Europa' }],
@@ -133,34 +138,63 @@ function importServiceJsonLd(siteUrl?: string): Record<string, unknown> {
 }
 
 export function getVehiclePageMeta(vehicle: VehicleDetail, siteUrl?: string): PageMeta {
-  const name = `${vehicle.make} ${vehicle.model}`;
+  const name = [vehicle.make, vehicle.model, vehicle.variant].filter(Boolean).join(' ');
   const year = vehicle.firstRegistrationYear;
-  const identity = `${name}${year ? ` (${year})` : ''}`;
+  const identity = `${vehicle.make} ${vehicle.model}${year ? ` (${year})` : ''}`;
+  const titleIdentity = `${name}${year ? ` (${year})` : ''}`;
+  // Explicit grouping includes four-digit values, unlike Intl's es-ES default.
+  const number = (value: number) => value.toLocaleString('es-ES', { useGrouping: true });
+  const km = vehicle.mileageKm != null ? `${number(vehicle.mileageKm)} km` : undefined;
+  const facts = [km, vehicle.powerHp != null ? `${number(vehicle.powerHp)} CV` : undefined,
+    vehicle.transmission ? `cambio ${vehicle.transmission.toLocaleLowerCase('es-ES')}` : undefined].filter(Boolean);
+  const factList = facts.length > 1 ? `${facts.slice(0, -1).join(', ')} y ${facts.at(-1)}` : facts.join('');
+  const fullTitle = `${titleIdentity} · ${km} · GP SELECT`;
+  const title = km && fullTitle.length <= 65 ? fullTitle : `${titleIdentity} · GP SELECT`;
+  const description = `${vehicle.availability === 'sold' ? 'Vendido: ' : ''}${name}${year ? ` de ${year}` : ''}${factList ? ` con ${factList}` : ''}.${vehicle.provenance ? ` Procedencia: ${vehicle.provenance}.` : ''} Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.`;
   const path = `/vehiculos/${encodeURIComponent(vehicle.slug)}`;
   const image = vehicle.images?.[0]?.src;
-  const publicPrice = vehicle.availability !== 'sold' && vehicle.priceEur !== null && vehicle.priceEur > 0;
+  const publicPrice = ['available', 'coming-soon'].includes(vehicle.availability ?? '') && vehicle.priceEur !== null && vehicle.priceEur > 0;
+  const driveWheelConfiguration = new Map([
+    ['Integral', 'https://schema.org/AllWheelDriveConfiguration'],
+    ['Trasera', 'https://schema.org/RearWheelDriveConfiguration'],
+    ['Delantera', 'https://schema.org/FrontWheelDriveConfiguration'],
+  ]).get(vehicle.drivetrain ?? '');
   return {
-    title: `${identity} · Vehículos europeos · GP SELECT`,
-    description: `Consulta las fotos y los datos de este ${identity} en GP SELECT. Selección de vehículos europeos desde Murcia para clientes de España y Europa.`,
+    title, description,
     path, image, imageAlt: identity,
     jsonLd: {
-      '@context': 'https://schema.org', '@type': 'Car', name: identity,
-      brand: { '@type': 'Brand', name: vehicle.make }, model: vehicle.model,
-      // The DTO year is first registration, not a manufacturing/model year.
-      ...(year ? { dateVehicleFirstRegistration: String(year) } : {}),
-      ...(siteUrl ? { url: `${siteUrl}${path}` } : {}),
-      ...(image ? { image: assetUrl(image, siteUrl) } : {}),
-      ...(vehicle.description ? { description: vehicle.description } : {}),
-      ...(vehicle.mileageKm !== null ? { mileageFromOdometer: {
-        '@type': 'QuantitativeValue', value: vehicle.mileageKm, unitCode: 'KMT',
-      } } : {}),
-      ...(vehicle.fuelType ? { fuelType: vehicle.fuelType } : {}),
-      ...(vehicle.transmission ? { vehicleTransmission: vehicle.transmission } : {}),
-      ...(vehicle.exteriorColour ? { color: vehicle.exteriorColour } : {}),
-      ...(publicPrice ? { offers: {
-        '@type': 'Offer', price: vehicle.priceEur, priceCurrency: 'EUR',
+      '@context': 'https://schema.org', '@graph': [{ '@type': 'Car', name: identity,
+        brand: { '@type': 'Brand', name: vehicle.make }, model: vehicle.model,
+        // The DTO year is first registration, not a manufacturing/model year.
+        ...(year ? { dateVehicleFirstRegistration: String(year) } : {}),
         ...(siteUrl ? { url: `${siteUrl}${path}` } : {}),
-      } } : {}),
+        ...(image ? { image: assetUrl(image, siteUrl) } : {}),
+        ...(vehicle.description ? { description: vehicle.description } : {}),
+        ...(vehicle.mileageKm !== null ? { mileageFromOdometer: {
+          '@type': 'QuantitativeValue', value: vehicle.mileageKm, unitCode: 'KMT',
+        } } : {}),
+        ...(vehicle.fuelType ? { fuelType: vehicle.fuelType } : {}),
+        ...(vehicle.transmission ? { vehicleTransmission: vehicle.transmission } : {}),
+        ...(vehicle.exteriorColour ? { color: vehicle.exteriorColour } : {}),
+        ...(vehicle.bodyType ? { bodyType: vehicle.bodyType } : {}),
+        ...(driveWheelConfiguration ? { driveWheelConfiguration } : {}),
+        ...(vehicle.powerHp != null ? { vehicleEngine: {
+          '@type': 'EngineSpecification',
+          enginePower: { '@type': 'QuantitativeValue', value: vehicle.powerHp, unitText: 'CV' },
+        } } : {}),
+        ...(publicPrice ? { offers: {
+          '@type': 'Offer', price: vehicle.priceEur, priceCurrency: 'EUR',
+          availability: `https://schema.org/${vehicle.availability === 'available' ? 'InStock' : 'PreOrder'}`,
+          seller: { '@type': 'AutoDealer', name: 'GP SELECT', ...(siteUrl ? { '@id': `${siteUrl}/#organization` } : {}) },
+          ...(siteUrl ? { url: `${siteUrl}${path}` } : {}),
+        } } : {}),
+      }, ...(siteUrl ? [{
+        '@type': 'BreadcrumbList', itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${siteUrl}/` },
+          { '@type': 'ListItem', position: 2, name: 'Vehículos', item: `${siteUrl}/vehiculos` },
+          { '@type': 'ListItem', position: 3, name: identity, item: `${siteUrl}${path}` },
+        ],
+      }] : [])],
     },
   };
 }

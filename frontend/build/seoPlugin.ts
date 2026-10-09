@@ -11,6 +11,17 @@ import { sceneAssets } from '../src/assets/sceneAssets';
 const homePreload = [sceneAssets.heroBackground.src, sceneAssets.heroCar.src]
   .map((src) => `<link rel="preload" as="image" href="${src}" fetchpriority="high" />\n  `).join('');
 
+/** Mirrors the public-page map in deploy/Caddyfile; never lowercase a vehicle slug. */
+export function canonicalPagePath(pathname: string): string | null {
+  let canonical: string | undefined;
+  if (/^\/index\.html\/?$/i.test(pathname)) canonical = '/';
+  const page = /^\/(vehiculos|importacion|nosotros|contacto|aviso-legal|privacidad|cookies)(?:\/index\.html)?\/?$/i.exec(pathname);
+  if (page) canonical = `/${page[1].toLowerCase()}`;
+  const vehicle = /^\/vehiculos\/([a-z0-9-]+)(?:\/index\.html)?\/?$/i.exec(pathname);
+  if (vehicle) canonical = `/vehiculos/${vehicle[1]}`;
+  return canonical && canonical !== pathname ? canonical : null;
+}
+
 /** Static reading views and metadata, retaining the SPA's built asset references. */
 export function seoPlugin(rawSiteUrl?: string): Plugin {
   const siteUrl = parseSiteUrl(rawSiteUrl);
@@ -32,10 +43,16 @@ export function seoPlugin(rawSiteUrl?: string): Plugin {
     configurePreviewServer(server) {
       server.middlewares.use((request, response, next) => {
         const url = new URL(request.url || '/', 'http://preview.local');
-        const path = url.pathname.toLowerCase().replace(/\/+$/, '') || '/';
+        const path = url.pathname;
         if (path === '/api' || path.startsWith('/api/') || path.startsWith('/assets/')) return next();
-        if (path === '/servicios') {
+        if (path === '/servicios' || path === '/servicios/') {
           response.writeHead(308, { Location: `/importacion${url.search}` });
+          response.end();
+          return;
+        }
+        const canonical = canonicalPagePath(path);
+        if (canonical) {
+          response.writeHead(301, { Location: `${canonical}${url.search}` });
           response.end();
           return;
         }
