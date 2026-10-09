@@ -11,7 +11,8 @@ const MAGNET_MAX = 6; // px
 
 // Surfaces light enough for ink type, and the dark bands inside them.
 const LIGHT_SURFACES = '#servicios, #seleccion, .interior-page, .planned-page, .car-handoff__pin';
-const DARK_SURFACES = '.interior-band';
+// The veil is Process's dark lifting off the car scene: dark until it has passed the pill.
+const DARK_SURFACES = '.interior-band, [data-handoff-veil]';
 
 /** The one global conversion: a small editorial glass button, fixed at the bottom centre of the public site. */
 export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElement) => void }) {
@@ -19,7 +20,8 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
   const { pathname } = useLocation();
   const linkRef = useRef<HTMLAnchorElement>(null);
   const bodyRef = useRef<HTMLSpanElement>(null);
-  const hidden = pathname.startsWith('/vehiculos');
+  // Not on the catalogue itself, nor over the contact form it would cover.
+  const hidden = pathname.startsWith('/vehiculos') || pathname.toLowerCase().startsWith('/contacto');
 
   useEffect(() => {
     const link = linkRef.current;

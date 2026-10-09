@@ -7,8 +7,9 @@
   --width-label: var(--type-label-width);
   --width-nav: var(--type-ui-width);
   --weight-extended: var(--type-display-weight);
-  --hero-size: clamp(3rem, 8.385vw, 12rem);
-  --hero-size-right: clamp(2.8rem, 7.803vw, 11.2rem);
+  /* One size in both languages (the Spanish words are the longest): switching language never resizes the headlines. */
+  --hero-size: clamp(2.5rem, 6.25vw, 9rem);
+  --hero-size-right: var(--hero-size);
   --hero-tracking: var(--type-display-tracking);
   --hero-leading: var(--type-display-leading);
   --hero-gutter-start: 5.7vw;
@@ -123,8 +124,7 @@
 
 @media (max-width: 767px) {
   :root {
-    --hero-size: clamp(3rem, 13.9vw, 6.5rem);
-    --hero-size-right: var(--hero-size);
+    --hero-size: clamp(2.5rem, 11.8vw, 5.5rem);
     --hero-gutter-start: var(--page-gutter);
     --hero-gutter-end: var(--page-gutter);
     --page-gutter: 6vw;
@@ -134,12 +134,6 @@
     --text-body: 1.0625rem;
     --button-height: 3.5rem;
   }
-}
-
-/* Spanish headlines need a smaller optical size to preserve the centre gap. */
-:root:lang(es) { --hero-size: clamp(2.5rem, 6.25vw, 9rem); --hero-size-right: var(--hero-size); }
-@media (max-width: 767px) {
-  :root:lang(es) { --hero-size: clamp(2.5rem, 11.8vw, 5.5rem); }
 }
 
 @media (min-width: 1920px) {

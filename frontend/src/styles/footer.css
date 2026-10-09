@@ -18,14 +18,9 @@
   border-top: var(--border-width) solid var(--color-muted);
 }
 
-.footer-brand {
-  font-stretch: var(--type-lede-width);
-  font-size: clamp(1.6rem, 2.3vw, 2.6rem);
-  font-weight: 300;
-  letter-spacing: .2em;
-  line-height: 1;
-  white-space: nowrap;
-}
+.footer-brand { display: inline-block; }
+/* Same logo as the header, a size up. */
+.footer-brand .brand-logo { width: clamp(11rem, 16vw, 18rem); }
 
 .footer-identity p {
   margin-top: 1.25rem;

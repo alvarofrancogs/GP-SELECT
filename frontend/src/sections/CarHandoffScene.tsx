@@ -14,7 +14,7 @@ function HandoffText({ state, name, layout, titleId }: { state: HandoffState; na
     <div className="car-handoff__text" data-text={name} data-layout={layout}>
       {/* Same classes as the hero headline: one type recipe, sizes fitted per word. */}
       <Heading id={titleId} className="scene-title hero-title" data-headline>
-        <span data-word><span data-line>{state.left}</span></span>
+        <span data-word><span data-line>{state.left}</span></span>{' '}
         <span data-word><span data-line>{state.right}</span></span>
       </Heading>
       {/* The fact sits inside the animated line, so it enters and leaves with its description. */}
@@ -29,9 +29,9 @@ function HandoffText({ state, name, layout, titleId }: { state: HandoffState; na
 /** The BMW seen from above drives in and parks; a soft curtain turns it into its mechanical cutaway
     while the weather closes in, then the scene leaves with the page. */
 export function CarHandoffScene() {
-  const { copy } = useLanguage();
+  const { copy, locale } = useLanguage();
   const text = copy.carHandoff;
-  const { sectionRef, pinRef } = useCarHandoffScene();
+  const { sectionRef, pinRef } = useCarHandoffScene(locale);
   const [stateA, stateB, stateC] = text.states;
 
   return (
@@ -72,6 +72,8 @@ export function CarHandoffScene() {
         </div>
         {/* One light over world and cars, so the weather changes the car too. */}
         <div className="car-handoff__grade" data-handoff-grade aria-hidden="true" />
+        {/* Process's dark, lifted off this frame like a curtain when Process hands over (useGsapScene.ts). */}
+        <div className="car-handoff__veil" data-handoff-veil aria-hidden="true" />
       </div>
     </section>
   );

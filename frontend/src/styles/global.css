@@ -36,6 +36,22 @@ dialog { overscroll-behavior: contain; }
 .site-header[data-tone-scene='hero'][data-tone='light'] { color: #000; }
 .site-header[data-tone-scene='hero'][data-tone='dark'] { text-shadow: 0 0 1px rgb(9 10 12 / .8), 0 0 3px rgb(9 10 12 / .5), 0 0 .5em rgb(9 10 12 / .3); }
 .site-header[data-tone-scene='hero'][data-tone='dark'] button { text-shadow: inherit; }
+/* Quick return (Header.tsx): over the pages' content the header slides away while reading down and comes
+   back on the way up over frosted glass, the same glass as the catalogue pill. At the top of a page and over
+   the Home's scenes it stays as it was: always there and see-through. The glass sits outside the header,
+   which is blended. Over the glass the header drops the blend for crisp ink (or white over dark bands). */
+.site-header, .header-backdrop { transition: transform 260ms var(--ease-out); }
+.site-header[data-hidden], .header-backdrop[data-hidden] { transform: translateY(-100%); }
+/* The open menu lives inside the header: never slid away under it. */
+.site-header.site-header--menu[data-hidden] { transform: none; }
+.header-backdrop { position: fixed; inset: 0 0 auto; z-index: calc(var(--z-header) - 1); height: var(--header-height); pointer-events: none; opacity: 0;
+  background: rgb(245 242 236 / .72); box-shadow: inset 0 -1px 0 rgb(16 17 18 / .08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4);
+  transition: opacity 200ms var(--ease-out), transform 260ms var(--ease-out), background-color 200ms var(--ease-out); }
+.header-backdrop[data-glass] { opacity: 1; }
+.header-backdrop[data-glass='dark'] { background: rgb(9 10 12 / .55); box-shadow: inset 0 -1px 0 rgb(255 252 247 / .1); }
+.site-header[data-glass='light'] { mix-blend-mode: normal; color: var(--color-ink); }
+.site-header[data-glass='dark'] { mix-blend-mode: normal; color: var(--color-white); }
 .header-inner { height: var(--header-height); margin-inline: var(--page-gutter); display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
 .header-nav, .header-actions { display: flex; align-items: center; gap: clamp(1rem, 2.9vw, 3.5rem); }
 .header-nav { font-family: var(--font-family); font-stretch: var(--width-nav); font-size: var(--header-nav-size); font-weight: var(--weight-extended-copy); letter-spacing: var(--header-nav-tracking); }
@@ -45,6 +61,12 @@ dialog { overscroll-behavior: contain; }
 .mobile-nav a.active { text-decoration: underline; text-decoration-thickness: var(--border-width); text-underline-offset: .2em; }
 .header-brand { position: absolute; left: 50.55%; transform: translateX(-50%); display: flex; gap: .4em; white-space: nowrap; font-family: var(--font-family); font-stretch: var(--width-extended); font-size: var(--header-brand-size); font-weight: var(--weight-extended-copy); letter-spacing: var(--header-brand-tracking); line-height: 1; }
 .brand-mark, .brand-name { font-weight: 400; }
+/* The real logo (GP monogram + SELECT) as a mask over currentColor: it takes the colour, blend and tones of the type it replaced. */
+.brand-logo { display: block; aspect-ratio: 7308 / 1268; background-color: currentColor;
+  -webkit-mask: url('/assets/seo/logo.svg') center / contain no-repeat; mask: url('/assets/seo/logo.svg') center / contain no-repeat; }
+.header-brand .brand-logo { width: 7.8em; }
+/* A mask clips text-shadow away: the brand gets the same halo as a filter. */
+.site-header[data-tone-scene='hero'][data-tone='dark'] .header-brand { filter: drop-shadow(0 0 1px rgb(9 10 12 / .8)) drop-shadow(0 0 3px rgb(9 10 12 / .5)); }
 .header-actions { margin-left: auto; }
 .language-switcher { display: flex; align-items: center; gap: var(--space-2); padding-left: var(--space-6); border-left: var(--border-width) solid currentColor; }
 .language-switcher button { border: 0; background: none; padding: var(--space-1); font-family: var(--font-family); font-stretch: var(--width-extended); font-size: var(--header-nav-size); opacity: .55; }
@@ -88,6 +110,7 @@ dialog { overscroll-behavior: contain; }
      links rise through their masks and the rules draw in. It lifts faster than it falls. */
   .site-header.site-header--open, .site-header.site-header--menu, .site-header.site-header--menu[data-tone] { mix-blend-mode: normal; color: var(--color-ink); text-shadow: none; }
   .site-header--menu button { text-shadow: none; }
+  .site-header--menu .header-brand { filter: none; }
   .mobile-nav {
     position: fixed; inset: 0; z-index: -1;
     display: flex; flex-direction: column;
@@ -136,8 +159,10 @@ dialog { overscroll-behavior: contain; }
   #main-content { animation: page-in 260ms var(--ease-out) backwards; }
 }
 @keyframes page-in { from { opacity: 0; } }
-/* Language change (LanguageSwitcher.tsx): a short crossfade between the two copies of the page. */
-::view-transition-old(root), ::view-transition-new(root) { animation-duration: 260ms; animation-timing-function: var(--ease-out); }
+/* Language change (LanguageSwitcher.tsx): only the lettering fades out and back in; photographs, cars and
+   backgrounds stay put. !important wins over the scenes' inline (GSAP) opacity only for these 440 ms. */
+html.lang-out :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:not(.header-brand, .catalogue-cta), .catalogue-cta__label, button:not(.language-switcher button, .menu-toggle)) { opacity: 0 !important; transition: opacity 160ms var(--ease-in-out) !important; }
+html.lang-in :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:not(.header-brand, .catalogue-cta), .catalogue-cta__label, button:not(.language-switcher button, .menu-toggle)) { transition: opacity 280ms var(--ease-out) !important; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0s !important; animation-duration: 0s !important; }
   /* The menu's staggered delays would still hold it (and its links) on screen with zero-length transitions. */

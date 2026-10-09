@@ -50,7 +50,7 @@ export function FeaturedVehicle() {
   return (
     <section ref={sectionRef} id="seleccion" className="featured" aria-labelledby="featured-title" aria-busy={state.status === 'loading'}>
       <Container>
-        <h2 id="featured-title" className="featured__title"><span>{text.title}</span><span>{text.titleFine}</span></h2>
+        <h2 id="featured-title" className="featured__title"><span>{text.title}</span>{' '}<span>{text.titleFine}</span></h2>
         {vehicles.length > 1 ? <div className="featured__rotation type-ui">
           <span className="type-numeric" aria-hidden="true">{String(index + 1).padStart(2, '0')} / {String(vehicles.length).padStart(2, '0')}</span>
           <span className="sr-only">{text.position(index + 1, vehicles.length)}</span>

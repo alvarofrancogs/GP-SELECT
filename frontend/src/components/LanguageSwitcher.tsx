@@ -3,20 +3,34 @@ import { useLanguage } from '../i18n/useLanguage';
 import type { Locale } from '../i18n/types';
 
 const locales: Locale[] = ['es', 'en'];
+// Must match the language fade in global.css.
+const FADE_OUT_MS = 160;
+const FADE_IN_MS = 280;
+let switching = false;
 
 export function LanguageSwitcher() {
   const { locale, copy, setLocale } = useLanguage();
 
-  // The copy crossfades instead of swapping in a single frame. Browsers without view transitions,
-  // and reduced motion, change it directly.
+  // Only the lettering fades: out, swapped while hidden, back in. A crossfade of the whole page
+  // (view transitions) showed both languages on top of each other halfway through.
+  // Reduced motion changes it directly.
   function change(language: Locale) {
-    if (language === locale) return;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced || !document.startViewTransition) {
+    if (language === locale || switching) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setLocale(language);
       return;
     }
-    document.startViewTransition(() => flushSync(() => setLocale(language)));
+    const root = document.documentElement;
+    switching = true;
+    root.classList.add('lang-out');
+    window.setTimeout(() => {
+      flushSync(() => setLocale(language));
+      root.classList.replace('lang-out', 'lang-in');
+      window.setTimeout(() => {
+        root.classList.remove('lang-in');
+        switching = false;
+      }, FADE_IN_MS);
+    }, FADE_OUT_MS);
   }
 
   return (

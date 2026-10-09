@@ -12,7 +12,8 @@ export function HeroScene() {
         <AssetSlot asset={sceneAssets.heroBackground} label={copy.common.backgroundAsset} background priority="high" />
       </div>
       <h1 id="hero-title" className="scene-title hero-title">
-        <span data-scene-title>{copy.hero.left}</span>
+        {/* The space keeps the words apart in the heading's text (search engines, screen readers); flex hides it. */}
+        <span data-scene-title>{copy.hero.left}</span>{' '}
         <span data-scene-title>{copy.hero.right}</span>
       </h1>
       <p className="scene-description hero-description" data-scene-ui>{copy.hero.description}</p>

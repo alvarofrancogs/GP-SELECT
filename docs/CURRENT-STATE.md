@@ -128,6 +128,17 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 - Gate de Opus: la ficha con error de red ya no se marca `noindex` (solo un vehículo inexistente confirmado). Detalle comprobado con API simulada en el navegador: `Car` + `Offer` (sin `offers` si está vendido), `<` escapado en el JSON-LD, 404 → `noindex`, navegación y vuelta atrás restauran el head, ruta desconocida → HTTP 404.
 - **Siguiente propuesto: GEO-1** (contenido legible sin JS en las páginas estáticas, bots de IA en robots, `llms.txt`). GEO-2 (FAQ) espera datos del usuario. SEO-2 espera hosting (recomendado: un servidor con Caddy para web + API).
 
+### UI: idioma, logo del header y preloader (07-10-2026, pedido por el usuario)
+
+- Cambio de idioma sin saltos de tamaño: `--hero-size` es el mismo en ES y EN (el valor que tenía ES; fuera `:root:lang(es)`). Los titulares de `CarHandoff` se reajustan en un `useLayoutEffect` por idioma, antes de la captura de la view transition (antes conservaban el tamaño del idioma anterior y saltaban al acabar el fundido).
+- Header: «GP SELECT» pasa a ser el logo real (`/assets/seo/logo.svg` como máscara sobre `currentColor`), así conserva el `mix-blend-mode` y los tonos por escena; el halo del tono oscuro del hero va como `drop-shadow`.
+- Preloader: solo logo y telón; fuera la barra y el contador.
+- Cambio de idioma sin View Transitions: solo el texto se funde (160 ms fuera, cambio, 280 ms dentro; clases `lang-out`/`lang-in` en `<html>`); fotos, coches y fondos no se mueven. El fundido de página completa mostraba los dos idiomas superpuestos a mitad.
+- Logo del header un poco más pequeño (7,8 em); el footer usa el mismo logo (`.brand-logo`). El CTA «Ver catálogo» no aparece en `/contacto` (tapaba el formulario).
+- Header «quick return» (sustituye a la franja de papel, rechazada por el usuario): sobre el contenido de las páginas se esconde al bajar y vuelve al subir sobre vidrio esmerilado (`.header-backdrop`, blur 18 px + saturate 1,4, el mismo vidrio que el CTA; claro u oscuro según la superficie, con filete de 1 px). Sobre el vidrio el header deja el `difference` y usa tinta o blanco. Arriba del todo y en `#hero`, `#criterio` y `#coches` sigue transparente y siempre visible. Nunca se esconde con el foco del teclado dentro ni con el menú abierto.
+- Process → coches: en vez de un fundido de opacidad (pasaba por una pantalla gris entera), el frame entra bajo un velo del oscuro de Process (`[data-handoff-veil]`) que sube como telón con borde suave. El CTA lo trata como superficie oscura.
+- SEO/GEO revisado tras estos cambios (build con `VITE_SITE_URL`, HTML estático y renderizado): sin regresiones. Arreglado un fallo previo: los títulos de dos partes (`<span>` pegados) se leían «SelecciónEuropea», «Porsche 911Carrera S PDK»… en el DOM renderizado; ahora llevan un espacio (invisible en flex, capturas idénticas).
+
 ### UI: CTA, idioma y marca (04-10-2026, pedido por el usuario, pendiente de su visto bueno)
 
 - `CatalogueCta`: el glass se adapta al lenguaje de la web: esquinas `--radius-small`, filete de 1 px, sin brillos ni sombra pesada, flecha en su propia celda tras un filete (hover: celda rellena). Mantiene tono claro/oscuro, magnetismo y reflejo.
