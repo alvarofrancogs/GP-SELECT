@@ -357,7 +357,7 @@ En las interiores, mismo patrón: «Importación» + lede visible → H1 «Impor
 2. **Bing Webmaster Tools** (alimenta Copilot y ChatGPT Search): importar desde GSC.
 3. **Rich Results Test** de la Home, `/importacion` y una ficha con precio y otra vendida.
 4. **PageSpeed Insights y CrUX** a las 4 semanas con tráfico. Configurar una API key en `~/.config/claude-seo/google-api.json` para que el plugin (`seo-google`, `pagespeed_check.py`, `lighthouse_agentic.py`) aporte datos reales, y repetir esta auditoría con `render_page.py` contra el dominio público (el guard de localhost deja de aplicar).
-5. **Comprobar en producción:** `gpselect.es` → 308 a `gpselect.com`, `robots.txt` y `llms.txt` servidos, cabeceras, 404 real y `/vehiculos/<slug>` servido por la API.
+5. **Comprobar en producción:** `www.gpselect.com` → 308 a `gpselect.com` (desde el 09-10-2026 `gpselect.es` está descartado), `robots.txt` y `llms.txt` servidos, cabeceras, 404 real y `/vehiculos/<slug>` servido por la API.
 6. **Google Business Profile:** alta, verificación, categorías y primeras reseñas.
 7. **Línea base de drift** con el plugin (`seo-drift`) tras el primer despliegue estable, para detectar regresiones en cada release.
 8. **Medición de conversiones:** decidir analítica (preferible sin cookies) y actualizar Privacidad/Cookies antes de activarla, como pide `CURRENT-STATE.md`.

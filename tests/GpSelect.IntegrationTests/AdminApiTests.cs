@@ -344,6 +344,19 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Equal(("invalid_text", "model"), (problem.GetProperty("code").GetString(), problem.GetProperty("field").GetString()));
     }
 
+    [Theory]
+    [InlineData("image/tiff")]
+    [InlineData("image/gif")]
+    [InlineData("image/svg+xml")]
+    public async Task Upload_intent_rejects_formats_other_than_jpeg_png_and_webp(string mimeType)
+    {
+        var (id, _) = await CreateVehicle();
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/admin/vehicles/{id}/images/intent") { Content = JsonContent.Create(new { mimeType, sizeBytes = 100 }) };
+        request.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
+        var response = await admin.SendAsync(request);
+        Assert.Equal(HttpStatusCode.UnsupportedMediaType, response.StatusCode);
+    }
+
     private HttpRequestMessage Intent(Guid vehicleId)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, $"/api/admin/vehicles/{vehicleId}/images/intent") { Content = JsonContent.Create(new { mimeType = "image/png", sizeBytes = 100 }) };

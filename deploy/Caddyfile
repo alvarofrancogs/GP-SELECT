@@ -77,15 +77,19 @@
 		}
 	}
 
-	# SEO-2: the API fills each vehicle page's metadata (SeoController). If it fails, the plain SPA loads the vehicle itself.
+	# SEO-2: the API fills each vehicle page's metadata (SeoController). If it fails, the plain SPA loads the vehicle itself,
+	# answered as 503: without the API nobody can tell whether the vehicle exists, so crawlers must neither index nor drop it.
 	@vehicle path_regexp vehicle (?i)^/vehiculos/([^/]+)/?$
 	handle @vehicle {
 		reverse_proxy api:8080 {
 			rewrite /seo/vehiculos/{re.vehicle.1}
 			@unavailable status 5xx
 			handle_response @unavailable {
+				header Retry-After 300
 				rewrite * /spa.html
-				file_server
+				file_server {
+					status 503
+				}
 			}
 		}
 	}
@@ -117,15 +121,16 @@
 				status 200
 			}
 		}
-		# The API is down (the proxy could not reach it): vehicle pages still work as the plain SPA.
+		# The API is down (the proxy could not reach it): vehicle pages still work as the plain SPA, again as a 503.
 		@vehicle_down {
 			path_regexp (?i)^/vehiculos/[^/]+/?$
 			expression {err.status_code} >= 500
 		}
 		handle @vehicle_down {
+			header Retry-After 300
 			rewrite * /spa.html
 			file_server {
-				status 200
+				status 503
 			}
 		}
 		# Same for the sitemap: the build's static copy.
