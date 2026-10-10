@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import fixtures from '../../../tests/fixtures/vehicle-seo.json';
 import englishValues from '../../../tests/fixtures/vehicle-values-en.json';
 import { en } from '../i18n/en';
+import { entityCopy } from '../i18n/entityCopy';
 import { translateValue } from './vehicleFormat';
 import { contactConfig } from '../config/contactChannels';
 import { fromPublicDetail } from '../services/vehicles';
@@ -34,6 +35,13 @@ describe('static structured data', () => {
     expect(graph[0]).toMatchObject({ '@type': 'AutomotiveBusiness', '@id': `${siteUrl}/#organization`, telephone: '+34661631555' });
     expect(graph[1]).toMatchObject({ '@id': `${siteUrl}/#website`, publisher: { '@id': `${siteUrl}/#organization` } });
     expect(getStaticPageMeta('/importacion', siteUrl).jsonLd!.provider).toMatchObject({ '@type': 'AutomotiveBusiness', '@id': `${siteUrl}/#organization` });
+  });
+
+  it.each([['/', 'es'], ['/en', 'en']] as const)('uses the entity copy for the %s business node', (path, locale) => {
+    const meta = getStaticPageMeta(path);
+    const graph = meta.jsonLd!['@graph'] as Record<string, unknown>[];
+    expect(graph[0].description).toBe(entityCopy[locale]);
+    expect(graph[0].description).not.toBe(meta.description);
   });
 
   it('omits IDs and publisher without siteUrl, but keeps the telephone', () => {

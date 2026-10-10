@@ -7,6 +7,7 @@ export interface InteriorCopy {
     why: EditorialCopy;
     audience: { title: string; intro: string; rows: EditorialCopy[] };
     approach: { title: string; body: string; rows: EditorialCopy[] };
+    transparency: { title: string; legalLabel: string; rows: EditorialCopy[] };
     closing: string;
     closingNote: string;
     cta: string;
@@ -18,6 +19,9 @@ export interface InteriorCopy {
     search: EditorialCopy;
     analysis: EditorialCopy;
     support: EditorialCopy & { detail: string };
+    stages: { title: string; intro: string; rows: EditorialCopy[] };
+    taxes: EditorialCopy;
+    faq: { title: string; rows: EditorialCopy[] };
     images: { search: string; inspection: string; delivery: string };
     closing: string;
     closingBody: string;
@@ -28,6 +32,7 @@ export interface InteriorCopy {
     pathsLabel: string;
     vehiclePath: string;
     searchPath: string;
+    nextSteps: string[];
     vehicleIntro: string;
     searchIntro: string;
     formTitle: string;

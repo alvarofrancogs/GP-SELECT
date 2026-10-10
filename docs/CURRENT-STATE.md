@@ -3,7 +3,7 @@
 
 ## PHASE
 
-**Estado vivo (10-10-2026): SEO Fase B. B0–B3 cerrados (B2/B3 en `main` vía PR #6, `0533d3d`); B4 aprobado y con commit en `feat/seo-b4`; siguiente B5; ver el bloque «SEO Fase B» más abajo.** Anterior: FINAL CLOSURE PASS, 3C PASS (01-10-2026); ver el bloque 3C más abajo. Historial: **PHASE COMPLETED: MOTION / SCROLL ARCHITECTURE PASS (29-09-2026).** Objetivo cumplido: HOME completa de principio a fin con scroll, pinning, handoffs y vehículos en movimiento ligados al scroll y reversibles. Siguiente fase (sin abrir todavía): FINAL VISUAL POLISH PASS.
+**Estado vivo (10-10-2026): SEO Fase B. B0–B3 cerrados (B2/B3 en `main` vía PR #6, `0533d3d`); B4 aprobado (`feat/seo-b4`); B5 terminado en `feat/seo-b5`, pendiente de aprobación; ver el bloque «SEO Fase B» más abajo.** Anterior: FINAL CLOSURE PASS, 3C PASS (01-10-2026); ver el bloque 3C más abajo. Historial: **PHASE COMPLETED: MOTION / SCROLL ARCHITECTURE PASS (29-09-2026).** Objetivo cumplido: HOME completa de principio a fin con scroll, pinning, handoffs y vehículos en movimiento ligados al scroll y reversibles. Siguiente fase (sin abrir todavía): FINAL VISUAL POLISH PASS.
 
 Unidades: 1A PASS · 1B PASS · 1C PASS · 1D PASS · 1E PASS · 1F PASS.
 
@@ -300,7 +300,12 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
   - **Verificación:** typecheck, lint, Vitest 159/159, build; `dotnet build` 0 errores (solo los avisos de ImageSharp), 156/156 unitarios, 148/148 integración. Stack de producción local (Caddy + API + Postgres + SeaweedFS) con 3 coches reales (disponible, próximamente, vendido visible): `curl` sin JS de fichas y catálogo EN/ES, 404 EN `noindex`, 301 de mayúsculas y barra final, sitemap (16 URLs), API parada → fallbacks correctos. Gemini 3.8 Flash High (preview + API real, 1440/390): 10/11 PASS; el único FAIL es un falso positivo del encargo (la pestaña del 404 usa el copy «This vehicle is not in the catalogue»). 311 s, ~199k tokens.
   - **Gap conocido (previo):** `en.vehicles.values` solo traduce los valores de ejemplo; otros («Delantera», más colores…) salen en español en la ficha EN. Ampliar la tabla (en `en.ts` y en el fixture) cuando el Admin use más valores.
   - Decisiones: GP SELECT no aparece como vendedor si no lo es (quitar `seller` del Offer, sin inventar vendedores); `AutoDealer` → `AutomotiveBusiness`; decisión final del Offer cuando se sepa qué incluye el precio publicado. También en B4: catálogo EN con datos y hreflang en las fichas. **Decisión del usuario (10-10-2026): las fichas EN se indexan ya**, con hreflang recíproco; interfaz, especificaciones y metadatos en inglés, y los textos libres del Admin (descripción, historial, equipamiento) en español con `lang="es"`. Sin campos EN en el Admin.
-- **Siguiente:** B5 (integrar los textos de B1). Implementación delegada a GPT-6.1-Sol high cuando no requiera criterio visual de Astra (petición del usuario, 10-10-2026). No hay commit, push ni despliegue sin su autorización.
+- **B5 · terminado, pendiente de aprobación (10-10-2026, `feat/seo-b5` desde `feat/seo-b4`, sin commit).** Textos de B1 integrados en ES/EN: metadatos ES (los EN ya coincidían), frase de entidad (`i18n/entityCopy.ts`) en el `AutomotiveBusiness` y al inicio de `llms.txt`, pie (descripción y «Clientes en toda Europa», también en el HTML legible de la ficha en `VehicleSeo.cs`; el alt de `og-default.jpg` conserva el texto de la imagen), Home (hero, Process «De la búsqueda a la entrega», dato 3 de «Toda Europa», Servicios), Importación (lede, «Nosotros gestionamos el resto», 7 etapas, impuestos sin enlace a la guía, FAQ 1–5 y 8 sin FAQPage, título «Preguntas frecuentes.»), Nosotros (lede, fila «Si vives fuera de España», sección de terceros con enlace al aviso legal y solo WhatsApp), Vehículos, ficha y Contacto (opción 2 y tres pasos). Ningún `[P]` publicado.
+  - **Calibración:** se usan los textos largos; ninguna alternativa corta hizo falta (80 pares B4/B5 de la Home a 390/1440/1920 ES/EN revisados por Opus y Gemini Flash: sin cortes, solapes ni cambios de composición; altura de la Home ±24 px; 0 errores de consola, sin scroll horizontal). GSAP sin tocar.
+  - **Composición:** Contacto, los pasos van bajo el párrafo introductorio (`.contact-next`, Opus). Nosotros (Astra): «Con quién trabajamos» pasa de rejilla 2 columnas a filas apiladas (con 3 filas quedaba 2 + 1) y la sección de terceros usa el patrón de «Preferimos proponerte…»; enlace «aviso legal» subrayado.
+  - **Ejecución:** implementó GPT-6-Sol high (`gpt-6.1-sol` no está disponible con la cuenta de ChatGPT); su sandbox no pudo correr Vitest ni el build. Verificación de Opus: typecheck, lint, Vitest 168/168, build; HTML sin JS con todas las secciones nuevas (h2/h3) en ES/EN.
+  - **Pendiente fuera de código:** `og-default.jpg` con «Clientes en toda Europa» y versión inglesa (recurso gráfico).
+- **Siguiente:** aprobación de B5 por el usuario → commit → B6 (H1 semánticos con los ledes). No hay commit, push ni despliegue sin su autorización.
 
 ### SEO-2 · fichas y sitemap desde el servidor = PASS (05-10-2026, tag `seo-2-pass`)
 
@@ -661,7 +666,7 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 7. **3B copy truth** (**PASS**, 01-10-2026);
 8. **3C final visual / asset polish** (**PASS**, 01-10-2026: UI Simplification, QA A–G y Real Stack Regression incluidas; sin push ni merge);
 9. **Siguiente: por decidir por el usuario**: sustituir las fotos del usuario según lleguen, y después 3D final release QA. SEO y dominio/deploy son fases aparte. NO iniciada.
-10. **SEO Fase B** (desde 09-10-2026): B0–B3 cerrados (B2/B3 en `main`); B4 aprobado (`feat/seo-b4`); siguiente B5. Ver el bloque «SEO Fase B».
+10. **SEO Fase B** (desde 09-10-2026): B0–B3 cerrados (B2/B3 en `main`); B4 aprobado; B5 terminado en `feat/seo-b5`, pendiente de aprobación. Ver el bloque «SEO Fase B».
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 

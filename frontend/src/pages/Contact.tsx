@@ -40,6 +40,8 @@ export function Contact() {
       <div className={`contact-content${hasChannels ? ' contact-content--channels' : ''}`}>
         <div className="contact-content__form">
           <p className="contact-introduction type-lede">{path === 'search' ? text.searchIntro : text.vehicleIntro}</p>
+          {/* What happens after sending: the approved copy carries its own numbers. */}
+          <ol className="contact-next type-body">{text.nextSteps.map((step) => <li key={step}>{step}</li>)}</ol>
           <ContactForm key={vehicle} intent={path} vehicle={vehicle} />
         </div>
         <DirectContact />

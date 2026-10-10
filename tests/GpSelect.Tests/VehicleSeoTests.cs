@@ -105,7 +105,7 @@ public class VehicleSeoTests
         Assert.Contains("href=\"/en/contact?vehiculo=BMW%20M4%20%282023%29&amp;intent=vehicle\">Enquire about this car", html);
         foreach (var path in new[] { "/en", "/en/vehicles", "/en/import", "/en/about", "/en/contact" })
             Assert.Contains($"href=\"{path}\"", html);
-        Assert.Contains("Murcia · Clients in Spain and Europe", html);
+        Assert.Contains("Murcia, Spain · Clients across Europe", html);
         var sold = VehicleSeo.Body(dto with { Status = VehicleStatus.Sold }, "en");
         Assert.Contains("This vehicle is no longer available.", sold);
         Assert.DoesNotContain("Price:", sold);

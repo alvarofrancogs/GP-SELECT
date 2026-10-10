@@ -1,5 +1,6 @@
 import { contactConfig } from '../config/contactChannels';
 import { en } from '../i18n/en';
+import { entityCopy } from '../i18n/entityCopy';
 import { matchPage, pagePath, pagePaths } from '../i18n/routes';
 import type { Locale } from '../i18n/types';
 import type { VehicleDetail } from '../types/vehicle';
@@ -23,24 +24,24 @@ export interface PageMeta {
 
 export const staticPageMeta: Record<string, PageMeta> = {
   '/': {
-    title: 'GP SELECT · Selección e importación de coches en Murcia',
-    description: 'Buscamos en Europa el coche que quieres, revisamos cada opción y coordinamos la compra y la importación. Desde Murcia, para clientes de España y Europa.',
+    title: "GP SELECT · Importación de coches premium desde Europa",
+    description: "Coches premium y deportivos de toda la UE, buscados para ti y entregados en tu país. GP SELECT gestiona la compra, los trámites y la matriculación desde Murcia.",
   },
   '/vehiculos': {
-    title: 'Coches europeos en venta · Catálogo de GP SELECT',
-    description: 'Catálogo de coches europeos de GP SELECT, con fotos y datos de cada unidad. Si no está el que buscas, lo buscamos. Desde Murcia, para España y Europa.',
+    title: "Coches premium seleccionados en Europa · GP SELECT",
+    description: "Coches premium y deportivos europeos, con fotos y datos de cada unidad. Si el que buscas no está, lo buscamos por encargo en toda Europa.",
   },
   '/importacion': {
-    title: 'Importar un coche de Alemania o de Europa · GP SELECT',
-    description: 'Cómo te ayudamos a importar un coche europeo: definimos la búsqueda, comparamos unidades, revisamos su documentación y coordinamos la compra.',
+    title: "Importar coche de Alemania o Europa llave en mano · GP SELECT",
+    description: "Gestionamos la importación de tu coche desde Alemania o cualquier país de la UE: búsqueda, selección, compra, trámites, transporte, matriculación y entrega.",
   },
   '/nosotros': {
-    title: 'Sobre GP SELECT · Selección de coches europeos en Murcia',
-    description: 'Cómo elegimos los coches que te proponemos: primero escuchamos, después comparamos y te contamos lo que sabemos de cada uno y lo que no. Desde Murcia.',
+    title: "Sobre GP SELECT · Importación de coches premium desde Murcia",
+    description: "Qué gestiona GP SELECT en cada operación, qué coordina con terceros y cómo elige los coches que te propone. Una empresa de Murcia con clientes en toda Europa.",
   },
   '/contacto': {
     title: 'Contacto · Cuéntanos qué coche buscas · GP SELECT',
-    description: 'Pregúntanos por un coche del catálogo o cuéntanos cuál quieres encontrar en Europa. GP SELECT trabaja desde Murcia con clientes de España y Europa.',
+    description: 'Pregúntanos por un coche del catálogo o cuéntanos cuál quieres encontrar en Europa. GP SELECT trabaja desde Murcia con clientes de toda Europa.',
   },
   [pagePaths.home.en]: {
     title: 'GP SELECT · Premium car sourcing and import across Europe',
@@ -118,6 +119,12 @@ export const adminMeta: PageMeta = {
   robots: 'noindex,nofollow',
 };
 
+// This describes the current og-default.jpg artwork until that image is replaced.
+const defaultImageAlt: Record<Locale, string> = {
+  es: 'GP SELECT · Murcia · Clientes en España y Europa',
+  en: 'GP SELECT · Murcia · Clients in Spain and Europe',
+};
+
 // A deployment URL is an origin, never a guessed production domain or a browser URL.
 export function parseSiteUrl(value?: string): string | undefined {
   if (!value?.trim()) return undefined;
@@ -153,7 +160,7 @@ export function getStaticPageMeta(path: string, siteUrl?: string): PageMeta {
       '@context': 'https://schema.org',
       '@graph': [{
         '@type': 'AutomotiveBusiness', name: 'GP SELECT',
-        description: meta.description,
+        description: entityCopy[locale],
         ...(siteUrl ? { '@id': `${siteUrl}/#organization`, url: `${siteUrl}/` } : {}),
         logo: assetUrl('/assets/seo/logo.png', siteUrl),
         areaServed: [
@@ -294,8 +301,7 @@ export function renderPageHead(meta: PageMeta, siteUrl?: string): string {
   const canonical = siteUrl && meta.path ? `${siteUrl}${meta.path}` : undefined;
   const image = assetUrl(meta.image || '/assets/seo/og-default.jpg', siteUrl);
   const english = meta.locale === 'en';
-  const imageAlt = meta.image ? meta.imageAlt || meta.title
-    : english ? 'GP SELECT · Murcia · Clients in Spain and Europe' : 'GP SELECT · Murcia · Clientes en España y Europa';
+  const imageAlt = meta.image ? meta.imageAlt || meta.title : defaultImageAlt[english ? 'en' : 'es'];
   const tags: string[] = [];
   const addMeta = (attribute: 'name' | 'property', key: string, value: string) => {
     tags.push(`<meta data-page-meta ${attribute}="${key}" content="${escapeHtml(value)}">`);

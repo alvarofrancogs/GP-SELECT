@@ -51,6 +51,29 @@ export function About() {
           ))}
         </ul>
       </section>
+      <section className="about-approach about-transparency" aria-labelledby="about-transparency-title">
+        <div>
+          <h2 id="about-transparency-title" className="type-section">{text.transparency.title}</h2>
+        </div>
+        <ul className="about-approach__rows">
+          {text.transparency.rows.map((row) => {
+            const [beforeLegal, afterLegal] = row.body.split(text.transparency.legalLabel);
+
+            return (
+              <li key={row.title}>
+                <h3 className="type-heading">{row.title}</h3>
+                <p className="type-body">
+                  {beforeLegal}
+                  {afterLegal !== undefined && <>
+                    <Link to={href('/aviso-legal')}>{text.transparency.legalLabel}</Link>
+                    {afterLegal}
+                  </>}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
       <section className="interior-closing about-closing" aria-labelledby="about-closing-title">
         <h2 id="about-closing-title" className="type-section">{text.closing}</h2>
         <div className="interior-closing__links">

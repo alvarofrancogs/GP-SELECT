@@ -16,7 +16,10 @@ public static class VehicleSeo
     public const string EmptyRoot = "<div id=\"root\"></div>";
 
     public const string DefaultImage = "/assets/seo/og-default.jpg";
-    private const string Location = "Murcia · Clientes en España y Europa";
+    private const string SpanishLocation = "Murcia · Clientes en toda Europa";
+    private const string EnglishLocation = "Murcia, Spain · Clients across Europe";
+    private const string SpanishDefaultImageAlt = "GP SELECT · Murcia · Clientes en España y Europa";
+    private const string EnglishDefaultImageAlt = "GP SELECT · Murcia · Clients in Spain and Europe";
 
     public static string Identity(VehiclePublicDto v) => $"{v.Make} {v.Model} ({v.Year})";
     public static string Path(VehiclePublicDto v, string locale = "es") => $"{(locale == "en" ? "/en/vehicles" : "/vehiculos")}/{Uri.EscapeDataString(v.Slug)}";
@@ -169,7 +172,7 @@ public static class VehicleSeo
         if (v.Status != VehicleStatus.Sold)
             // Same readable vehicle name the SPA puts in the contact form (frontend/src/pages/VehicleDetail.tsx).
             html.Append($"<p><a href=\"{contact}?vehiculo={Uri.EscapeDataString($"{v.Make} {v.Model}{(v.Variant is { Length: > 0 } ? $" {v.Variant}" : "")} ({v.Year})")}&amp;intent=vehicle\">{Text("Solicitar información", "Enquire about this car")}</a></p>");
-        html.Append($"</main><footer><p>{E(english ? "Murcia · Clients in Spain and Europe" : Location)}</p><nav><ul>");
+        html.Append($"</main><footer><p>{E(english ? EnglishLocation : SpanishLocation)}</p><nav><ul>");
         var navigation = english
             ? new[] { ("/en", "GP SELECT"), ("/en/vehicles", "Stock"), ("/en/import", "Import"), ("/en/about", "About"), ("/en/contact", "Contact") }
             : new[] { ("/", "GP SELECT"), ("/vehiculos", "Vehículos"), ("/importacion", "Importación"), ("/nosotros", "Nosotros"), ("/contacto", "Contacto") };
@@ -229,7 +232,7 @@ public static class VehicleSeo
     {
         var english = locale == "en";
         var shareImage = Absolute(image ?? DefaultImage, siteUrl);
-        var shareAlt = image is null ? $"GP SELECT · {(english ? "Murcia · Clients in Spain and Europe" : Location)}" : imageAlt ?? title;
+        var shareAlt = image is null ? (english ? EnglishDefaultImageAlt : SpanishDefaultImageAlt) : imageAlt ?? title;
         var tags = new List<string> { $"<title data-page-meta>{E(title)}</title>" };
         void Meta(string attribute, string key, string value) => tags.Add($"<meta data-page-meta {attribute}=\"{key}\" content=\"{E(value)}\">");
         Meta("name", "description", description);
