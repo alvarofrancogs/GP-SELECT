@@ -1,12 +1,29 @@
 import { expect, it } from 'vitest';
 import { renderLlmsText, renderReadableContent } from './readableContent';
 import { entityCopy } from '../src/i18n/entityCopy';
+import { es } from '../src/i18n/es';
+import { en } from '../src/i18n/en';
+import { escapeHtml } from '../src/lib/pageMeta';
 
 it('leaves one empty vehicle-list marker pair inside the catalogue main', () => {
   const html = renderReadableContent('/vehiculos');
   const markers = '<!--vehicle-list--><!--/vehicle-list-->';
   expect(html.split(markers)).toHaveLength(2);
-  expect(html).toMatch(/<main>[\s\S]*<\/p><!--vehicle-list--><!--\/vehicle-list--><section>[\s\S]*<\/main>/);
+  expect(html).toMatch(/<main>[\s\S]*<\/h1><!--vehicle-list--><!--\/vehicle-list--><section>[\s\S]*<\/main>/);
+});
+
+it.each([
+  ['/importacion', es.interiors.import],
+  ['/nosotros', es.interiors.about],
+  ['/vehiculos', es.vehicles],
+  ['/contacto', es.interiors.contact],
+  ['/en/import', en.interiors.import],
+  ['/en/about', en.interiors.about],
+  ['/en/vehicles', en.vehicles],
+  ['/en/contact', en.interiors.contact],
+])('includes the visible title and lede in the readable H1 on %s', (path, { title, lede }) => {
+  const html = renderReadableContent(path);
+  expect(html).toContain(`<h1>${escapeHtml(title)} <span class="static-content__lede">${escapeHtml(lede)}</span></h1>`);
 });
 
 it('renders the English pages from the English dictionaries, with English links', () => {

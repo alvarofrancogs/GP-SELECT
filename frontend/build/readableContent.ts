@@ -28,6 +28,8 @@ const link = (href: string, text: string) => `<a href="${escapeHtml(href)}">${es
 const list = (items: string[]) => `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
 const section = (title: string, body: string) => `<section>${heading(2, title)}${body}</section>`;
 const introduction = (title: string, lede: string) => heading(1, title) + paragraph(lede);
+const interiorIntroduction = (title: string, lede: string) =>
+  `<h1>${escapeHtml(title)} <span class="static-content__lede">${escapeHtml(lede)}</span></h1>`;
 const rows = (items: { title: string; body: string }[]) =>
   `<ul>${items.map((item) => `<li>${heading(3, item.title)}${paragraph(item.body)}</li>`).join('')}</ul>`;
 
@@ -50,7 +52,7 @@ function homeContent(t: Dictionary, locale: Locale): string {
 
 function aboutContent(t: Dictionary, locale: Locale): string {
   const text = t.interiors.about;
-  return introduction(text.title, text.lede)
+  return interiorIntroduction(text.title, text.lede)
     + section(text.why.title, paragraph(text.why.body))
     + section(text.audience.title, paragraph(text.audience.intro) + rows(text.audience.rows))
     + section(text.approach.title, paragraph(text.approach.body) + rows(text.approach.rows))
@@ -65,7 +67,7 @@ function aboutContent(t: Dictionary, locale: Locale): string {
 
 function importContent(t: Dictionary, locale: Locale): string {
   const text = t.interiors.import;
-  return introduction(text.title, text.lede)
+  return interiorIntroduction(text.title, text.lede)
     + section(text.define.title, paragraph(text.define.body) + list(text.define.items) + paragraph(text.define.detail))
     + section(text.search.title, paragraph(text.search.body))
     + section(text.analysis.title, paragraph(text.analysis.body))
@@ -80,7 +82,7 @@ function importContent(t: Dictionary, locale: Locale): string {
 
 function contactContent(t: Dictionary, locale: Locale): string {
   const text = t.interiors.contact;
-  return introduction(text.title, text.lede)
+  return interiorIntroduction(text.title, text.lede)
     + paragraph(text.pathsLabel)
     + `<ul><li>${link(localizeHref('/contacto?intent=vehicle', locale), text.vehiclePath)}${paragraph(text.vehicleIntro)}</li>`
     + `<li>${link(localizeHref('/contacto?intent=search', locale), text.searchPath)}${paragraph(text.searchIntro)}</li></ul>`
@@ -121,7 +123,7 @@ export function renderReadableContent(path: string): string {
     case 'import': content = importContent(t, locale); break;
     case 'contact': content = contactContent(t, locale); break;
     case 'vehicles':
-      content = introduction(t.vehicles.title, t.vehicles.lede)
+      content = interiorIntroduction(t.vehicles.title, t.vehicles.lede)
         + '<!--vehicle-list--><!--/vehicle-list-->'
         + section(t.vehicles.closing, link(localizeHref(qualificationUrl({ intent: 'import', source: 'vehicles' }), locale), t.vehicles.find));
       break;
@@ -148,6 +150,7 @@ export const readableHead = `<script>document.documentElement.classList.add('js'
       .static-content main { margin-block: 3rem; }
       .static-content section { margin-block: 2.5rem; }
       .static-content h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.15; }
+      .static-content__lede { display: block; max-width: 72ch; margin-block: 1rem; font-size: 1rem; font-weight: 400; line-height: 1.6; }
       .static-content h2 { font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.25; }
       .static-content h3 { font-size: 1.125rem; line-height: 1.4; }
       .static-content p, .static-content ul, .static-content ol { margin-block: 1rem; max-width: 72ch; }
