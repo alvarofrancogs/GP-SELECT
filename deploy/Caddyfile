@@ -104,12 +104,32 @@
 		}
 	}
 
-	# English vehicle pages: the plain SPA (noindex) until the API serves them with their own English text (B4).
-	# The English catalogue (/en/vehicles) is the build's static page for now.
-	@vehicle_en path_regexp (?i)^/en/vehicles/[^/]+/?$
+	handle /en/vehicles {
+		reverse_proxy api:8080 {
+			rewrite /seo/en/vehicles
+			@unavailable status 404 5xx
+			handle_response @unavailable {
+				rewrite * /en/vehicles/index.html
+				file_server {
+					status 200
+				}
+			}
+		}
+	}
+
+	@vehicle_en path_regexp vehicle_en (?i)^/en/vehicles/([^/]+)/?$
 	handle @vehicle_en {
-		rewrite * /en/spa.html
-		file_server
+		reverse_proxy api:8080 {
+			rewrite /seo/en/vehicles/{re.vehicle_en.1}
+			@unavailable status 5xx
+			handle_response @unavailable {
+				header Retry-After 300
+				rewrite * /en/spa.html
+				file_server {
+					status 503
+				}
+			}
+		}
 	}
 
 	# The live sitemap comes from the inventory; the build's static one covers an API failure.
@@ -147,6 +167,27 @@
 		handle @vehicle_down {
 			header Retry-After 300
 			rewrite * /spa.html
+			file_server {
+				status 503
+			}
+		}
+		@catalogue_en_down {
+			path /en/vehicles
+			expression {err.status_code} >= 500
+		}
+		handle @catalogue_en_down {
+			rewrite * /en/vehicles/index.html
+			file_server {
+				status 200
+			}
+		}
+		@vehicle_en_down {
+			path_regexp (?i)^/en/vehicles/[^/]+/?$
+			expression {err.status_code} >= 500
+		}
+		handle @vehicle_en_down {
+			header Retry-After 300
+			rewrite * /en/spa.html
 			file_server {
 				status 503
 			}
@@ -205,7 +246,7 @@
 # Internal only (not published): the API reads the page template for vehicle pages from here.
 http://:8080 {
 	root * /srv
-	@template path /spa.html /vehiculos/index.html
+	@template path /spa.html /vehiculos/index.html /en/spa.html /en/vehicles/index.html
 	handle @template {
 		file_server
 	}

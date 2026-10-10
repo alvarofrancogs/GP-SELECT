@@ -4,6 +4,8 @@ WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 COPY frontend/ ./
+# tsc -b also checks the tests, which share the SEO fixtures with the API (../tests/fixtures).
+COPY tests/fixtures/ /tests/fixtures/
 # The public origin (canonical, og:url, sitemap) and whether the contact form really sends.
 ARG VITE_SITE_URL
 ARG VITE_ENQUIRIES_ENABLED=false

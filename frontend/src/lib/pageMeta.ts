@@ -152,7 +152,7 @@ export function getStaticPageMeta(path: string, siteUrl?: string): PageMeta {
     jsonLd: {
       '@context': 'https://schema.org',
       '@graph': [{
-        '@type': 'AutoDealer', name: 'GP SELECT',
+        '@type': 'AutomotiveBusiness', name: 'GP SELECT',
         description: meta.description,
         ...(siteUrl ? { '@id': `${siteUrl}/#organization`, url: `${siteUrl}/` } : {}),
         logo: assetUrl('/assets/seo/logo.png', siteUrl),
@@ -193,7 +193,7 @@ function importServiceJsonLd(meta: PageMeta, siteUrl?: string): Record<string, u
     description: meta.description,
     ...(siteUrl ? { url: `${siteUrl}${meta.path}` } : {}),
     provider: {
-      '@type': 'AutoDealer', name: 'GP SELECT',
+      '@type': 'AutomotiveBusiness', name: 'GP SELECT',
       ...(siteUrl ? { '@id': `${siteUrl}/#organization`, url: `${siteUrl}/` } : {}),
       address: { '@type': 'PostalAddress', addressLocality: 'Murcia', addressRegion: 'Región de Murcia', addressCountry: 'ES' },
     },
@@ -201,11 +201,10 @@ function importServiceJsonLd(meta: PageMeta, siteUrl?: string): Record<string, u
   };
 }
 
-/** The English vehicle page stays out of the index until the vehicle has its own English text (B4). */
-function englishVehicleMeta(vehicle: VehicleDetail): PageMeta {
+/** English title and description of a vehicle page; the rest of its metadata is shared with Spanish. */
+function englishVehicleText(vehicle: VehicleDetail): Pick<PageMeta, 'title' | 'description'> {
   const name = [vehicle.make, vehicle.model, vehicle.variant].filter(Boolean).join(' ');
   const year = vehicle.firstRegistrationYear;
-  const identity = `${vehicle.make} ${vehicle.model}${year ? ` (${year})` : ''}`;
   const titleIdentity = `${name}${year ? ` (${year})` : ''}`;
   const number = (value: number) => value.toLocaleString('en-GB', { useGrouping: true });
   const km = vehicle.mileageKm != null ? `${number(vehicle.mileageKm)} km` : undefined;
@@ -216,14 +215,13 @@ function englishVehicleMeta(vehicle: VehicleDetail): PageMeta {
   const fullTitle = `${titleIdentity} · ${km} · GP SELECT`;
   return {
     title: km && fullTitle.length <= 65 ? fullTitle : `${titleIdentity} · GP SELECT`,
-    description: `${vehicle.availability === 'sold' ? 'Sold: ' : ''}${name}${year ? ` from ${year}` : ''}${factList ? ` with ${factList}` : ''}. Photos, specifications and direct enquiries with GP SELECT.`,
-    path: pagePath('vehicle', 'en', vehicle.slug), locale: 'en', robots: 'noindex,follow',
-    image: vehicle.images?.[0]?.src, imageAlt: identity,
+    description: `${vehicle.availability === 'sold' ? 'Sold: ' : ''}${name}${year ? ` from ${year}` : ''}${factList ? ` with ${factList}` : ''}.${vehicle.provenance ? ` Origin: ${translateValue(en.vehicles.values, vehicle.provenance)}.` : ''} Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.`,
   };
 }
 
 export function getVehiclePageMeta(vehicle: VehicleDetail, siteUrl?: string, locale: Locale = 'es'): PageMeta {
-  if (locale === 'en') return englishVehicleMeta(vehicle);
+  const english = locale === 'en';
+  const translate = (value: string | null) => english ? translateValue(en.vehicles.values, value) : value;
   const name = [vehicle.make, vehicle.model, vehicle.variant].filter(Boolean).join(' ');
   const year = vehicle.firstRegistrationYear;
   const identity = `${vehicle.make} ${vehicle.model}${year ? ` (${year})` : ''}`;
@@ -237,7 +235,7 @@ export function getVehiclePageMeta(vehicle: VehicleDetail, siteUrl?: string, loc
   const fullTitle = `${titleIdentity} · ${km} · GP SELECT`;
   const title = km && fullTitle.length <= 65 ? fullTitle : `${titleIdentity} · GP SELECT`;
   const description = `${vehicle.availability === 'sold' ? 'Vendido: ' : ''}${name}${year ? ` de ${year}` : ''}${factList ? ` con ${factList}` : ''}.${vehicle.provenance ? ` Procedencia: ${vehicle.provenance}.` : ''} Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.`;
-  const path = `/vehiculos/${encodeURIComponent(vehicle.slug)}`;
+  const path = pagePath('vehicle', locale, vehicle.slug);
   const image = vehicle.images?.[0]?.src;
   const publicPrice = ['available', 'coming-soon'].includes(vehicle.availability ?? '') && vehicle.priceEur !== null && vehicle.priceEur > 0;
   const driveWheelConfiguration = new Map([
@@ -246,8 +244,9 @@ export function getVehiclePageMeta(vehicle: VehicleDetail, siteUrl?: string, loc
     ['Delantera', 'https://schema.org/FrontWheelDriveConfiguration'],
   ]).get(vehicle.drivetrain ?? '');
   return {
-    title, description,
-    path, image, imageAlt: identity,
+    ...(english ? englishVehicleText(vehicle) : { title, description }),
+    path, locale, image, imageAlt: identity,
+    ...(siteUrl ? { alternates: { es: pagePath('vehicle', 'es', vehicle.slug), en: pagePath('vehicle', 'en', vehicle.slug) } } : {}),
     jsonLd: {
       '@context': 'https://schema.org', '@graph': [{ '@type': 'Car', name: identity,
         brand: { '@type': 'Brand', name: vehicle.make }, model: vehicle.model,
@@ -255,29 +254,28 @@ export function getVehiclePageMeta(vehicle: VehicleDetail, siteUrl?: string, loc
         ...(year ? { dateVehicleFirstRegistration: String(year) } : {}),
         ...(siteUrl ? { url: `${siteUrl}${path}` } : {}),
         ...(image ? { image: assetUrl(image, siteUrl) } : {}),
-        ...(vehicle.description ? { description: vehicle.description } : {}),
+        ...(!english && vehicle.description ? { description: vehicle.description } : {}),
         ...(vehicle.mileageKm !== null ? { mileageFromOdometer: {
           '@type': 'QuantitativeValue', value: vehicle.mileageKm, unitCode: 'KMT',
         } } : {}),
-        ...(vehicle.fuelType ? { fuelType: vehicle.fuelType } : {}),
-        ...(vehicle.transmission ? { vehicleTransmission: vehicle.transmission } : {}),
-        ...(vehicle.exteriorColour ? { color: vehicle.exteriorColour } : {}),
-        ...(vehicle.bodyType ? { bodyType: vehicle.bodyType } : {}),
+        ...(vehicle.fuelType ? { fuelType: translate(vehicle.fuelType) } : {}),
+        ...(vehicle.transmission ? { vehicleTransmission: translate(vehicle.transmission) } : {}),
+        ...(vehicle.exteriorColour ? { color: translate(vehicle.exteriorColour) } : {}),
+        ...(vehicle.bodyType ? { bodyType: translate(vehicle.bodyType) } : {}),
         ...(driveWheelConfiguration ? { driveWheelConfiguration } : {}),
         ...(vehicle.powerHp != null ? { vehicleEngine: {
           '@type': 'EngineSpecification',
-          enginePower: { '@type': 'QuantitativeValue', value: vehicle.powerHp, unitText: 'CV' },
+          enginePower: { '@type': 'QuantitativeValue', value: vehicle.powerHp, unitText: english ? 'hp' : 'CV' },
         } } : {}),
         ...(publicPrice ? { offers: {
           '@type': 'Offer', price: vehicle.priceEur, priceCurrency: 'EUR',
           availability: `https://schema.org/${vehicle.availability === 'available' ? 'InStock' : 'PreOrder'}`,
-          seller: { '@type': 'AutoDealer', name: 'GP SELECT', ...(siteUrl ? { '@id': `${siteUrl}/#organization` } : {}) },
           ...(siteUrl ? { url: `${siteUrl}${path}` } : {}),
         } } : {}),
       }, ...(siteUrl ? [{
         '@type': 'BreadcrumbList', itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${siteUrl}/` },
-          { '@type': 'ListItem', position: 2, name: 'Vehículos', item: `${siteUrl}/vehiculos` },
+          { '@type': 'ListItem', position: 1, name: english ? 'Home' : 'Inicio', item: `${siteUrl}${pagePath('home', locale)}` },
+          { '@type': 'ListItem', position: 2, name: english ? 'Vehicles' : 'Vehículos', item: `${siteUrl}${pagePath('vehicles', locale)}` },
           { '@type': 'ListItem', position: 3, name: identity, item: `${siteUrl}${path}` },
         ],
       }] : [])],

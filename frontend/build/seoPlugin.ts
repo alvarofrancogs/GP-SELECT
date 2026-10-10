@@ -113,8 +113,7 @@ export function seoPlugin(rawSiteUrl?: string): Plugin {
         // Vehicle pages: the API (SeoController) fills this shell's metadata and #root per vehicle. Served as is,
         // it is a neutral page that never claims to be the home. It always carries the readable-content styles.
         { file: 'spa.html', meta: { title: 'GP SELECT', description: staticPageMeta['/'].description }, content: '', readable: true },
-        // English vehicle pages: the plain SPA, kept out of the index until a vehicle has its own English text (B4).
-        { file: 'en/spa.html', meta: { title: 'GP SELECT', description: staticPageMeta['/en'].description, locale: 'en', robots: 'noindex,follow' }, content: '', readable: true },
+        { file: 'en/spa.html', meta: { title: 'GP SELECT', description: staticPageMeta['/en'].description, locale: 'en' }, content: '', readable: true },
       ];
       for (const { file, meta, content, readable } of pages as { file: string; meta: PageMeta; content: string; readable?: boolean }[]) {
         const target = resolve(outDir, file);

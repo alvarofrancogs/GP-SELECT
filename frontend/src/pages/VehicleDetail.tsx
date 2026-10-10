@@ -43,8 +43,7 @@ function VehicleDetailContent({ slug }: { slug: string }) {
     title: status === 'ready' ? (english ? 'Vehicle not found · GP SELECT' : 'Vehículo no encontrado · GP SELECT')
       : english ? 'Vehicle · GP SELECT' : 'Ficha de vehículo · GP SELECT',
     // A failed request is transient: only a confirmed missing vehicle is kept out of the index.
-    // English vehicle pages are never indexed yet (they have no English text of their own).
-    robots: status === 'ready' ? 'noindex' : english ? 'noindex,follow' : 'index,follow',
+    robots: status === 'ready' ? 'noindex' : 'index,follow',
     tabTitle: status === 'ready' ? `${text.notFound} · GP SELECT` : undefined,
   });
   const back = <Link className="editorial-link type-ui" to={href('/vehiculos')}><span aria-hidden="true">←</span>{text.back}</Link>;
@@ -97,10 +96,10 @@ export function VehicleDetailView({ vehicle, back, className = '' }: { vehicle: 
       </aside>
     </div>
     <div className="vehicle-detail__body">
-      {vehicle.description ? <section className="vehicle-detail__section" aria-labelledby="vehicle-description"><h2 id="vehicle-description" className="type-heading">{text.description}</h2><p className="type-body">{vehicle.description}</p></section> : null}
+      {vehicle.description ? <section className="vehicle-detail__section" aria-labelledby="vehicle-description"><h2 id="vehicle-description" className="type-heading">{text.description}</h2><p className="type-body" lang={locale === 'en' ? 'es' : undefined}>{vehicle.description}</p></section> : null}
       {specifications.some((row) => row.value) ? <section className="vehicle-detail__section" aria-labelledby="vehicle-specifications"><h2 id="vehicle-specifications" className="type-heading">{text.specifications}</h2><VehicleSpecs rows={specifications} /></section> : null}
-      {vehicle.equipment?.length ? <section className="vehicle-detail__section" aria-labelledby="vehicle-equipment"><h2 id="vehicle-equipment" className="type-heading">{text.equipment}</h2><ul className="vehicle-equipment type-body">{vehicle.equipment.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}</ul></section> : null}
-      {vehicle.history ? <section className="vehicle-detail__section" aria-labelledby="vehicle-history"><h2 id="vehicle-history" className="type-heading">{text.history}</h2><p className="type-body">{vehicle.history}</p></section> : null}
+      {vehicle.equipment?.length ? <section className="vehicle-detail__section" aria-labelledby="vehicle-equipment"><h2 id="vehicle-equipment" className="type-heading">{text.equipment}</h2><ul className="vehicle-equipment type-body" lang={locale === 'en' ? 'es' : undefined}>{vehicle.equipment.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}</ul></section> : null}
+      {vehicle.history ? <section className="vehicle-detail__section" aria-labelledby="vehicle-history"><h2 id="vehicle-history" className="type-heading">{text.history}</h2><p className="type-body" lang={locale === 'en' ? 'es' : undefined}>{vehicle.history}</p></section> : null}
       {vehicle.provenance ? <section className="vehicle-detail__section" aria-labelledby="vehicle-provenance"><h2 id="vehicle-provenance" className="type-heading">{text.provenance}</h2><p className="type-lede">{translate(vehicle.provenance)}</p></section> : null}
     </div>
     <section className="interior-band vehicle-import"><h2 className="type-section">{text.importTitle}</h2><div><p className="type-body">{text.importBody}</p><Link className="editorial-link type-ui" to={href('/importacion')}>{text.importLink}<span aria-hidden="true">→</span></Link></div></section>

@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import fixtures from '../../../tests/fixtures/vehicle-seo.json';
+import englishValues from '../../../tests/fixtures/vehicle-values-en.json';
+import { en } from '../i18n/en';
+import { translateValue } from './vehicleFormat';
 import { contactConfig } from '../config/contactChannels';
 import { fromPublicDetail } from '../services/vehicles';
 import type { VehiclePublicDto } from '../types/vehicle';
@@ -9,10 +12,11 @@ describe('shared vehicle SEO fixtures', () => {
   for (const fixture of fixtures) {
     it(fixture.name, () => {
       const siteUrl = fixture.siteUrl ?? undefined;
-      const meta = getVehiclePageMeta(fromPublicDetail(fixture.vehicle as VehiclePublicDto), siteUrl);
+      const meta = getVehiclePageMeta(fromPublicDetail(fixture.vehicle as VehiclePublicDto), siteUrl, 'locale' in fixture && fixture.locale === 'en' ? 'en' : 'es');
       expect({ title: meta.title, description: meta.description, jsonLd: meta.jsonLd }).toEqual(fixture.expected);
       expect(meta.imageAlt).toBe(`${fixture.vehicle.make} ${fixture.vehicle.model} (${fixture.vehicle.year})`);
       const head = renderPageHead(meta, siteUrl);
+      expect(head.split('\n    ').filter((tag) => !tag.startsWith('<script'))).toEqual(fixture.headTags);
       const json = head.match(/<script data-page-meta type="application\/ld\+json">(.*?)<\/script>/s)![1];
       expect(json).not.toContain('<');
       expect(JSON.parse(json)).toEqual(fixture.expected.jsonLd);
@@ -24,12 +28,12 @@ describe('static structured data', () => {
   const original = { ...contactConfig };
   afterEach(() => Object.assign(contactConfig, original));
 
-  it('connects the dealer, website and import provider with absolute IDs', () => {
+  it('connects the business, website and import provider with absolute IDs', () => {
     const siteUrl = 'https://gp-select.example';
     const graph = getStaticPageMeta('/', siteUrl).jsonLd!['@graph'] as Record<string, unknown>[];
-    expect(graph[0]).toMatchObject({ '@id': `${siteUrl}/#organization`, telephone: '+34661631555' });
+    expect(graph[0]).toMatchObject({ '@type': 'AutomotiveBusiness', '@id': `${siteUrl}/#organization`, telephone: '+34661631555' });
     expect(graph[1]).toMatchObject({ '@id': `${siteUrl}/#website`, publisher: { '@id': `${siteUrl}/#organization` } });
-    expect(getStaticPageMeta('/importacion', siteUrl).jsonLd!.provider).toMatchObject({ '@id': `${siteUrl}/#organization` });
+    expect(getStaticPageMeta('/importacion', siteUrl).jsonLd!.provider).toMatchObject({ '@type': 'AutomotiveBusiness', '@id': `${siteUrl}/#organization` });
   });
 
   it('omits IDs and publisher without siteUrl, but keeps the telephone', () => {
@@ -73,13 +77,35 @@ describe('language versions', () => {
     expect(enHead).toContain('property="og:locale:alternate" content="es_ES"');
   });
 
-  it('declares no language versions without a site URL, nor on pages that exist in one language only', () => {
-    expect(renderPageHead(getStaticPageMeta('/en'))).not.toContain('hreflang');
+  it.each(['es', 'en'] as const)('indexes %s vehicle pages with reciprocal language links', (locale) => {
     const vehicle = fromPublicDetail(fixtures[0].vehicle as VehiclePublicDto);
-    expect(renderPageHead(getVehiclePageMeta(vehicle, siteUrl), siteUrl)).not.toContain('hreflang');
-    const english = getVehiclePageMeta(vehicle, siteUrl, 'en');
-    expect(english).toMatchObject({ robots: 'noindex,follow', locale: 'en', path: `/en/vehicles/${vehicle.slug}` });
-    expect(english.jsonLd).toBeUndefined();
-    expect(renderPageHead(english, siteUrl)).not.toContain('hreflang');
+    const meta = getVehiclePageMeta(vehicle, siteUrl, locale);
+    const head = renderPageHead(meta, siteUrl);
+    const es = `/vehiculos/${vehicle.slug}`;
+    const en = `/en/vehicles/${vehicle.slug}`;
+    expect(meta.robots).toBeUndefined();
+    expect(links(head)).toEqual([`canonical ${siteUrl}${locale === 'en' ? en : es}`,
+      `alternate:es ${siteUrl}${es}`, `alternate:en ${siteUrl}${en}`, `alternate:x-default ${siteUrl}${en}`]);
+    expect(head).toContain('name="robots" content="index,follow"');
+    expect(head).toContain(`property="og:locale" content="${locale === 'en' ? 'en_GB' : 'es_ES'}"`);
+    expect(head).toContain(`property="og:locale:alternate" content="${locale === 'en' ? 'es_ES' : 'en_GB'}"`);
+    const withoutSite = renderPageHead(getVehiclePageMeta(vehicle, undefined, locale));
+    expect(withoutSite).not.toContain('hreflang');
+    expect(withoutSite).not.toContain('canonical');
+    expect(withoutSite).not.toContain('og:locale:alternate');
+    expect(renderPageHead(getStaticPageMeta('/en'))).not.toContain('hreflang');
+  });
+});
+
+describe('English vehicle values', () => {
+  it('matches the shared dictionary fixture', () => {
+    expect(en.vehicles.values).toEqual(englishValues);
+  });
+
+  it.each([
+    ['  AUTOmaTICO  ', 'Automatic'], ['ELE\u0301CTRICO', 'Electric'],
+    ['  Acabado especial  ', '  Acabado especial  '], ['', null], [null, null],
+  ])('translates %s with the shared normalization', (value, expected) => {
+    expect(translateValue(en.vehicles.values, value)).toBe(expected);
   });
 });

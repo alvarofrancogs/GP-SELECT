@@ -74,11 +74,6 @@
               "price": 119900,
               "priceCurrency": "EUR",
               "availability": "https://schema.org/InStock",
-              "seller": {
-                "@type": "AutoDealer",
-                "name": "GP SELECT",
-                "@id": "https://gp-select.example/#organization"
-              },
               "url": "https://gp-select.example/vehiculos/porsche-911"
             }
           },
@@ -107,7 +102,30 @@
           }
         ]
       }
-    }
+    },
+    "headTags": [
+      "<title data-page-meta>Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<link data-page-meta rel=\"canonical\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"es\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"en\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"x-default\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:locale:alternate\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:url\" content=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<meta data-page-meta property=\"og:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"Porsche 911 (2021)\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"Porsche 911 (2021)\">"
+    ]
   },
   {
     "name": "Reserved with public price and rear drive",
@@ -205,7 +223,30 @@
           }
         ]
       }
-    }
+    },
+    "headTags": [
+      "<title data-page-meta>Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<link data-page-meta rel=\"canonical\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"es\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"en\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"x-default\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:locale:alternate\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:url\" content=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<meta data-page-meta property=\"og:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"Porsche 911 (2021)\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"Porsche 911 (2021)\">"
+    ]
   },
   {
     "name": "Sold",
@@ -303,7 +344,30 @@
           }
         ]
       }
-    }
+    },
+    "headTags": [
+      "<title data-page-meta>Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Vendido: Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<link data-page-meta rel=\"canonical\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"es\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"en\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"x-default\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Vendido: Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:locale:alternate\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:url\" content=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<meta data-page-meta property=\"og:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"Porsche 911 (2021)\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Vendido: Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"Porsche 911 (2021)\">"
+    ]
   },
   {
     "name": "ComingSoon with front drive",
@@ -380,11 +444,6 @@
               "price": 119900,
               "priceCurrency": "EUR",
               "availability": "https://schema.org/PreOrder",
-              "seller": {
-                "@type": "AutoDealer",
-                "name": "GP SELECT",
-                "@id": "https://gp-select.example/#organization"
-              },
               "url": "https://gp-select.example/vehiculos/porsche-911"
             }
           },
@@ -413,7 +472,30 @@
           }
         ]
       }
-    }
+    },
+    "headTags": [
+      "<title data-page-meta>Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<link data-page-meta rel=\"canonical\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"es\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"en\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"x-default\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:locale:alternate\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:url\" content=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<meta data-page-meta property=\"og:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"Porsche 911 (2021)\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"Porsche 911 (2021)\">"
+    ]
   },
   {
     "name": "minimal",
@@ -485,7 +567,33 @@
           }
         ]
       }
-    }
+    },
+    "headTags": [
+      "<title data-page-meta>Porsche 911 (2021) · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Porsche 911 de 2021. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<link data-page-meta rel=\"canonical\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"es\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"en\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"x-default\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 (2021) · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Porsche 911 de 2021. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:locale:alternate\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:url\" content=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<meta data-page-meta property=\"og:image\" content=\"https://gp-select.example/assets/seo/og-default.jpg\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"GP SELECT · Murcia · Clientes en España y Europa\">",
+      "<meta data-page-meta property=\"og:image:type\" content=\"image/jpeg\">",
+      "<meta data-page-meta property=\"og:image:width\" content=\"1200\">",
+      "<meta data-page-meta property=\"og:image:height\" content=\"630\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 (2021) · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Porsche 911 de 2021. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"https://gp-select.example/assets/seo/og-default.jpg\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"GP SELECT · Murcia · Clientes en España y Europa\">"
+    ]
   },
   {
     "name": "long model omits mileage from title",
@@ -562,11 +670,6 @@
               "price": 119900,
               "priceCurrency": "EUR",
               "availability": "https://schema.org/InStock",
-              "seller": {
-                "@type": "AutoDealer",
-                "name": "GP SELECT",
-                "@id": "https://gp-select.example/#organization"
-              },
               "url": "https://gp-select.example/vehiculos/porsche-911"
             }
           },
@@ -595,7 +698,30 @@
           }
         ]
       }
-    }
+    },
+    "headTags": [
+      "<title data-page-meta>Porsche 911 Carrera Gran Turismo Edición Especial (2021) · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Porsche 911 Carrera Gran Turismo Edición Especial de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<link data-page-meta rel=\"canonical\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"es\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"en\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"x-default\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 Carrera Gran Turismo Edición Especial (2021) · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Porsche 911 Carrera Gran Turismo Edición Especial de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:locale:alternate\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:url\" content=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<meta data-page-meta property=\"og:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"Porsche 911 Carrera Gran Turismo Edición Especial (2021)\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 Carrera Gran Turismo Edición Especial (2021) · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Porsche 911 Carrera Gran Turismo Edición Especial de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"Porsche 911 Carrera Gran Turismo Edición Especial (2021)\">"
+    ]
   },
   {
     "name": "no site URL",
@@ -670,16 +796,29 @@
               "@type": "Offer",
               "price": 119900,
               "priceCurrency": "EUR",
-              "availability": "https://schema.org/InStock",
-              "seller": {
-                "@type": "AutoDealer",
-                "name": "GP SELECT"
-              }
+              "availability": "https://schema.org/InStock"
             }
           }
         ]
       }
-    }
+    },
+    "headTags": [
+      "<title data-page-meta>Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:image\" content=\"/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"Porsche 911 (2021)\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18.500 km · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Porsche 911 Carrera S PDK de 2021 con 18.500 km, 450 CV y cambio automático. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"Porsche 911 (2021)\">"
+    ]
   },
   {
     "name": "unknown drivetrain and two facts",
@@ -747,11 +886,6 @@
               "price": 119900,
               "priceCurrency": "EUR",
               "availability": "https://schema.org/InStock",
-              "seller": {
-                "@type": "AutoDealer",
-                "name": "GP SELECT",
-                "@id": "https://gp-select.example/#organization"
-              },
               "url": "https://gp-select.example/vehiculos/porsche-911"
             }
           },
@@ -780,7 +914,30 @@
           }
         ]
       }
-    }
+    },
+    "headTags": [
+      "<title data-page-meta>Porsche 911 Carrera S PDK (2021) · 4.500 km · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Porsche 911 Carrera S PDK de 2021 con 4.500 km y cambio manual. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<link data-page-meta rel=\"canonical\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"es\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"en\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"x-default\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 Carrera S PDK (2021) · 4.500 km · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Porsche 911 Carrera S PDK de 2021 con 4.500 km y cambio manual. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:locale:alternate\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:url\" content=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<meta data-page-meta property=\"og:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"Porsche 911 (2021)\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 Carrera S PDK (2021) · 4.500 km · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Porsche 911 Carrera S PDK de 2021 con 4.500 km y cambio manual. Procedencia: Alemania. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"Porsche 911 (2021)\">"
+    ]
   },
   {
     "name": "zero mileage and one fact",
@@ -857,7 +1014,33 @@
           }
         ]
       }
-    }
+    },
+    "headTags": [
+      "<title data-page-meta>Porsche 911 (2021) · 0 km · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Porsche 911 de 2021 con 0 km. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<link data-page-meta rel=\"canonical\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"es\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"en\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"x-default\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 (2021) · 0 km · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Porsche 911 de 2021 con 0 km. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:locale:alternate\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:url\" content=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<meta data-page-meta property=\"og:image\" content=\"https://gp-select.example/assets/seo/og-default.jpg\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"GP SELECT · Murcia · Clientes en España y Europa\">",
+      "<meta data-page-meta property=\"og:image:type\" content=\"image/jpeg\">",
+      "<meta data-page-meta property=\"og:image:width\" content=\"1200\">",
+      "<meta data-page-meta property=\"og:image:height\" content=\"630\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 (2021) · 0 km · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Porsche 911 de 2021 con 0 km. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"https://gp-select.example/assets/seo/og-default.jpg\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"GP SELECT · Murcia · Clientes en España y Europa\">"
+    ]
   },
   {
     "name": "empty optional strings",
@@ -929,6 +1112,762 @@
           }
         ]
       }
-    }
+    },
+    "headTags": [
+      "<title data-page-meta>Porsche 911 (2021) · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Porsche 911 de 2021. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<link data-page-meta rel=\"canonical\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"es\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"en\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"x-default\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 (2021) · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Porsche 911 de 2021. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:locale:alternate\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:url\" content=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<meta data-page-meta property=\"og:image\" content=\"https://gp-select.example/assets/seo/og-default.jpg\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"GP SELECT · Murcia · Clientes en España y Europa\">",
+      "<meta data-page-meta property=\"og:image:type\" content=\"image/jpeg\">",
+      "<meta data-page-meta property=\"og:image:width\" content=\"1200\">",
+      "<meta data-page-meta property=\"og:image:height\" content=\"630\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 (2021) · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Porsche 911 de 2021. Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"https://gp-select.example/assets/seo/og-default.jpg\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"GP SELECT · Murcia · Clientes en España y Europa\">"
+    ]
+  },
+  {
+    "name": "English Available",
+    "siteUrl": "https://gp-select.example",
+    "vehicle": {
+      "slug": "porsche-911",
+      "make": "Porsche",
+      "model": "911",
+      "variant": "Carrera S PDK",
+      "year": 2021,
+      "month": 6,
+      "priceEur": 119900,
+      "mileageKm": 18500,
+      "powerHp": 450,
+      "fuelType": "Gasolina",
+      "transmission": "Automático",
+      "bodyType": "Coupé",
+      "drivetrain": "Integral",
+      "exteriorColour": "Negro",
+      "interior": "Cuero negro",
+      "description": "Unidad cuidada </script><script>alert(1)</script>",
+      "history": null,
+      "provenance": "Alemania",
+      "equipment": [
+        "Asientos deportivos"
+      ],
+      "customSpecifications": [],
+      "status": "Available",
+      "images": [
+        "/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail"
+      ],
+      "cardImages": [
+        "/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/card"
+      ]
+    },
+    "expected": {
+      "title": "Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT",
+      "description": "Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.",
+      "jsonLd": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Car",
+            "name": "Porsche 911 (2021)",
+            "brand": {
+              "@type": "Brand",
+              "name": "Porsche"
+            },
+            "model": "911",
+            "dateVehicleFirstRegistration": "2021",
+            "url": "https://gp-select.example/en/vehicles/porsche-911",
+            "image": "https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail",
+            "fuelType": "Petrol",
+            "vehicleTransmission": "Automatic",
+            "color": "Black",
+            "bodyType": "Coupé",
+            "mileageFromOdometer": {
+              "@type": "QuantitativeValue",
+              "value": 18500,
+              "unitCode": "KMT"
+            },
+            "driveWheelConfiguration": "https://schema.org/AllWheelDriveConfiguration",
+            "vehicleEngine": {
+              "@type": "EngineSpecification",
+              "enginePower": {
+                "@type": "QuantitativeValue",
+                "value": 450,
+                "unitText": "hp"
+              }
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": 119900,
+              "priceCurrency": "EUR",
+              "availability": "https://schema.org/InStock",
+              "url": "https://gp-select.example/en/vehicles/porsche-911"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://gp-select.example/en"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Vehicles",
+                "item": "https://gp-select.example/en/vehicles"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Porsche 911 (2021)",
+                "item": "https://gp-select.example/en/vehicles/porsche-911"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "locale": "en",
+    "headTags": [
+      "<title data-page-meta>Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<link data-page-meta rel=\"canonical\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"es\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"en\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"x-default\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:locale:alternate\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:url\" content=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"Porsche 911 (2021)\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"Porsche 911 (2021)\">"
+    ]
+  },
+  {
+    "name": "English Sold",
+    "siteUrl": "https://gp-select.example",
+    "vehicle": {
+      "slug": "porsche-911",
+      "make": "Porsche",
+      "model": "911",
+      "variant": "Carrera S PDK",
+      "year": 2021,
+      "month": 6,
+      "priceEur": 119900,
+      "mileageKm": 18500,
+      "powerHp": 450,
+      "fuelType": "Gasolina",
+      "transmission": "Automático",
+      "bodyType": "Coupé",
+      "drivetrain": "Integral",
+      "exteriorColour": "Negro",
+      "interior": "Cuero negro",
+      "description": "Unidad cuidada </script><script>alert(1)</script>",
+      "history": null,
+      "provenance": "Alemania",
+      "equipment": [
+        "Asientos deportivos"
+      ],
+      "customSpecifications": [],
+      "status": "Sold",
+      "images": [
+        "/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail"
+      ],
+      "cardImages": [
+        "/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/card"
+      ]
+    },
+    "expected": {
+      "title": "Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT",
+      "description": "Sold: Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.",
+      "jsonLd": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Car",
+            "name": "Porsche 911 (2021)",
+            "brand": {
+              "@type": "Brand",
+              "name": "Porsche"
+            },
+            "model": "911",
+            "dateVehicleFirstRegistration": "2021",
+            "url": "https://gp-select.example/en/vehicles/porsche-911",
+            "image": "https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail",
+            "fuelType": "Petrol",
+            "vehicleTransmission": "Automatic",
+            "color": "Black",
+            "bodyType": "Coupé",
+            "mileageFromOdometer": {
+              "@type": "QuantitativeValue",
+              "value": 18500,
+              "unitCode": "KMT"
+            },
+            "driveWheelConfiguration": "https://schema.org/AllWheelDriveConfiguration",
+            "vehicleEngine": {
+              "@type": "EngineSpecification",
+              "enginePower": {
+                "@type": "QuantitativeValue",
+                "value": 450,
+                "unitText": "hp"
+              }
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://gp-select.example/en"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Vehicles",
+                "item": "https://gp-select.example/en/vehicles"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Porsche 911 (2021)",
+                "item": "https://gp-select.example/en/vehicles/porsche-911"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "locale": "en",
+    "headTags": [
+      "<title data-page-meta>Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Sold: Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<link data-page-meta rel=\"canonical\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"es\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"en\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"x-default\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Sold: Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:locale:alternate\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:url\" content=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"Porsche 911 (2021)\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Sold: Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"Porsche 911 (2021)\">"
+    ]
+  },
+  {
+    "name": "English ComingSoon",
+    "siteUrl": "https://gp-select.example",
+    "vehicle": {
+      "slug": "porsche-911",
+      "make": "Porsche",
+      "model": "911",
+      "variant": "Carrera S PDK",
+      "year": 2021,
+      "month": 6,
+      "priceEur": 119900,
+      "mileageKm": 18500,
+      "powerHp": 450,
+      "fuelType": "Gasolina",
+      "transmission": "Automático",
+      "bodyType": "Coupé",
+      "drivetrain": "Integral",
+      "exteriorColour": "Negro",
+      "interior": "Cuero negro",
+      "description": "Unidad cuidada </script><script>alert(1)</script>",
+      "history": null,
+      "provenance": "Alemania",
+      "equipment": [
+        "Asientos deportivos"
+      ],
+      "customSpecifications": [],
+      "status": "ComingSoon",
+      "images": [
+        "/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail"
+      ],
+      "cardImages": [
+        "/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/card"
+      ]
+    },
+    "expected": {
+      "title": "Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT",
+      "description": "Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.",
+      "jsonLd": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Car",
+            "name": "Porsche 911 (2021)",
+            "brand": {
+              "@type": "Brand",
+              "name": "Porsche"
+            },
+            "model": "911",
+            "dateVehicleFirstRegistration": "2021",
+            "url": "https://gp-select.example/en/vehicles/porsche-911",
+            "image": "https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail",
+            "fuelType": "Petrol",
+            "vehicleTransmission": "Automatic",
+            "color": "Black",
+            "bodyType": "Coupé",
+            "mileageFromOdometer": {
+              "@type": "QuantitativeValue",
+              "value": 18500,
+              "unitCode": "KMT"
+            },
+            "driveWheelConfiguration": "https://schema.org/AllWheelDriveConfiguration",
+            "vehicleEngine": {
+              "@type": "EngineSpecification",
+              "enginePower": {
+                "@type": "QuantitativeValue",
+                "value": 450,
+                "unitText": "hp"
+              }
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": 119900,
+              "priceCurrency": "EUR",
+              "availability": "https://schema.org/PreOrder",
+              "url": "https://gp-select.example/en/vehicles/porsche-911"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://gp-select.example/en"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Vehicles",
+                "item": "https://gp-select.example/en/vehicles"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Porsche 911 (2021)",
+                "item": "https://gp-select.example/en/vehicles/porsche-911"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "locale": "en",
+    "headTags": [
+      "<title data-page-meta>Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<link data-page-meta rel=\"canonical\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"es\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"en\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"x-default\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:locale:alternate\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:url\" content=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"Porsche 911 (2021)\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"Porsche 911 (2021)\">"
+    ]
+  },
+  {
+    "name": "English no site URL",
+    "siteUrl": null,
+    "vehicle": {
+      "slug": "porsche-911",
+      "make": "Porsche",
+      "model": "911",
+      "variant": "Carrera S PDK",
+      "year": 2021,
+      "month": 6,
+      "priceEur": 119900,
+      "mileageKm": 18500,
+      "powerHp": 450,
+      "fuelType": "Gasolina",
+      "transmission": "Automático",
+      "bodyType": "Coupé",
+      "drivetrain": "Integral",
+      "exteriorColour": "Negro",
+      "interior": "Cuero negro",
+      "description": "Unidad cuidada </script><script>alert(1)</script>",
+      "history": null,
+      "provenance": "Alemania",
+      "equipment": [
+        "Asientos deportivos"
+      ],
+      "customSpecifications": [],
+      "status": "Available",
+      "images": [
+        "/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail"
+      ],
+      "cardImages": [
+        "/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/card"
+      ]
+    },
+    "expected": {
+      "title": "Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT",
+      "description": "Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.",
+      "jsonLd": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Car",
+            "name": "Porsche 911 (2021)",
+            "brand": {
+              "@type": "Brand",
+              "name": "Porsche"
+            },
+            "model": "911",
+            "dateVehicleFirstRegistration": "2021",
+            "image": "/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail",
+            "fuelType": "Petrol",
+            "vehicleTransmission": "Automatic",
+            "color": "Black",
+            "bodyType": "Coupé",
+            "mileageFromOdometer": {
+              "@type": "QuantitativeValue",
+              "value": 18500,
+              "unitCode": "KMT"
+            },
+            "driveWheelConfiguration": "https://schema.org/AllWheelDriveConfiguration",
+            "vehicleEngine": {
+              "@type": "EngineSpecification",
+              "enginePower": {
+                "@type": "QuantitativeValue",
+                "value": 450,
+                "unitText": "hp"
+              }
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": 119900,
+              "priceCurrency": "EUR",
+              "availability": "https://schema.org/InStock"
+            }
+          }
+        ]
+      }
+    },
+    "locale": "en",
+    "headTags": [
+      "<title data-page-meta>Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:image\" content=\"/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"Porsche 911 (2021)\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"Porsche 911 (2021)\">"
+    ]
+  },
+  {
+    "name": "English untranslated values",
+    "siteUrl": "https://gp-select.example",
+    "vehicle": {
+      "slug": "porsche-911",
+      "make": "Porsche",
+      "model": "911",
+      "variant": "Carrera S PDK",
+      "year": 2021,
+      "month": 6,
+      "priceEur": 119900,
+      "mileageKm": 18500,
+      "powerHp": 450,
+      "fuelType": "Combustible especial",
+      "transmission": "Caja especial",
+      "bodyType": "Carrocería especial",
+      "drivetrain": "Integral",
+      "exteriorColour": "Verde especial",
+      "interior": "Cuero negro",
+      "description": "Unidad cuidada </script><script>alert(1)</script>",
+      "history": null,
+      "provenance": null,
+      "equipment": [
+        "Asientos deportivos"
+      ],
+      "customSpecifications": [],
+      "status": "Available",
+      "images": [
+        "/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail"
+      ],
+      "cardImages": [
+        "/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/card"
+      ]
+    },
+    "expected": {
+      "title": "Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT",
+      "description": "Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and caja especial gearbox. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.",
+      "jsonLd": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Car",
+            "name": "Porsche 911 (2021)",
+            "brand": {
+              "@type": "Brand",
+              "name": "Porsche"
+            },
+            "model": "911",
+            "dateVehicleFirstRegistration": "2021",
+            "url": "https://gp-select.example/en/vehicles/porsche-911",
+            "image": "https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail",
+            "fuelType": "Combustible especial",
+            "vehicleTransmission": "Caja especial",
+            "color": "Verde especial",
+            "bodyType": "Carrocería especial",
+            "mileageFromOdometer": {
+              "@type": "QuantitativeValue",
+              "value": 18500,
+              "unitCode": "KMT"
+            },
+            "driveWheelConfiguration": "https://schema.org/AllWheelDriveConfiguration",
+            "vehicleEngine": {
+              "@type": "EngineSpecification",
+              "enginePower": {
+                "@type": "QuantitativeValue",
+                "value": 450,
+                "unitText": "hp"
+              }
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": 119900,
+              "priceCurrency": "EUR",
+              "availability": "https://schema.org/InStock",
+              "url": "https://gp-select.example/en/vehicles/porsche-911"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://gp-select.example/en"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Vehicles",
+                "item": "https://gp-select.example/en/vehicles"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Porsche 911 (2021)",
+                "item": "https://gp-select.example/en/vehicles/porsche-911"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "locale": "en",
+    "headTags": [
+      "<title data-page-meta>Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and caja especial gearbox. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<link data-page-meta rel=\"canonical\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"es\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"en\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"x-default\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and caja especial gearbox. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:locale:alternate\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:url\" content=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"Porsche 911 (2021)\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and caja especial gearbox. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"Porsche 911 (2021)\">"
+    ]
+  },
+  {
+    "name": "English normalized values",
+    "siteUrl": "https://gp-select.example",
+    "vehicle": {
+      "slug": "porsche-911",
+      "make": "Porsche",
+      "model": "911",
+      "variant": "Carrera S PDK",
+      "year": 2021,
+      "month": 6,
+      "priceEur": 119900,
+      "mileageKm": 18500,
+      "powerHp": 450,
+      "fuelType": "  GASOLINA ",
+      "transmission": " AUTOMATICO ",
+      "bodyType": "familiar",
+      "drivetrain": "Integral",
+      "exteriorColour": " negro ",
+      "interior": "Cuero negro",
+      "description": "Unidad cuidada </script><script>alert(1)</script>",
+      "history": null,
+      "provenance": " ALEMANIA ",
+      "equipment": [
+        "Asientos deportivos"
+      ],
+      "customSpecifications": [],
+      "status": "Available",
+      "images": [
+        "/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail"
+      ],
+      "cardImages": [
+        "/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/card"
+      ]
+    },
+    "expected": {
+      "title": "Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT",
+      "description": "Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.",
+      "jsonLd": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Car",
+            "name": "Porsche 911 (2021)",
+            "brand": {
+              "@type": "Brand",
+              "name": "Porsche"
+            },
+            "model": "911",
+            "dateVehicleFirstRegistration": "2021",
+            "url": "https://gp-select.example/en/vehicles/porsche-911",
+            "image": "https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail",
+            "fuelType": "Petrol",
+            "vehicleTransmission": "Automatic",
+            "color": "Black",
+            "bodyType": "Estate",
+            "mileageFromOdometer": {
+              "@type": "QuantitativeValue",
+              "value": 18500,
+              "unitCode": "KMT"
+            },
+            "driveWheelConfiguration": "https://schema.org/AllWheelDriveConfiguration",
+            "vehicleEngine": {
+              "@type": "EngineSpecification",
+              "enginePower": {
+                "@type": "QuantitativeValue",
+                "value": 450,
+                "unitText": "hp"
+              }
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": 119900,
+              "priceCurrency": "EUR",
+              "availability": "https://schema.org/InStock",
+              "url": "https://gp-select.example/en/vehicles/porsche-911"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://gp-select.example/en"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Vehicles",
+                "item": "https://gp-select.example/en/vehicles"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Porsche 911 (2021)",
+                "item": "https://gp-select.example/en/vehicles/porsche-911"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "locale": "en",
+    "headTags": [
+      "<title data-page-meta>Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT</title>",
+      "<meta data-page-meta name=\"description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta name=\"robots\" content=\"index,follow\">",
+      "<link data-page-meta rel=\"canonical\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"es\" href=\"https://gp-select.example/vehiculos/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"en\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<link data-page-meta rel=\"alternate\" hreflang=\"x-default\" href=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:type\" content=\"website\">",
+      "<meta data-page-meta property=\"og:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT\">",
+      "<meta data-page-meta property=\"og:description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta property=\"og:locale\" content=\"en_GB\">",
+      "<meta data-page-meta property=\"og:locale:alternate\" content=\"es_ES\">",
+      "<meta data-page-meta property=\"og:site_name\" content=\"GP SELECT\">",
+      "<meta data-page-meta property=\"og:url\" content=\"https://gp-select.example/en/vehicles/porsche-911\">",
+      "<meta data-page-meta property=\"og:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta property=\"og:image:alt\" content=\"Porsche 911 (2021)\">",
+      "<meta data-page-meta name=\"twitter:card\" content=\"summary_large_image\">",
+      "<meta data-page-meta name=\"twitter:title\" content=\"Porsche 911 Carrera S PDK (2021) · 18,500 km · GP SELECT\">",
+      "<meta data-page-meta name=\"twitter:description\" content=\"Porsche 911 Carrera S PDK from 2021 with 18,500 km, 450 hp and automatic gearbox. Origin: Germany. Photos, specifications and direct enquiries with GP SELECT from Murcia, Spain.\">",
+      "<meta data-page-meta name=\"twitter:image\" content=\"https://gp-select.example/api/public/vehicles/porsche-911/images/11111111-1111-1111-1111-111111111111/detail\">",
+      "<meta data-page-meta name=\"twitter:image:alt\" content=\"Porsche 911 (2021)\">"
+    ]
   }
 ]
