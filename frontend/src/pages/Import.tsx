@@ -7,7 +7,7 @@ import { qualificationUrl } from '../lib/qualification';
 import '../styles/interiors.css';
 
 export function Import() {
-  const { copy } = useLanguage();
+  const { copy, href } = useLanguage();
   const text = copy.interiors.import;
 
   return (
@@ -49,8 +49,8 @@ export function Import() {
         <h2 id="import-closing-title" className="type-section">{text.closing}</h2>
         <p className="type-body">{text.closingBody}</p>
         <div className="interior-closing__links">
-          <Link className="editorial-link type-lede" to={qualificationUrl({ intent: 'search', source: 'importacion' })}>{text.cta}<span aria-hidden="true">→</span></Link>
-          <Link className="editorial-link type-ui" to="/contacto?intent=vehicle">{text.secondary}<span aria-hidden="true">→</span></Link>
+          <Link className="editorial-link type-lede" to={href(qualificationUrl({ intent: 'search', source: 'importacion' }))}>{text.cta}<span aria-hidden="true">→</span></Link>
+          <Link className="editorial-link type-ui" to={href('/contacto?intent=vehicle')}>{text.secondary}<span aria-hidden="true">→</span></Link>
         </div>
       </section>
     </article>

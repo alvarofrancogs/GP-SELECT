@@ -5,6 +5,7 @@ import { useLanguage } from '../i18n/useLanguage';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { scrollToTop } from '../lib/scrollToTop';
 import { footerCopy } from '../i18n/footerCopy';
+import { matchPage, pageKey } from '../i18n/routes';
 
 // Matches the curtain's closing transition in global.css: the page stays locked until it has lifted.
 const MENU_CLOSE_MS = 420;
@@ -32,7 +33,7 @@ function surfaceAt(y: number): 'light' | 'dark' | null {
 }
 
 export function Header() {
-  const { copy, locale } = useLanguage();
+  const { copy, locale, href } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   // Stays true while the curtain lifts, so the header keeps its menu colours until it is gone.
   const [menuShown, setMenuShown] = useState(false);
@@ -40,11 +41,13 @@ export function Header() {
   const headerRef = useRef<HTMLElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
+  // The page whatever its language: switching language is not a new page for the header.
+  const page = pageKey(pathname);
   const links = [
-    { to: '/nosotros', label: copy.nav.about },
-    { to: '/vehiculos', label: copy.nav.vehicles },
-    { to: '/importacion', label: copy.nav.import },
-    { to: '/contacto', label: copy.nav.contact },
+    { to: href('/nosotros'), label: copy.nav.about },
+    { to: href('/vehiculos'), label: copy.nav.vehicles },
+    { to: href('/importacion'), label: copy.nav.import },
+    { to: href('/contacto'), label: copy.nav.contact },
   ];
 
   useEffect(() => {
@@ -89,7 +92,7 @@ export function Header() {
       delete header.dataset.tone;
       delete header.dataset.toneScene;
     };
-  }, [pathname]);
+  }, [page]);
 
   // Quick return: reading down the page the header slides away, so text never runs under the logo and
   // links; any scroll up brings it back over glass. Over the Home's scenes and at the top it stays.
@@ -142,7 +145,7 @@ export function Header() {
         delete element.dataset.glass;
       });
     };
-  }, [pathname]);
+  }, [page]);
 
   useEffect(() => {
     if (menuOpen) {
@@ -194,10 +197,10 @@ export function Header() {
           <nav className="header-nav" aria-label={copy.nav.label}>
             {links.map((link) => <NavLink key={link.to} className="nav-link" to={link.to}>{link.label}</NavLink>)}
           </nav>
-          <Link to="/" className="header-brand" aria-label={`${copy.brand} · ${copy.nav.home}`} onClick={(event) => {
+          <Link to={href('/')} className="header-brand" aria-label={`${copy.brand} · ${copy.nav.home}`} onClick={(event) => {
             setMenuOpen(false);
             // Already on the Home: rewind to the top instead of reloading the same route.
-            if (pathname === '/') { event.preventDefault(); scrollToTop(); }
+            if (matchPage(pathname)?.page === 'home') { event.preventDefault(); scrollToTop(); }
           }}>
             {/* The logo's own lettering, painted in the header's colour so it keeps the blend over every scene. */}
             <span className="brand-logo" aria-hidden="true" />

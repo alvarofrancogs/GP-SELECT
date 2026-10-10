@@ -13,7 +13,7 @@ import '../styles/interiors.css';
 import '../styles/vehicles.css';
 
 export function Vehicles() {
-  const { copy } = useLanguage();
+  const { copy, href } = useLanguage();
   const text = copy.vehicles;
   const [params, setParams] = useSearchParams();
   const [vehicles, setVehicles] = useState<VehicleSummary[]>([]);
@@ -31,7 +31,7 @@ export function Vehicles() {
     if (clean.toString() !== params.toString()) setParams(clean, { replace: true, preventScrollReset: true });
   }, [clean, params, setParams]);
   const shown = useMemo(() => sortVehicles(filterVehicles(vehicles, clean), clean.get('sort')), [vehicles, clean]);
-  const searchUrl = qualificationUrl({ intent: 'import', source: 'vehicles' });
+  const searchUrl = href(qualificationUrl({ intent: 'import', source: 'vehicles' }));
   function clear() {
     const next = new URLSearchParams(clean);
     vehicleFilterKeys.forEach((key) => next.delete(key));

@@ -43,6 +43,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Security:TrustedProxies", TrustedProxy);
         builder.UseSetting("Enquiries:Enabled", "true");
         builder.UseSetting("Seo:SiteUrl", SiteUrl);
+        builder.UseSetting("Seo:TemplateUrl", "http://frontend:8080/spa.html");
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<DbContextOptions<GpSelectDbContext>>();
@@ -65,7 +66,13 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         public const string Shell = "<!doctype html><html lang=\"es\"><head><meta charset=\"UTF-8\" />\n    <!--page-meta-->\n    "
             + "<title data-page-meta>GP SELECT</title>\n    <!--/page-meta-->\n  </head><body><div id=\"root\"></div></body></html>";
         public string? Html { get; set; } = Shell;
+        public const string CatalogueShell = "<!doctype html><html lang=\"es\"><head><title>Catálogo estático</title></head>"
+            + "<body><main><h1>Vehículos</h1><p>Introducción</p><!--vehicle-list--><!--/vehicle-list-->"
+            + "<section>Cierre</section></main></body></html>";
+        public string? CatalogueHtml { get; set; } = CatalogueShell;
         public Task<string?> GetAsync(CancellationToken ct) => Task.FromResult(Html);
+        public Task<string?> GetAsync(string relativePath, CancellationToken ct) =>
+            Task.FromResult(relativePath == "vehiculos/index.html" ? CatalogueHtml : null);
     }
 
     /// <summary>TestServer has no socket: a request can choose its peer address with X-Test-Peer.

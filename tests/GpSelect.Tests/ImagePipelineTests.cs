@@ -121,6 +121,56 @@ public class ImagePipelineTests
         Assert.Equal("File signature does not match an allowed image format", error.Message);
     }
 
+    // TIFF and BigTIFF headers (little and big endian): GHSA-wmxv-xphr-5c9g is in the BigTIFF decoder.
+    public static TheoryData<byte[]> TiffHeaders => new()
+    {
+        new byte[] { 0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 0, 0, 0, 0 },
+        new byte[] { 0x4D, 0x4D, 0x00, 0x2A, 0x00, 0x00, 0x00, 0x08, 0, 0, 0, 0 },
+        new byte[] { 0x49, 0x49, 0x2B, 0x00, 0x08, 0x00, 0x00, 0x00, 0x10, 0, 0, 0, 0, 0, 0, 0 },
+        new byte[] { 0x4D, 0x4D, 0x00, 0x2B, 0x00, 0x08, 0x00, 0x00, 0, 0, 0, 0, 0, 0, 0, 0x10 },
+    };
+
+    [Theory]
+    [MemberData(nameof(TiffHeaders))]
+    public async Task Decode_rejects_tiff_and_bigtiff_under_any_claimed_type(byte[] header)
+    {
+        foreach (var claimed in new[] { "image/jpeg", "image/png", "image/webp", "image/tiff" })
+        {
+            using var input = new MemoryStream(header);
+            var error = await Assert.ThrowsAsync<InvalidDataException>(() => ImagePipeline.DecodeAsync(input, claimed, CancellationToken.None));
+            Assert.Equal("File signature does not match an allowed image format", error.Message);
+        }
+    }
+
+    [Fact]
+    public void Decoders_know_only_jpeg_png_and_webp()
+    {
+        Assert.Equal(["JPEG", "PNG", "WEBP"], ImagePipeline.Decoders.ImageFormats.Select(x => x.Name.ToUpperInvariant()).Order());
+    }
+
+    [Fact]
+    public async Task Decoders_cannot_read_a_real_tiff_even_past_the_signature_check()
+    {
+        using var original = new Image<Rgb24>(4, 4);
+        using var tiff = new MemoryStream();
+        await original.SaveAsTiffAsync(tiff);
+        tiff.Position = 0;
+
+        await Assert.ThrowsAsync<UnknownImageFormatException>(() =>
+            Image.IdentifyAsync(new SixLabors.ImageSharp.Formats.DecoderOptions { Configuration = ImagePipeline.Decoders }, tiff, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Decode_still_reads_webp()
+    {
+        using var original = new Image<Rgb24>(3, 2);
+        using var input = new MemoryStream();
+        await original.SaveAsWebpAsync(input);
+
+        using var decoded = await ImagePipeline.DecodeAsync(input, "image/webp", CancellationToken.None);
+        Assert.Equal((3, 2), (decoded.Width, decoded.Height));
+    }
+
     private static MemoryStream CreateHeaderOnlyPng(int width, int height)
     {
         var stream = new MemoryStream();

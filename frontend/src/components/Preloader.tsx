@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { useLanguage } from '../i18n/useLanguage';
+import { matchPage } from '../i18n/routes';
 import { sceneAssets } from '../assets/sceneAssets';
 import { prefetchVehicles } from '../services/vehicles';
 import '../styles/preloader.css';
@@ -43,7 +44,7 @@ export function Preloader() {
     shown = true;
     markSeen();
     const start = performance.now();
-    const onHome = pathname === '/';
+    const onHome = matchPage(pathname)?.page === 'home';
     const tasks = [
       document.fonts.ready,
       prefetchVehicles(),

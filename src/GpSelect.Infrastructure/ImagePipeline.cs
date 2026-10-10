@@ -1,6 +1,8 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
 
 namespace GpSelect.Infrastructure;
@@ -9,6 +11,12 @@ public static class ImagePipeline
 {
     public const long MaxUploadBytes = 20 * 1024 * 1024;
     const int DecodeBox = 2400;
+
+    /// <summary>Only the decoders for the formats uploads accept (JPEG, PNG, WebP). Any other format, TIFF and BigTIFF
+    /// included (GHSA-wmxv-xphr-5c9g, unpatched in ImageSharp 3.x), is unknown to the decoder even past the
+    /// signature check.</summary>
+    public static readonly Configuration Decoders = new(
+        new JpegConfigurationModule(), new PngConfigurationModule(), new WebpConfigurationModule());
 
     public static async Task<MemoryStream> ReadBoundedAsync(Stream source, long maxBytes, CancellationToken ct)
     {
@@ -45,7 +53,7 @@ public static class ImagePipeline
         if (!await IsSupported(input, mimeType, ct))
             throw new InvalidDataException("File signature does not match an allowed image format");
 
-        var options = new DecoderOptions { MaxFrames = 1, Configuration = Configuration.Default };
+        var options = new DecoderOptions { MaxFrames = 1, Configuration = Decoders };
         input.Position = 0;
         var info = await Image.IdentifyAsync(options, input, ct);
         if (info.Width > 10000 || info.Height > 10000 || (long)info.Width * info.Height > 40000000)
@@ -54,7 +62,7 @@ public static class ImagePipeline
         // Decode no larger than the biggest derivative needs (a 40 MP JPEG is scaled while decoding, saving most of the
         // ~0.7 GB peak). The box is square because EXIF orientation may still swap width and height.
         if (info.Width > DecodeBox || info.Height > DecodeBox)
-            options = new DecoderOptions { MaxFrames = 1, Configuration = Configuration.Default, TargetSize = new Size(DecodeBox, DecodeBox) };
+            options = new DecoderOptions { MaxFrames = 1, Configuration = Decoders, TargetSize = new Size(DecodeBox, DecodeBox) };
         input.Position = 0;
         var source = await Image.LoadAsync(options, input, ct);
         try

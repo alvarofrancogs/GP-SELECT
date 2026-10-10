@@ -16,9 +16,9 @@ Un servidor con Docker y un solo comando. Todo se ha probado en local en modo pr
 ## Requisitos
 
 - Un servidor Linux con Docker y el plugin `docker compose`. Con 2 GB de RAM basta: la API tiene un límite de 1 GB porque procesar una foto muy grande ocupa unos 0,7 GB.
-- Un dominio con un registro DNS **A** apuntando al servidor (`gpselect.es`).
-- Dominios secundarios: `REDIRECT_DOMAINS=gpselect.es, www.gpselect.es, www.gpselect.com` si `DOMAIN=gpselect.com`. Cada nombre necesita un registro **A** al servidor; Caddy obtiene sus certificados y redirige con 308, conservando ruta y query. No incluir el dominio principal ni el de S3. Vacío desactiva estas redirecciones.
-- Si usas el almacenamiento propio, un segundo registro **A** para las subidas (`s3.gpselect.es`).
+- Un dominio con un registro DNS **A** apuntando al servidor (`DOMAIN=gpselect.com`, el único dominio previsto).
+- Dominios secundarios: `REDIRECT_DOMAINS=www.gpselect.com`. Cada nombre necesita un registro **A** al servidor; Caddy obtiene sus certificados y redirige con 308, conservando ruta y query. No incluir el dominio principal ni el de S3. Vacío desactiva estas redirecciones.
+- Si usas el almacenamiento propio, un segundo registro **A** para las subidas (`s3.gpselect.com`).
 - Los puertos 80 y 443 abiertos.
 
 ## Primera puesta en marcha

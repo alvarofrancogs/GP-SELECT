@@ -8,13 +8,14 @@ import '../styles/legal.css';
 
 /** One run of legal text. A missing holder detail is marked, never filled with a guess. */
 export function LegalText({ inline }: { inline: LegalInline }) {
+  const { href } = useLanguage();
   if (typeof inline === 'string') return <>{inline}</>;
   if ('field' in inline) {
     const value = legalConfig[inline.field];
     return value ? <>{value}</> : <mark className="legal-pending">Pendiente: {pendingLabels[inline.field]}</mark>;
   }
   return inline.to.startsWith('/')
-    ? <Link to={inline.to}>{inline.text}</Link>
+    ? <Link to={href(inline.to)}>{inline.text}</Link>
     : <a href={inline.to} target="_blank" rel="noopener noreferrer">{inline.text}</a>;
 }
 

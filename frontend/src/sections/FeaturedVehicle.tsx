@@ -15,7 +15,7 @@ const EMPTY: VehicleSummary[] = [];
 
 /** The public inventory, starting with the API's first vehicle. No price: curiosity, not a listing. */
 export function FeaturedVehicle() {
-  const { copy, locale } = useLanguage();
+  const { copy, locale, href } = useLanguage();
   const text = featuredCopy[locale];
   const labels = copy.vehicles;
   const [state, setState] = useState<State>({ status: 'loading' });
@@ -62,7 +62,7 @@ export function FeaturedVehicle() {
         {state.status === 'error' ? <p className="featured__state" role="alert">{text.error}</p> : null}
         {state.status === 'ready' && !vehicle ? <p className="featured__state" role="status">{text.empty}</p> : null}
         {vehicle ? (
-          <Link className="featured__piece" to={`/vehiculos/${encodeURIComponent(vehicle.slug)}`}>
+          <Link className="featured__piece" to={href(`/vehiculos/${encodeURIComponent(vehicle.slug)}`)}>
             <div className="featured__media">
               <div className="featured__image">
                 {photo

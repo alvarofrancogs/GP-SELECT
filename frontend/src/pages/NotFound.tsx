@@ -5,7 +5,7 @@ import { useLanguage } from '../i18n/useLanguage';
 import '../styles/interiors.css';
 
 export function NotFound() {
-  const { copy } = useLanguage();
+  const { copy, href } = useLanguage();
 
   return (
     <section className="planned-page">
@@ -14,8 +14,8 @@ export function NotFound() {
         <h1>{copy.notFound.title}</h1>
         <p>{copy.notFound.description}</p>
         <div className="planned-page__actions">
-          <Button to="/">{copy.common.backHome}</Button>
-          <Link className="editorial-link type-ui" to="/vehiculos">{copy.notFound.vehicles}<span aria-hidden="true">→</span></Link>
+          <Button to={href('/')}>{copy.common.backHome}</Button>
+          <Link className="editorial-link type-ui" to={href('/vehiculos')}>{copy.notFound.vehicles}<span aria-hidden="true">→</span></Link>
         </div>
       </Container>
     </section>

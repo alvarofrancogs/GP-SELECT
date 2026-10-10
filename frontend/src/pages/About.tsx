@@ -7,7 +7,7 @@ import { qualificationUrl } from '../lib/qualification';
 import '../styles/interiors.css';
 
 export function About() {
-  const { copy } = useLanguage();
+  const { copy, href } = useLanguage();
   const text = copy.interiors.about;
 
   return (
@@ -54,8 +54,8 @@ export function About() {
       <section className="interior-closing about-closing" aria-labelledby="about-closing-title">
         <h2 id="about-closing-title" className="type-section">{text.closing}</h2>
         <div className="interior-closing__links">
-          <Link className="editorial-link type-lede" to={qualificationUrl({ intent: 'search', source: 'nosotros' })}>{text.cta}<span aria-hidden="true">→</span></Link>
-          <Link className="editorial-link type-ui" to="/importacion">{text.secondary}<span aria-hidden="true">→</span></Link>
+          <Link className="editorial-link type-lede" to={href(qualificationUrl({ intent: 'search', source: 'nosotros' }))}>{text.cta}<span aria-hidden="true">→</span></Link>
+          <Link className="editorial-link type-ui" to={href('/importacion')}>{text.secondary}<span aria-hidden="true">→</span></Link>
         </div>
         <p className="about-closing__note type-body">{text.closingNote}</p>
       </section>

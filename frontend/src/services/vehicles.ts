@@ -3,6 +3,37 @@ import type { VehicleDetail, VehiclePublicDto, VehicleSummary } from '../types/v
 
 const API = '/api/public/vehicles';
 
+// Captured before the router starts: reloads can retain a non-default history key.
+const initialPath = typeof window === 'undefined' ? '' : window.location.pathname;
+const initialKey: string = typeof window === 'undefined' ? 'default' : window.history.state?.key ?? 'default';
+let initialData: VehicleDetail | null | undefined;
+let initialDataConsumed = false;
+
+/** Read once, but retain the result for StrictMode's repeated state initializer. */
+export function getInitialVehicle(slug: string, locationKey: string): VehicleDetail | null {
+  if (initialDataConsumed || locationKey !== initialKey
+    || !/^\/vehiculos\/[^/]+\/?$/i.test(initialPath)) return null;
+  try {
+    if (decodeURIComponent(initialPath.replace(/\/$/, '').split('/').pop()!) !== slug) return null;
+  } catch { return null; }
+  if (initialData === undefined) {
+    const script = document.getElementById('vehicle-data');
+    initialData = null;
+    try {
+      const dto = JSON.parse(script?.textContent ?? '') as VehiclePublicDto;
+      if (dto?.slug === slug) initialData = fromPublicDetail(dto);
+    } catch { /* Missing or invalid data uses the normal API request. */ }
+    script?.remove();
+  }
+  return initialData?.slug === slug ? initialData : null;
+}
+
+/** Called on commit, after both StrictMode initializers; later visits must fetch. */
+export function consumeInitialVehicle(): void {
+  initialDataConsumed = true;
+  initialData = null;
+}
+
 const availabilityByStatus = {
   Available: 'available', ComingSoon: 'coming-soon', Reserved: 'reserved', Sold: 'sold',
 } as const;

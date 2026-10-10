@@ -7,17 +7,18 @@ import type { LegalDoc } from '../i18n/legalCopy';
 import { qualificationUrl } from '../lib/qualification';
 import { scrollToTop } from '../lib/scrollToTop';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { matchPage } from '../i18n/routes';
 import '../styles/footer.css';
 
 export function Footer() {
-  const { locale, copy } = useLanguage();
+  const { locale, copy, href } = useLanguage();
   const text = footerCopy[locale];
   const legal = legalUi[locale];
   const { pathname } = useLocation();
 
   // On the Home the brand rewinds to the top; elsewhere the route change already starts at the top.
   function backToTop(event: MouseEvent<HTMLAnchorElement>) {
-    if (pathname === '/') {
+    if (matchPage(pathname)?.page === 'home') {
       event.preventDefault();
       scrollToTop();
     }
@@ -28,21 +29,21 @@ export function Footer() {
     <footer className="site-footer">
       <div className="footer-main">
         <div className="footer-identity">
-          <Link className="footer-brand" to="/" onClick={backToTop} aria-label={copy.brand}><span className="brand-logo" aria-hidden="true" /></Link>
+          <Link className="footer-brand" to={href('/')} onClick={backToTop} aria-label={copy.brand}><span className="brand-logo" aria-hidden="true" /></Link>
           <p>{text.description}</p>
           <p className="footer-location">{text.location}</p>
         </div>
         <nav className="footer-nav" aria-label={text.navigation}>
-          <Link to="/nosotros">{copy.nav.about}</Link>
-          <Link to="/vehiculos">{copy.nav.vehicles}</Link>
-          <Link to="/importacion">{copy.nav.import}</Link>
-          <Link to={qualificationUrl({ intent: 'information', source: 'home-footer' })}>{copy.nav.contact}</Link>
+          <Link to={href('/nosotros')}>{copy.nav.about}</Link>
+          <Link to={href('/vehiculos')}>{copy.nav.vehicles}</Link>
+          <Link to={href('/importacion')}>{copy.nav.import}</Link>
+          <Link to={href(qualificationUrl({ intent: 'information', source: 'home-footer' }))}>{copy.nav.contact}</Link>
         </nav>
       </div>
       <div className="footer-bottom">
         <p>© {new Date().getFullYear()} {copy.brand}</p>
         <nav className="footer-legal" aria-label={legal.navigation}>
-          {(Object.keys(legalPaths) as LegalDoc[]).map((doc) => <Link key={doc} to={legalPaths[doc]}>{legal.links[doc]}</Link>)}
+          {(Object.keys(legalPaths) as LegalDoc[]).map((doc) => <Link key={doc} to={href(legalPaths[doc])}>{legal.links[doc]}</Link>)}
         </nav>
         <LanguageSwitcher />
       </div>

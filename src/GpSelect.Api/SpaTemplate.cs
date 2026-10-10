@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace GpSelect.Api;
 
 /// <summary>The frontend's built <c>spa.html</c>, the page that server-rendered vehicle pages fill in.</summary>
@@ -5,6 +7,8 @@ public interface ISpaTemplate
 {
     /// <summary>Null when SEO pages are off (no <c>Seo:TemplateUrl</c>) or the template cannot be fetched.</summary>
     Task<string?> GetAsync(CancellationToken ct);
+    /// <summary>A built page resolved relative to <c>Seo:TemplateUrl</c>, with its own cache.</summary>
+    Task<string?> GetAsync(string relativePath, CancellationToken ct);
 }
 
 /// <summary>Fetches the template from wherever the frontend is served (another container, a CDN), so it always
@@ -12,18 +16,23 @@ public interface ISpaTemplate
 public sealed class HttpSpaTemplate(IHttpClientFactory clients, IConfiguration config, ILogger<HttpSpaTemplate> logger) : ISpaTemplate
 {
     private static readonly TimeSpan Lifetime = TimeSpan.FromMinutes(1);
-    private (string Html, DateTimeOffset At)? cached;
+    private readonly ConcurrentDictionary<string, (string Html, DateTimeOffset At)> cached = new();
 
-    public async Task<string?> GetAsync(CancellationToken ct)
+    public Task<string?> GetAsync(CancellationToken ct) => FetchAsync(null, ct);
+
+    public Task<string?> GetAsync(string relativePath, CancellationToken ct) => FetchAsync(relativePath, ct);
+
+    private async Task<string?> FetchAsync(string? relativePath, CancellationToken ct)
     {
         var url = config["Seo:TemplateUrl"];
         if (string.IsNullOrWhiteSpace(url)) return null;
-        var current = cached;
+        if (relativePath is not null) url = new Uri(new Uri(url), relativePath).AbsoluteUri;
+        (string Html, DateTimeOffset At)? current = cached.TryGetValue(url, out var entry) ? entry : null;
         if (current is { } hit && DateTimeOffset.UtcNow - hit.At < Lifetime) return hit.Html;
         try
         {
             var html = await clients.CreateClient().GetStringAsync(url, ct);
-            cached = (html, DateTimeOffset.UtcNow);
+            cached[url] = (html, DateTimeOffset.UtcNow);
             return html;
         }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested)

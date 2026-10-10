@@ -5,7 +5,7 @@ import { useLanguage } from '../i18n/useLanguage';
 import { formatKm, formatPower, formatPrice, translateValue } from '../lib/vehicleFormat';
 
 export function VehicleCard({ vehicle }: { vehicle: VehicleSummary }) {
-  const { copy, locale } = useLanguage();
+  const { copy, locale, href } = useLanguage();
   const text = copy.vehicles;
   const [failed, setFailed] = useState(false);
   const image = failed ? undefined : vehicle.images?.[0];
@@ -14,7 +14,7 @@ export function VehicleCard({ vehicle }: { vehicle: VehicleSummary }) {
   const facts = [vehicle.firstRegistrationYear, formatKm(vehicle.mileageKm, locale)].filter((v) => v !== null).join(' · ');
   const mechanical = [formatPower(vehicle.powerHp, locale), translate(vehicle.fuelType), translate(vehicle.transmission)].filter(Boolean).join(' · ');
   return (
-    <Link className="vehicle-card" to={`/vehiculos/${encodeURIComponent(vehicle.slug)}`}>
+    <Link className="vehicle-card" to={href(`/vehiculos/${encodeURIComponent(vehicle.slug)}`)}>
       <figure className="vehicle-card__media editorial-media">
         {image ? <img src={image.src} alt={image.temporary ? '' : image.alt ?? name}
           style={{ objectFit: image.fit }} data-fit={image.fit}
