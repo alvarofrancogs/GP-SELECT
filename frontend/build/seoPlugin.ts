@@ -5,20 +5,32 @@ import { adminMeta, escapeHtml, getStaticPageMeta, legalPageMeta, notFoundMeta, 
 import { missingLegalFields } from '../src/config/legal';
 import type { PageMeta } from '../src/lib/pageMeta';
 import { readableHead, renderLlmsText, renderReadableContent } from './readableContent';
+import { pagePaths } from '../src/i18n/routes';
 import { sceneAssets } from '../src/assets/sceneAssets';
 
 // The home's first view: its photographs download alongside the script instead of after it renders.
 const homePreload = [sceneAssets.heroBackground.src, sceneAssets.heroCar.src]
   .map((src) => `<link rel="preload" as="image" href="${src}" fetchpriority="high" />\n  `).join('');
 
+// Page names from the route table: /vehiculos… in Spanish, /en/vehicles… in English.
+const spanishPages = Object.values(pagePaths).map((paths) => paths.es.slice(1)).filter(Boolean);
+const englishPages = Object.values(pagePaths).map((paths) => paths.en.slice('/en/'.length)).filter(Boolean);
+const spanishPage = new RegExp(`^/(${spanishPages.join('|')})(?:/index\\.html)?/?$`, 'i');
+const englishPage = new RegExp(`^/en/(${englishPages.join('|')})(?:/index\\.html)?/?$`, 'i');
+
 /** Mirrors the public-page map in deploy/Caddyfile; never lowercase a vehicle slug. */
 export function canonicalPagePath(pathname: string): string | null {
   let canonical: string | undefined;
   if (/^\/index\.html\/?$/i.test(pathname)) canonical = '/';
-  const page = /^\/(vehiculos|importacion|nosotros|contacto|aviso-legal|privacidad|cookies)(?:\/index\.html)?\/?$/i.exec(pathname);
+  if (/^\/en(?:\/index\.html)?\/?$/i.test(pathname)) canonical = '/en';
+  const page = spanishPage.exec(pathname);
   if (page) canonical = `/${page[1].toLowerCase()}`;
+  const english = englishPage.exec(pathname);
+  if (english) canonical = `/en/${english[1].toLowerCase()}`;
   const vehicle = /^\/vehiculos\/([a-z0-9-]+)(?:\/index\.html)?\/?$/i.exec(pathname);
   if (vehicle) canonical = `/vehiculos/${vehicle[1]}`;
+  const englishVehicle = /^\/en\/vehicles\/([a-z0-9-]+)(?:\/index\.html)?\/?$/i.exec(pathname);
+  if (englishVehicle) canonical = `/en/vehicles/${englishVehicle[1]}`;
   return canonical && canonical !== pathname ? canonical : null;
 }
 
@@ -56,15 +68,16 @@ export function seoPlugin(rawSiteUrl?: string): Plugin {
           response.end();
           return;
         }
-        const explicitFiles = [...Object.values(pageFiles), 'admin/index.html', '404.html', 'spa.html', 'robots.txt', 'sitemap.xml', 'llms.txt'];
+        const explicitFiles = [...Object.values(pageFiles), 'admin/index.html', '404.html', 'en/404.html', 'spa.html', 'en/spa.html', 'robots.txt', 'sitemap.xml', 'llms.txt'];
         if (explicitFiles.includes(path.slice(1))) return next();
         const file = pageFiles[path] || (path === '/admin' || path.startsWith('/admin/')
-          ? 'admin/index.html' : /^\/vehiculos\/[^/]+$/.test(path) ? 'spa.html' : null);
+          ? 'admin/index.html' : /^\/vehiculos\/[^/]+$/.test(path) ? 'spa.html'
+            : /^\/en\/vehicles\/[^/]+$/.test(path) ? 'en/spa.html' : null);
         if (file) {
           request.url = `/${file}${url.search}`;
           next();
         } else if (request.headers.accept?.includes('text/html')) {
-          void readFile(resolve(outDir, '404.html'), 'utf8').then((html) => {
+          void readFile(resolve(outDir, /^\/en(\/|$)/i.test(path) ? 'en/404.html' : '404.html'), 'utf8').then((html) => {
             response.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
             response.end(html);
           }, next);
@@ -95,17 +108,21 @@ export function seoPlugin(rawSiteUrl?: string): Plugin {
           content: renderReadableContent(path),
         })),
         { file: 'admin/index.html', meta: adminMeta, content: '' },
-        { file: '404.html', meta: notFoundMeta, content: renderReadableContent('/404.html') },
+        { file: '404.html', meta: notFoundMeta.es, content: renderReadableContent('/404.html') },
+        { file: 'en/404.html', meta: notFoundMeta.en, content: renderReadableContent('/en/404.html') },
         // Vehicle pages: the API (SeoController) fills this shell's metadata and #root per vehicle. Served as is,
         // it is a neutral page that never claims to be the home. It always carries the readable-content styles.
         { file: 'spa.html', meta: { title: 'GP SELECT', description: staticPageMeta['/'].description }, content: '', readable: true },
+        // English vehicle pages: the plain SPA, kept out of the index until a vehicle has its own English text (B4).
+        { file: 'en/spa.html', meta: { title: 'GP SELECT', description: staticPageMeta['/en'].description, locale: 'en', robots: 'noindex,follow' }, content: '', readable: true },
       ];
       for (const { file, meta, content, readable } of pages as { file: string; meta: PageMeta; content: string; readable?: boolean }[]) {
         const target = resolve(outDir, file);
         await mkdir(resolve(target, '..'), { recursive: true });
         // The markers let the API replace exactly this block (VehicleSeo.cs).
-        const html = template.replace('<title>GP SELECT</title>', `<!--page-meta-->\n    ${renderPageHead(meta, siteUrl)}\n    <!--/page-meta-->`)
-          .replace('</head>', `${file === 'index.html' ? homePreload : ''}${content || readable ? readableHead : ''}\n  </head>`)
+        const html = template.replace('<html lang="es">', `<html lang="${meta.locale ?? 'es'}">`)
+          .replace('<title>GP SELECT</title>', `<!--page-meta-->\n    ${renderPageHead(meta, siteUrl)}\n    <!--/page-meta-->`)
+          .replace('</head>', `${file === 'index.html' || file === 'en/index.html' ? homePreload : ''}${content || readable ? readableHead : ''}\n  </head>`)
           .replace('<div id="root"></div>', `<div id="root">${content}</div>`);
         await writeFile(target, html);
       }

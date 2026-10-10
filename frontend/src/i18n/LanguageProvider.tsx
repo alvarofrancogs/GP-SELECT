@@ -1,33 +1,22 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useLayoutEffect, type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { es } from './es';
 import { en } from './en';
 import { LanguageContext } from './LanguageContext';
-import type { Locale } from './types';
+import { localeOf, localizeHref } from './routes';
 
-const storageKey = 'gp-select.locale.v1';
-
-function readLocale(): Locale {
-  try {
-    return localStorage.getItem(storageKey) === 'en' ? 'en' : 'es';
-  } catch {
-    return 'es';
-  }
-}
-
+/** The language is the address: /en/… is English, everything else Spanish. Nothing is stored in the browser. */
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState<Locale>(readLocale);
+  const { pathname } = useLocation();
+  const locale = localeOf(pathname);
+  const href = useCallback((path: string) => localizeHref(path, locale), [locale]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.lang = locale;
-    try {
-      localStorage.setItem(storageKey, locale);
-    } catch {
-      // The current session remains usable if the browser blocks storage.
-    }
   }, [locale]);
 
   return (
-    <LanguageContext.Provider value={{ locale, copy: locale === 'es' ? es : en, setLocale }}>
+    <LanguageContext.Provider value={{ locale, copy: locale === 'es' ? es : en, href }}>
       {children}
     </LanguageContext.Provider>
   );

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { useLanguage } from '../i18n/useLanguage';
+import { matchPage, pageKey } from '../i18n/routes';
 import '../styles/catalogue-cta.css';
 
 // The pull is deliberately small: 90 % stable, 10 % magnetic.
@@ -16,12 +17,14 @@ const DARK_SURFACES = '.interior-band, [data-handoff-veil]';
 
 /** The one global conversion: a small editorial glass button, fixed at the bottom centre of the public site. */
 export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElement) => void }) {
-  const { copy } = useLanguage();
+  const { copy, href } = useLanguage();
   const { pathname } = useLocation();
+  const match = matchPage(pathname);
   const linkRef = useRef<HTMLAnchorElement>(null);
   const bodyRef = useRef<HTMLSpanElement>(null);
   // Not on the catalogue itself, nor over the contact form it would cover.
-  const hidden = pathname.startsWith('/vehiculos') || pathname.toLowerCase().startsWith('/contacto');
+  const hidden = match?.page === 'vehicles' || match?.page === 'vehicle' || match?.page === 'contact';
+  const page = pageKey(pathname);
 
   useEffect(() => {
     const link = linkRef.current;
@@ -101,12 +104,12 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
     };
-  }, [hidden, pathname]);
+  }, [hidden, page]);
 
   if (hidden) return null;
 
   return (
-    <Link ref={linkRef} to="/vehiculos" className="catalogue-cta" onClick={(event) => {
+    <Link ref={linkRef} to={href('/vehiculos')} className="catalogue-cta" onClick={(event) => {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
       onNavigate(event.currentTarget);

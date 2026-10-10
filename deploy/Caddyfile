@@ -43,6 +43,16 @@
 		~(?i)^/privacidad(?:/index\.html)?/?$ /privacidad
 		~(?i)^/cookies(?:/index\.html)?/?$ /cookies
 		~(?i)^/vehiculos/([a-z0-9-]+)(?:/index\.html)?/?$ /vehiculos/${1}
+		# English (frontend/src/i18n/routes.ts).
+		~(?i)^/en(?:/index\.html)?/?$ /en
+		~(?i)^/en/vehicles(?:/index\.html)?/?$ /en/vehicles
+		~(?i)^/en/import(?:/index\.html)?/?$ /en/import
+		~(?i)^/en/about(?:/index\.html)?/?$ /en/about
+		~(?i)^/en/contact(?:/index\.html)?/?$ /en/contact
+		~(?i)^/en/legal-notice(?:/index\.html)?/?$ /en/legal-notice
+		~(?i)^/en/privacy(?:/index\.html)?/?$ /en/privacy
+		~(?i)^/en/cookies(?:/index\.html)?/?$ /en/cookies
+		~(?i)^/en/vehicles/([a-z0-9-]+)(?:/index\.html)?/?$ /en/vehicles/${1}
 		default {path}
 	}
 	@needsRedirect expression `{canonical} != {path}`
@@ -94,6 +104,14 @@
 		}
 	}
 
+	# English vehicle pages: the plain SPA (noindex) until the API serves them with their own English text (B4).
+	# The English catalogue (/en/vehicles) is the build's static page for now.
+	@vehicle_en path_regexp (?i)^/en/vehicles/[^/]+/?$
+	handle @vehicle_en {
+		rewrite * /en/spa.html
+		file_server
+	}
+
 	# The live sitemap comes from the inventory; the build's static one covers an API failure.
 	handle /sitemap.xml {
 		reverse_proxy api:8080 {
@@ -142,6 +160,14 @@
 			file_server {
 				status 200
 			}
+		}
+		@missing_en {
+			path /en /en/*
+			expression {err.status_code} == 404
+		}
+		handle @missing_en {
+			rewrite * /en/404.html
+			file_server
 		}
 		@missing expression {err.status_code} == 404
 		handle @missing {

@@ -3,7 +3,7 @@
 
 ## PHASE
 
-**Estado vivo: FINAL CLOSURE PASS, 3C PASS (01-10-2026); ver el bloque 3C más abajo.** Historial: **PHASE COMPLETED: MOTION / SCROLL ARCHITECTURE PASS (29-09-2026).** Objetivo cumplido: HOME completa de principio a fin con scroll, pinning, handoffs y vehículos en movimiento ligados al scroll y reversibles. Siguiente fase (sin abrir todavía): FINAL VISUAL POLISH PASS.
+**Estado vivo (10-10-2026): SEO Fase B. B0 aceptado con salvedad, B1 aprobado, B2 y B3 terminados y verificados, sin commit, pendientes de aprobación del usuario; ver el bloque «SEO Fase B» más abajo. No empezar B4 sin su visto bueno.** Anterior: FINAL CLOSURE PASS, 3C PASS (01-10-2026); ver el bloque 3C más abajo. Historial: **PHASE COMPLETED: MOTION / SCROLL ARCHITECTURE PASS (29-09-2026).** Objetivo cumplido: HOME completa de principio a fin con scroll, pinning, handoffs y vehículos en movimiento ligados al scroll y reversibles. Siguiente fase (sin abrir todavía): FINAL VISUAL POLISH PASS.
 
 Unidades: 1A PASS · 1B PASS · 1C PASS · 1D PASS · 1E PASS · 1F PASS.
 
@@ -284,6 +284,19 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
   - **CLS ocasional del catálogo:** `/vehiculos` dio 0,077 en una carga en frío de cinco a 1440 (resto 0,0014). Causa: el estado de carga del listado empuja `.vehicle-closing`. Preexistente.
   - ~~**Coherencia del fallback con la API caída**~~: resuelto en `fix/pre-deploy`. Con la API caída o en 5xx, Caddy sirve `spa.html` como **503 con `Retry-After: 300`** (los buscadores ni indexan ni retiran la ficha; el visitante ve la SPA con su estado de error y «Reintentar»). Un 404 de la API sigue pasando con `noindex`. Catálogo y sitemap mantienen su fallback estático en 200. Si la plantilla quedara mal configurada de forma permanente, todas las fichas darían 503: revisar logs de la API tras cada despliegue.
   - **`lastmod` y fotos:** cambiar solo fotos (portada, orden, borrado) no actualiza `UpdatedAt`; corregirlo cambiaría el orden del listado del Admin (decisión del usuario).
+
+### SEO Fase B · B0–B3 (09/10-10-2026, rama `feat/seo-phase-b`, sin commit, pendiente de aprobación)
+
+Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el usuario; se trabaja un bloque cada vez y se para al final de cada uno.
+
+- **B0 · línea base = aceptada con salvedad.** Frontend (typecheck, lint, Vitest 114/114), build con `VITE_SITE_URL=https://gpselect.com`, snapshot SEO de los 11 HTML, 210 capturas (ES 390/1440/1920, EN 1440/390, reduced-motion 1440/390) y `motion-reference.json`. **Pendiente:** `dotnet build`, `GpSelect.Tests` y `GpSelect.IntegrationTests` con .NET 10 y Docker (no disponibles en el portátil). Las capturas y scripts de B0 están en el scratchpad del portátil, no en el repo: en otro equipo se regeneran desde `5ad7945`.
+- **B1 · textos comerciales ES/EN = aprobado.** Documento «GP SELECT · B1 Textos comerciales ES/EN» (https://claude.ai/code/artifact/25e17078-5d37-4654-badb-80bc3d3eab64): 9 afirmaciones verificadas y 11 pendientes con su texto neutro. Se integran en **B5**, no antes; en B5 calibrar longitudes en Home, Process y Services (hay alternativas cortas, sin tocar GSAP).
+- **B2 · idioma en la URL = terminado.** Español en las rutas de siempre; inglés en `/en/...` (`/en`, `/en/vehicles`, `/en/vehicles/<slug>`, `/en/import`, `/en/about`, `/en/contact`, `/en/legal-notice`, `/en/privacy`, `/en/cookies`). Tabla única en `frontend/src/i18n/routes.ts` (con tests). El idioma sale de la URL; `localStorage` ya no se usa. Selector ES/EN con enlaces reales: solo funde el texto, no remonta la página ni las escenas GSAP y conserva el scroll (`SiteLayout` usa una clave de página sin idioma); si el visitante navega durante el fundido, el cambio se cancela. Enlaces internos por idioma con `href()`/`localizeHref`. Sin redirecciones por IP ni por idioma del navegador.
+- **B3 · SEO internacional = terminado.** Build: 21 HTML con contenido legible sin JS en los dos idiomas, `<html lang>`, title/description por idioma, canonical autorreferenciado, hreflang recíproco es/en + x-default → inglés en las 5 páginas públicas de cada idioma, `og:locale` es_ES/en_GB, 404 en inglés. Sitemap: 5 URLs ES + 5 EN (build y `SeoController.cs`); `lastmod` solo en `/vehiculos` y fichas. Caddy y preview: 301 a la forma canónica (barra final, `index.html`, mayúsculas) y `/en/vehicles/<slug>` → `en/spa.html`. Legales EN y ficha EN: `noindex` sin hreflang hasta B4 (legales: texto vinculante en español con nota en inglés). La política de cookies ya no menciona la preferencia de idioma.
+- **Verificación (10-10-2026):** Vitest 146/146, typecheck y lint OK, build OK. Reglas de Caddy probadas con el binario oficial 2.10.2. QA Playwright: 70 cambios de idioma dentro de los pins (hero, Process, coche, Services) a 390/1440/1920 y reduced-motion, sin remount, sin salto de scroll, pin-spacers iguales y consola limpia; navegación, historial, head con y sin JS, 301 y menú móvil OK. Regresión visual contra B0: páginas completas 0 %; las diferencias del scroll de la Home (≤ 4,4 %) son ruido de captura, confirmado con dos pasadas de control (Haiku y Gemini). Revisión independiente: sin P0/P1; sus tres P2 corregidos.
+- **Pendiente antes de cerrar B2/B3:** backend (`SeoController.cs`, `SeoTests.cs`) sin compilar ni probar (.NET 10 + Docker); el 404 real solo se comprueba en Caddy o en el servidor (`vite preview` devuelve 200). Aviso de consola previo a B2: la precarga de `logo.svg` (crossorigin).
+- **Decisiones ya tomadas para B4 (no implementadas):** GP SELECT no aparece como vendedor si no lo es (quitar `seller` del Offer, sin inventar vendedores); `AutoDealer` → `AutomotiveBusiness`; decisión final del Offer cuando se sepa qué incluye el precio publicado. También en B4: catálogo EN con datos y hreflang en las fichas.
+- **Siguiente:** aprobación de B2/B3 por el usuario → commit → B4. No hay commit, push ni despliegue sin su autorización.
 
 ### SEO-2 · fichas y sitemap desde el servidor = PASS (05-10-2026, tag `seo-2-pass`)
 
@@ -644,6 +657,7 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 7. **3B copy truth** (**PASS**, 01-10-2026);
 8. **3C final visual / asset polish** (**PASS**, 01-10-2026: UI Simplification, QA A–G y Real Stack Regression incluidas; sin push ni merge);
 9. **Siguiente: por decidir por el usuario**: sustituir las fotos del usuario según lleguen, y después 3D final release QA. SEO y dominio/deploy son fases aparte. NO iniciada.
+10. **SEO Fase B** (desde 09-10-2026): B0 aceptado con salvedad, B1 aprobado, B2/B3 terminados y pendientes de aprobación; luego B4. Ver el bloque «SEO Fase B».
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 

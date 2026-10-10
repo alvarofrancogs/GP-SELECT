@@ -1,19 +1,24 @@
 import { es } from '../src/i18n/es';
+import { en } from '../src/i18n/en';
 import { featuredCopy } from '../src/i18n/featuredCopy';
 import { footerCopy } from '../src/i18n/footerCopy';
 import { servicesCopy } from '../src/i18n/servicesCopy';
 import { escapeHtml, staticPageMeta } from '../src/lib/pageMeta';
 import { qualificationUrl } from '../src/lib/qualification';
 import { legalConfig } from '../src/config/legal';
-import { legalPages, legalPaths, pendingLabels } from '../src/i18n/legalCopy';
+import { legalPages, legalUi, pendingLabels } from '../src/i18n/legalCopy';
 import type { LegalDoc, LegalInline } from '../src/i18n/legalCopy';
+import { localizeHref, matchPage, pagePath } from '../src/i18n/routes';
+import type { Dictionary, Locale } from '../src/i18n/types';
 
-const navigation = [
-  ['/', es.brand],
-  ['/vehiculos', es.nav.vehicles],
-  ['/importacion', es.nav.import],
-  ['/nosotros', es.nav.about],
-  ['/contacto', es.nav.contact],
+const dictionaries: Record<Locale, Dictionary> = { es, en };
+
+const navigation = (t: Dictionary, locale: Locale) => [
+  [pagePath('home', locale), t.brand],
+  [pagePath('vehicles', locale), t.nav.vehicles],
+  [pagePath('import', locale), t.nav.import],
+  [pagePath('about', locale), t.nav.about],
+  [pagePath('contact', locale), t.nav.contact],
 ] as const;
 
 const paragraph = (text: string) => `<p>${escapeHtml(text)}</p>`;
@@ -25,96 +30,103 @@ const introduction = (title: string, lede: string) => heading(1, title) + paragr
 const rows = (items: { title: string; body: string }[]) =>
   `<ul>${items.map((item) => `<li>${heading(3, item.title)}${paragraph(item.body)}</li>`).join('')}</ul>`;
 
-function homeContent(): string {
-  const services = servicesCopy.es;
-  const featured = featuredCopy.es;
-  return introduction(`${es.hero.left} ${es.hero.right}`, es.hero.description)
-    + section(es.process.title, `<ol>${es.process.steps.map((step) =>
+function homeContent(t: Dictionary, locale: Locale): string {
+  const services = servicesCopy[locale];
+  const featured = featuredCopy[locale];
+  return introduction(`${t.hero.left} ${t.hero.right}`, t.hero.description)
+    + section(t.process.title, `<ol>${t.process.steps.map((step) =>
       `<li>${heading(3, step.word)}${paragraph(step.title)}${paragraph(step.description)}</li>`).join('')}</ol>`)
-    + section(`${es.carHandoff.states[0].left} ${es.carHandoff.states[0].right}`,
-      paragraph(es.carHandoff.states[0].description) + paragraph(es.carHandoff.states[0].fact)
-      + es.carHandoff.states.slice(1).map((state, index) =>
-        (index === 1 ? paragraph(es.carHandoff.interlude) : '')
+    + section(`${t.carHandoff.states[0].left} ${t.carHandoff.states[0].right}`,
+      paragraph(t.carHandoff.states[0].description) + paragraph(t.carHandoff.states[0].fact)
+      + t.carHandoff.states.slice(1).map((state, index) =>
+        (index === 1 ? paragraph(t.carHandoff.interlude) : '')
         + heading(3, `${state.left} ${state.right}`) + paragraph(state.description) + paragraph(state.fact)).join(''))
     + section(`${services.title} ${services.titleFine}`, paragraph(services.description)
       + rows(services.items.map((item) => ({ title: item.title, body: item.description }))))
     // Inventory is live: include its fixed heading, never a guessed vehicle or availability state.
-    + section(`${featured.title} ${featured.titleFine}`, link('/vehiculos', es.common.catalogue));
+    + section(`${featured.title} ${featured.titleFine}`, link(pagePath('vehicles', locale), t.common.catalogue));
 }
 
-function aboutContent(): string {
-  const text = es.interiors.about;
+function aboutContent(t: Dictionary, locale: Locale): string {
+  const text = t.interiors.about;
   return introduction(text.title, text.lede)
     + section(text.why.title, paragraph(text.why.body))
     + section(text.audience.title, paragraph(text.audience.intro) + rows(text.audience.rows))
     + section(text.approach.title, paragraph(text.approach.body) + rows(text.approach.rows))
     + section(text.closing, paragraph(text.closingNote)
-      + link(qualificationUrl({ intent: 'search', source: 'nosotros' }), text.cta)
-      + ' ' + link('/importacion', text.secondary));
+      + link(localizeHref(qualificationUrl({ intent: 'search', source: 'nosotros' }), locale), text.cta)
+      + ' ' + link(pagePath('import', locale), text.secondary));
 }
 
-function importContent(): string {
-  const text = es.interiors.import;
+function importContent(t: Dictionary, locale: Locale): string {
+  const text = t.interiors.import;
   return introduction(text.title, text.lede)
     + section(text.define.title, paragraph(text.define.body) + list(text.define.items) + paragraph(text.define.detail))
     + section(text.search.title, paragraph(text.search.body))
     + section(text.analysis.title, paragraph(text.analysis.body))
     + section(text.support.title, paragraph(text.support.body) + paragraph(text.support.detail))
     + section(text.closing, paragraph(text.closingBody)
-      + link(qualificationUrl({ intent: 'search', source: 'importacion' }), text.cta)
-      + ' ' + link('/contacto?intent=vehicle', text.secondary));
+      + link(localizeHref(qualificationUrl({ intent: 'search', source: 'importacion' }), locale), text.cta)
+      + ' ' + link(localizeHref('/contacto?intent=vehicle', locale), text.secondary));
 }
 
-function contactContent(): string {
-  const text = es.interiors.contact;
+function contactContent(t: Dictionary, locale: Locale): string {
+  const text = t.interiors.contact;
   return introduction(text.title, text.lede)
     + paragraph(text.pathsLabel)
-    + `<ul><li>${link('/contacto?intent=vehicle', text.vehiclePath)}${paragraph(text.vehicleIntro)}</li>`
-    + `<li>${link('/contacto?intent=search', text.searchPath)}${paragraph(text.searchIntro)}</li></ul>`;
+    + `<ul><li>${link(localizeHref('/contacto?intent=vehicle', locale), text.vehiclePath)}${paragraph(text.vehicleIntro)}</li>`
+    + `<li>${link(localizeHref('/contacto?intent=search', locale), text.searchPath)}${paragraph(text.searchIntro)}</li></ul>`;
 }
 
-// Same text as the React legal page (src/pages/Legal.tsx); a missing detail reads as pending.
-function legalInline(inline: LegalInline): string {
-  if (typeof inline === 'string') return escapeHtml(inline);
-  if ('field' in inline) return escapeHtml(legalConfig[inline.field] ?? `[Pendiente: ${pendingLabels[inline.field]}]`);
-  return link(inline.to, inline.text);
-}
-
-function legalContent(doc: LegalDoc): string {
+// Same text as the React legal page (src/pages/Legal.tsx): always the Spanish, binding version; a missing detail
+// reads as pending. In English it carries the note that says so, and its internal links stay in English.
+function legalContent(doc: LegalDoc, locale: Locale): string {
   const page = legalPages[doc];
+  const ui = legalUi[locale];
+  const inline = (part: LegalInline): string => {
+    if (typeof part === 'string') return escapeHtml(part);
+    if ('field' in part) return escapeHtml(legalConfig[part.field] ?? `[Pendiente: ${pendingLabels[part.field]}]`);
+    return link(localizeHref(part.to, locale), part.text);
+  };
   const shown = (item: LegalInline[]) => item.every((part) => typeof part === 'string' || !('field' in part) || !part.optional || legalConfig[part.field]);
-  return introduction(page.title, page.lede) + page.sections.map((item) => section(item.heading, item.blocks.map((block) =>
-    'p' in block ? `<p>${block.p.map(legalInline).join('')}</p>`
-      : `<ul>${block.list.filter(shown).map((entry) => `<li>${entry.map(legalInline).join('')}</li>`).join('')}</ul>`).join(''))).join('')
-    + paragraph(`Última revisión: ${legalConfig.updated}`);
+  const body = heading(1, page.title) + paragraph(page.lede)
+    + (ui.bindingNote ? `<p lang="en">${escapeHtml(ui.bindingNote)}</p>` : '')
+    + page.sections.map((item) => section(item.heading, item.blocks.map((block) =>
+      'p' in block ? `<p>${block.p.map(inline).join('')}</p>`
+        : `<ul>${block.list.filter(shown).map((entry) => `<li>${entry.map(inline).join('')}</li>`).join('')}</ul>`).join(''))).join('')
+    + paragraph(`${legalUi.es.updated}: ${legalConfig.updated}`);
+  return locale === 'es' ? body : `<div lang="es">${body}</div>`;
 }
 
 /** Build-only reading view. All public copy comes from the same dictionaries as React. */
 export function renderReadableContent(path: string): string {
+  const notFound = /^(\/en)?\/404\.html$/.exec(path);
+  const match = notFound ? null : matchPage(path);
+  if (!notFound && !match) throw new Error(`No readable content for ${path}`);
+  const locale: Locale = notFound ? (notFound[1] ? 'en' : 'es') : match!.locale;
+  const t = dictionaries[locale];
   let content: string;
-  switch (path) {
-    case '/': content = homeContent(); break;
-    case '/nosotros': content = aboutContent(); break;
-    case '/importacion': content = importContent(); break;
-    case '/contacto': content = contactContent(); break;
-    case '/vehiculos':
-      content = introduction(es.vehicles.title, es.vehicles.lede)
+  switch (notFound ? '404' : match!.page) {
+    case 'home': content = homeContent(t, locale); break;
+    case 'about': content = aboutContent(t, locale); break;
+    case 'import': content = importContent(t, locale); break;
+    case 'contact': content = contactContent(t, locale); break;
+    case 'vehicles':
+      content = introduction(t.vehicles.title, t.vehicles.lede)
         + '<!--vehicle-list--><!--/vehicle-list-->'
-        + section(es.vehicles.closing, link(qualificationUrl({ intent: 'import', source: 'vehicles' }), es.vehicles.find));
+        + section(t.vehicles.closing, link(localizeHref(qualificationUrl({ intent: 'import', source: 'vehicles' }), locale), t.vehicles.find));
       break;
-    case legalPaths['aviso-legal']: content = legalContent('aviso-legal'); break;
-    case legalPaths.privacidad: content = legalContent('privacidad'); break;
-    case legalPaths.cookies: content = legalContent('cookies'); break;
-    case '/404.html':
-      content = paragraph(es.notFound.eyebrow) + introduction(es.notFound.title, es.notFound.description)
-        + link('/', es.common.backHome) + ' ' + link('/vehiculos', es.notFound.vehicles);
+    case 'aviso-legal': case 'privacidad': case 'cookies': content = legalContent(match!.page as LegalDoc, locale); break;
+    case '404':
+      content = paragraph(t.notFound.eyebrow) + introduction(t.notFound.title, t.notFound.description)
+        + link(pagePath('home', locale), t.common.backHome) + ' ' + link(pagePath('vehicles', locale), t.notFound.vehicles);
       break;
     default: throw new Error(`No readable content for ${path}`);
   }
-  const footer = footerCopy.es;
-  return `<div class="static-content"><header>${link('/', es.brand)}</header><main>${content}</main>`
+  const footer = footerCopy[locale];
+  return `<div class="static-content"><header>${link(pagePath('home', locale), t.brand)}</header><main>${content}</main>`
     + `<footer>${paragraph(footer.description)}${paragraph(footer.location)}`
-    + `<nav aria-label="${escapeHtml(footer.navigation)}"><ul>${navigation.map(([href, label]) =>
+    + `<nav aria-label="${escapeHtml(footer.navigation)}"><ul>${navigation(t, locale).map(([href, label]) =>
       `<li>${link(href, label)}</li>`).join('')}</ul></nav></footer></div>`;
 }
 
@@ -137,11 +149,16 @@ export const readableHead = `<script>document.documentElement.classList.add('js'
       .static-content nav ul { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; padding: 0; list-style: none; }
     </style>`;
 
+/** llms.txt: the Spanish site first (the main language), then the English pages. */
 export function renderLlmsText(siteUrl?: string): string {
   const entry = (path: string, label: string) =>
     `- [${label}](${siteUrl || ''}${path}): ${staticPageMeta[path].description}`;
+  const pages = (t: Dictionary, locale: Locale) => navigation(t, locale).filter(([path]) => path !== pagePath('contact', locale))
+    .map(([path, label]) => entry(path, label)).join('\n');
   return `# ${es.brand}\n\n> ${staticPageMeta['/'].description}\n\n${footerCopy.es.location}\n\n`
     + `${es.interiors.about.lede}\n\n${es.interiors.import.lede}\n\n`
-    + `## ${footerCopy.es.navigation}\n\n${navigation.filter(([path]) => path !== '/contacto').map(([path, label]) => entry(path, label)).join('\n')}\n\n`
-    + `## ${es.nav.contact}\n\n${entry('/contacto', es.nav.contact)}\n`;
+    + `## ${footerCopy.es.navigation}\n\n${pages(es, 'es')}\n\n`
+    + `## ${es.nav.contact}\n\n${entry('/contacto', es.nav.contact)}\n\n`
+    + `## English\n\n${pages(en, 'en')}\n${entry(pagePath('contact', 'en'), en.nav.contact)}\n`;
 }
+

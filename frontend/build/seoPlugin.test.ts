@@ -44,3 +44,32 @@ describe('canonicalPagePath', () => {
     expect(canonicalPagePath(path)).toBeNull();
   });
 });
+
+describe('canonicalPagePath · English pages', () => {
+  const english = ['vehicles', 'import', 'about', 'contact', 'legal-notice', 'privacy', 'cookies'];
+
+  it.each(english)('canonicalizes case and suffix variants of /en/%s in one hop', (page) => {
+    for (const name of [page, page.toUpperCase()]) {
+      for (const prefix of ['/en', '/EN']) {
+        for (const suffix of ['', '/', '/index.html', '/INDEX.HTML/']) {
+          const path = `${prefix}/${name}${suffix}`;
+          const target = `/en/${page}`;
+          expect(canonicalPagePath(path)).toBe(path === target ? null : target);
+        }
+      }
+    }
+  });
+
+  it.each(['/en/', '/EN', '/en/index.html', '/En/Index.Html/'])('redirects %s to the English home', (path) => {
+    expect(canonicalPagePath(path)).toBe('/en');
+  });
+
+  it('keeps the slug case of an English vehicle page', () => {
+    expect(canonicalPagePath('/EN/Vehicles/BMW-m4/')).toBe('/en/vehicles/BMW-m4');
+    expect(canonicalPagePath('/en/vehicles/BMW-m4')).toBeNull();
+  });
+
+  it.each(['/en', '/en/unknown', '/en/vehiculos', '/en/importacion', '/en/vehicles/bmw-m4/photos/', '/enx'])('leaves %s untouched', (path) => {
+    expect(canonicalPagePath(path)).toBeNull();
+  });
+});

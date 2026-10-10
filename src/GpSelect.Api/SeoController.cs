@@ -16,8 +16,9 @@ namespace GpSelect.Api;
 [ApiExplorerSettings(IgnoreApi = true)]
 public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfiguration config, ILogger<SeoController> logger) : ControllerBase
 {
-    // The SPA's static routes (frontend/src/lib/pageMeta.ts, staticPageMeta).
-    private static readonly string[] StaticPaths = ["/", "/vehiculos", "/importacion", "/nosotros", "/contacto"];
+    // The SPA's static routes in both languages (frontend/src/i18n/routes.ts, staticPageMeta in pageMeta.ts).
+    private static readonly string[] StaticPaths =
+        ["/", "/vehiculos", "/importacion", "/nosotros", "/contacto", "/en", "/en/vehicles", "/en/import", "/en/about", "/en/contact"];
 
     [HttpGet("seo/vehiculos")]
     public async Task<IActionResult> Catalogue(CancellationToken ct)
@@ -90,7 +91,8 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
         var vehicles = await db.Vehicles.AsNoTracking().Where(PublicVehiclesController.Listed)
             .OrderByDescending(x => x.UpdatedAt).Select(x => new { x.PublicSlug, x.UpdatedAt }).ToListAsync(ct);
         // The catalogue changes whenever a vehicle that was ever public changes, including when it leaves the list.
-        // The other static pages carry no lastmod: no real content date exists for them.
+        // The other static pages carry no lastmod: no real content date exists for them. That includes
+        // /en/vehicles, a static page until the English catalogue is filled from the API.
         var catalogueChanged = await db.Vehicles.AsNoTracking().Where(x => x.PublishedAt != null)
             .MaxAsync(x => (DateTimeOffset?)x.UpdatedAt, ct);
         var xml = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");

@@ -69,11 +69,11 @@ dialog { overscroll-behavior: contain; }
 .site-header[data-tone-scene='hero'][data-tone='dark'] .header-brand { filter: drop-shadow(0 0 1px rgb(9 10 12 / .8)) drop-shadow(0 0 3px rgb(9 10 12 / .5)); }
 .header-actions { margin-left: auto; }
 .language-switcher { display: flex; align-items: center; gap: var(--space-2); padding-left: var(--space-6); border-left: var(--border-width) solid currentColor; }
-.language-switcher button { border: 0; background: none; padding: var(--space-1); font-family: var(--font-family); font-stretch: var(--width-extended); font-size: var(--header-nav-size); opacity: .55; }
-.language-switcher button { min-width: 1.5rem; min-height: 1.5rem; }
+.language-switcher a { display: inline-flex; align-items: center; justify-content: center; padding: var(--space-1); font-family: var(--font-family); font-stretch: var(--width-extended); font-size: var(--header-nav-size); opacity: .55; }
+.language-switcher a { min-width: 1.5rem; min-height: 1.5rem; }
 /* Touch targets of at least 24 px without moving the type: the brand grows an invisible hit area. */
 .header-brand::after { content: ''; position: absolute; inset: -.375rem -.25rem; }
-.language-switcher button[aria-pressed='true'] { opacity: 1; text-decoration: underline; text-underline-offset: .35em; }
+.language-switcher a[aria-current='true'] { opacity: 1; text-decoration: underline; text-underline-offset: .35em; }
 .menu-toggle { display: none; border: 0; background: none; padding: var(--space-3); margin-right: calc(var(--space-3) * -1); color: inherit; }
 /* Two rules that cross into an X; drawn, not a glyph. */
 .menu-toggle__icon { position: relative; display: block; width: 1.5rem; height: .75rem; }
@@ -96,7 +96,7 @@ dialog { overscroll-behavior: contain; }
 .button--light:hover { background: var(--color-paper); }
 .button--dark:hover { background: var(--color-muted); }
 .eyebrow { font-family: var(--font-family); font-stretch: var(--type-label-width); font-size: var(--text-label); font-weight: var(--type-label-weight); letter-spacing: var(--type-label-tracking); line-height: var(--type-label-leading); text-transform: uppercase; }
-.header-nav, .mobile-nav, .language-switcher button { font-stretch: var(--type-ui-width); font-weight: var(--type-ui-weight); letter-spacing: var(--type-ui-tracking); line-height: var(--type-ui-leading); }
+.header-nav, .mobile-nav, .language-switcher a { font-stretch: var(--type-ui-width); font-weight: var(--type-ui-weight); letter-spacing: var(--type-ui-tracking); line-height: var(--type-ui-leading); }
 .planned-page { min-height: 100svh; display: flex; align-items: center; padding-block: calc(var(--header-height) + var(--space-7)); }
 .planned-page h1 { max-width: 15ch; margin-block: var(--space-6); font: var(--weight-display) var(--text-h1)/1 var(--font-family); letter-spacing: var(--tracking-display); }
 .planned-page p { max-width: 46ch; margin-block: var(--space-5); font-size: var(--text-body); line-height: 1.5; }
@@ -161,8 +161,8 @@ dialog { overscroll-behavior: contain; }
 @keyframes page-in { from { opacity: 0; } }
 /* Language change (LanguageSwitcher.tsx): only the lettering fades out and back in; photographs, cars and
    backgrounds stay put. !important wins over the scenes' inline (GSAP) opacity only for these 440 ms. */
-html.lang-out :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:not(.header-brand, .catalogue-cta), .catalogue-cta__label, button:not(.language-switcher button, .menu-toggle)) { opacity: 0 !important; transition: opacity 160ms var(--ease-in-out) !important; }
-html.lang-in :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:not(.header-brand, .catalogue-cta), .catalogue-cta__label, button:not(.language-switcher button, .menu-toggle)) { transition: opacity 280ms var(--ease-out) !important; }
+html.lang-out :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:not(.header-brand, .catalogue-cta, .language-switcher a), .catalogue-cta__label, button:not(.menu-toggle)) { opacity: 0 !important; transition: opacity 160ms var(--ease-in-out) !important; }
+html.lang-in :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:not(.header-brand, .catalogue-cta, .language-switcher a), .catalogue-cta__label, button:not(.menu-toggle)) { transition: opacity 280ms var(--ease-out) !important; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0s !important; animation-duration: 0s !important; }
   /* The menu's staggered delays would still hold it (and its links) on screen with zero-length transitions. */

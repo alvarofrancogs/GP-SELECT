@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { siteUrl, usePageMeta } from '../lib/usePageMeta';
 import { getVehiclePageMeta, notFoundMeta } from '../lib/pageMeta';
 import type { CSSProperties, ReactNode } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { EditorialMedia } from '../components/EditorialMedia';
 import { VehicleGallery } from '../components/VehicleGallery';
@@ -16,14 +16,13 @@ import { qualificationUrl } from '../lib/qualification';
 import '../styles/interiors.css';
 import '../styles/vehicles.css';
 
-export function VehicleDetail() {
-  const { slug = '' } = useParams();
+export function VehicleDetail({ slug }: { slug: string }) {
   // Keying the request boundary prevents showing a previous vehicle on slug changes.
   return <VehicleDetailContent key={slug} slug={slug} />;
 }
 
 function VehicleDetailContent({ slug }: { slug: string }) {
-  const { copy } = useLanguage();
+  const { copy, locale, href } = useLanguage();
   const text = copy.vehicles;
   const { key } = useLocation();
   const [initialVehicle] = useState(() => getInitialVehicle(slug, key));
@@ -38,23 +37,26 @@ function VehicleDetailContent({ slug }: { slug: string }) {
       () => { if (!request.signal.aborted) setStatus('error'); });
     return () => request.abort();
   }, [slug, attempt, initialVehicle]);
-  usePageMeta(status === 'ready' && vehicle ? getVehiclePageMeta(vehicle, siteUrl) : {
-    ...notFoundMeta,
-    title: status === 'ready' ? 'Vehículo no encontrado · GP SELECT' : 'Ficha de vehículo · GP SELECT',
+  const english = locale === 'en';
+  usePageMeta(status === 'ready' && vehicle ? getVehiclePageMeta(vehicle, siteUrl, locale) : {
+    ...notFoundMeta[locale],
+    title: status === 'ready' ? (english ? 'Vehicle not found · GP SELECT' : 'Vehículo no encontrado · GP SELECT')
+      : english ? 'Vehicle · GP SELECT' : 'Ficha de vehículo · GP SELECT',
     // A failed request is transient: only a confirmed missing vehicle is kept out of the index.
-    robots: status === 'ready' ? 'noindex' : 'index,follow',
+    // English vehicle pages are never indexed yet (they have no English text of their own).
+    robots: status === 'ready' ? 'noindex' : english ? 'noindex,follow' : 'index,follow',
     tabTitle: status === 'ready' ? `${text.notFound} · GP SELECT` : undefined,
   });
-  const back = <Link className="editorial-link type-ui" to="/vehiculos"><span aria-hidden="true">←</span>{text.back}</Link>;
+  const back = <Link className="editorial-link type-ui" to={href('/vehiculos')}><span aria-hidden="true">←</span>{text.back}</Link>;
   if (status !== 'ready') return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state" role={status === 'error' ? 'alert' : 'status'}>{status === 'error' ? <h1 className="type-lede">{text.detailError}</h1> : <p className="type-lede">{text.loading}</p>}{status === 'error' ? <button className="editorial-link type-ui" onClick={() => { setStatus('loading'); setAttempt(attempt + 1); }}>{text.retry}</button> : null}</div></article>;
-  if (!vehicle) return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state"><h1 className="type-display">{text.notFound}</h1><Link className="editorial-link type-ui" to={qualificationUrl({ intent: 'import', source: 'vehicle-not-found' })}>{text.search}<span aria-hidden="true">→</span></Link></div></article>;
+  if (!vehicle) return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state"><h1 className="type-display">{text.notFound}</h1><Link className="editorial-link type-ui" to={href(qualificationUrl({ intent: 'import', source: 'vehicle-not-found' }))}>{text.search}<span aria-hidden="true">→</span></Link></div></article>;
 
   return <VehicleDetailView vehicle={vehicle} back={back} />;
 }
 
 /** Presentational detail, shared with the private admin preview. */
 export function VehicleDetailView({ vehicle, back, className = '' }: { vehicle: Vehicle; back: ReactNode; className?: string }) {
-  const { copy, locale } = useLanguage();
+  const { copy, locale, href } = useLanguage();
   const text = copy.vehicles;
   const translate = (value: string | null) => translateValue(text.values, value);
   const name = `${vehicle.make} ${vehicle.model}`;
@@ -62,7 +64,7 @@ export function VehicleDetailView({ vehicle, back, className = '' }: { vehicle: 
   // A sold vehicle cannot be requested: the call to action looks for an alternative.
   // The form shows this text in its vehicle field (and the enquiry email carries it): a readable name, not the slug.
   const label = `${name}${vehicle.variant ? ` ${vehicle.variant}` : ''} (${vehicle.firstRegistrationYear})`;
-  const contactUrl = sold ? qualificationUrl({ intent: 'search', source: 'vehicle-sold' }) : `/contacto?${new URLSearchParams({ vehiculo: label, intent: 'vehicle' })}`;
+  const contactUrl = href(sold ? qualificationUrl({ intent: 'search', source: 'vehicle-sold' }) : `/contacto?${new URLSearchParams({ vehiculo: label, intent: 'vehicle' })}`);
   const cta = sold ? text.soldAlternative : text.request;
   const core = [
     { label: text.registration, value: formatRegistration(vehicle.firstRegistrationYear, vehicle.firstRegistrationMonth, locale) },
@@ -101,7 +103,7 @@ export function VehicleDetailView({ vehicle, back, className = '' }: { vehicle: 
       {vehicle.history ? <section className="vehicle-detail__section" aria-labelledby="vehicle-history"><h2 id="vehicle-history" className="type-heading">{text.history}</h2><p className="type-body">{vehicle.history}</p></section> : null}
       {vehicle.provenance ? <section className="vehicle-detail__section" aria-labelledby="vehicle-provenance"><h2 id="vehicle-provenance" className="type-heading">{text.provenance}</h2><p className="type-lede">{translate(vehicle.provenance)}</p></section> : null}
     </div>
-    <section className="interior-band vehicle-import"><h2 className="type-section">{text.importTitle}</h2><div><p className="type-body">{text.importBody}</p><Link className="editorial-link type-ui" to="/importacion">{text.importLink}<span aria-hidden="true">→</span></Link></div></section>
+    <section className="interior-band vehicle-import"><h2 className="type-section">{text.importTitle}</h2><div><p className="type-body">{text.importBody}</p><Link className="editorial-link type-ui" to={href('/importacion')}>{text.importLink}<span aria-hidden="true">→</span></Link></div></section>
     {extraImages.length > 1 ? <div className="vehicle-detail__extra">{extraImages.map((image, index) => <div key={`${image.src}-${index}`} className="vehicle-detail__extra-item" style={{ '--vehicle-image-fit': image.fit } as CSSProperties}><EditorialMedia asset={image} label={image.alt ?? `${name} · ${text.image} ${index + 2}`} /></div>)}</div> : null}
     <section className="interior-closing vehicle-detail__closing"><h2 className="type-heading">{name}{vehicle.variant ? <span className="type-fine"> {vehicle.variant}</span> : null}</h2><Button to={contactUrl}>{cta}</Button></section>
   </article>;

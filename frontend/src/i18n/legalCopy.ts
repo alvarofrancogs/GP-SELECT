@@ -81,15 +81,14 @@ export const legalPages: Record<LegalDoc, LegalPageCopy> = {
       {
         heading: 'Qué usamos',
         blocks: [
-          { p: ['Solo almacenamiento técnico en tu navegador, necesario para que la web funcione o para recordar una preferencia que eliges tú:'] },
+          { p: ['Solo almacenamiento técnico en tu navegador, necesario para que la web funcione:'] },
           { list: [
-            ['Idioma (almacenamiento local, «gp-select.locale.v1»): recuerda si prefieres la web en español o en inglés. Se guarda hasta que borres los datos del navegador.'],
             ['Pantalla de carga (almacenamiento de sesión, «gp-select.preloader.seen»): evita repetir la animación completa al recargar. Se borra al cerrar la pestaña.'],
             ['Sesión del área de administración (cookie técnica): solo se crea cuando inicia sesión el personal autorizado de GP SELECT.'],
           ] },
         ],
       },
-      { heading: 'Consentimiento', blocks: [{ p: ['Al ser elementos técnicos o de preferencia que solicitas tú, están exceptuados del deber de consentimiento (artículo 22.2 de la LSSI). Por eso la web no muestra un aviso de cookies.'] }] },
+      { heading: 'Consentimiento', blocks: [{ p: ['Al ser elementos técnicos, están exceptuados del deber de consentimiento (artículo 22.2 de la LSSI). Por eso la web no muestra un aviso de cookies.'] }] },
       { heading: 'Servicios de terceros', blocks: [{ p: ['La web no carga contenido de terceros que instale cookies: las tipografías y las imágenes se sirven desde nuestro propio servidor. Si abres un enlace externo, como WhatsApp, se aplica la política de ese servicio.'] }] },
       { heading: 'Cómo eliminarlo', blocks: [{ p: ['Puedes borrar este almacenamiento cuando quieras desde la configuración de tu navegador.'] }] },
       { heading: 'Cambios', blocks: [{ p: ['Si incorporamos herramientas de análisis u otras que usen cookies, lo indicaremos aquí y te pediremos el consentimiento antes de activarlas.'] }] },

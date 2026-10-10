@@ -54,3 +54,32 @@ describe('static structured data', () => {
     expect(dealer()).not.toHaveProperty('telephone');
   });
 });
+
+describe('language versions', () => {
+  const siteUrl = 'https://gpselect.com';
+  const pairs = [['/', '/en'], ['/vehiculos', '/en/vehicles'], ['/importacion', '/en/import'], ['/nosotros', '/en/about'], ['/contacto', '/en/contact']];
+  const links = (head: string) => [...head.matchAll(/<link data-page-meta rel="(canonical|alternate)"(?: hreflang="([^"]+)")? href="([^"]+)">/g)]
+    .map(([, rel, language, href]) => `${rel}${language ? `:${language}` : ''} ${href}`);
+
+  it.each(pairs)('%s and %s point at each other, themselves and the English x-default', (es, en) => {
+    const esHead = renderPageHead(getStaticPageMeta(es, siteUrl), siteUrl);
+    const enHead = renderPageHead(getStaticPageMeta(en, siteUrl), siteUrl);
+    const alternates = [`alternate:es ${siteUrl}${es}`, `alternate:en ${siteUrl}${en}`, `alternate:x-default ${siteUrl}${en}`];
+    expect(links(esHead)).toEqual([`canonical ${siteUrl}${es}`, ...alternates]);
+    expect(links(enHead)).toEqual([`canonical ${siteUrl}${en}`, ...alternates]);
+    expect(esHead).toContain('property="og:locale" content="es_ES"');
+    expect(esHead).toContain('property="og:locale:alternate" content="en_GB"');
+    expect(enHead).toContain('property="og:locale" content="en_GB"');
+    expect(enHead).toContain('property="og:locale:alternate" content="es_ES"');
+  });
+
+  it('declares no language versions without a site URL, nor on pages that exist in one language only', () => {
+    expect(renderPageHead(getStaticPageMeta('/en'))).not.toContain('hreflang');
+    const vehicle = fromPublicDetail(fixtures[0].vehicle as VehiclePublicDto);
+    expect(renderPageHead(getVehiclePageMeta(vehicle, siteUrl), siteUrl)).not.toContain('hreflang');
+    const english = getVehiclePageMeta(vehicle, siteUrl, 'en');
+    expect(english).toMatchObject({ robots: 'noindex,follow', locale: 'en', path: `/en/vehicles/${vehicle.slug}` });
+    expect(english.jsonLd).toBeUndefined();
+    expect(renderPageHead(english, siteUrl)).not.toContain('hreflang');
+  });
+});

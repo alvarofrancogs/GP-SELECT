@@ -7,7 +7,7 @@ import { useLanguage } from '../i18n/useLanguage';
 import { submitLead, validateLead, type LeadDraft, type LeadField, type LeadIntent } from '../lib/submitLead';
 
 export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: string }) {
-  const { copy, locale } = useLanguage();
+  const { copy, locale, href } = useLanguage();
   const notice = legalUi[locale].formNotice;
   const text = copy.interiors.contact;
   const id = useId();
@@ -119,7 +119,7 @@ export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: 
         {/* First information layer (GDPR art. 13); the full text is the privacy policy. */}
         <p className="contact-privacy type-ui">
           {notice.before}{legalConfig.holder ?? copy.brand}{notice.purpose}
-          <Link to={legalPaths.privacidad}>{notice.link}</Link>{notice.after}
+          <Link to={href(legalPaths.privacidad)}>{notice.link}</Link>{notice.after}
         </p>
       </form>
     </section>
