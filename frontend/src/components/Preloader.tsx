@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { useLanguage } from '../i18n/useLanguage';
 import { matchPage } from '../i18n/routes';
-import { sceneAssets } from '../assets/sceneAssets';
+import { sceneAssets, type SceneAsset } from '../assets/sceneAssets';
 import { prefetchVehicles } from '../services/vehicles';
 import '../styles/preloader.css';
 
@@ -24,9 +24,14 @@ function markSeen() {
   try { sessionStorage.setItem(SEEN_KEY, '1'); } catch { /* Private mode: every load is the full version. */ }
 }
 
-/** Downloads and decodes the image so the browser has it ready when the hero first paints. */
-function loadImage(src: string) {
+/** Downloads and decodes the image so the browser has it ready when the hero first paints.
+    The same srcset and sizes as the page, so it picks the same file and nothing downloads twice. */
+function loadImage({ src, srcSet, sizes }: SceneAsset) {
   const image = new Image();
+  if (srcSet && sizes) {
+    image.sizes = sizes;
+    image.srcset = srcSet;
+  }
   image.src = src;
   return image.decode().catch(() => undefined);
 }
@@ -48,7 +53,7 @@ export function Preloader() {
     const tasks = [
       document.fonts.ready,
       prefetchVehicles(),
-      ...(onHome ? [loadImage(sceneAssets.heroBackground.src), loadImage(sceneAssets.heroCar.src)] : []),
+      ...(onHome ? [loadImage(sceneAssets.heroBackground), loadImage(sceneAssets.heroCar)] : []),
     ];
     let done = 0;
     tasks.forEach((task) => void Promise.resolve(task).finally(() => { done += 1; }));
