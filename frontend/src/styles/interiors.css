@@ -11,12 +11,13 @@
 .interior-page .type-lede { font-size: clamp(1.25rem, 1.85vw, 2rem); }
 .interior-page .type-heading { font-size: clamp(1.4rem, 2.2vw, 2.75rem); }
 .interior-header { padding-top: calc(var(--header-height) + clamp(3rem, 6vw, 7rem)); padding-bottom: clamp(3.5rem, 6vw, 7rem); }
-.interior-header__line { display: grid; grid-template-columns: minmax(0, 2.15fr) minmax(0, 1fr); align-items: end; align-items: last baseline; gap: 3vw; }
-.interior-header h1 { font-size: clamp(4rem, 10.5vw, 12rem); white-space: nowrap; }
-.interior-header__line > p { max-width: 24ch; }
+.interior-header__line { display: grid; grid-template-columns: minmax(0, 2.15fr) minmax(0, 1fr); align-items: end; align-items: last baseline; gap: 3vw; font: inherit; }
+.interior-header__title, .interior-header__lede { display: block; }
+.interior-header__title { font-size: clamp(4rem, 10.5vw, 12rem); white-space: nowrap; }
+.interior-header__lede { max-width: 24ch; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .interior-header h1 { animation: interior-title-focus 650ms var(--ease-cinematic) both; }
+  .interior-header__title { animation: interior-title-focus 650ms var(--ease-cinematic) both; }
 }
 @keyframes interior-title-focus {
   from { opacity: 0; filter: blur(8px); transform: translateY(8px); }
@@ -93,7 +94,7 @@
 
 @media (min-width: 768px) and (max-width: 1199px) {
   .interior-header__line { grid-template-columns: minmax(0, 1fr) minmax(0, .6fr); }
-  .interior-header h1 { font-size: 9vw; }
+  .interior-header__title { font-size: 9vw; }
   .contact-content--channels { gap: 4vw; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
   .contact-content--channels .contact-fields { grid-template-columns: 1fr; }
 }
@@ -102,8 +103,8 @@
   .interior-page { --interior-space: 4.5rem; }
   .interior-header { padding-top: calc(var(--header-height) + 3rem); padding-bottom: 3.5rem; }
   .interior-header__line { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
-  .interior-header h1 { font-size: clamp(2.75rem, 14vw, 6.5rem); }
-  .interior-header__line > p { max-width: 24ch; margin-left: 17%; font-size: 1.15rem; }
+  .interior-header__title { font-size: clamp(2.75rem, 14vw, 6.5rem); }
+  .interior-header__lede { max-width: 24ch; margin-left: 17%; font-size: 1.15rem; }
   .editorial-media figcaption { flex-direction: column; gap: .25rem; font-size: .625rem; }
   .interior-closing h2 { font-size: 2.5rem; }
   .interior-closing__links { flex-direction: column; gap: 1.5rem; }
@@ -130,11 +131,11 @@
   align-items: start;
   gap: 5vw;
 }
-:is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header h1 {
+:is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__title {
   font-size: clamp(3.75rem, calc(1rem + 4.166667vw), 6rem);
   white-space: normal;
 }
-:is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__line > p {
+:is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__lede {
   max-width: 44ch;
   margin-left: 0;
   font-size: clamp(1.375rem, calc(.625rem + .833333vw), 1.625rem);
@@ -243,7 +244,7 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 1.75rem;
   }
-  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__line > p {
+  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__lede {
     margin-left: 24%;
     max-width: 44ch;
   }
@@ -253,8 +254,8 @@
 @media (max-width: 767px) {
   :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header { padding-top: calc(var(--header-height) + 1.75rem); padding-bottom: 2.5rem; }
   :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__line { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
-  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header h1 { font-size: clamp(2.375rem, calc(1.21rem + 5.29vw), 3.75rem); }
-  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__line > p { font-size: 1.1875rem; max-width: 44ch; }
+  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__title { font-size: clamp(2.375rem, calc(1.21rem + 5.29vw), 3.75rem); }
+  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__lede { font-size: 1.1875rem; max-width: 44ch; }
   :is(.about-page, .import-page) .type-section { font-size: clamp(1.875rem, calc(1.23rem + 2.645vw), 2.5rem); }
   :is(.about-page, .import-page) .type-heading { font-size: 1.25rem; }
   :is(.about-page, .import-page) .type-lede { font-size: 1.1875rem; }

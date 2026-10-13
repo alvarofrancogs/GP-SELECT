@@ -103,7 +103,8 @@ export function ServicesSection() {
                     <button id={buttonId} type="button" className="service-toggle" aria-expanded={expanded}
                       aria-controls={panelId} onClick={() => setActiveService(expanded ? null : item.id)}>
                       <span>{item.title}</span>
-                      <span className="service-toggle__icon" aria-hidden="true">{expanded ? '−' : '+'}</span>
+                      {/* The +/− is drawn by CSS so the heading text is only the service name. */}
+                      <span className="service-toggle__icon" aria-hidden="true" />
                     </button>
                   </h3>
                   {/* Always rendered so it can unfold; `inert` keeps a closed answer out of focus and assistive tech. */}

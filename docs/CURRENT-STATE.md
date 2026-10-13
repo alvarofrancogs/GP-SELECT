@@ -3,7 +3,7 @@
 
 ## PHASE
 
-**Estado vivo (13-10-2026): SEO B4 integrado en `main` (PR #7). B5 (textos B1) terminado en la rama `feat/seo-b5`, pendiente de revisión. Posicionamiento confirmado por el usuario: GP SELECT busca, acompaña y gestiona todo el proceso (búsqueda, revisión, negociación, transporte, matriculación y entrega). Según la operación, el coche se compra directamente a nombre del cliente o lo compra la empresa de GP SELECT y se lo vende con factura (confirmado por el cliente el 13-10-2026); la web lo dice y no publica el depósito.** Anterior: FINAL CLOSURE PASS, 3C PASS (01-10-2026). Arquitectura motion 1A–1F completada; no se modifica en B5.
+**Estado vivo (13-10-2026): SEO B4 y B5 integrados en `main` (PR #7 y #8). B6 (encabezados) terminado en `feat/seo-b6-headings`, pendiente de revisión; plan y estado de cada bloque en `docs/SEO-PHASE-B.md`. Posicionamiento confirmado por el usuario: GP SELECT busca, acompaña y gestiona todo el proceso (búsqueda, revisión, negociación, transporte, matriculación y entrega). Según la operación, el coche se compra directamente a nombre del cliente o lo compra la empresa de GP SELECT y se lo vende con factura (confirmado por el cliente el 13-10-2026); la web lo dice y no publica el depósito.** Anterior: FINAL CLOSURE PASS, 3C PASS (01-10-2026). Arquitectura motion 1A–1F completada; no se modifica en B6.
 
 Unidades: 1A PASS · 1B PASS · 1C PASS · 1D PASS · 1E PASS · 1F PASS.
 
@@ -287,7 +287,7 @@ Forma parte de 3C por decisión del usuario; no es una ampliación accidental de
 
 ### SEO Fase B · B0–B3 (09/10-10-2026; integrado en main mediante PR #6)
 
-Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el usuario; se trabaja un bloque cada vez y se para al final de cada uno.
+Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el usuario; se trabaja un bloque cada vez y se para al final de cada uno. **Plan completo, estado por bloque y decisiones que cambiaron: `docs/SEO-PHASE-B.md`.**
 
 - **B0 · línea base = aceptada con salvedad.** Frontend (typecheck, lint, Vitest 114/114), build con `VITE_SITE_URL=https://gpselect.com`, snapshot SEO de los 11 HTML, 210 capturas (ES 390/1440/1920, EN 1440/390, reduced-motion 1440/390) y `motion-reference.json`. **Pendiente:** `dotnet build`, `GpSelect.Tests` y `GpSelect.IntegrationTests` con .NET 10 y Docker (no disponibles en el portátil). Las capturas y scripts de B0 están en el scratchpad del portátil, no en el repo: en otro equipo se regeneran desde `5ad7945`.
 - **B1 · textos comerciales ES/EN = aprobado.** Documento «GP SELECT · B1 Textos comerciales ES/EN» (https://claude.ai/code/artifact/25e17078-5d37-4654-badb-80bc3d3eab64): 9 afirmaciones verificadas y 11 pendientes con su texto neutro. Se integran en **B5**, no antes; en B5 calibrar longitudes en Home, Process y Services (hay alternativas cortas, sin tocar GSAP).
@@ -317,7 +317,16 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 - **Pruebas:** Vitest 163/163, typecheck, lint y build; backend 150/150 unitarios y 155/155 de integración.
 - **Titularidad (13-10-2026, mensaje del cliente al usuario):** el coche va a nombre del cliente o de la empresa de GP SELECT según la operación, y GP SELECT negocia el precio. Sustituye a «el comprador es siempre el cliente» del documento B1: fuera «el coche se compra a tu nombre» y «el comprador eres tú»; FAQ 4 pasa a «¿A nombre de quién va el coche?»; nota en la ficha bajo el precio (también en el HTML de la API) que explica los dos casos; «negociamos» en Servicios, etapa 3 y Nosotros. El `Offer` sigue sin `seller` (depende de la operación). El depósito del 20 % no se publica (decisión del usuario). «Te confirmamos cuál antes de la compra» queda pendiente de confirmar con el cliente; conviene revisión legal.
 - **Pendiente fuera de código:** `og-default.jpg` con «Clientes en toda Europa» y versión inglesa (recurso gráfico). Datos [P] del documento B1 (seguro del transporte, lugar de entrega, honorarios, plazos…).
-- **Siguiente:** revisión y PR de `feat/seo-b5`; después B6 (H1 semánticos con los ledes) desde `feat/seo-b6`, y descartar esa rama.
+- **Cerrado:** integrado en `main` con el PR #8 (13-10-2026).
+
+### SEO B6 · encabezados semánticos (13-10-2026, rama `feat/seo-b6-headings`)
+
+- **Interiores** (portado de `feat/seo-b6`): en Importación, Nosotros, Vehículos y Contacto, ES/EN, el H1 es la línea de cabecera completa (título + lede visibles, dos `span`); el HTML sin JS lleva el mismo H1. La Home conserva su H1.
+- **Servicios (P3-2/O3):** el +/− lo dibuja CSS en un `span` con `aria-hidden`; el texto de cada H3 es solo el nombre del servicio.
+- **Sin hacer:** la prueba opcional del H1 de la Home (toca elementos que anima GSAP; es de Astra y solo se acepta si queda idéntica al píxel) y el H2 repetido de la ficha (O4).
+- **Verificación:** Vitest 171/171, typecheck, lint y build. Capturas contra `main`: interiores ES/EN a 390/768/1024/1440/1920 (página completa) y Servicios abierto/cerrado a 390/1440: 44 de 48 idénticas; las otras 4 difieren en 0–30 píxeles dentro de los marcadores de foto provisionales (ruido), ninguna en títulos ni iconos.
+- **Plan:** `docs/SEO-PHASE-B.md` (traído de `feat/seo-b6` y actualizado) recoge B0–B10, su estado y las decisiones que cambiaron.
+- **Siguiente:** revisión y PR; después borrar `feat/seo-b6`, y B8 (guía ES/EN).
 
 ### SEO-2 · fichas y sitemap desde el servidor = PASS (05-10-2026, tag `seo-2-pass`)
 
@@ -678,7 +687,7 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 7. **3B copy truth** (**PASS**, 01-10-2026);
 8. **3C final visual / asset polish** (**PASS**, 01-10-2026: UI Simplification, QA A–G y Real Stack Regression incluidas; sin push ni merge);
 9. **Siguiente: por decidir por el usuario**: sustituir las fotos del usuario según lleguen, y después 3D final release QA. SEO y dominio/deploy son fases aparte. NO iniciada.
-10. **SEO Fase B:** B0 aceptado con salvedad y B1 aprobado; B2/B3 integrados en main. B4 integrado en main (PR #7). B5 terminado en `feat/seo-b5`, pendiente de revisión; después B6. Ver los bloques «SEO B4» y «SEO B5».
+10. **SEO Fase B:** B0 aceptado con salvedad y B1 aprobado; B2/B3 integrados en main. B4 y B5 integrados en main (PR #7 y #8). B6 en `feat/seo-b6-headings`, pendiente de revisión; después B8. Plan en `docs/SEO-PHASE-B.md`.
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 
