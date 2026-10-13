@@ -94,7 +94,8 @@ function guideContent(locale: Locale): string {
     + section(text.sources.title, paragraph(text.sources.intro)
       + `<ul>${text.sources.rows.map((row) => `<li>${link(row.href, row.label)}</li>`).join('')}</ul>`)
     + section(text.closing, paragraph(text.closingBody)
-      + link(localizeHref(qualificationUrl({ intent: 'search', source: 'guia' }), locale), text.cta));
+      + link(localizeHref(qualificationUrl({ intent: 'search', source: 'guia' }), locale), text.cta)
+      + ' ' + link(pagePath('import', locale), text.secondary));
 }
 
 function contactContent(t: Dictionary, locale: Locale): string {

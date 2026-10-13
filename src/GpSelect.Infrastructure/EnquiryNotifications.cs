@@ -6,14 +6,16 @@ using Microsoft.Extensions.Logging;
 
 namespace GpSelect.Infrastructure;
 
-/// <summary>The email for one enquiry. Subject and body are plain text; the recipient comes from Enquiries:NotificationEmail.</summary>
+/// <summary>The email for one enquiry. Subject and body are plain text; the recipient comes from Enquiries:NotificationEmail.
+/// The email is for GP SELECT, so it stays in Spanish; it says which language to reply in.</summary>
 public sealed record EnquiryNotification(Guid EnquiryId, string Subject, string Body, string ReplyTo)
 {
     public static EnquiryNotification For(Enquiry e) => new(e.Id,
         // Name is one line (validated), so it is safe in a subject.
-        $"GP SELECT · {(e.Intent == EnquiryIntent.Vehicle ? "Consulta sobre un vehículo" : "Búsqueda de vehículo")} · {e.Name}",
+        $"GP SELECT · {(e.Intent == EnquiryIntent.Vehicle ? "Consulta sobre un vehículo" : "Búsqueda de vehículo")}{(e.Language == EnquiryLanguage.En ? " · en inglés" : "")} · {e.Name}",
         string.Join('\n',
             $"Tipo: {(e.Intent == EnquiryIntent.Vehicle ? "vehículo concreto" : "ayúdame a encontrarlo")}",
+            $"Idioma: {(e.Language == EnquiryLanguage.En ? "inglés (responde en inglés)" : "español")}",
             $"Nombre: {e.Name}",
             $"Email: {e.Email}",
             $"Teléfono: {e.Phone ?? "—"}",

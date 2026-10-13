@@ -4,6 +4,7 @@ import type { Plugin } from 'vite';
 import { adminMeta, escapeHtml, getStaticPageMeta, legalPageMeta, notFoundMeta, parseSiteUrl, renderPageHead, staticPageMeta } from '../src/lib/pageMeta';
 import { missingLegalFields } from '../src/config/legal';
 import type { PageMeta } from '../src/lib/pageMeta';
+import { findPendingCopy } from './pendingCopy';
 import { readableHead, renderLlmsText, renderReadableContent } from './readableContent';
 import { pagePaths } from '../src/i18n/routes';
 import { sceneAssets } from '../src/assets/sceneAssets';
@@ -94,6 +95,10 @@ export function seoPlugin(rawSiteUrl?: string): Plugin {
       const missingLegal = missingLegalFields();
       if (missingLegal.length) {
         this.warn(`Datos legales pendientes en src/config/legal.ts (${missingLegal.join(', ')}): las páginas legales los marcan como «Pendiente». Necesarios antes de publicar.`);
+      }
+      const pendingCopy = findPendingCopy();
+      if (pendingCopy.length) {
+        this.warn(`Textos con el marcador [P] (${pendingCopy.join(', ')}): esperan un dato del cliente y no se pueden publicar así.`);
       }
       const template = await readFile(resolve(outDir, 'index.html'), 'utf8');
       const pages = [

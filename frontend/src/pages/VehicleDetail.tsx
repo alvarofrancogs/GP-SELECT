@@ -8,7 +8,7 @@ import { EditorialMedia } from '../components/EditorialMedia';
 import { VehicleGallery } from '../components/VehicleGallery';
 import { VehicleSpecs } from '../components/VehicleSpecs';
 import { useLanguage } from '../i18n/useLanguage';
-import { contactConfig, showContactPreview } from '../config/contact';
+import { contactConfig, showContactPreview, whatsappUrl } from '../config/contact';
 import { consumeInitialVehicle, getInitialVehicle, getVehicle } from '../services/vehicles';
 import type { VehicleDetail as Vehicle } from '../types/vehicle';
 import { formatKm, formatPower, formatPrice, formatRegistration, translateValue } from '../lib/vehicleFormat';
@@ -63,6 +63,9 @@ export function VehicleDetailView({ vehicle, back, className = '' }: { vehicle: 
   // A sold vehicle cannot be requested: the call to action looks for an alternative.
   // The form shows this text in its vehicle field (and the enquiry email carries it): a readable name, not the slug.
   const label = `${name}${vehicle.variant ? ` ${vehicle.variant}` : ''} (${vehicle.firstRegistrationYear})`;
+  // The public address, also from the admin preview, so the chat says exactly which car.
+  const whatsappMessage = text.whatsappMessage.replace('{vehicle}', label)
+    .replace('{url}', `${window.location.origin}${href(`/vehiculos/${encodeURIComponent(vehicle.slug)}`)}`);
   const contactUrl = href(sold ? qualificationUrl({ intent: 'search', source: 'vehicle-sold' }) : `/contacto?${new URLSearchParams({ vehiculo: label, intent: 'vehicle' })}`);
   const cta = sold ? text.soldAlternative : text.request;
   const core = [
@@ -92,7 +95,7 @@ export function VehicleDetailView({ vehicle, back, className = '' }: { vehicle: 
         {sold ? null : <p className="vehicle-detail__availability type-ui">{text.ownership}</p>}
         <VehicleSpecs rows={core} />
         <Button to={contactUrl}>{cta}</Button>
-        {contactConfig.whatsapp ? <a className="editorial-link type-ui" href={`https://wa.me/${contactConfig.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer">{text.whatsapp}<span aria-hidden="true">→</span></a>
+        {contactConfig.whatsapp ? <a className="editorial-link type-ui" href={whatsappUrl(contactConfig.whatsapp, whatsappMessage)} target="_blank" rel="noreferrer">{text.whatsapp}<span aria-hidden="true">→</span></a>
           : showContactPreview ? <button type="button" className="editorial-link type-ui" disabled>{text.whatsapp}<span aria-hidden="true">→</span></button> : null}
       </aside>
     </div>

@@ -1,4 +1,4 @@
-export { contactConfig } from './contactChannels';
+export { contactConfig, whatsappUrl } from './contactChannels';
 
 // Show the editorial contact layout locally without inventing business channels.
 export const showContactPreview = import.meta.env.DEV;
