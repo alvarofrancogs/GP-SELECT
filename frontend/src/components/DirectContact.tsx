@@ -1,4 +1,4 @@
-import { contactConfig, showContactPreview } from '../config/contact';
+import { contactConfig, showContactPreview, whatsappUrl } from '../config/contact';
 import { useLanguage } from '../i18n/useLanguage';
 
 export function DirectContact() {
@@ -13,7 +13,7 @@ export function DirectContact() {
       {whatsapp || preview ? <div className="direct-contact__whatsapp">
         <h2 className="type-section">{text.whatsappTitle}</h2>
         <p className="type-body">{text.whatsappBody}</p>
-        {whatsapp ? <a className="editorial-link type-ui" href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer">
+        {whatsapp ? <a className="editorial-link type-ui" href={whatsappUrl(whatsapp, text.whatsappMessage)} target="_blank" rel="noreferrer">
           {text.whatsappCta}<span aria-hidden="true">→</span>
         </a> : <button className="editorial-link type-ui" type="button" disabled>
           {text.whatsappCta}<span aria-hidden="true">→</span>

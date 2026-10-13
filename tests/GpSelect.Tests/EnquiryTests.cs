@@ -18,6 +18,8 @@ public class EnquiryTests {
  [Fact] public void Message_has_a_maximum()=>Assert.Equal("message",Field(()=>Valid(message:new string('m',Enquiry.MessageMax+1))));
  [Fact] public void Control_characters_are_rejected(){Assert.Equal("name",Field(()=>Valid(name:"Ana\0López")));Assert.Equal("message",Field(()=>Valid(message:"Hola que tal\u0007 bien")));}
  [Fact] public void Unknown_intent_is_rejected()=>Assert.Equal("intent",Field(()=>Valid(intent:(EnquiryIntent)7)));
+ [Fact] public void Language_is_spanish_unless_given(){Assert.Equal(EnquiryLanguage.Es,Valid().Language);Assert.Equal(EnquiryLanguage.En,Enquiry.Create(EnquiryIntent.Search,"Ana López","ana@example.test",null,null,"Looking for a family car.",Now,EnquiryLanguage.En).Language);}
+ [Fact] public void Unknown_language_is_rejected()=>Assert.Equal("language",Field(()=>Enquiry.Create(EnquiryIntent.Search,"Ana López","ana@example.test",null,null,"Busco un coche familiar.",Now,(EnquiryLanguage)7)));
  [Fact] public void Failed_notifications_back_off_then_stop_without_losing_the_enquiry(){var e=Valid();e.NotificationFailed(Now);Assert.Equal(Now.AddMinutes(1),e.NotificationNextAttemptAt);e.NotificationFailed(Now);Assert.Equal(Now.AddMinutes(5),e.NotificationNextAttemptAt);for(var i=0;i<3;i++)e.NotificationFailed(Now);Assert.Equal(EnquiryNotificationStatus.Pending,e.NotificationStatus);e.NotificationFailed(Now);Assert.Equal((EnquiryNotificationStatus.Failed,Enquiry.MaxNotificationAttempts),(e.NotificationStatus,e.NotificationAttempts));}
  [Fact] public void Sent_notification_is_recorded(){var e=Valid();e.NotificationSent(Now);Assert.Equal((EnquiryNotificationStatus.Sent,Now,1),(e.NotificationStatus,e.NotifiedAt,e.NotificationAttempts));}
 }

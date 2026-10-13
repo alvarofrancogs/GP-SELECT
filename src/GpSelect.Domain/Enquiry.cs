@@ -4,6 +4,8 @@ using System.Text.RegularExpressions;
 namespace GpSelect.Domain;
 
 public enum EnquiryIntent { Vehicle, Search }
+/// <summary>The language the visitor wrote in, which is the language the reply goes out in.</summary>
+public enum EnquiryLanguage { Es, En }
 public enum EnquiryNotificationStatus { Pending, Sent, Failed }
 
 /// <summary>A contact-form enquiry. The stored row is the source of truth; the email notification is best effort.
@@ -19,6 +21,7 @@ public sealed class Enquiry
 
     public Guid Id { get; private set; } = Guid.NewGuid();
     public EnquiryIntent Intent { get; private set; }
+    public EnquiryLanguage Language { get; private set; }
     public string Name { get; private set; } = "";
     public string Email { get; private set; } = "";
     public string? Phone { get; private set; }
@@ -30,9 +33,11 @@ public sealed class Enquiry
     public DateTimeOffset NotificationNextAttemptAt { get; private set; }
     public DateTimeOffset? NotifiedAt { get; private set; }
 
-    public static Enquiry Create(EnquiryIntent intent, string? name, string? email, string? phone, string? vehicle, string? message, DateTimeOffset now)
+    public static Enquiry Create(EnquiryIntent intent, string? name, string? email, string? phone, string? vehicle, string? message, DateTimeOffset now,
+        EnquiryLanguage language = EnquiryLanguage.Es)
     {
         if (!Enum.IsDefined(intent)) throw new DomainException("invalid_intent", "intent is invalid", "intent");
+        if (!Enum.IsDefined(language)) throw new DomainException("invalid_language", "language is invalid", "language");
         var cleanName = Line(name, NameMax, "name") ?? throw new DomainException("required", "name is required", "name");
         if (cleanName.Length < NameMin) throw new DomainException("too_short", $"name needs at least {NameMin} characters", "name");
 
@@ -54,7 +59,7 @@ public sealed class Enquiry
 
         return new Enquiry
         {
-            Intent = intent, Name = cleanName, Email = cleanEmail, Phone = cleanPhone, Vehicle = cleanVehicle, Message = cleanMessage,
+            Intent = intent, Language = language, Name = cleanName, Email = cleanEmail, Phone = cleanPhone, Vehicle = cleanVehicle, Message = cleanMessage,
             CreatedAt = now, NotificationNextAttemptAt = now,
         };
     }

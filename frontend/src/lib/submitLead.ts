@@ -1,3 +1,5 @@
+import type { Locale } from '../i18n/types';
+
 export type LeadIntent = 'vehicle' | 'search';
 export interface LeadDraft {
   name: string;
@@ -37,8 +39,9 @@ async function problemField(response: Response): Promise<LeadField | null> {
   }
 }
 
-/** Sends to POST /api/public/enquiries when enabled; otherwise a local preview with no network or storage. */
-export async function submitLead(lead: LeadDraft, enabled: boolean): Promise<LeadResult> {
+/** Sends to POST /api/public/enquiries when enabled; otherwise a local preview with no network or storage.
+    The page language goes with it, so the reply is in the visitor's language. */
+export async function submitLead(lead: LeadDraft, enabled: boolean, language: Locale): Promise<LeadResult> {
   const invalid = validateLead(lead);
   if (invalid.length) return { ok: false, reason: 'invalid', fields: invalid };
   if (!enabled) return { ok: true, mode: 'preview' };
@@ -50,7 +53,7 @@ export async function submitLead(lead: LeadDraft, enabled: boolean): Promise<Lea
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
         intent: lead.intent === 'vehicle' ? 'Vehicle' : 'Search',
-        name: lead.name, email: lead.email, phone: lead.phone || null, vehicle: lead.vehicle || null, message: lead.message,
+        name: lead.name, email: lead.email, phone: lead.phone || null, vehicle: lead.vehicle || null, message: lead.message, language,
       }),
     });
   } catch {

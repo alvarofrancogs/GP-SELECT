@@ -41,6 +41,11 @@ namespace GpSelect.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasMaxLength(5000)
@@ -172,11 +177,11 @@ namespace GpSelect.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("OriginalKey");
+
                     b.HasIndex("VehicleUnitId")
                         .IsUnique()
                         .HasFilter("\"IsCover\" = TRUE AND \"State\" <> 'Deleted'");
-
-                    b.HasIndex("OriginalKey");
 
                     b.HasIndex(new[] { "VehicleUnitId" }, "IX_Images_VehicleUnitId_All");
 

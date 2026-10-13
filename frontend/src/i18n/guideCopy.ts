@@ -23,6 +23,8 @@ interface GuideCopy {
   closing: string;
   closingBody: string;
   cta: string;
+  /** Link to the Import page, which describes the service. */
+  secondary: string;
   breadcrumb: string;
 }
 
@@ -153,6 +155,7 @@ export const guideCopy: Record<Locale, GuideCopy> = {
     closing: '¿Prefieres que lo gestionemos nosotros?',
     closingBody: 'Cuéntanos qué coche buscas y dónde vives, y te decimos qué trámites tendría tu caso.',
     cta: 'Pedir una búsqueda',
+    secondary: 'Cómo funciona la importación',
     breadcrumb: 'Guía de importación',
   },
   en: {
@@ -279,6 +282,7 @@ export const guideCopy: Record<Locale, GuideCopy> = {
     closing: 'Would you rather we handled it?',
     closingBody: 'Tell us which car you want and where you live, and we will tell you which formalities your case would involve.',
     cta: 'Request a search',
+    secondary: 'How import works',
     breadcrumb: 'Import guide',
   },
 };

@@ -12,10 +12,10 @@ Plan aprobado por el usuario el 09-10-2026 (sesión del portátil). Sustituye a 
 | B3 · HTML EN, head, hreflang, sitemap | Hecho | `main` (PR #6) |
 | B4 · Vehículos EN | Hecho | `main` (PR #7) |
 | B5 · Textos aprobados | Hecho | `main` (PR #8) |
-| B6 · Encabezados semánticos | Interiores y Servicios hechos; H1 de la Home sin hacer (opcional) | `feat/seo-b6-headings` |
+| B6 · Encabezados semánticos | Interiores y Servicios hechos; H1 de la Home sin hacer (opcional) | `main` (PR #9) |
 | B7 · Secciones nuevas | **Absorbido por B5** | Ver abajo |
-| B8 · Guía ES/EN | Hecha, pendiente de aprobación de textos | `feat/seo-b8-guide` |
-| B9 · Entidad, GEO y conversión | Pendiente | — |
+| B8 · Guía ES/EN | Hecha, textos aprobados por el usuario | PR #10 |
+| B9 · Entidad, GEO y conversión | Hecho | `feat/seo-b9` (sobre B8) |
 | B10 · Validación final | Pendiente | — |
 
 Orden aprobado: B0 → B1 → B2 y B3 → B5, B6 y B7 → B4 → B8 → B9 → B10 (en la práctica B4 se hizo antes de B5). Un commit por bloque; sin push ni merge sin aprobación; tag `seo-phase-b-pass` al final.
@@ -88,6 +88,12 @@ Orden aprobado: B0 → B1 → B2 y B3 → B5, B6 y B7 → B4 → B8 → B9 → B
 - Solución: Schema final; matriz de enlaces internos (Home → Importación y Vehículos; Importación ↔ guía; fichas → Importación; Nosotros → Importación; cada página EN enlaza solo a EN); idioma de la consulta guardado y mostrado en el aviso, respuesta en el idioma del cliente; mensaje de WhatsApp en EN; el build avisa si queda un marcador `[P]`.
 - Modelo: Opus; agentes seo-schema y seo-geo para revisar.
 - Aceptación: JSON-LD válido, `@id` coherentes, consulta en modo vista previa mientras el formulario siga desactivado *(cortado)*.
+- **Hecho (13-10-2026, `feat/seo-b9`):**
+  - **Schema:** el negocio tiene un solo `@id` (`/#organization`) en todas las páginas que lo nombran (prueba en `pageMeta.test.ts`); `knowsLanguage` es/en; el Article de la guía lleva `image`. Sin `legalName` ni `taxID`: el titular es una persona física y faltan datos legales.
+  - **Enlaces:** la guía enlaza a Importación en su cierre (nuevo, mismo patrón que Nosotros). El resto de la matriz ya existía: Importación → guía, fichas → Importación, Nosotros → Importación, Home → Vehículos (catálogo) y Home → Importación por la cabecera y el pie. No se añade un enlace en el cuerpo de la Home: es una sección aprobada del mockup (Astra). Una prueba recorre todas las páginas EN y exige que solo enlacen a EN.
+  - **Idioma de la consulta:** `language` (`es`/`en`) en `POST /api/public/enquiries`, opcional y `es` por defecto; columna `Language` (migración `AddEnquiryLanguage`, las filas anteriores quedan `Es`). El email de aviso sigue en español y dice «Idioma: inglés (responde en inglés)», con «en inglés» en el asunto. El formulario sigue en vista previa en producción hasta activarlo.
+  - **WhatsApp:** los enlaces abren el chat con un primer mensaje en el idioma de la página; desde una ficha nombra el coche y su dirección pública.
+  - **[P]:** `build/pendingCopy.ts` busca el marcador en todos los textos públicos; el build avisa y una prueba falla si aparece.
 
 ### B10 · Validación final
 - La matriz completa de pruebas (build, lint, typecheck, tests, HTML sin JS, metadatos y canonical, hreflang recíproco, sitemap ES/EN, navegación y selector, enlaces y CTAs, capturas a 390/1440/1920, GSAP/ScrollTrigger/reduced-motion, sin regresiones de la Fase A). Las comprobaciones mecánicas se delegan; Opus da el gate, actualiza `CURRENT-STATE.md` y pone el tag.

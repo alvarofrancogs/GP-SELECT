@@ -59,6 +59,8 @@ export interface InteriorCopy {
     whatsappTitle: string;
     whatsappBody: string;
     whatsappCta: string;
+    /** First message of the WhatsApp chat. */
+    whatsappMessage: string;
     phoneLabel: string;
     emailLabel: string;
   };
@@ -107,6 +109,8 @@ export interface VehicleCopy extends InteriorHeaderCopy {
   soldAlternative: string;
   request: string;
   whatsapp: string;
+  /** First WhatsApp message from a vehicle page; {vehicle} is its name and {url} its address. */
+  whatsappMessage: string;
   registration: string;
   power: string;
   description: string;

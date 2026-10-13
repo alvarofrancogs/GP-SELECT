@@ -326,14 +326,21 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 - **Sin hacer:** la prueba opcional del H1 de la Home (toca elementos que anima GSAP; es de Astra y solo se acepta si queda idéntica al píxel) y el H2 repetido de la ficha (O4).
 - **Verificación:** Vitest 171/171, typecheck, lint y build. Capturas contra `main`: interiores ES/EN a 390/768/1024/1440/1920 (página completa) y Servicios abierto/cerrado a 390/1440: 44 de 48 idénticas; las otras 4 difieren en 0–30 píxeles dentro de los marcadores de foto provisionales (ruido), ninguna en títulos ni iconos.
 - **Plan:** `docs/SEO-PHASE-B.md` (traído de `feat/seo-b6` y actualizado) recoge B0–B10, su estado y las decisiones que cambiaron.
-- **Siguiente:** PR #9; después borrar `feat/seo-b6`.
+- **Cerrado:** integrado en `main` con el PR #9 (13-10-2026). `feat/seo-b6` se puede borrar.
 
 ### SEO B8 · guía de importación ES/EN (13-10-2026, rama `feat/seo-b8-guide`, sobre B6)
 
 - Página `/guias/importar-un-coche-de-europa` y `/en/guides/importing-a-car-from-europe` con la composición de Importación. Detalle, fuentes y decisiones en `docs/SEO-PHASE-B.md` (bloque B8).
 - **Verificación:** Vitest 179/179, typecheck, lint y build (las dos páginas y el sitemap); backend 150/150 y 155/155; Caddyfile validado con Caddy 2.10.2; navegador a 390 y 1440 ES/EN sin errores ni scroll horizontal.
-- **Pendiente:** aprobación del usuario de los textos (contenido normativo) y, recomendado, revisión de un gestor o asesor fiscal. No publicar sin ella.
-- **Siguiente:** B9 (entidad, enlaces internos, idioma de la consulta).
+- **Textos aprobados por el usuario** (13-10-2026). Recomendado: revisión de un gestor o asesor fiscal antes de publicar.
+- **Siguiente:** PR #10.
+
+### SEO B9 · entidad, enlaces internos e idioma de la consulta (13-10-2026, rama `feat/seo-b9`, sobre B8)
+
+- Un solo `@id` del negocio en todo el JSON-LD, `knowsLanguage` es/en e `image` en el Article. La guía enlaza a Importación; una prueba exige que cada página EN enlace solo a EN. Idioma de la consulta guardado (migración `AddEnquiryLanguage`) y mostrado en el email de aviso. WhatsApp con primer mensaje en el idioma de la página. El build avisa de cualquier texto con [P]. Detalle en `docs/SEO-PHASE-B.md` (bloque B9).
+- **Verificación:** Vitest 193/193, typecheck, lint y build; backend 153/153 y 156/156 de integración (migración aplicada sobre Postgres); captura del cierre de la guía a 390 y 1440.
+- **Pendiente del usuario:** revisar los mensajes de WhatsApp («Hola, quiero buscar un coche con GP SELECT.» / «Hola, me interesa el {coche}: {dirección}» y sus versiones EN).
+- **Siguiente:** B10 (validación final y tag `seo-phase-b-pass`).
 
 ### SEO-2 · fichas y sitemap desde el servidor = PASS (05-10-2026, tag `seo-2-pass`)
 

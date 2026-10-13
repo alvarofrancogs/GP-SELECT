@@ -45,7 +45,7 @@ export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: 
     setStatus('submitting');
     setRateLimited(false);
     try {
-      const result = await submitLead(lead, enquiriesEnabled);
+      const result = await submitLead(lead, enquiriesEnabled, locale);
       if (result.ok) {
         setSent(result.mode === 'sent');
         setStatus('success');

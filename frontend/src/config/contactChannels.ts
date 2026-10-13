@@ -15,3 +15,8 @@ export const contactConfig: ContactConfig = {
   email: null,
   sameAs: [],
 };
+
+/** A WhatsApp chat with the first message already written, in the visitor's language. */
+export function whatsappUrl(number: string, message: string): string {
+  return `https://wa.me/${number.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+}

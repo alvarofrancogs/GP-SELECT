@@ -7,7 +7,7 @@ import { contactConfig } from '../config/contactChannels';
 import { fromPublicDetail } from '../services/vehicles';
 import type { Locale } from '../i18n/types';
 import type { VehiclePublicDto } from '../types/vehicle';
-import { getStaticPageMeta, getVehiclePageMeta, renderPageHead } from './pageMeta';
+import { getStaticPageMeta, getVehiclePageMeta, renderPageHead, staticPageMeta } from './pageMeta';
 
 describe('shared vehicle SEO fixtures', () => {
   for (const fixture of fixtures) {
@@ -34,6 +34,17 @@ describe('static structured data', () => {
     expect(graph[0]).toMatchObject({ '@type': 'AutomotiveBusiness', '@id': `${siteUrl}/#organization`, telephone: '+34661631555' });
     expect(graph[1]).toMatchObject({ '@id': `${siteUrl}/#website`, publisher: { '@id': `${siteUrl}/#organization` } });
     expect(getStaticPageMeta('/importacion', siteUrl).jsonLd!.provider).toMatchObject({ '@type': 'AutomotiveBusiness', '@id': `${siteUrl}/#organization` });
+  });
+
+  it('names the business with one @id on every page that mentions it', () => {
+    const siteUrl = 'https://gp-select.example';
+    const ids = (value: unknown): string[] => !value || typeof value !== 'object' ? []
+      : Object.entries(value).flatMap(([key, item]) => key === '@id' && typeof item === 'string' ? [item] : ids(item));
+    const business = Object.keys(staticPageMeta).flatMap((path) => ids(getStaticPageMeta(path, siteUrl).jsonLd))
+      .filter((id) => id.includes('#organization'));
+    expect(business.length).toBeGreaterThanOrEqual(6);
+    expect(new Set(business)).toEqual(new Set([`${siteUrl}/#organization`]));
+    expect((getStaticPageMeta('/en', siteUrl).jsonLd!['@graph'] as Record<string, unknown>[])[0].knowsLanguage).toEqual(['es', 'en']);
   });
 
   it.each([['/', 'es'], ['/en', 'en']] as const)('uses the entity copy for the %s business node', (path, locale) => {

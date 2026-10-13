@@ -173,6 +173,8 @@ export function getStaticPageMeta(path: string, siteUrl?: string): PageMeta {
         description: entityCopy[locale],
         ...(siteUrl ? { '@id': `${siteUrl}/#organization`, url: `${siteUrl}/` } : {}),
         logo: assetUrl('/assets/seo/logo.png', siteUrl),
+        // The site and its enquiries work in both languages; the reply goes out in the visitor's.
+        knowsLanguage: ['es', 'en'],
         areaServed: [
           { '@type': 'Country', name: place.country },
           { '@type': 'AdministrativeArea', name: place.region },
@@ -228,6 +230,7 @@ function guideJsonLd(meta: PageMeta, siteUrl?: string): Record<string, unknown> 
     '@graph': [{
       '@type': 'Article', headline: meta.title.replace(/ · GP SELECT$/, ''), description: meta.description,
       inLanguage: locale, datePublished: text.reviewed.iso, dateModified: text.reviewed.iso,
+      image: assetUrl('/assets/seo/og-default.jpg', siteUrl),
       author: organization, publisher: organization,
       ...(siteUrl ? { mainEntityOfPage: `${siteUrl}${meta.path}`, url: `${siteUrl}${meta.path}` } : {}),
     }, ...(siteUrl ? [{

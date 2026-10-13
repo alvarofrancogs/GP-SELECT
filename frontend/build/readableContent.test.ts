@@ -3,7 +3,7 @@ import { renderLlmsText, renderReadableContent } from './readableContent';
 import { entityCopy } from '../src/i18n/entityCopy';
 import { es } from '../src/i18n/es';
 import { en } from '../src/i18n/en';
-import { escapeHtml } from '../src/lib/pageMeta';
+import { escapeHtml, legalPageMeta, staticPageMeta } from '../src/lib/pageMeta';
 
 it('leaves one empty vehicle-list marker pair inside the catalogue main', () => {
   const html = renderReadableContent('/vehiculos');
@@ -103,3 +103,22 @@ it('lists the guide in llms.txt in both languages', () => {
   expect(llms).toContain('(https://gpselect.com/en/guides/importing-a-car-from-europe)');
 });
 
+
+it('links each English page only to English pages', () => {
+  const english = [...Object.keys(staticPageMeta), ...Object.keys(legalPageMeta)].filter((path) => path.startsWith('/en'));
+  for (const path of [...english, '/en/404.html']) {
+    const internal = [...renderReadableContent(path).matchAll(/href="(\/[^"]*)"/g)].map((match) => match[1]);
+    expect(internal.length, path).toBeGreaterThan(0);
+    expect(internal.filter((href) => href !== '/en' && !href.startsWith('/en/')), path).toEqual([]);
+  }
+});
+
+it.each([
+  ['/', '/vehiculos'], ['/en', '/en/vehicles'],
+  ['/importacion', '/guias/importar-un-coche-de-europa'], ['/en/import', '/en/guides/importing-a-car-from-europe'],
+  ['/guias/importar-un-coche-de-europa', '/importacion'], ['/en/guides/importing-a-car-from-europe', '/en/import'],
+  ['/nosotros', '/importacion'], ['/en/about', '/en/import'],
+])('links %s to %s in its content', (path, target) => {
+  const main = renderReadableContent(path).split('</main>')[0];
+  expect(main).toContain(`href="${target}"`);
+});

@@ -65,6 +65,7 @@ export function Guide() {
         <p className="type-body">{text.closingBody}</p>
         <div className="interior-closing__links">
           <Link className="editorial-link type-lede" to={href(qualificationUrl({ intent: 'search', source: 'guia' }))}>{text.cta}<span aria-hidden="true">→</span></Link>
+          <Link className="editorial-link type-ui" to={href('/importacion')}>{text.secondary}<span aria-hidden="true">→</span></Link>
         </div>
       </section>
     </article>

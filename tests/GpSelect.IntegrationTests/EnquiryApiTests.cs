@@ -13,8 +13,8 @@ namespace GpSelect.IntegrationTests;
 
 public sealed class EnquiryApiTests(ApiFactory api) : IClassFixture<ApiFactory>
 {
-    private static object Body(string message = "Busco un coche familiar, gracias.", string intent = "Search", string? vehicle = null, string name = "Ana López") =>
-        new { intent, name, email = "ana@example.test", phone = "+34 600 000 000", vehicle, message };
+    private static object Body(string message = "Busco un coche familiar, gracias.", string intent = "Search", string? vehicle = null, string name = "Ana López", string? language = null) =>
+        new { intent, name, email = "ana@example.test", phone = "+34 600 000 000", vehicle, message, language };
 
     private static HttpRequestMessage Post(object body, string peer)
     {
@@ -47,6 +47,18 @@ public sealed class EnquiryApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Equal((EnquiryIntent.Vehicle, "Ana López", "ana@example.test", "+34 600 000 000", "porsche-911-x"), (stored.Intent, stored.Name, stored.Email, stored.Phone, stored.Vehicle));
         Assert.Equal((EnquiryNotificationStatus.Pending, 0), (stored.NotificationStatus, stored.NotificationAttempts));
         Assert.InRange(stored.CreatedAt, DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddSeconds(5));
+    }
+
+    [Fact]
+    public async Task The_language_is_stored_and_spanish_when_absent()
+    {
+        var english = "English " + Guid.NewGuid().ToString("N");
+        var unset = "Sin idioma " + Guid.NewGuid().ToString("N");
+        await Read(await api.Anonymous().SendAsync(Post(Body(english, language: "en"), "198.51.100.68")), HttpStatusCode.Accepted);
+        await Read(await api.Anonymous().SendAsync(Post(Body(unset), "198.51.100.68")), HttpStatusCode.Accepted);
+        Assert.Equal(EnquiryLanguage.En, await Db(db => db.Enquiries.Where(x => x.Message == english).Select(x => x.Language).SingleAsync()));
+        Assert.Equal(EnquiryLanguage.Es, await Db(db => db.Enquiries.Where(x => x.Message == unset).Select(x => x.Language).SingleAsync()));
+        Assert.Equal(HttpStatusCode.BadRequest, (await api.Anonymous().SendAsync(Post(Body(language: "fr"), "198.51.100.69"))).StatusCode);
     }
 
     private static int invalidPeer;

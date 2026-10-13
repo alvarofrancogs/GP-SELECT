@@ -57,6 +57,17 @@ public class DebtCloseUnitTests
     }
 
     [Fact]
+    public void Enquiry_email_says_which_language_to_reply_in()
+    {
+        var spanish = EnquiryNotification.For(Enquiry.Create(EnquiryIntent.Search, "María Pérez", "customer@example.test", null, null, "Busco un vehículo.", DateTimeOffset.UtcNow));
+        var english = EnquiryNotification.For(Enquiry.Create(EnquiryIntent.Search, "Mary Price", "customer@example.test", null, null, "Looking for a car.", DateTimeOffset.UtcNow, EnquiryLanguage.En));
+        Assert.Equal("GP SELECT · Búsqueda de vehículo · María Pérez", spanish.Subject);
+        Assert.Contains("Idioma: español", spanish.Body);
+        Assert.Equal("GP SELECT · Búsqueda de vehículo · en inglés · Mary Price", english.Subject);
+        Assert.Contains("Idioma: inglés (responde en inglés)", english.Body);
+    }
+
+    [Fact]
     public void Equipment_is_deduplicated_and_an_oversized_list_stops_at_the_limit()
     {
         Assert.Equal("[\"Techo\",\"Navegador\"]", VehicleContent.WriteEquipment(["Techo", "techo", " Navegador ", "TECHO"]));

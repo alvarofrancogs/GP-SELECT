@@ -15,7 +15,8 @@ public sealed record GalleryChanges(IReadOnlyList<Guid>? Order, IReadOnlyList<Gu
 public sealed record SaveVehicleRequest(UpdateVehicleRequest? Changes, GalleryChanges? Gallery, StatusChangeRequest? Status);
 public interface ISlugGenerator { string Generate(string make, string model); }
 /// <summary>Public contact form. Exactly the form's fields; all nullable so the domain answers with a per-field problem.</summary>
-public sealed record CreateEnquiryRequest(EnquiryIntent? Intent, string? Name, string? Email, string? Phone, string? Vehicle, string? Message);
+// Language is optional so a page cached before it existed still sends; Spanish is the default.
+public sealed record CreateEnquiryRequest(EnquiryIntent? Intent, string? Name, string? Email, string? Phone, string? Vehicle, string? Message, EnquiryLanguage? Language = null);
 
 public sealed record VehicleAdminListDto(Guid Id, string Slug, VehicleStatus Status, string Make, string Model, string? Variant, int Year, int? Month,
     int? MileageKm, int? PowerHp, decimal? PriceEur, string? InternalReference, string? CoverCardUrl, int ImageCount, int ReadyImageCount,
