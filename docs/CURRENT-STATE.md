@@ -339,8 +339,14 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 
 - Un solo `@id` del negocio en todo el JSON-LD, `knowsLanguage` es/en e `image` en el Article. La guía enlaza a Importación; una prueba exige que cada página EN enlace solo a EN. Idioma de la consulta guardado (migración `AddEnquiryLanguage`) y mostrado en el email de aviso. WhatsApp con primer mensaje en el idioma de la página. El build avisa de cualquier texto con [P]. Detalle en `docs/SEO-PHASE-B.md` (bloque B9).
 - **Verificación:** Vitest 193/193, typecheck, lint y build; backend 153/153 y 156/156 de integración (migración aplicada sobre Postgres); captura del cierre de la guía a 390 y 1440.
-- **Pendiente del usuario:** revisar los mensajes de WhatsApp («Hola, quiero buscar un coche con GP SELECT.» / «Hola, me interesa el {coche}: {dirección}» y sus versiones EN).
-- **Siguiente:** B10 (validación final y tag `seo-phase-b-pass`).
+- **Cerrado:** integrado en `main` con el PR #11 (13-10-2026). Pendiente del usuario: revisar los mensajes de WhatsApp («Hola, quiero buscar un coche con GP SELECT.» / «Hola, me interesa el {coche}: {dirección}» y sus versiones EN).
+
+### SEO B10 · validación final de la Fase B = PASS (13-10-2026, rama `feat/seo-b10`)
+
+- Matriz completa sobre `main` tras el PR #11: pruebas front y back, HTML del build (metadatos, canonical, hreflang recíproco, sitemap, JSON-LD, robots, `llms.txt`), navegador en 22 rutas a 390/1440/1920 (errores, scroll horizontal, H1, selector de idioma, enlaces, 404), Home en 7 posiciones de scroll y con reduced-motion. Detalle en `docs/SEO-PHASE-B.md` (bloque B10).
+- **Corregido:** `spa.html` pasa a `noindex,follow`, como `en/spa.html`.
+- **Tag:** `seo-phase-b-pass` sobre `main` al integrar este PR.
+- **Fase B cerrada.** Lo que queda es externo al código: revisión legal y datos del titular, revisión de la guía por un gestor, `og-default.jpg`, dominio y servidor, proveedor de email (formulario aún en vista previa), CSP y licencia de ImageSharp.
 
 ### SEO-2 · fichas y sitemap desde el servidor = PASS (05-10-2026, tag `seo-2-pass`)
 
@@ -686,7 +692,7 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 
 ## CHECKPOINTS (tags de git)
 
-`pre-car-handoff` · `2f-a-pass` · `2f-b-pass` · `2f-c1-pass` · `2f-c2-pass` · `home-handoff-fix-pass` · **`home-closed-pass`** (HOME cerrada, 30-09-2026) · `2f-c3-pass` · `2g-pass` · `3a-production-ready-pass` · `final-technical-qa-pass` · `3b-copy-truth-pass` · **`3c-pass`** (último checkpoint). Cada unidad aprobada se cierra con un tag `<unidad>-pass`.
+`pre-car-handoff` · `2f-a-pass` · `2f-b-pass` · `2f-c1-pass` · `2f-c2-pass` · `home-handoff-fix-pass` · **`home-closed-pass`** (HOME cerrada, 30-09-2026) · `2f-c3-pass` · `2g-pass` · `3a-production-ready-pass` · `final-technical-qa-pass` · `3b-copy-truth-pass` · **`3c-pass`** · … · **`seo-phase-b-pass`** (SEO Fase B, 13-10-2026; último checkpoint). Cada unidad aprobada se cierra con un tag `<unidad>-pass`.
 
 ## NEXT
 

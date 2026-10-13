@@ -15,8 +15,8 @@ Plan aprobado por el usuario el 09-10-2026 (sesión del portátil). Sustituye a 
 | B6 · Encabezados semánticos | Interiores y Servicios hechos; H1 de la Home sin hacer (opcional) | `main` (PR #9) |
 | B7 · Secciones nuevas | **Absorbido por B5** | Ver abajo |
 | B8 · Guía ES/EN | Hecha, textos aprobados por el usuario | `main` (PR #10) |
-| B9 · Entidad, GEO y conversión | Hecho | `feat/seo-b9` |
-| B10 · Validación final | Pendiente | — |
+| B9 · Entidad, GEO y conversión | Hecho | `main` (PR #11) |
+| B10 · Validación final | **PASS** | `feat/seo-b10`; tag `seo-phase-b-pass` al integrarlo |
 
 Orden aprobado: B0 → B1 → B2 y B3 → B5, B6 y B7 → B4 → B8 → B9 → B10 (en la práctica B4 se hizo antes de B5). Un commit por bloque; sin push ni merge sin aprobación; tag `seo-phase-b-pass` al final.
 
@@ -97,6 +97,13 @@ Orden aprobado: B0 → B1 → B2 y B3 → B5, B6 y B7 → B4 → B8 → B9 → B
 
 ### B10 · Validación final
 - La matriz completa de pruebas (build, lint, typecheck, tests, HTML sin JS, metadatos y canonical, hreflang recíproco, sitemap ES/EN, navegación y selector, enlaces y CTAs, capturas a 390/1440/1920, GSAP/ScrollTrigger/reduced-motion, sin regresiones de la Fase A). Las comprobaciones mecánicas se delegan; Opus da el gate, actualiza `CURRENT-STATE.md` y pone el tag.
+- **PASS (13-10-2026, sobre `main` tras el PR #11):**
+  - **Pruebas:** Vitest 193/193, typecheck, lint y build con `VITE_SITE_URL`; backend 153/153 unitarias y 156/156 de integración (Postgres con Testcontainers, incluidas las fichas y el sitemap de `SeoController`).
+  - **HTML del build** (23 archivos): un title y una description por página; en las 12 indexadas, canonical propio, `lang` correcto, un H1, hreflang es/en/x-default recíproco y presentes en el sitemap (12 URL, ninguna `noindex`). JSON-LD válido. Sin `[P]`, `undefined` ni `null` en el contenido. `robots.txt` y `llms.txt` correctos.
+  - **Navegador** (preview con la API simulada), 22 rutas × 390/1440/1920: sin errores de consola, sin scroll horizontal, un H1 visible, `lang`, canonical y hreflang en la navegación del cliente, el selector de idioma lleva a la página equivalente (fichas incluidas), las páginas EN solo enlazan a EN salvo el selector, 36 enlaces internos responden 200 y las 404 son `noindex`.
+  - **Motion:** la Home recorrida en 7 posiciones a cada ancho sin regresiones frente a la Fase A; con `prefers-reduced-motion` todo el texto queda visible salvo las respuestas cerradas del acordeón de Servicios (cerradas a propósito).
+  - **Corregido en B10:** `spa.html` (la plantilla de las fichas, que también se sirve como 503 si cae la API) era indexable y sin canonical; ahora es `noindex,follow` como `en/spa.html`. La API sigue sustituyendo su bloque de metadatos en cada ficha.
+  - **Aceptado:** la description de `/admin` es corta (página privada, `noindex,nofollow`). Caddyfile sin cambios desde su validación en B8.
 
 ## Estrategia (resumen del plan)
 
