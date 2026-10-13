@@ -115,9 +115,10 @@ export function seoPlugin(rawSiteUrl?: string): Plugin {
         { file: 'admin/index.html', meta: adminMeta, content: '' },
         { file: '404.html', meta: notFoundMeta.es, content: renderReadableContent('/404.html') },
         { file: 'en/404.html', meta: notFoundMeta.en, content: renderReadableContent('/en/404.html') },
-        // Vehicle pages: the API (SeoController) fills this shell's metadata and #root per vehicle. Served as is,
-        // it is a neutral page that never claims to be the home. It always carries the readable-content styles.
-        { file: 'spa.html', meta: { title: 'GP SELECT', description: staticPageMeta['/'].description }, content: '', readable: true },
+        // Vehicle pages: the API (SeoController) fills this shell's metadata and #root per vehicle. Served as is
+        // (a direct visit, or the 503 fallback), it is a neutral noindex page that never claims to be the home.
+        // It always carries the readable-content styles.
+        { file: 'spa.html', meta: { title: 'GP SELECT', description: staticPageMeta['/'].description, robots: 'noindex,follow' }, content: '', readable: true },
         // English shell: the API replaces its neutral metadata and fills the vehicle content.
         { file: 'en/spa.html', meta: { title: 'GP SELECT', description: staticPageMeta['/en'].description, locale: 'en', robots: 'noindex,follow' }, content: '', readable: true },
       ];
