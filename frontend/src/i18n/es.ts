@@ -3,7 +3,7 @@ import type { Dictionary } from './types';
 export const es: Dictionary = {
   vehicles: {
     "title": "Vehículos",
-    "lede": "El catálogo de GP SELECT: coches europeos con las fotografías y los datos de cada unidad.",
+    "lede": "Coches premium y deportivos seleccionados en Europa, con las fotografías y los datos de cada unidad.",
     "singular": "vehículo",
     "plural": "vehículos",
     "filters": "Filtros",
@@ -32,7 +32,7 @@ export const es: Dictionary = {
     "showMore": "Ver más",
     "empty": "Ningún vehículo coincide con tu búsqueda.",
     "search": "Pedir una búsqueda",
-    "closing": "Si el coche que quieres no está aquí, lo buscamos en Europa.",
+    "closing": "Si el coche que quieres no está aquí, lo buscamos por encargo en el mercado europeo.",
     "find": "Pedir una búsqueda",
     "loading": "Cargando vehículos…",
     "error": "No hemos podido cargar los vehículos.",
@@ -56,7 +56,7 @@ export const es: Dictionary = {
     "interiorColour": "Color interior",
     "history": "Historial",
     "importTitle": "¿Buscas otra configuración?",
-    "importBody": "Buscamos en el mercado europeo una unidad con el motor, el equipamiento y el presupuesto que tienes en mente, y te acompañamos en la compra y la importación.",
+    "importBody": "Buscamos en el mercado europeo una unidad con el motor, el equipamiento y el presupuesto que tienes en mente, y gestionamos su compra, importación y entrega.",
     "importLink": "Cómo funciona la importación",
     "gallery": "Galería del vehículo",
     "previous": "Imagen anterior",
@@ -90,10 +90,10 @@ export const es: Dictionary = {
   interiors: {
     about: {
       title: 'Nosotros',
-      lede: 'GP SELECT busca y selecciona vehículos premium europeos para cada cliente, desde Murcia y para toda España y Europa. Trabajamos a partir de una conversación: qué quieres conducir, cómo lo vas a usar y qué es importante para ti.',
+      lede: "GP SELECT gestiona por encargo la búsqueda, la compra y la importación de coches premium europeos para clientes de toda Europa. Empezamos por cómo vas a usar el coche y qué presupuesto tienes.",
       why: {
         title: 'Comprar bien un coche no debería ser una búsqueda a solas.',
-        body: 'Encontrar un vehículo premium en Europa suele empezar con cientos de anuncios y poca información contrastada. GP SELECT existe para cambiar ese punto de partida: alguien que entiende lo que buscas, compara por ti y te explica con claridad lo que tienes delante antes de que decidas.',
+        body: 'Encontrar un vehículo premium en Europa suele empezar con cientos de anuncios y poca información contrastada. GP SELECT existe para cambiar ese punto de partida: alguien que entiende lo que buscas, compara por ti, te explica lo que tienes delante y, cuando decides, se encarga del resto.',
       },
       audience: {
         title: 'Con quién trabajamos',
@@ -101,6 +101,7 @@ export const es: Dictionary = {
         rows: [
           { title: 'Si ya sabes qué coche quieres', body: 'Te ayudamos a encontrar la unidad adecuada y a valorar si de verdad lo es.' },
           { title: 'Si todavía no lo tienes claro', body: 'Lo definimos contigo a partir de cómo conduces, de tu presupuesto y de lo que te importa.' },
+          { title: "Si vives fuera de España", body: "Gestionamos la importación y la matriculación en tu país, con los requisitos que allí se apliquen." },
         ],
       },
       approach: {
@@ -113,6 +114,15 @@ export const es: Dictionary = {
           { title: 'La decisión es tuya.', body: 'Te explicamos cada opción y tú decides si sigues adelante.' },
         ],
       },
+      transparency: {
+        title: "Qué hacemos nosotros y qué coordinamos con terceros.",
+        legalLabel: 'aviso legal',
+        rows: [
+          { title: "Lo que hace GP SELECT", body: "La búsqueda, la selección y la evaluación de cada unidad, la coordinación con el vendedor, la preparación de la documentación y el seguimiento de la operación hasta la entrega." },
+          { title: "Lo que coordina con terceros", body: "El transporte, la inspección técnica que exija tu país para matricular el coche y los trámites ante las administraciones de origen y destino." },
+          { title: "Empresa", body: "GP SELECT tiene su base en Murcia (España). Los datos del titular están en el aviso legal. Puedes escribirnos por WhatsApp." },
+        ],
+      },
       closing: 'Cuéntanos qué buscas.',
       closingNote: 'Es un formulario breve y no te compromete a nada.',
       cta: 'Pedir una búsqueda',
@@ -121,7 +131,7 @@ export const es: Dictionary = {
     },
     import: {
       "title": "Importación",
-      "lede": "Si el coche que quieres está en Alemania o en otro país europeo, te ayudamos a encontrarlo y a comprarlo: definimos contigo la búsqueda, comparamos unidades, analizamos la información de cada una y coordinamos la compra y la importación.",
+      "lede": "Importamos tu próximo coche desde Alemania o cualquier país de la UE: lo buscamos, gestionamos la compra, los trámites y la matriculación, y coordinamos la entrega.",
       "define": {
         "title": "Primero, qué buscas.",
         "body": "Antes de mirar anuncios, concretamos contigo:",
@@ -143,9 +153,34 @@ export const es: Dictionary = {
         "body": "Antes de avanzar con una unidad revisamos la información disponible: especificación, fotografías, el historial y la documentación que aporte el vendedor, la procedencia y el precio frente al mercado. Te explicamos lo que sabemos, lo que no y qué convendría confirmar antes de decidir."
       },
       "support": {
-        "title": "Contigo en la compra y la importación.",
-        "body": "Cuando eliges una unidad, coordinamos contigo los siguientes pasos de la compra y la importación: qué se necesita en cada momento, con quién hay que hablar y qué queda pendiente. Cada operación es distinta, así que los detalles se concretan caso por caso, antes de que te comprometas.",
-        "detail": "Nuestro papel es que tomes cada decisión con la información delante."
+        "title": "Nosotros gestionamos el resto.",
+        "body": "Cuando eliges una unidad, coordinamos todo lo que viene después. Tú eres el comprador; nosotros llevamos la operación.",
+        "detail": "En cada etapa sabes en qué punto está la operación y qué queda pendiente."
+      },
+      "stages": {
+        "title": "Importación llave en mano: qué gestionamos, paso a paso.",
+        "intro": "Un único servicio, desde la primera búsqueda hasta la entrega.",
+        "rows": [
+          { title: "1 · Búsqueda", body: "Concretamos contigo modelo, configuración, presupuesto y uso, y buscamos unidades en el mercado europeo." },
+          { title: "2 · Selección", body: "Revisamos cada unidad con la información y la documentación disponibles y te proponemos una selección corta." },
+          { title: "3 · Compra", body: "Coordinamos la compra con el vendedor. El comprador eres tú, y la decisión de comprar también." },
+          { title: "4 · Documentación y trámites", body: "Reunimos y revisamos la documentación del vehículo y preparamos los trámites de importación que exige tu país." },
+          { title: "5 · Transporte", body: "Organizamos el traslado desde el país de origen." },
+          { title: "6 · Matriculación", body: "Gestionamos la matriculación en tu país de residencia, con los requisitos y los impuestos que allí se apliquen." },
+          { title: "7 · Entrega", body: "Coordinamos la entrega del coche." },
+        ],
+      },
+      "taxes": { "title": "Impuestos y trámites, según tu país.", "body": "Los impuestos y los trámites dependen del país donde se matricule el coche y de si lo vende un particular o un profesional. Entre países de la UE no hay aranceles, pero cada país tiene su propia matriculación e impuestos, y un coche que se considera nuevo a efectos del IVA (entregado dentro de los seis meses siguientes a su primera puesta en servicio, o con 6.000 km como máximo) paga el IVA en el país de destino. Antes de comprar te indicamos qué impuestos y trámites suelen aplicarse en tu caso." },
+      "faq": {
+        "title": "Preguntas frecuentes.",
+        "rows": [
+          { title: "¿Qué incluye el servicio?", body: "Siete etapas, desde la búsqueda en Europa hasta la entrega: selección y evaluación de las unidades, coordinación de la compra, documentación y trámites, transporte, matriculación en tu país y entrega." },
+          { title: "¿Tengo que saber qué modelo quiero?", body: "No. Puedes llegar con un modelo concreto o solo con lo que esperas del coche: cómo lo vas a usar, qué te importa y qué presupuesto tienes. Con eso definimos la búsqueda contigo." },
+          { title: "¿De qué países traéis los coches?", body: "Principalmente de países de la Unión Europea. Buscamos en varios mercados de la UE, Alemania entre ellos, y comparamos las unidades de distintos países con el mismo criterio para proponerte las que mejor encajan con lo que buscas." },
+          { title: "¿Quién compra el coche?", body: "Tú. El vehículo se compra a tu nombre y GP SELECT gestiona la operación: coordina con el vendedor, revisa la documentación y se encarga de los trámites hasta la entrega." },
+          { title: "¿Trabajáis con clientes fuera de España?", body: "Sí. Trabajamos con clientes de toda Europa y gestionamos la matriculación en el país donde vives, con los requisitos y los impuestos que allí se apliquen." },
+          { title: "¿Qué pasa después de enviar el cuestionario?", body: "Leemos tu solicitud y te contactamos para concretar la búsqueda. Enviar el cuestionario no te compromete a nada." },
+        ],
       },
       "images": {
         "search": "Búsqueda en el mercado europeo · fotografía pendiente",
@@ -159,7 +194,8 @@ export const es: Dictionary = {
     },
     contact: {
       title: 'Contacto', lede: 'Pregúntanos por un coche del catálogo o cuéntanos cuál quieres encontrar en Europa.',
-      pathsLabel: '¿Cómo empezamos?', vehiclePath: 'Sé qué coche quiero', searchPath: 'Quiero que GP SELECT me ayude a encontrarlo',
+      nextSteps: ["1. Leemos tu solicitud y te contactamos.", "2. Concretamos contigo la búsqueda.", "3. Empezamos a buscar."],
+      pathsLabel: '¿Cómo empezamos?', vehiclePath: 'Sé qué coche quiero', searchPath: "Quiero que GP SELECT lo busque por mí",
       vehicleIntro: 'Dinos qué vehículo te interesa y qué te gustaría saber. Si tienes claro el modelo pero no una unidad concreta, elige la otra opción.',
       searchIntro: 'Cuéntanos qué buscas: cómo conduces, qué modelos te gustan y qué presupuesto tienes en mente. No necesitas haber elegido un vehículo.',
       formTitle: 'Tu consulta', fields: { name: 'Nombre', phone: 'Teléfono', email: 'Email', vehicle: 'Vehículo de interés', message: 'Mensaje' },
@@ -184,7 +220,7 @@ export const es: Dictionary = {
   },
   hero: {
     left: 'Selección', right: 'Europea',
-    description: 'Buscamos en Europa el coche\nque quieres y te acompañamos\nen su compra e importación.',
+    description: "Buscamos en Europa el coche\nque quieres y gestionamos todo\nhasta entregártelo.",
   },
   carHandoff: {
     states: [
@@ -193,19 +229,19 @@ export const es: Dictionary = {
       { left: 'Potencia', right: 'Control', description: 'Revisamos motorización, caja\ny equipamiento de cada unidad.',
         fact: 'Un mismo modelo cambia mucho según el país y el año: motores, cajas de cambio y paquetes de equipamiento distintos.' },
       { left: 'Toda', right: 'Europa', description: 'Comparamos unidades de distintos\npaíses con el mismo criterio.',
-        fact: 'Entre países de la UE no hay aranceles. Al matricularlo en España se paga el impuesto de matriculación, que depende de las emisiones de CO₂. Fuente: Agencia Tributaria.' },
+        fact: "Entre países de la UE no hay aranceles. Los impuestos de matriculación dependen del país de destino: en España, por ejemplo, el tipo depende de las emisiones de CO₂. Fuentes: Comisión Europea; Agencia Tributaria." },
     ],
     carA: 'BMW M4 · vista cenital',
     carCutaway: 'BMW M4 · vista técnica de la mecánica',
     interlude: 'Lo que no sale\nen el anuncio.',
   },
   process: {
-    title: 'Cómo trabajamos cada búsqueda',
+    title: "De la búsqueda a la entrega",
     steps: [
-      { word: 'Buscamos', title: 'En toda Europa', description: 'Unidades que encajan con tu uso y tu presupuesto.' },
-      { word: 'Analizamos', title: 'Antes de proponer', description: 'Especificación, historial, documentación y precio.' },
-      { word: 'Seleccionamos', title: 'Pocas unidades', description: 'Solo te proponemos las que pasan ese filtro.' },
-      { word: 'Acompañamos', title: 'Compra e importación', description: 'Coordinamos contigo cada paso y lo que queda pendiente.' },
+      { word: "Buscamos", title: "En toda Europa", description: "Unidades que encajan con tu uso y tu presupuesto." },
+      { word: "Seleccionamos", title: "Antes de proponer", description: "Especificación, historial, documentación y precio." },
+      { word: "Gestionamos", title: "Compra y trámites", description: "Coordinamos la compra y la documentación." },
+      { word: "Entregamos", title: "Transporte y matrícula", description: "Organizamos el transporte, gestionamos la matriculación y coordinamos la entrega." },
     ],
   },
   common: {

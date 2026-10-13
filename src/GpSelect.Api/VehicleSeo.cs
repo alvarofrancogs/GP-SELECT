@@ -16,7 +16,10 @@ public static class VehicleSeo
     public const string EmptyRoot = "<div id=\"root\"></div>";
 
     public const string DefaultImage = "/assets/seo/og-default.jpg";
-    private const string Location = "Murcia · Clientes en España y Europa";
+    private const string SpanishLocation = "Murcia · Clientes en toda Europa";
+    private const string EnglishLocation = "Murcia, Spain · Clients across Europe";
+    private const string SpanishDefaultImageAlt = "GP SELECT · Murcia · Clientes en España y Europa";
+    private const string EnglishDefaultImageAlt = "GP SELECT · Murcia · Clients in Spain and Europe";
 
     public static string Identity(VehiclePublicDto v) => $"{v.Make} {v.Model} ({v.Year})";
     public static string CataloguePath(bool english = false) => english ? "/en/vehicles" : "/vehiculos";
@@ -65,11 +68,11 @@ public static class VehicleSeo
             + " Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.";
         var url = siteUrl is null ? null : siteUrl + Path(v, english);
         var image = v.Images.FirstOrDefault();
-        // The published amount includes advisory fees and costs; GP SELECT is not the vehicle seller.
+        // The published amount includes service fees and costs; GP SELECT is not the vehicle seller.
         var offer = new Dictionary<string, object?>
         {
             ["@type"] = "Offer", ["price"] = v.PriceEur, ["priceCurrency"] = "EUR",
-            ["description"] = english ? "Total price including advisory fees and costs." : "Precio total con honorarios de asesoramiento y gastos incluidos.",
+            ["description"] = english ? "Total price including service fees and costs." : "Precio total con honorarios del servicio y gastos incluidos.",
             ["availability"] = v.Status == VehicleStatus.Available ? "https://schema.org/InStock" : "https://schema.org/PreOrder",
         };
         if (url is not null) offer["url"] = url;
@@ -159,10 +162,11 @@ public static class VehicleSeo
         if (v.Status != VehicleStatus.Sold)
             // Same readable vehicle name the SPA puts in the contact form (frontend/src/pages/VehicleDetail.tsx).
             html.Append($"<p><a href=\"{(english ? "/en/contact" : "/contacto")}?vehiculo={Uri.EscapeDataString($"{v.Make} {v.Model}{(v.Variant is { Length: > 0 } ? $" {v.Variant}" : "")} ({v.Year})")}&amp;intent=vehicle\">{(english ? "Enquire about this car" : "Solicitar información")}</a></p>");
-        html.Append($"</main><footer><p>{E(english ? "Murcia · Clients in Spain and Europe" : Location)}</p><nav><ul>");
-        foreach (var (href, label) in english
-            ? new[] { ("/en", "GP SELECT"), ("/en/vehicles", "Vehicles"), ("/en/import", "Import"), ("/en/about", "About us"), ("/en/contact", "Contact") }
-            : new[] { ("/", "GP SELECT"), ("/vehiculos", "Vehículos"), ("/importacion", "Importación"), ("/nosotros", "Nosotros"), ("/contacto", "Contacto") })
+        html.Append($"</main><footer><p>{E(english ? EnglishLocation : SpanishLocation)}</p><nav><ul>");
+        var navigation = english
+            ? new[] { ("/en", "GP SELECT"), ("/en/vehicles", "Stock"), ("/en/import", "Import"), ("/en/about", "About"), ("/en/contact", "Contact") }
+            : new[] { ("/", "GP SELECT"), ("/vehiculos", "Vehículos"), ("/importacion", "Importación"), ("/nosotros", "Nosotros"), ("/contacto", "Contacto") };
+        foreach (var (href, label) in navigation)
             html.Append($"<li><a href=\"{href}\">{E(label)}</a></li>");
         return html.Append("</ul></nav></footer></div>").ToString();
     }
@@ -179,7 +183,7 @@ public static class VehicleSeo
         string? siteUrl, Dictionary<string, object?>? jsonLd, bool english = false, string? vehicleSlug = null)
     {
         var shareImage = Absolute(image ?? DefaultImage, siteUrl);
-        var shareAlt = image is null ? (english ? "GP SELECT · Murcia · Clients in Spain and Europe" : "GP SELECT · Murcia · Clientes en España y Europa") : imageAlt ?? title;
+        var shareAlt = image is null ? (english ? EnglishDefaultImageAlt : SpanishDefaultImageAlt) : imageAlt ?? title;
         var tags = new List<string> { $"<title data-page-meta>{E(title)}</title>" };
         void Meta(string attribute, string key, string value) => tags.Add($"<meta data-page-meta {attribute}=\"{key}\" content=\"{E(value)}\">");
         Meta("name", "description", description);

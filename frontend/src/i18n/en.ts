@@ -3,7 +3,7 @@ import type { Dictionary } from './types';
 export const en: Dictionary = {
   vehicles: {
     "title": "Vehicles",
-    "lede": "The GP SELECT catalogue: European cars, with photographs and details for each one.",
+    "lede": "Premium and performance cars selected in Europe, with photographs and key details for each one.",
     "singular": "vehicle",
     "plural": "vehicles",
     "filters": "Filters",
@@ -32,7 +32,7 @@ export const en: Dictionary = {
     "showMore": "Show more",
     "empty": "No vehicles match your search.",
     "search": "Request a search",
-    "closing": "If the car you want isn't here, we'll look for it in Europe.",
+    "closing": "If the car you want isn’t here, we’ll source it for you in the European market.",
     "find": "Request a search",
     "loading": "Loading vehicles…",
     "error": "We could not load the vehicles.",
@@ -56,7 +56,7 @@ export const en: Dictionary = {
     "interiorColour": "Interior colour",
     "history": "History",
     "importTitle": "Looking for a different spec?",
-    "importBody": "We search the European market for a car with the engine, equipment and budget you have in mind, and guide you through buying and importing it.",
+    "importBody": "We search the European market for a car with the engine, equipment and budget you have in mind, and manage its purchase, import and delivery.",
     "importLink": "How import works",
     "gallery": "Vehicle gallery",
     "previous": "Previous image",
@@ -90,10 +90,10 @@ export const en: Dictionary = {
   interiors: {
     about: {
       title: 'About us',
-      lede: 'GP SELECT sources premium European cars for each client, from Murcia, across Spain and Europe. We work from a conversation: what you want to drive, how you will use it and what matters to you.',
+      lede: "GP SELECT manages the sourcing, purchase and import of premium European cars for clients across Europe. We start with how you will use the car and what you want to spend.",
       why: {
         title: 'Buying the right car shouldn’t be a search on your own.',
-        body: 'Finding a premium car in Europe usually starts with hundreds of listings and little reliable information. GP SELECT exists to change that starting point: someone who understands what you are looking for, compares options for you and clearly explains what is in front of you before you decide.',
+        body: 'Finding a premium car in Europe usually starts with hundreds of listings and little reliable information. GP SELECT exists to change that starting point: someone who understands what you are looking for, compares options for you, explains what is in front of you and, once you decide, takes care of the rest.',
       },
       audience: {
         title: 'Who we work with',
@@ -101,6 +101,7 @@ export const en: Dictionary = {
         rows: [
           { title: 'If you already know which car you want', body: 'We help you find the right example and judge whether it is the right one.' },
           { title: 'If you are not sure yet', body: 'We define it with you, based on how you drive, your budget and what matters to you.' },
+          { title: "If you live outside Spain", body: "We handle the import and the registration in your country, under the rules that apply there." },
         ],
       },
       approach: {
@@ -113,6 +114,15 @@ export const en: Dictionary = {
           { title: 'The decision is yours.', body: 'We explain each option and you decide whether to go ahead.' },
         ],
       },
+      transparency: {
+        title: "What we do ourselves, and what we coordinate.",
+        legalLabel: 'legal notice',
+        rows: [
+          { title: "What GP SELECT does", body: "The search, the selection and evaluation of each car, coordination with the seller, preparing the paperwork and following the process through to delivery." },
+          { title: "What we coordinate with third parties", body: "Transport, the roadworthiness inspection your country requires for registration, and the formalities with the authorities in the origin and destination countries." },
+          { title: "Company", body: "GP SELECT is based in Murcia, Spain. The owner’s details are in the legal notice. You can reach us on WhatsApp." },
+        ],
+      },
       closing: 'Tell us what you’re looking for.',
       closingNote: 'It’s a short form and it commits you to nothing.',
       cta: 'Request a search',
@@ -121,7 +131,7 @@ export const en: Dictionary = {
     },
     import: {
       "title": "Import",
-      "lede": "If the car you want is in Germany or elsewhere in Europe, we help you find it and buy it: we set the brief with you, compare cars, review the information on each one and coordinate the purchase and import.",
+      "lede": "We import your next car from Germany or anywhere in the EU: we find it, manage the purchase, paperwork and registration, and coordinate delivery.",
       "define": {
         "title": "First, what you're looking for.",
         "body": "Before looking at any listing, we agree with you on:",
@@ -143,9 +153,34 @@ export const en: Dictionary = {
         "body": "Before moving forward with a car, we review the information available: specification, photographs, any history and documents the seller provides, where it comes from and its price against the market. We explain what we know, what we don't, and what would be worth confirming before you decide."
       },
       "support": {
-        "title": "With you through purchase and import.",
-        "body": "When you choose a car, we coordinate the next steps of the purchase and import with you: what is needed at each stage, who needs to be involved and what is still pending. Every transaction is different, so the details are agreed case by case, before you commit.",
-        "detail": "Our role is to make sure you take every decision with the information in front of you."
+        "title": "We handle the rest.",
+        "body": "Once you choose a car, we coordinate everything that follows. You are the buyer; we run the process.",
+        "detail": "At every stage you know where things stand and what is still pending."
+      },
+      "stages": {
+        "title": "End-to-end import: what we manage, step by step.",
+        "intro": "One service, from the first search to delivery.",
+        "rows": [
+          { title: "1 · Search", body: "We agree the model, specification and budget with you, and how you will use the car, then search the European market." },
+          { title: "2 · Selection", body: "We review each car against the information and documents available and put forward a short list." },
+          { title: "3 · Purchase", body: "We coordinate the purchase with the seller. You are the buyer, and the decision to buy is yours." },
+          { title: "4 · Documents and paperwork", body: "We gather and check the vehicle’s documents and prepare the registration formalities your country requires." },
+          { title: "5 · Transport", body: "We arrange transport from the country of origin." },
+          { title: "6 · Registration", body: "We handle registration in your country of residence, under the rules and taxes that apply there." },
+          { title: "7 · Delivery", body: "We coordinate delivery of your car." },
+        ],
+      },
+      "taxes": { "title": "Taxes and paperwork depend on your country.", "body": "Taxes and paperwork depend on where the car will be registered and on whether the seller is a private individual or a business. There are no customs duties between EU countries, but each country has its own registration rules and taxes, and a car that counts as new for VAT (supplied within six months of first entering service, or with no more than 6,000 km) pays VAT in the destination country. Before you buy, we outline the taxes and formalities that usually apply to you." },
+      "faq": {
+        "title": "Frequently asked questions.",
+        "rows": [
+          { title: "What does the service include?", body: "Seven stages, from the search in Europe to delivery: selecting and evaluating cars, coordinating the purchase, paperwork, transport, registration in your country and delivery." },
+          { title: "Do I need to know which model I want?", body: "No. You can come with a specific model or just with what you expect from the car: how you will use it, what matters to you and your budget. We define the search with you from there." },
+          { title: "Which countries do the cars come from?", body: "Mainly from EU countries. We search several EU markets, Germany among them, and compare cars from different countries against the same brief to put forward the ones that best match what you want." },
+          { title: "Who buys the car?", body: "You do. The car is bought in your name, and GP SELECT runs the process: we coordinate with the seller, check the paperwork and handle the formalities through to delivery." },
+          { title: "Do you work with clients outside Spain?", body: "Yes. We work with clients across Europe and handle registration in the country where you live, under the rules and taxes that apply there." },
+          { title: "What happens after I send the form?", body: "We read your request and get in touch to define the search. Sending the form does not commit you to anything." },
+        ],
       },
       "images": {
         "search": "Searching the European market · photography pending",
@@ -159,7 +194,8 @@ export const en: Dictionary = {
     },
     contact: {
       title: 'Contact', lede: 'Ask about a car in our stock, or tell us which one you want us to find in Europe.',
-      pathsLabel: 'Where shall we start?', vehiclePath: 'I know which car I want', searchPath: 'I want GP SELECT to help me find it',
+      nextSteps: ["1. We read your request and get back to you.", "2. We define the search with you.", "3. We start searching."],
+      pathsLabel: 'Where shall we start?', vehiclePath: 'I know which car I want', searchPath: "I want GP SELECT to find it for me",
       vehicleIntro: 'Tell us which vehicle interests you and what you would like to know. If you know the model but not a specific car, choose the other option.',
       searchIntro: 'Tell us what you are looking for: how you drive, the models you like and the budget you have in mind. You do not need to have chosen a vehicle.',
       formTitle: 'Your enquiry', fields: { name: 'Name', phone: 'Phone', email: 'Email', vehicle: 'Vehicle of interest', message: 'Message' },
@@ -183,7 +219,7 @@ export const en: Dictionary = {
   },
   hero: {
     left: 'Sourced', right: 'in Europe',
-    description: 'We search Europe for the car\nyou want and guide you through\nbuying and importing it.',
+    description: "We find the car you want\nin Europe and handle everything\nthrough to delivery.",
   },
   carHandoff: {
     states: [
@@ -192,19 +228,19 @@ export const en: Dictionary = {
       { left: 'Power', right: 'Control', description: 'We review the engine, gearbox\nand equipment of every car.',
         fact: 'The same model varies a lot by country and year: different engines, gearboxes and option packs.' },
       { left: 'Across', right: 'Europe', description: 'We compare cars from different\ncountries against the same brief.',
-        fact: 'There are no customs duties between EU countries. Registering the car in Spain means paying registration tax, set by its CO₂ emissions. Source: Spanish Tax Agency.' },
+        fact: "There are no customs duties between EU countries. Registration taxes depend on the destination country: in Spain, for example, the rate depends on CO₂ emissions. Sources: European Commission; Spanish Tax Agency." },
     ],
     carA: 'BMW M4 · top view',
     carCutaway: 'BMW M4 · technical cutaway',
     interlude: 'What the listing\ndoesn’t show.',
   },
   process: {
-    title: 'How we run every search',
+    title: "From search to delivery",
     steps: [
-      { word: 'Search', title: 'Across Europe', description: 'Cars that fit how you drive and what you spend.' },
-      { word: 'Analyse', title: 'Before we suggest', description: 'Specification, history, documents and price.' },
-      { word: 'Select', title: 'A short list', description: 'We only put forward the cars that pass.' },
-      { word: 'Guide', title: 'Purchase & import', description: 'We coordinate each step with you and what is still pending.' },
+      { word: "Search", title: "Across Europe", description: "Cars that suit how you drive and your budget." },
+      { word: "Select", title: "Before we recommend", description: "Specification, history, documents and price." },
+      { word: "Manage", title: "Purchase and paperwork", description: "We coordinate the purchase and the transfer paperwork." },
+      { word: "Deliver", title: "Transport and registration", description: "We arrange transport, handle registration and coordinate delivery." },
     ],
   },
   common: {

@@ -108,7 +108,7 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Equal("Brand", ld.GetProperty("brand").GetProperty("@type").GetString());
         Assert.Equal(86900, ld.GetProperty("offers").GetProperty("price").GetDecimal());
         Assert.False(ld.GetProperty("offers").TryGetProperty("seller", out _));
-        Assert.Contains(english ? "advisory fees and costs" : "honorarios de asesoramiento y gastos", ld.GetProperty("offers").GetProperty("description").GetString()!);
+        Assert.Contains(english ? "service fees and costs" : "honorarios del servicio y gastos", ld.GetProperty("offers").GetProperty("description").GetString()!);
         Assert.DoesNotContain("AutoDealer", html);
         Assert.Contains(english ? "Price: €86,900" : "Precio: 86.900 €", html);
         Assert.Equal(12500, ld.GetProperty("mileageFromOdometer").GetProperty("value").GetInt32());

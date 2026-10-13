@@ -45,6 +45,39 @@ export function Import() {
         </div>
         <EditorialMedia asset={sceneAssets.importDelivery} label={text.images.delivery} portrait />
       </section>
+      <section className="import-brief" aria-labelledby="import-stages-title">
+        <div className="import-brief__copy">
+          <h2 id="import-stages-title" className="type-section">{text.stages.title}</h2>
+          <p className="type-body">{text.stages.intro}</p>
+        </div>
+        <ol className="import-brief__list">
+          {text.stages.rows.map((row) => (
+            <li key={row.title}>
+              <h3 className="type-heading">{row.title}</h3>
+              <p className="type-body">{row.body}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+      <section className="import-brief" aria-labelledby="import-taxes-title">
+        <div className="import-brief__copy">
+          <h2 id="import-taxes-title" className="type-section">{text.taxes.title}</h2>
+        </div>
+        <p className="type-body">{text.taxes.body}</p>
+      </section>
+      <section className="import-brief" aria-labelledby="import-faq-title">
+        <div className="import-brief__copy">
+          <h2 id="import-faq-title" className="type-section">{text.faq.title}</h2>
+        </div>
+        <ul className="import-brief__list">
+          {text.faq.rows.map((row) => (
+            <li key={row.title}>
+              <h3 className="type-heading">{row.title}</h3>
+              <p className="type-body">{row.body}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
       <section className="interior-closing import-closing" aria-labelledby="import-closing-title">
         <h2 id="import-closing-title" className="type-section">{text.closing}</h2>
         <p className="type-body">{text.closingBody}</p>
