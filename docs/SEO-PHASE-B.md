@@ -14,7 +14,7 @@ Plan aprobado por el usuario el 09-10-2026 (sesión del portátil). Sustituye a 
 | B5 · Textos aprobados | Hecho | `main` (PR #8) |
 | B6 · Encabezados semánticos | Interiores y Servicios hechos; H1 de la Home sin hacer (opcional) | `feat/seo-b6-headings` |
 | B7 · Secciones nuevas | **Absorbido por B5** | Ver abajo |
-| B8 · Guía ES/EN | Pendiente | — |
+| B8 · Guía ES/EN | Hecha, pendiente de aprobación de textos | `feat/seo-b8-guide` |
 | B9 · Entidad, GEO y conversión | Pendiente | — |
 | B10 · Validación final | Pendiente | — |
 
@@ -80,6 +80,8 @@ Orden aprobado: B0 → B1 → B2 y B3 → B5, B6 y B7 → B4 → B8 → B9 → B
 - Contenido de Opus con fuentes verificadas; revisión de seo-content; maqueta de Astra con componentes interiores; fecha de revisión visible. Conviene revisión profesional.
 - Aceptación: cada afirmación normativa con fuente; ningún trámite español presentado como europeo.
 - Al publicarse la guía: añadir el enlace «Guía: cómo importar un coche desde Europa →» en la sección de impuestos de Importación (B1).
+- **Hecho (13-10-2026, `feat/seo-b8-guide`):** `/guias/importar-un-coche-de-europa` y `/en/guides/importing-a-car-from-europe`, con los textos en `i18n/guideCopy.ts`. Estructura del plan con dos ajustes: Alemania como ejemplo de origen y, en España, ITV, 576 (05/06), 309, ITP, DGT e IVTM; Francia, Irlanda y Países Bajos solo remiten a su autoridad. Article + BreadcrumbList (Inicio › Importación › Guía) con `dateModified`, hreflang, sitemap (build y API), `llms.txt`, Caddy y enlace desde Importación. Sin FAQPage. «Qué hace GP SELECT» refleja la titularidad según la operación.
+- **Fuentes:** comprobadas con el buscador porque la red del entorno cloud no deja abrir europa.eu, boe.es ni la AEAT. Pendiente: revisión profesional y aprobación del usuario antes de publicar.
 
 ### B9 · Entidad, GEO y conversión
 - Archivos: `pageMeta.ts`, `contactChannels.ts`, `ContactForm.tsx`, `EnquiriesController.cs` y `Enquiry.cs` (+ migración), notificación por email.

@@ -1,6 +1,7 @@
 import { contactConfig } from '../config/contactChannels';
 import { en } from '../i18n/en';
 import { entityCopy } from '../i18n/entityCopy';
+import { guideCopy } from '../i18n/guideCopy';
 import { matchPage, pagePath, pagePaths } from '../i18n/routes';
 import type { Locale } from '../i18n/types';
 import type { VehicleDetail } from '../types/vehicle';
@@ -35,6 +36,10 @@ export const staticPageMeta: Record<string, PageMeta> = {
     title: "Importar coche de Alemania o Europa llave en mano · GP SELECT",
     description: "Gestionamos la importación de tu coche desde Alemania o cualquier país de la UE: búsqueda, selección, compra, trámites, transporte, matriculación y entrega.",
   },
+  [pagePaths.guide.es]: {
+    title: 'Importar un coche de Europa: impuestos y trámites · GP SELECT',
+    description: 'Guía para importar un coche desde otro país europeo: IVA de coche nuevo y usado, aduana fuera de la UE, documentos de origen y matriculación en España.',
+  },
   '/nosotros': {
     title: "Sobre GP SELECT · Importación de coches premium desde Murcia",
     description: "Qué gestiona GP SELECT en cada operación, qué coordina con terceros y cómo elige los coches que te propone. Una empresa de Murcia con clientes en toda Europa.",
@@ -54,6 +59,10 @@ export const staticPageMeta: Record<string, PageMeta> = {
   [pagePaths.import.en]: {
     title: 'Import a car from Germany or elsewhere in Europe · GP SELECT',
     description: 'We manage every step of importing a car from Germany or another EU country: search, selection, purchase, paperwork, transport, registration and delivery.',
+  },
+  [pagePaths.guide.en]: {
+    title: 'Importing a car from Europe: taxes and paperwork · GP SELECT',
+    description: 'Guide to importing a car from another European country: VAT on new and used cars, customs outside the EU, origin documents and registration in Spain.',
   },
   [pagePaths.about.en]: {
     title: 'About GP SELECT · European car sourcing from Murcia, Spain',
@@ -152,6 +161,7 @@ export function getStaticPageMeta(path: string, siteUrl?: string): PageMeta {
   const { page, locale } = match;
   const meta: PageMeta = { ...staticPageMeta[path], path, locale, alternates: { ...pagePaths[page] } };
   if (page === 'import') return { ...meta, jsonLd: importServiceJsonLd(meta, siteUrl) };
+  if (page === 'guide') return { ...meta, jsonLd: guideJsonLd(meta, siteUrl) };
   if (page !== 'home') return meta;
   const place = places[locale];
   return {
@@ -205,6 +215,28 @@ function importServiceJsonLd(meta: PageMeta, siteUrl?: string): Record<string, u
       address: { '@type': 'PostalAddress', addressLocality: 'Murcia', addressRegion: 'Región de Murcia', addressCountry: 'ES' },
     },
     areaServed: [{ '@type': 'Country', name: place.country }, { '@type': 'Continent', name: place.continent }],
+  };
+}
+
+// The guide as an Article by the business, with its review date and its place under Import.
+function guideJsonLd(meta: PageMeta, siteUrl?: string): Record<string, unknown> {
+  const locale = meta.locale ?? 'es';
+  const text = guideCopy[locale];
+  const organization = { '@type': 'AutomotiveBusiness', name: 'GP SELECT', ...(siteUrl ? { '@id': `${siteUrl}/#organization` } : {}) };
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [{
+      '@type': 'Article', headline: meta.title.replace(/ · GP SELECT$/, ''), description: meta.description,
+      inLanguage: locale, datePublished: text.reviewed.iso, dateModified: text.reviewed.iso,
+      author: organization, publisher: organization,
+      ...(siteUrl ? { mainEntityOfPage: `${siteUrl}${meta.path}`, url: `${siteUrl}${meta.path}` } : {}),
+    }, ...(siteUrl ? [{
+      '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: locale === 'en' ? 'Home' : 'Inicio', item: `${siteUrl}${pagePath('home', locale)}` },
+        { '@type': 'ListItem', position: 2, name: locale === 'en' ? 'Import' : 'Importación', item: `${siteUrl}${pagePath('import', locale)}` },
+        { '@type': 'ListItem', position: 3, name: text.breadcrumb, item: `${siteUrl}${meta.path}` },
+      ],
+    }] : [])],
   };
 }
 

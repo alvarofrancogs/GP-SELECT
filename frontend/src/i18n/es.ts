@@ -171,7 +171,7 @@ export const es: Dictionary = {
           { title: "7 · Entrega", body: "Coordinamos la entrega del coche." },
         ],
       },
-      "taxes": { "title": "Impuestos y trámites, según tu país.", "body": "Los impuestos y los trámites dependen del país donde se matricule el coche y de si lo vende un particular o un profesional. Entre países de la UE no hay aranceles, pero cada país tiene su propia matriculación e impuestos, y un coche que se considera nuevo a efectos del IVA (entregado dentro de los seis meses siguientes a su primera puesta en servicio, o con 6.000 km como máximo) paga el IVA en el país de destino. Antes de comprar te indicamos qué impuestos y trámites suelen aplicarse en tu caso." },
+      "taxes": { "title": "Impuestos y trámites, según tu país.", "body": "Los impuestos y los trámites dependen del país donde se matricule el coche y de si lo vende un particular o un profesional. Entre países de la UE no hay aranceles, pero cada país tiene su propia matriculación e impuestos, y un coche que se considera nuevo a efectos del IVA (entregado dentro de los seis meses siguientes a su primera puesta en servicio, o con 6.000 km como máximo) paga el IVA en el país de destino. Antes de comprar te indicamos qué impuestos y trámites suelen aplicarse en tu caso.", "guide": "Guía: cómo importar un coche desde Europa" },
       "faq": {
         "title": "Preguntas frecuentes.",
         "rows": [

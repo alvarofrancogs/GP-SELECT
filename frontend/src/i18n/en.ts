@@ -171,7 +171,7 @@ export const en: Dictionary = {
           { title: "7 · Delivery", body: "We coordinate delivery of your car." },
         ],
       },
-      "taxes": { "title": "Taxes and paperwork depend on your country.", "body": "Taxes and paperwork depend on where the car will be registered and on whether the seller is a private individual or a business. There are no customs duties between EU countries, but each country has its own registration rules and taxes, and a car that counts as new for VAT (supplied within six months of first entering service, or with no more than 6,000 km) pays VAT in the destination country. Before you buy, we outline the taxes and formalities that usually apply to you." },
+      "taxes": { "title": "Taxes and paperwork depend on your country.", "body": "Taxes and paperwork depend on where the car will be registered and on whether the seller is a private individual or a business. There are no customs duties between EU countries, but each country has its own registration rules and taxes, and a car that counts as new for VAT (supplied within six months of first entering service, or with no more than 6,000 km) pays VAT in the destination country. Before you buy, we outline the taxes and formalities that usually apply to you.", "guide": "Guide: importing a car from Europe" },
       "faq": {
         "title": "Frequently asked questions.",
         "rows": [

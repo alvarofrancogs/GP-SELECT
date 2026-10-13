@@ -63,7 +63,10 @@ export function Import() {
         <div className="import-brief__copy">
           <h2 id="import-taxes-title" className="type-section">{text.taxes.title}</h2>
         </div>
-        <p className="type-body">{text.taxes.body}</p>
+        <div>
+          <p className="type-body">{text.taxes.body}</p>
+          <Link className="editorial-link type-ui import-brief__link" to={href('/guias/importar-un-coche-de-europa')}>{text.taxes.guide}<span aria-hidden="true">→</span></Link>
+        </div>
       </section>
       <section className="import-brief" aria-labelledby="import-faq-title">
         <div className="import-brief__copy">

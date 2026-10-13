@@ -1,7 +1,7 @@
 import type { Locale } from './types';
 
 /** Every public page. The vehicle detail is the only one with a parameter (its slug). */
-export type PageId = 'home' | 'vehicles' | 'vehicle' | 'import' | 'about' | 'contact' | 'aviso-legal' | 'privacidad' | 'cookies';
+export type PageId = 'home' | 'vehicles' | 'vehicle' | 'import' | 'guide' | 'about' | 'contact' | 'aviso-legal' | 'privacidad' | 'cookies';
 type FixedPage = Exclude<PageId, 'vehicle'>;
 
 export const locales: Locale[] = ['es', 'en'];
@@ -12,6 +12,7 @@ export const pagePaths: Record<FixedPage, Record<Locale, string>> = {
   home: { es: '/', en: '/en' },
   vehicles: { es: '/vehiculos', en: '/en/vehicles' },
   import: { es: '/importacion', en: '/en/import' },
+  guide: { es: '/guias/importar-un-coche-de-europa', en: '/en/guides/importing-a-car-from-europe' },
   about: { es: '/nosotros', en: '/en/about' },
   contact: { es: '/contacto', en: '/en/contact' },
   'aviso-legal': { es: '/aviso-legal', en: '/en/legal-notice' },
@@ -22,7 +23,7 @@ export const pagePaths: Record<FixedPage, Record<Locale, string>> = {
 export interface PageMatch { page: PageId; locale: Locale; slug?: string }
 
 /** Pages with an equivalent in both languages that search engines index (hreflang pairs). */
-export const indexedPages: FixedPage[] = ['home', 'vehicles', 'import', 'about', 'contact'];
+export const indexedPages: FixedPage[] = ['home', 'vehicles', 'import', 'guide', 'about', 'contact'];
 
 export function localeOf(pathname: string): Locale {
   return /^\/en(\/|$)/i.test(pathname) ? 'en' : 'es';

@@ -18,7 +18,8 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
 {
     // The SPA's static routes in both languages (frontend/src/i18n/routes.ts, staticPageMeta in pageMeta.ts).
     private static readonly string[] StaticPaths =
-        ["/", "/vehiculos", "/importacion", "/nosotros", "/contacto", "/en", "/en/vehicles", "/en/import", "/en/about", "/en/contact"];
+        ["/", "/vehiculos", "/importacion", "/guias/importar-un-coche-de-europa", "/nosotros", "/contacto",
+         "/en", "/en/vehicles", "/en/import", "/en/guides/importing-a-car-from-europe", "/en/about", "/en/contact"];
 
     [HttpGet("seo/vehiculos")]
     public Task<IActionResult> Catalogue(CancellationToken ct) => Catalogue(false, ct);

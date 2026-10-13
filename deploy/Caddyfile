@@ -37,6 +37,7 @@
 		~(?i)^/index\.html/?$ /
 		~(?i)^/vehiculos(?:/index\.html)?/?$ /vehiculos
 		~(?i)^/importacion(?:/index\.html)?/?$ /importacion
+		~(?i)^/guias/importar-un-coche-de-europa(?:/index\.html)?/?$ /guias/importar-un-coche-de-europa
 		~(?i)^/nosotros(?:/index\.html)?/?$ /nosotros
 		~(?i)^/contacto(?:/index\.html)?/?$ /contacto
 		~(?i)^/aviso-legal(?:/index\.html)?/?$ /aviso-legal
@@ -47,6 +48,7 @@
 		~(?i)^/en(?:/index\.html)?/?$ /en
 		~(?i)^/en/vehicles(?:/index\.html)?/?$ /en/vehicles
 		~(?i)^/en/import(?:/index\.html)?/?$ /en/import
+		~(?i)^/en/guides/importing-a-car-from-europe(?:/index\.html)?/?$ /en/guides/importing-a-car-from-europe
 		~(?i)^/en/about(?:/index\.html)?/?$ /en/about
 		~(?i)^/en/contact(?:/index\.html)?/?$ /en/contact
 		~(?i)^/en/legal-notice(?:/index\.html)?/?$ /en/legal-notice
