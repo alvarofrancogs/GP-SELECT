@@ -79,3 +79,27 @@ it.each([
   expect(html).toContain(option);
   expect(html).toContain(`<ol><li>${firstStep}</li>`);
 });
+
+it.each([
+  ['/guias/importar-un-coche-de-europa', 'Guía', 'Dentro de la Unión Europea.', 'Revisada el'],
+  ['/en/guides/importing-a-car-from-europe', 'Guide', 'Within the European Union.', 'Reviewed on'],
+])('renders the import guide in %s with its review date and official sources', (path, title, section, reviewed) => {
+  const html = renderReadableContent(path);
+  expect(html).toContain(`<h1>${title} <span class="static-content__lede">`);
+  expect(html).toContain(`<h2>${section}</h2>`);
+  expect(html).toContain(`${reviewed} <time datetime="2026-10-13">`);
+  expect(html).toContain('href="https://www.dgt.es/');
+  expect(html).not.toContain('FAQPage');
+});
+
+it.each([['/importacion', '/guias/importar-un-coche-de-europa'], ['/en/import', '/en/guides/importing-a-car-from-europe']])(
+  'links %s to the guide from its taxes section', (path, guide) => {
+    expect(renderReadableContent(path)).toContain(`href="${guide}"`);
+  });
+
+it('lists the guide in llms.txt in both languages', () => {
+  const llms = renderLlmsText('https://gpselect.com');
+  expect(llms).toContain('(https://gpselect.com/guias/importar-un-coche-de-europa)');
+  expect(llms).toContain('(https://gpselect.com/en/guides/importing-a-car-from-europe)');
+});
+

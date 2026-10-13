@@ -326,7 +326,14 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 - **Sin hacer:** la prueba opcional del H1 de la Home (toca elementos que anima GSAP; es de Astra y solo se acepta si queda idéntica al píxel) y el H2 repetido de la ficha (O4).
 - **Verificación:** Vitest 171/171, typecheck, lint y build. Capturas contra `main`: interiores ES/EN a 390/768/1024/1440/1920 (página completa) y Servicios abierto/cerrado a 390/1440: 44 de 48 idénticas; las otras 4 difieren en 0–30 píxeles dentro de los marcadores de foto provisionales (ruido), ninguna en títulos ni iconos.
 - **Plan:** `docs/SEO-PHASE-B.md` (traído de `feat/seo-b6` y actualizado) recoge B0–B10, su estado y las decisiones que cambiaron.
-- **Siguiente:** revisión y PR; después borrar `feat/seo-b6`, y B8 (guía ES/EN).
+- **Siguiente:** PR #9; después borrar `feat/seo-b6`.
+
+### SEO B8 · guía de importación ES/EN (13-10-2026, rama `feat/seo-b8-guide`, sobre B6)
+
+- Página `/guias/importar-un-coche-de-europa` y `/en/guides/importing-a-car-from-europe` con la composición de Importación. Detalle, fuentes y decisiones en `docs/SEO-PHASE-B.md` (bloque B8).
+- **Verificación:** Vitest 179/179, typecheck, lint y build (las dos páginas y el sitemap); backend 150/150 y 155/155; Caddyfile validado con Caddy 2.10.2; navegador a 390 y 1440 ES/EN sin errores ni scroll horizontal.
+- **Pendiente:** aprobación del usuario de los textos (contenido normativo) y, recomendado, revisión de un gestor o asesor fiscal. No publicar sin ella.
+- **Siguiente:** B9 (entidad, enlaces internos, idioma de la consulta).
 
 ### SEO-2 · fichas y sitemap desde el servidor = PASS (05-10-2026, tag `seo-2-pass`)
 

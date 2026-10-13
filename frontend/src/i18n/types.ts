@@ -20,7 +20,7 @@ export interface InteriorCopy {
     analysis: EditorialCopy;
     support: EditorialCopy & { detail: string };
     stages: { title: string; intro: string; rows: EditorialCopy[] };
-    taxes: EditorialCopy;
+    taxes: EditorialCopy & { guide: string };
     faq: { title: string; rows: EditorialCopy[] };
     images: { search: string; inspection: string; delivery: string };
     closing: string;

@@ -68,7 +68,7 @@ describe('static structured data', () => {
 
 describe('language versions', () => {
   const siteUrl = 'https://gpselect.com';
-  const pairs = [['/', '/en'], ['/vehiculos', '/en/vehicles'], ['/importacion', '/en/import'], ['/nosotros', '/en/about'], ['/contacto', '/en/contact']];
+  const pairs = [['/', '/en'], ['/vehiculos', '/en/vehicles'], ['/importacion', '/en/import'], ['/guias/importar-un-coche-de-europa', '/en/guides/importing-a-car-from-europe'], ['/nosotros', '/en/about'], ['/contacto', '/en/contact']];
   const links = (head: string) => [...head.matchAll(/<link data-page-meta rel="(canonical|alternate)"(?: hreflang="([^"]+)")? href="([^"]+)">/g)]
     .map(([, rel, language, href]) => `${rel}${language ? `:${language}` : ''} ${href}`);
 
@@ -107,3 +107,21 @@ describe('English vehicle values', () => {
     expect(en.vehicles.values).toEqual(englishValues);
   });
 });
+
+describe('import guide', () => {
+  const siteUrl = 'https://gpselect.com';
+
+  it.each([
+    ['/guias/importar-un-coche-de-europa', 'es', 'Importación', '/importacion'],
+    ['/en/guides/importing-a-car-from-europe', 'en', 'Import', '/en/import'],
+  ])('describes %s as an Article by the business, under Import', (path, locale, parent, parentPath) => {
+    const graph = getStaticPageMeta(path, siteUrl).jsonLd!['@graph'] as Record<string, unknown>[];
+    expect(graph[0]).toMatchObject({
+      '@type': 'Article', inLanguage: locale, dateModified: '2026-10-13', url: `${siteUrl}${path}`,
+      publisher: { '@type': 'AutomotiveBusiness', '@id': `${siteUrl}/#organization` },
+    });
+    expect(graph[0].headline).not.toContain('GP SELECT');
+    expect((graph[1].itemListElement as Record<string, unknown>[])[1]).toMatchObject({ name: parent, item: `${siteUrl}${parentPath}` });
+  });
+});
+

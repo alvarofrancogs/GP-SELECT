@@ -2,6 +2,8 @@ import { es } from '../src/i18n/es';
 import { en } from '../src/i18n/en';
 import { featuredCopy } from '../src/i18n/featuredCopy';
 import { footerCopy } from '../src/i18n/footerCopy';
+import { guideCopy } from '../src/i18n/guideCopy';
+import type { GuideBlock } from '../src/i18n/guideCopy';
 import { entityCopy } from '../src/i18n/entityCopy';
 import { servicesCopy } from '../src/i18n/servicesCopy';
 import { escapeHtml, staticPageMeta } from '../src/lib/pageMeta';
@@ -73,11 +75,26 @@ function importContent(t: Dictionary, locale: Locale): string {
     + section(text.analysis.title, paragraph(text.analysis.body))
     + section(text.support.title, paragraph(text.support.body) + paragraph(text.support.detail))
     + section(text.stages.title, paragraph(text.stages.intro) + rows(text.stages.rows))
-    + section(text.taxes.title, paragraph(text.taxes.body))
+    + section(text.taxes.title, paragraph(text.taxes.body) + link(pagePath('guide', locale), text.taxes.guide))
     + section(text.faq.title, rows(text.faq.rows))
     + section(text.closing, paragraph(text.closingBody)
       + link(localizeHref(qualificationUrl({ intent: 'search', source: 'importacion' }), locale), text.cta)
       + ' ' + link(localizeHref('/contacto?intent=vehicle', locale), text.secondary));
+}
+
+function guideContent(locale: Locale): string {
+  const text = guideCopy[locale];
+  const blocks = (items: GuideBlock[]) => items.map((block) => 'p' in block ? paragraph(block.p) : list(block.list)).join('');
+  return interiorIntroduction(text.title, text.lede)
+    + `<p>${escapeHtml(text.reviewed.label)} <time datetime="${text.reviewed.iso}">${escapeHtml(text.reviewed.date)}</time></p>`
+    + paragraph(text.notice)
+    + text.sections.map((item) => section(item.title, blocks(item.blocks))).join('')
+    + section(text.faq.title, rows(text.faq.rows))
+    + section(text.gpSelect.title, blocks(text.gpSelect.blocks))
+    + section(text.sources.title, paragraph(text.sources.intro)
+      + `<ul>${text.sources.rows.map((row) => `<li>${link(row.href, row.label)}</li>`).join('')}</ul>`)
+    + section(text.closing, paragraph(text.closingBody)
+      + link(localizeHref(qualificationUrl({ intent: 'search', source: 'guia' }), locale), text.cta));
 }
 
 function contactContent(t: Dictionary, locale: Locale): string {
@@ -121,6 +138,7 @@ export function renderReadableContent(path: string): string {
     case 'home': content = homeContent(t, locale); break;
     case 'about': content = aboutContent(t, locale); break;
     case 'import': content = importContent(t, locale); break;
+    case 'guide': content = guideContent(locale); break;
     case 'contact': content = contactContent(t, locale); break;
     case 'vehicles':
       content = interiorIntroduction(t.vehicles.title, t.vehicles.lede)
@@ -169,8 +187,8 @@ export function renderLlmsText(siteUrl?: string): string {
     .map(([path, label]) => entry(path, label)).join('\n');
   return `# ${es.brand}\n\n> ${entityCopy.es}\n\n${footerCopy.es.location}\n\n`
     + `${es.interiors.about.lede}\n\n${es.interiors.import.lede}\n\n`
-    + `## ${footerCopy.es.navigation}\n\n${pages(es, 'es')}\n\n`
+    + `## ${footerCopy.es.navigation}\n\n${pages(es, 'es')}\n${entry(pagePath('guide', 'es'), guideCopy.es.breadcrumb)}\n\n`
     + `## ${es.nav.contact}\n\n${entry('/contacto', es.nav.contact)}\n\n`
-    + `## English\n\n> ${entityCopy.en}\n\n${pages(en, 'en')}\n${entry(pagePath('contact', 'en'), en.nav.contact)}\n`;
+    + `## English\n\n> ${entityCopy.en}\n\n${pages(en, 'en')}\n${entry(pagePath('guide', 'en'), guideCopy.en.breadcrumb)}\n${entry(pagePath('contact', 'en'), en.nav.contact)}\n`;
 }
 

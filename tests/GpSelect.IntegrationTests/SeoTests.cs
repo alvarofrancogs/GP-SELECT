@@ -204,7 +204,7 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("application/xml", response.Content.Headers.ContentType?.MediaType);
         // Only the catalogue has a real content date among the static routes.
-        foreach (var path in new[] { "/", "/importacion", "/nosotros", "/contacto", "/en", "/en/import", "/en/about", "/en/contact" })
+        foreach (var path in new[] { "/", "/importacion", "/guias/importar-un-coche-de-europa", "/nosotros", "/contacto", "/en", "/en/import", "/en/guides/importing-a-car-from-europe", "/en/about", "/en/contact" })
             Assert.Contains($"<url><loc>{ApiFactory.SiteUrl}{path}</loc></url>", xml);
         Assert.Contains($"<loc>{ApiFactory.SiteUrl}/vehiculos</loc><lastmod>2099-05-06</lastmod>", xml);
         Assert.Contains($"<loc>{ApiFactory.SiteUrl}/en/vehicles</loc><lastmod>2099-05-06</lastmod>", xml);
