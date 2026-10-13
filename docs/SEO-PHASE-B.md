@@ -14,8 +14,8 @@ Plan aprobado por el usuario el 09-10-2026 (sesión del portátil). Sustituye a 
 | B5 · Textos aprobados | Hecho | `main` (PR #8) |
 | B6 · Encabezados semánticos | Interiores y Servicios hechos; H1 de la Home sin hacer (opcional) | `main` (PR #9) |
 | B7 · Secciones nuevas | **Absorbido por B5** | Ver abajo |
-| B8 · Guía ES/EN | Hecha, textos aprobados por el usuario | PR #10 |
-| B9 · Entidad, GEO y conversión | Hecho | `feat/seo-b9` (sobre B8) |
+| B8 · Guía ES/EN | Hecha, textos aprobados por el usuario | `main` (PR #10) |
+| B9 · Entidad, GEO y conversión | Hecho | `feat/seo-b9` |
 | B10 · Validación final | Pendiente | — |
 
 Orden aprobado: B0 → B1 → B2 y B3 → B5, B6 y B7 → B4 → B8 → B9 → B10 (en la práctica B4 se hizo antes de B5). Un commit por bloque; sin push ni merge sin aprobación; tag `seo-phase-b-pass` al final.

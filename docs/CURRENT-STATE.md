@@ -333,9 +333,9 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 - Página `/guias/importar-un-coche-de-europa` y `/en/guides/importing-a-car-from-europe` con la composición de Importación. Detalle, fuentes y decisiones en `docs/SEO-PHASE-B.md` (bloque B8).
 - **Verificación:** Vitest 179/179, typecheck, lint y build (las dos páginas y el sitemap); backend 150/150 y 155/155; Caddyfile validado con Caddy 2.10.2; navegador a 390 y 1440 ES/EN sin errores ni scroll horizontal.
 - **Textos aprobados por el usuario** (13-10-2026). Recomendado: revisión de un gestor o asesor fiscal antes de publicar.
-- **Siguiente:** PR #10.
+- **Cerrado:** integrado en `main` con el PR #10 (13-10-2026). `feat/seo-b8-guide` se puede borrar.
 
-### SEO B9 · entidad, enlaces internos e idioma de la consulta (13-10-2026, rama `feat/seo-b9`, sobre B8)
+### SEO B9 · entidad, enlaces internos e idioma de la consulta (13-10-2026, rama `feat/seo-b9`)
 
 - Un solo `@id` del negocio en todo el JSON-LD, `knowsLanguage` es/en e `image` en el Article. La guía enlaza a Importación; una prueba exige que cada página EN enlace solo a EN. Idioma de la consulta guardado (migración `AddEnquiryLanguage`) y mostrado en el email de aviso. WhatsApp con primer mensaje en el idioma de la página. El build avisa de cualquier texto con [P]. Detalle en `docs/SEO-PHASE-B.md` (bloque B9).
 - **Verificación:** Vitest 193/193, typecheck, lint y build; backend 153/153 y 156/156 de integración (migración aplicada sobre Postgres); captura del cierre de la guía a 390 y 1440.
