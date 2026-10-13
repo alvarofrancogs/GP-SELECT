@@ -220,8 +220,9 @@ public static class VehicleSeo
         return string.Join("\n    ", tags);
     }
 
-    // Same known values as frontend/src/i18n/en.ts. Unknown/free text stays as supplied by the author.
-    private static readonly Dictionary<string, string> EnglishValues = new()
+    // Same known values as frontend/src/i18n/en.ts; both are checked against tests/fixtures/vehicle-values-en.json.
+    // Unknown/free text stays as supplied by the author.
+    internal static readonly Dictionary<string, string> EnglishValues = new()
     {
         ["Gasolina"] = "Petrol",
         ["Eléctrico"] = "Electric",
@@ -243,7 +244,7 @@ public static class VehicleSeo
         ["Azul"] = "Blue",
         ["Cuero negro"] = "Black leather",
     };
-    private static string? Translate(string? value, bool english)
+    internal static string? Translate(string? value, bool english)
     {
         if (!english || string.IsNullOrEmpty(value)) return value;
         return EnglishValues.FirstOrDefault(x => English.CompareInfo.Compare(x.Key, value.Trim(),

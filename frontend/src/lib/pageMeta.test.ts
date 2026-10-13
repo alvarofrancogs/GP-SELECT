@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import fixtures from '../../../tests/fixtures/vehicle-seo.json';
+import englishValues from '../../../tests/fixtures/vehicle-values-en.json';
+import { en } from '../i18n/en';
 import { contactConfig } from '../config/contactChannels';
 import { fromPublicDetail } from '../services/vehicles';
 import type { Locale } from '../i18n/types';
@@ -89,5 +91,11 @@ describe('language versions', () => {
       expect(JSON.stringify(meta.jsonLd)).not.toMatch(/"seller"|AutoDealer/);
       expect(renderPageHead(getVehiclePageMeta(vehicle, undefined, locale))).not.toContain('hreflang');
     }
+  });
+});
+
+describe('English vehicle values', () => {
+  it('match the table the API uses (tests/fixtures/vehicle-values-en.json)', () => {
+    expect(en.vehicles.values).toEqual(englishValues);
   });
 });

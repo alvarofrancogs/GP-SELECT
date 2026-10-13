@@ -1,0 +1,21 @@
+{
+  "Gasolina": "Petrol",
+  "Eléctrico": "Electric",
+  "Diésel": "Diesel",
+  "Híbrido": "Hybrid",
+  "Automático": "Automatic",
+  "Manual": "Manual",
+  "Coupé": "Coupé",
+  "Familiar": "Estate",
+  "SUV": "SUV",
+  "Berlina": "Saloon",
+  "Integral": "All-wheel drive",
+  "Trasera": "Rear-wheel drive",
+  "Alemania": "Germany",
+  "Bélgica": "Belgium",
+  "Negro": "Black",
+  "Blanco": "White",
+  "Gris": "Grey",
+  "Azul": "Blue",
+  "Cuero negro": "Black leather"
+}

@@ -4,6 +4,7 @@
 **/obj
 src
 tests
+!tests/fixtures
 docs
 .git
 .vs
