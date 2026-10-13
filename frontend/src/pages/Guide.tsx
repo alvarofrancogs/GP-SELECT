@@ -54,7 +54,7 @@ export function Guide() {
           <h2 id="guide-sources-title" className="type-section">{text.sources.title}</h2>
           <p className="type-body">{text.sources.intro}</p>
         </div>
-        <ul className="import-brief__list">
+        <ul className="import-brief__list guide-sources">
           {text.sources.rows.map((row) => (
             <li key={row.href} className="type-body"><a href={row.href} target="_blank" rel="noreferrer">{row.label}</a></li>
           ))}

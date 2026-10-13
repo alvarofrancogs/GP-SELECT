@@ -218,6 +218,10 @@
 .import-brief__detail { grid-column: 2; }
 .import-brief__link { margin-top: 1.5rem; }
 .guide-page .import-brief__list a { color: var(--color-ink); text-decoration: underline; text-underline-offset: .2em; }
+/* The row's spacing moves into the link, so the whole row is its tap area; the layout stays the same. */
+.guide-sources li { padding-block: 0; }
+.guide-sources a { display: block; padding-block: .875rem; }
+.guide-sources li:first-child a { padding-top: 0; }
 .guide-page .import-brief > div > * + * { margin-top: 1.25rem; }
 .import-chapter {
   display: grid;

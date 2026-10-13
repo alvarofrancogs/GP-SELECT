@@ -163,6 +163,14 @@ dialog { overscroll-behavior: contain; }
    backgrounds stay put. !important wins over the scenes' inline (GSAP) opacity only for these 440 ms. */
 html.lang-out :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:not(.header-brand, .catalogue-cta, .language-switcher a), .catalogue-cta__label, button:not(.menu-toggle)) { opacity: 0 !important; transition: opacity 160ms var(--ease-in-out) !important; }
 html.lang-in :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:not(.header-brand, .catalogue-cta, .language-switcher a), .catalogue-cta__label, button:not(.menu-toggle)) { transition: opacity 280ms var(--ease-out) !important; }
+/* Touch: small links and buttons answer to a taller area (44 px, --tap) around them, invisible and without moving
+   anything. Where neighbours are closer, the group sets a smaller --tap so no two areas overlap. */
+@media (pointer: coarse) {
+  :is(.language-switcher a, .menu-toggle, .editorial-link, .footer-brand, .footer-legal a, .footer-nav a) { position: relative; }
+  :is(.language-switcher a, .menu-toggle, .editorial-link, .footer-brand, .footer-legal a, .footer-nav a)::after { content: ''; position: absolute; inset: min(0px, calc(50% - var(--tap, 2.75rem) / 2)) 0; }
+  .header-brand::after { inset: min(-.375rem, calc(50% - var(--tap, 2.75rem) / 2)) -.25rem; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0s !important; animation-duration: 0s !important; }
   /* The menu's staggered delays would still hold it (and its links) on screen with zero-length transitions. */
