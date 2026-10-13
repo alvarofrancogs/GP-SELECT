@@ -111,6 +111,7 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Contains(english ? "service fees and costs" : "honorarios del servicio y gastos", ld.GetProperty("offers").GetProperty("description").GetString()!);
         Assert.DoesNotContain("AutoDealer", html);
         Assert.Contains(english ? "Price: €86,900" : "Precio: 86.900 €", html);
+        Assert.Contains(english ? "We confirm which before the purchase." : "Te confirmamos cuál antes de la compra.", html);
         Assert.Equal(12500, ld.GetProperty("mileageFromOdometer").GetProperty("value").GetInt32());
 
         // Readable without JavaScript, and vehicle text can never break out of the page.
@@ -143,6 +144,7 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.False(JsonLd(html).GetProperty("@graph")[0].TryGetProperty("offers", out _));
         Assert.Contains(english ? "This vehicle is no longer available." : "Este vehículo ya no está disponible.", html);
         Assert.DoesNotContain(english ? "Enquire about this car" : "Solicitar información", html);
+        Assert.DoesNotContain(english ? "We confirm which before the purchase." : "Te confirmamos cuál antes de la compra.", html);
     }
 
     [Theory]

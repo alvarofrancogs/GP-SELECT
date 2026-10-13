@@ -28,6 +28,7 @@ export const es: Dictionary = {
     "onRequest": "Precio bajo consulta",
     "comingSoon": "Próximamente",
     "reserved": "Reservado",
+    "ownership": "Según la operación, el coche se compra directamente a tu nombre o te lo vende GP SELECT con su factura. Te confirmamos cuál antes de la compra.",
     "sold": "Vendido",
     "showMore": "Ver más",
     "empty": "Ningún vehículo coincide con tu búsqueda.",
@@ -118,7 +119,7 @@ export const es: Dictionary = {
         title: "Qué hacemos nosotros y qué coordinamos con terceros.",
         legalLabel: 'aviso legal',
         rows: [
-          { title: "Lo que hace GP SELECT", body: "La búsqueda, la selección y la evaluación de cada unidad, la coordinación con el vendedor, la preparación de la documentación y el seguimiento de la operación hasta la entrega." },
+          { title: "Lo que hace GP SELECT", body: "La búsqueda, la selección y la evaluación de cada unidad, la negociación con el vendedor, la preparación de la documentación y el seguimiento de la operación hasta la entrega." },
           { title: "Lo que coordina con terceros", body: "El transporte, la inspección técnica que exija tu país para matricular el coche y los trámites ante las administraciones de origen y destino." },
           { title: "Empresa", body: "GP SELECT tiene su base en Murcia (España). Los datos del titular están en el aviso legal. Puedes escribirnos por WhatsApp." },
         ],
@@ -154,7 +155,7 @@ export const es: Dictionary = {
       },
       "support": {
         "title": "Nosotros gestionamos el resto.",
-        "body": "Cuando eliges una unidad, coordinamos todo lo que viene después. Tú eres el comprador; nosotros llevamos la operación.",
+        "body": "Cuando eliges una unidad, coordinamos todo lo que viene después. Tú decides; nosotros llevamos la operación.",
         "detail": "En cada etapa sabes en qué punto está la operación y qué queda pendiente."
       },
       "stages": {
@@ -163,7 +164,7 @@ export const es: Dictionary = {
         "rows": [
           { title: "1 · Búsqueda", body: "Concretamos contigo modelo, configuración, presupuesto y uso, y buscamos unidades en el mercado europeo." },
           { title: "2 · Selección", body: "Revisamos cada unidad con la información y la documentación disponibles y te proponemos una selección corta." },
-          { title: "3 · Compra", body: "Coordinamos la compra con el vendedor. El comprador eres tú, y la decisión de comprar también." },
+          { title: "3 · Compra", body: "Negociamos y coordinamos la compra con el vendedor. La decisión de comprar es siempre tuya." },
           { title: "4 · Documentación y trámites", body: "Reunimos y revisamos la documentación del vehículo y preparamos los trámites de importación que exige tu país." },
           { title: "5 · Transporte", body: "Organizamos el traslado desde el país de origen." },
           { title: "6 · Matriculación", body: "Gestionamos la matriculación en tu país de residencia, con los requisitos y los impuestos que allí se apliquen." },
@@ -177,7 +178,7 @@ export const es: Dictionary = {
           { title: "¿Qué incluye el servicio?", body: "Siete etapas, desde la búsqueda en Europa hasta la entrega: selección y evaluación de las unidades, coordinación de la compra, documentación y trámites, transporte, matriculación en tu país y entrega." },
           { title: "¿Tengo que saber qué modelo quiero?", body: "No. Puedes llegar con un modelo concreto o solo con lo que esperas del coche: cómo lo vas a usar, qué te importa y qué presupuesto tienes. Con eso definimos la búsqueda contigo." },
           { title: "¿De qué países traéis los coches?", body: "Principalmente de países de la Unión Europea. Buscamos en varios mercados de la UE, Alemania entre ellos, y comparamos las unidades de distintos países con el mismo criterio para proponerte las que mejor encajan con lo que buscas." },
-          { title: "¿Quién compra el coche?", body: "Tú. El vehículo se compra a tu nombre y GP SELECT gestiona la operación: coordina con el vendedor, revisa la documentación y se encarga de los trámites hasta la entrega." },
+          { title: "¿A nombre de quién va el coche?", body: "Depende de la operación. En unos casos el coche se compra directamente a tu nombre al vendedor de origen; en otros, lo compra GP SELECT y te lo vende con su factura. Te confirmamos cuál antes de la compra y, en los dos casos, gestionamos los trámites hasta la entrega." },
           { title: "¿Trabajáis con clientes fuera de España?", body: "Sí. Trabajamos con clientes de toda Europa y gestionamos la matriculación en el país donde vives, con los requisitos y los impuestos que allí se apliquen." },
           { title: "¿Qué pasa después de enviar el cuestionario?", body: "Leemos tu solicitud y te contactamos para concretar la búsqueda. Enviar el cuestionario no te compromete a nada." },
         ],

@@ -16,6 +16,8 @@ public static class VehicleSeo
     public const string EmptyRoot = "<div id=\"root\"></div>";
 
     public const string DefaultImage = "/assets/seo/og-default.jpg";
+    private const string OwnershipEs = "Según la operación, el coche se compra directamente a tu nombre o te lo vende GP SELECT con su factura. Te confirmamos cuál antes de la compra.";
+    private const string OwnershipEn = "Depending on the transaction, the car is bought directly in your name or sold to you by GP SELECT with its own invoice. We confirm which before the purchase.";
     private const string SpanishLocation = "Murcia · Clientes en toda Europa";
     private const string EnglishLocation = "Murcia, Spain · Clients across Europe";
     private const string SpanishDefaultImageAlt = "GP SELECT · Murcia · Clientes en España y Europa";
@@ -68,7 +70,8 @@ public static class VehicleSeo
             + " Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.";
         var url = siteUrl is null ? null : siteUrl + Path(v, english);
         var image = v.Images.FirstOrDefault();
-        // The published amount includes service fees and costs; GP SELECT is not the vehicle seller.
+        // The published amount includes service fees and costs. The seller depends on the transaction
+        // (the original seller or GP SELECT), so the Offer names none.
         var offer = new Dictionary<string, object?>
         {
             ["@type"] = "Offer", ["price"] = v.PriceEur, ["priceCurrency"] = "EUR",
@@ -140,6 +143,8 @@ public static class VehicleSeo
         if (v.Variant is { Length: > 0 }) html.Append($"<p>{E(v.Variant)}</p>");
         if (v.Status == VehicleStatus.Sold) html.Append(english ? "<p>This vehicle is no longer available.</p>" : "<p>Este vehículo ya no está disponible.</p>");
         else if (HasPublicPrice(v)) html.Append($"<p>{(english ? "Price" : "Precio")}: {E(Price(v.PriceEur!.Value, english))}</p>");
+        // Same notice as the SPA (frontend/src/i18n: vehicles.ownership).
+        if (v.Status != VehicleStatus.Sold) html.Append(english ? $"<p>{OwnershipEn}</p>" : $"<p>{OwnershipEs}</p>");
 
         var specs = new (string Label, string? Value)[]
         {

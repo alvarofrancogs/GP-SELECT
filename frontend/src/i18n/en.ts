@@ -28,6 +28,7 @@ export const en: Dictionary = {
     "onRequest": "Price on request",
     "comingSoon": "Coming soon",
     "reserved": "Reserved",
+    "ownership": "Depending on the transaction, the car is bought directly in your name or sold to you by GP SELECT with its own invoice. We confirm which before the purchase.",
     "sold": "Sold",
     "showMore": "Show more",
     "empty": "No vehicles match your search.",
@@ -118,7 +119,7 @@ export const en: Dictionary = {
         title: "What we do ourselves, and what we coordinate.",
         legalLabel: 'legal notice',
         rows: [
-          { title: "What GP SELECT does", body: "The search, the selection and evaluation of each car, coordination with the seller, preparing the paperwork and following the process through to delivery." },
+          { title: "What GP SELECT does", body: "The search, the selection and evaluation of each car, negotiation with the seller, preparing the paperwork and following the process through to delivery." },
           { title: "What we coordinate with third parties", body: "Transport, the roadworthiness inspection your country requires for registration, and the formalities with the authorities in the origin and destination countries." },
           { title: "Company", body: "GP SELECT is based in Murcia, Spain. The owner’s details are in the legal notice. You can reach us on WhatsApp." },
         ],
@@ -154,7 +155,7 @@ export const en: Dictionary = {
       },
       "support": {
         "title": "We handle the rest.",
-        "body": "Once you choose a car, we coordinate everything that follows. You are the buyer; we run the process.",
+        "body": "Once you choose a car, we coordinate everything that follows. You decide; we run the process.",
         "detail": "At every stage you know where things stand and what is still pending."
       },
       "stages": {
@@ -163,7 +164,7 @@ export const en: Dictionary = {
         "rows": [
           { title: "1 · Search", body: "We agree the model, specification and budget with you, and how you will use the car, then search the European market." },
           { title: "2 · Selection", body: "We review each car against the information and documents available and put forward a short list." },
-          { title: "3 · Purchase", body: "We coordinate the purchase with the seller. You are the buyer, and the decision to buy is yours." },
+          { title: "3 · Purchase", body: "We negotiate and coordinate the purchase with the seller. The decision to buy is always yours." },
           { title: "4 · Documents and paperwork", body: "We gather and check the vehicle’s documents and prepare the registration formalities your country requires." },
           { title: "5 · Transport", body: "We arrange transport from the country of origin." },
           { title: "6 · Registration", body: "We handle registration in your country of residence, under the rules and taxes that apply there." },
@@ -177,7 +178,7 @@ export const en: Dictionary = {
           { title: "What does the service include?", body: "Seven stages, from the search in Europe to delivery: selecting and evaluating cars, coordinating the purchase, paperwork, transport, registration in your country and delivery." },
           { title: "Do I need to know which model I want?", body: "No. You can come with a specific model or just with what you expect from the car: how you will use it, what matters to you and your budget. We define the search with you from there." },
           { title: "Which countries do the cars come from?", body: "Mainly from EU countries. We search several EU markets, Germany among them, and compare cars from different countries against the same brief to put forward the ones that best match what you want." },
-          { title: "Who buys the car?", body: "You do. The car is bought in your name, and GP SELECT runs the process: we coordinate with the seller, check the paperwork and handle the formalities through to delivery." },
+          { title: "In whose name is the car bought?", body: "It depends on the transaction. In some cases the car is bought directly in your name from the original seller; in others, GP SELECT buys it and sells it to you with its own invoice. We confirm which before the purchase and, either way, we handle the formalities through to delivery." },
           { title: "Do you work with clients outside Spain?", body: "Yes. We work with clients across Europe and handle registration in the country where you live, under the rules and taxes that apply there." },
           { title: "What happens after I send the form?", body: "We read your request and get in touch to define the search. Sending the form does not commit you to anything." },
         ],

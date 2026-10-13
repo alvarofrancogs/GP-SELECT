@@ -259,7 +259,8 @@ export function getVehiclePageMeta(vehicle: VehicleDetail, siteUrl?: string, loc
           '@type': 'EngineSpecification',
           enginePower: { '@type': 'QuantitativeValue', value: vehicle.powerHp, unitText: 'CV' },
         } } : {}),
-        // The published amount includes service fees and costs. GP SELECT is not the vehicle seller.
+        // The published amount includes service fees and costs. The seller depends on the transaction
+        // (the original seller or GP SELECT), so the Offer names none.
         ...(publicPrice ? { offers: {
           '@type': 'Offer', price: vehicle.priceEur, priceCurrency: 'EUR',
           description: english ? 'Total price including service fees and costs.' : 'Precio total con honorarios del servicio y gastos incluidos.',
