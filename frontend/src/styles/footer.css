@@ -68,6 +68,10 @@
 .footer-legal a { padding-block: .3rem; margin-block: -.3rem; }
 .footer-legal a:hover { opacity: 1; text-decoration: underline; text-underline-offset: .3em; }
 
+/* Tap areas (global.css): the nav links (padded) are .3rem apart, the legal links sit just above the language links. */
+.footer-nav { --tap: calc(100% + .3rem); }
+.footer-bottom { --tap: 2.6rem; }
+
 @media (max-width: 1199px) {
   .footer-main { grid-template-columns: 1fr 1fr; }
   .footer-nav { grid-template-columns: repeat(2, max-content); }

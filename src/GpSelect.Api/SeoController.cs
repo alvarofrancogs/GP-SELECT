@@ -37,21 +37,21 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
         var end = start < 0 ? -1 : html!.IndexOf(close, start + open.Length, StringComparison.Ordinal);
         if (end < 0) return StatusCode(StatusCodes.Status503ServiceUnavailable);
 
-        var vehicles = await db.Vehicles.AsNoTracking().Where(PublicVehiclesController.Listed)
-            .OrderBy(x => x.Status == VehicleStatus.Sold).ThenByDescending(x => x.CreatedAt)
-            .ThenByDescending(x => x.Id).Take(VehicleQueryLimits.MaxVehicles).ToListAsync(ct);
+        var vehicles = await PublicVehiclesController.Cards(db, ct);
         var list = new StringBuilder();
         if (vehicles.Count > 0)
         {
             list.Append("<ul>");
             foreach (var v in vehicles)
             {
-                var name = $"{v.Make} {v.Model}{(v.Variant is { Length: > 0 } ? $" {v.Variant}" : "")} ({v.FirstRegistrationYear})";
-                list.Append($"<li><a href=\"{VehicleSeo.CataloguePath(english)}/{Uri.EscapeDataString(v.PublicSlug)}\">{VehicleSeo.E(name)}</a>"
+                var name = $"{v.Make} {v.Model}{(v.Variant is { Length: > 0 } ? $" {v.Variant}" : "")} ({v.Year})";
+                list.Append($"<li><a href=\"{VehicleSeo.CataloguePath(english)}/{Uri.EscapeDataString(v.Slug)}\">{VehicleSeo.E(name)}</a>"
                     + (v.Status == VehicleStatus.Sold ? (english ? " · Sold" : " · Vendido") : "") + "</li>");
             }
             list.Append("</ul>");
         }
+        // The same list the API returns: the page renders it at once instead of moving its closing section later.
+        list.Append(VehicleSeo.DataScript("vehicles-data", vehicles));
         var page = html![..(start + open.Length)] + list + html[end..];
         Response.Headers.CacheControl = "public,max-age=60";
         return Content(page, "text/html; charset=utf-8");

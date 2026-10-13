@@ -19,14 +19,17 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
         || (x.Status == VehicleStatus.Sold && (x.ShowWhenSold || x.PublishedAt != null));
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<VehiclePublicCardDto>>> List(CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<VehiclePublicCardDto>>> List(CancellationToken ct) => Ok(await Cards(db, ct));
+
+    /// <summary>The public list, also embedded by the catalogue page so it renders without waiting for this endpoint.</summary>
+    internal static async Task<List<VehiclePublicCardDto>> Cards(GpSelectDbContext db, CancellationToken ct)
     {
         // Newest first, sold vehicles kept on show after everything still for sale.
         var vehicles = await db.Vehicles.AsNoTracking().Where(Listed).OrderBy(x => x.Status == VehicleStatus.Sold)
             .ThenByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id).Take(VehicleQueryLimits.MaxVehicles).ToListAsync(ct);
         var ids = vehicles.Select(x => x.Id).ToList();
         var images = (await db.Images.AsNoTracking().Where(x => ids.Contains(x.VehicleUnitId)).ToListAsync(ct)).ToLookup(x => x.VehicleUnitId);
-        return Ok(vehicles.Select(v => PublicMapping.MapCard(v, images[v.Id])).ToList());
+        return vehicles.Select(v => PublicMapping.MapCard(v, images[v.Id])).ToList();
     }
 
     [HttpGet("{slug}")]
