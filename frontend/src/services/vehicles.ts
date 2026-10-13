@@ -63,6 +63,28 @@ export function fromPublicDetail(dto: VehiclePublicDto): VehicleDetail {
   };
 }
 
+// The catalogue page from the server carries the list, read before React replaces the page's content.
+let initialList: VehicleSummary[] | null = null;
+if (typeof document !== 'undefined' && /^\/(?:vehiculos|en\/vehicles)\/?$/i.test(initialPath)) {
+  const script = document.getElementById('vehicles-data');
+  try {
+    const list = JSON.parse(script?.textContent ?? '') as VehiclePublicCardDto[];
+    if (Array.isArray(list)) initialList = list.map(fromPublicCard);
+  } catch { /* Missing or invalid data uses the normal API request. */ }
+  script?.remove();
+}
+const listEmbedded = initialList !== null;
+
+/** The first catalogue render of the document's own history entry starts from the embedded list. */
+export function getInitialVehicles(locationKey: string): VehicleSummary[] | null {
+  return locationKey === initialKey ? initialList : null;
+}
+
+/** Called on commit, after both StrictMode initializers; later visits must fetch. */
+export function consumeInitialVehicles(): void {
+  initialList = null;
+}
+
 // The start-up screen asks for the list while it loads; the first reader within a few seconds reuses it.
 let prefetched: { at: number; list: Promise<VehicleSummary[]> } | null = null;
 const PREFETCH_TTL = 8000;
@@ -75,6 +97,7 @@ async function fetchVehicles(signal?: AbortSignal): Promise<VehicleSummary[]> {
 
 /** Starts loading the list ahead of time (errors are left to the first real reader). */
 export function prefetchVehicles(): Promise<unknown> {
+  if (listEmbedded) return Promise.resolve(); // already in the page
   const list = fetchVehicles();
   prefetched = { at: Date.now(), list };
   return list.catch(() => { prefetched = null; });

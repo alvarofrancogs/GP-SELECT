@@ -253,6 +253,11 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         var links = System.Text.RegularExpressions.Regex.Matches(html, $"<li><a href=\"{prefix}/([^\"]+)\">");
         Assert.Equal(cards.EnumerateArray().Select(x => Uri.EscapeDataString(x.GetProperty("slug").GetString()!)),
             links.Select(x => x.Groups[1].Value));
+        // The page carries the API's own list, so the client renders it without a second request.
+        var data = System.Text.RegularExpressions.Regex.Match(html,
+            "<script type=\"application/json\" id=\"vehicles-data\">([^<]*)</script><!--/vehicle-list-->").Groups[1].Value;
+        Assert.True(JsonElement.DeepEquals(cards, JsonDocument.Parse(data).RootElement));
+        Assert.Contains("BMW \\u003C\\u0026\\u003E", data);
         var empty = System.Text.RegularExpressions.Regex.Replace(html,
             "(?<=<!--vehicle-list-->)[\\s\\S]*?(?=<!--/vehicle-list-->)", "");
         Assert.Equal((english ? ApiFactory.FixedSpaTemplate.EnglishCatalogueShell : ApiFactory.FixedSpaTemplate.CatalogueShell), empty);
@@ -261,7 +266,7 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task Empty_catalogue_keeps_the_markers_empty(bool english)
+    public async Task Empty_catalogue_lists_nothing_and_embeds_an_empty_list(bool english)
     {
         var prefix = english ? "/en/vehicles" : "/vehiculos";
         // A separate database keeps this independent of the shared fixture's published vehicles.
@@ -271,7 +276,9 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
             await emptyApi.InitializeAsync();
             var response = await emptyApi.Anonymous().GetAsync($"/seo{prefix}");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.Equal((english ? ApiFactory.FixedSpaTemplate.EnglishCatalogueShell : ApiFactory.FixedSpaTemplate.CatalogueShell), await response.Content.ReadAsStringAsync());
+            var shell = english ? ApiFactory.FixedSpaTemplate.EnglishCatalogueShell : ApiFactory.FixedSpaTemplate.CatalogueShell;
+            Assert.Equal(shell.Replace("<!--vehicle-list-->", "<!--vehicle-list--><script type=\"application/json\" id=\"vehicles-data\">[]</script>"),
+                await response.Content.ReadAsStringAsync());
         }
         finally { await ((IAsyncLifetime)emptyApi).DisposeAsync(); }
     }

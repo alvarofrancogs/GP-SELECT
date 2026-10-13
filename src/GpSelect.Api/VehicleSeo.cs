@@ -37,16 +37,18 @@ public static class VehicleSeo
         var end = template.IndexOf(HeadEnd, StringComparison.Ordinal);
         var root = template.IndexOf(EmptyRoot, StringComparison.Ordinal);
         if (start < 0 || end < start || root < 0) return null;
-        var script = "";
-        if (data is not null)
-        {
-            // Escape after serialization, even if the API later uses a relaxed encoder.
-            var json = JsonSerializer.Serialize(data, DataOptions)
-                .Replace("<", "\\u003C").Replace(">", "\\u003E").Replace("&", "\\u0026");
-            script = $"<script type=\"application/json\" id=\"vehicle-data\">{json}</script>";
-        }
+        var script = data is null ? "" : DataScript("vehicle-data", data);
         return template[..(start + HeadStart.Length)] + "\n    " + head + "\n    " + template[end..root]
             + $"<div id=\"root\">{body}</div>" + script + template[(root + EmptyRoot.Length)..];
+    }
+
+    /// <summary>The API's own JSON for the client to start from, safe inside the HTML.</summary>
+    public static string DataScript<T>(string id, T data)
+    {
+        // Escape after serialization, even if the API later uses a relaxed encoder.
+        var json = JsonSerializer.Serialize(data, DataOptions)
+            .Replace("<", "\\u003C").Replace(">", "\\u003E").Replace("&", "\\u0026");
+        return $"<script type=\"application/json\" id=\"{id}\">{json}</script>";
     }
 
     public static string Head(VehiclePublicDto v, string? siteUrl, bool english = false)

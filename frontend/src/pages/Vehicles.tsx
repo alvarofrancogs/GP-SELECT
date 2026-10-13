@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { InteriorPageHeader } from '../components/InteriorPageHeader';
 import { VehicleGrid } from '../components/VehicleGrid';
 import { VehicleFilters } from '../components/VehicleFilters';
 import { useLanguage } from '../i18n/useLanguage';
-import { listVehicles } from '../services/vehicles';
+import { consumeInitialVehicles, getInitialVehicles, listVehicles } from '../services/vehicles';
 import { filterVehicles, sanitizeParams, sortVehicles, vehicleFilterKeys } from '../lib/vehicleFacets';
 import type { FacetKey } from '../lib/vehicleFacets';
 import type { VehicleSummary } from '../types/vehicle';
@@ -16,15 +16,20 @@ export function Vehicles() {
   const { copy, href } = useLanguage();
   const text = copy.vehicles;
   const [params, setParams] = useSearchParams();
-  const [vehicles, setVehicles] = useState<VehicleSummary[]>([]);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const { key } = useLocation();
+  // Rendering the list at once keeps the closing section from moving down when it arrives.
+  const [initialList] = useState(() => getInitialVehicles(key));
+  const [vehicles, setVehicles] = useState<VehicleSummary[]>(initialList ?? []);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(initialList ? 'ready' : 'loading');
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
+    consumeInitialVehicles();
+    if (initialList && attempt === 0) return;
     const request = new AbortController();
     listVehicles(request.signal).then((data) => { setVehicles(data); setStatus('ready'); },
       () => { if (!request.signal.aborted) setStatus('error'); });
     return () => request.abort();
-  }, [attempt]);
+  }, [attempt, initialList]);
   // The URL is the source of truth; selections that no longer exist are dropped before rendering.
   const clean = useMemo(() => status === 'ready' ? sanitizeParams(vehicles, params) : params, [status, vehicles, params]);
   useEffect(() => {
