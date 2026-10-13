@@ -43,8 +43,7 @@ function VehicleDetailContent({ slug }: { slug: string }) {
     title: status === 'ready' ? (english ? 'Vehicle not found · GP SELECT' : 'Vehículo no encontrado · GP SELECT')
       : english ? 'Vehicle · GP SELECT' : 'Ficha de vehículo · GP SELECT',
     // A failed request is transient: only a confirmed missing vehicle is kept out of the index.
-    // English vehicle pages are never indexed yet (they have no English text of their own).
-    robots: status === 'ready' ? 'noindex' : english ? 'noindex,follow' : 'index,follow',
+    robots: status === 'ready' ? 'noindex' : 'index,follow',
     tabTitle: status === 'ready' ? `${text.notFound} · GP SELECT` : undefined,
   });
   const back = <Link className="editorial-link type-ui" to={href('/vehiculos')}><span aria-hidden="true">←</span>{text.back}</Link>;

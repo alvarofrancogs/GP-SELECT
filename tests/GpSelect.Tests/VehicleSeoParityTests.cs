@@ -26,7 +26,7 @@ public class VehicleSeoParityTests
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         ApiJsonOptions.Configure(options);
         var vehicle = root.GetProperty("vehicle").Deserialize<VehiclePublicDto>(options)!;
-        var head = VehicleSeo.Head(vehicle, root.GetProperty("siteUrl").GetString());
+        var head = VehicleSeo.Head(vehicle, root.GetProperty("siteUrl").GetString(), root.GetProperty("locale").GetString() == "en");
         var expected = root.GetProperty("expected");
         var title = Regex.Match(head, "<title data-page-meta>(.*?)</title>", RegexOptions.Singleline);
         var description = Regex.Match(head, "<meta data-page-meta name=\"description\" content=\"(.*?)\">", RegexOptions.Singleline);
@@ -36,5 +36,22 @@ public class VehicleSeoParityTests
         Assert.Equal(expected.GetProperty("description").GetString(), WebUtility.HtmlDecode(description.Groups[1].Value));
         Assert.DoesNotContain("<", script.Groups[1].Value);
         Assert.True(JsonNode.DeepEquals(JsonNode.Parse(expected.GetProperty("jsonLd").GetRawText()), JsonNode.Parse(script.Groups[1].Value)), name);
+    }
+
+    [Fact]
+    public void English_values_match_the_shared_fixture()
+    {
+        var json = File.ReadAllText(System.IO.Path.Combine(AppContext.BaseDirectory, "fixtures", "vehicle-values-en.json"));
+        Assert.True(JsonNode.DeepEquals(JsonNode.Parse(json), JsonSerializer.SerializeToNode(VehicleSeo.EnglishValues)));
+    }
+
+    [Theory]
+    [InlineData("  AUTOmaTICO  ", "Automatic")]
+    [InlineData("ELE\u0301CTRICO", "Electric")]
+    [InlineData("Acabado especial", "Acabado especial")]
+    public void English_values_ignore_case_accents_and_surrounding_whitespace(string value, string expected)
+    {
+        Assert.Equal(expected, VehicleSeo.Translate(value, english: true));
+        Assert.Equal(value, VehicleSeo.Translate(value, english: false));
     }
 }

@@ -21,10 +21,15 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
         ["/", "/vehiculos", "/importacion", "/nosotros", "/contacto", "/en", "/en/vehicles", "/en/import", "/en/about", "/en/contact"];
 
     [HttpGet("seo/vehiculos")]
-    public async Task<IActionResult> Catalogue(CancellationToken ct)
+    public Task<IActionResult> Catalogue(CancellationToken ct) => Catalogue(false, ct);
+
+    [HttpGet("seo/en/vehicles")]
+    public Task<IActionResult> EnglishCatalogue(CancellationToken ct) => Catalogue(true, ct);
+
+    private async Task<IActionResult> Catalogue(bool english, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(config["Seo:TemplateUrl"])) return NotFound();
-        var html = await template.GetAsync("vehiculos/index.html", ct);
+        var html = await template.GetAsync(english ? "en/vehicles/index.html" : "vehiculos/index.html", ct);
         const string open = "<!--vehicle-list-->";
         const string close = "<!--/vehicle-list-->";
         var start = html?.IndexOf(open, StringComparison.Ordinal) ?? -1;
@@ -41,8 +46,8 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
             foreach (var v in vehicles)
             {
                 var name = $"{v.Make} {v.Model}{(v.Variant is { Length: > 0 } ? $" {v.Variant}" : "")} ({v.FirstRegistrationYear})";
-                list.Append($"<li><a href=\"/vehiculos/{Uri.EscapeDataString(v.PublicSlug)}\">{VehicleSeo.E(name)}</a>"
-                    + (v.Status == VehicleStatus.Sold ? " · Vendido" : "") + "</li>");
+                list.Append($"<li><a href=\"{VehicleSeo.CataloguePath(english)}/{Uri.EscapeDataString(v.PublicSlug)}\">{VehicleSeo.E(name)}</a>"
+                    + (v.Status == VehicleStatus.Sold ? (english ? " · Sold" : " · Vendido") : "") + "</li>");
             }
             list.Append("</ul>");
         }
@@ -52,9 +57,14 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
     }
 
     [HttpGet("seo/vehiculos/{slug}")]
-    public async Task<IActionResult> Vehicle(string slug, CancellationToken ct)
+    public Task<IActionResult> Vehicle(string slug, CancellationToken ct) => Vehicle(slug, false, ct);
+
+    [HttpGet("seo/en/vehicles/{slug}")]
+    public Task<IActionResult> EnglishVehicle(string slug, CancellationToken ct) => Vehicle(slug, true, ct);
+
+    private async Task<IActionResult> Vehicle(string slug, bool english, CancellationToken ct)
     {
-        var html = await template.GetAsync(ct);
+        var html = english ? await template.GetAsync("en/spa.html", ct) : await template.GetAsync(ct);
         // 503 lets the proxy fall back to the plain SPA, which still works (it loads the vehicle itself).
         if (html is null) return StatusCode(StatusCodes.Status503ServiceUnavailable);
 
@@ -63,14 +73,14 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
         string? page;
         if (vehicle is null)
         {
-            page = VehicleSeo.Fill(html, VehicleSeo.NotFoundHead(), "");
+            page = VehicleSeo.Fill(html, VehicleSeo.NotFoundHead(english), "");
             Response.StatusCode = StatusCodes.Status404NotFound;
         }
         else
         {
             var images = await db.Images.AsNoTracking().Where(x => x.VehicleUnitId == vehicle.Id).ToListAsync(ct);
             var dto = PublicMapping.Map(vehicle, images);
-            page = VehicleSeo.Fill(html, VehicleSeo.Head(dto, SiteUrl()), VehicleSeo.Body(dto), dto);
+            page = VehicleSeo.Fill(html, VehicleSeo.Head(dto, SiteUrl(), english), VehicleSeo.Body(dto, english), dto);
         }
         if (page is null)
         {
@@ -91,16 +101,16 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
         var vehicles = await db.Vehicles.AsNoTracking().Where(PublicVehiclesController.Listed)
             .OrderByDescending(x => x.UpdatedAt).Select(x => new { x.PublicSlug, x.UpdatedAt }).ToListAsync(ct);
         // The catalogue changes whenever a vehicle that was ever public changes, including when it leaves the list.
-        // The other static pages carry no lastmod: no real content date exists for them. That includes
-        // /en/vehicles, a static page until the English catalogue is filled from the API.
+        // Both catalogues share the same inventory date; the other static pages have no real content date.
         var catalogueChanged = await db.Vehicles.AsNoTracking().Where(x => x.PublishedAt != null)
             .MaxAsync(x => (DateTimeOffset?)x.UpdatedAt, ct);
         var xml = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
         foreach (var path in StaticPaths)
             xml.Append($"  <url><loc>{SecurityElement.Escape(site + path)}</loc>"
-                + (path == "/vehiculos" && catalogueChanged is { } changed ? LastMod(changed) : "") + "</url>\n");
+                + ((path == "/vehiculos" || path == "/en/vehicles") && catalogueChanged is { } changed ? LastMod(changed) : "") + "</url>\n");
         foreach (var v in vehicles)
-            xml.Append($"  <url><loc>{SecurityElement.Escape($"{site}/vehiculos/{Uri.EscapeDataString(v.PublicSlug)}")}</loc>"
+        foreach (var path in new[] { "/vehiculos", "/en/vehicles" })
+            xml.Append($"  <url><loc>{SecurityElement.Escape($"{site}{path}/{Uri.EscapeDataString(v.PublicSlug)}")}</loc>"
                 + LastMod(v.UpdatedAt) + "</url>\n");
         xml.Append("</urlset>\n");
         Response.Headers.CacheControl = "public,max-age=300";

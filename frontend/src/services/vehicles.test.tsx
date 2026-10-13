@@ -19,7 +19,8 @@ function embed(text = JSON.stringify(dto)) {
 }
 
 describe('initial vehicle data', () => {
-  it('maps the matching initial slug and retains it for both initializers', async () => {
+  it.each(['/vehiculos/bmw-m4', '/en/vehicles/bmw-m4'])('maps %s and retains it for both initializers', async (path) => {
+    window.history.replaceState(null, '', path);
     embed();
     const { getInitialVehicle } = await import('./vehicles');
     const first = getInitialVehicle('bmw-m4', 'default');

@@ -79,11 +79,14 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         return JsonDocument.Parse(html[start..html.IndexOf("</script>", start, StringComparison.Ordinal)]).RootElement;
     }
 
-    [Fact]
-    public async Task Vehicle_page_carries_its_metadata_and_readable_content()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Vehicle_page_carries_its_metadata_and_readable_content(bool english)
     {
+        var prefix = english ? "/en/vehicles" : "/vehiculos";
         var (_, slug, image) = await PublishedVehicle();
-        var response = await api.Anonymous().GetAsync($"/seo/vehiculos/{slug}");
+        var response = await api.Anonymous().GetAsync($"/seo{prefix}/{slug}");
         var html = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -93,8 +96,8 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         var dataStart = html.IndexOf(dataScript, StringComparison.Ordinal) + dataScript.Length;
         using var data = JsonDocument.Parse(html[dataStart..html.IndexOf("</script>", dataStart, StringComparison.Ordinal)]);
         Assert.Equal(slug, data.RootElement.GetProperty("slug").GetString());
-        Assert.Contains("<title data-page-meta>BMW M4 (2023) · 12.500 km · GP SELECT</title>", html);
-        Assert.Contains($"<link data-page-meta rel=\"canonical\" href=\"{ApiFactory.SiteUrl}/vehiculos/{slug}\">", html);
+        Assert.Contains(english ? "<title data-page-meta>BMW M4 (2023) · 12,500 km · GP SELECT</title>" : "<title data-page-meta>BMW M4 (2023) · 12.500 km · GP SELECT</title>", html);
+        Assert.Contains($"<link data-page-meta rel=\"canonical\" href=\"{ApiFactory.SiteUrl}{prefix}/{slug}\">", html);
         Assert.Contains($"property=\"og:image\" content=\"{ApiFactory.SiteUrl}/api/public/vehicles/{slug}/images/{image}/detail\"", html);
         Assert.Contains("content=\"index,follow\"", html);
         // The template's placeholder title is gone; the markers stay for the next fill.
@@ -104,60 +107,80 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Equal("Car", ld.GetProperty("@type").GetString());
         Assert.Equal("Brand", ld.GetProperty("brand").GetProperty("@type").GetString());
         Assert.Equal(86900, ld.GetProperty("offers").GetProperty("price").GetDecimal());
+        Assert.False(ld.GetProperty("offers").TryGetProperty("seller", out _));
+        Assert.Contains(english ? "advisory fees and costs" : "honorarios de asesoramiento y gastos", ld.GetProperty("offers").GetProperty("description").GetString()!);
+        Assert.DoesNotContain("AutoDealer", html);
+        Assert.Contains(english ? "Price: €86,900" : "Precio: 86.900 €", html);
         Assert.Equal(12500, ld.GetProperty("mileageFromOdometer").GetProperty("value").GetInt32());
 
         // Readable without JavaScript, and vehicle text can never break out of the page.
         Assert.Contains("<h1>BMW M4</h1>", html);
         // The contact link carries the readable name the form shows, not the slug.
-        Assert.Contains("/contacto?vehiculo=BMW%20M4%20%282023%29&amp;intent=vehicle", html);
-        Assert.Contains("<dd>12.500 km</dd>", html);
+        Assert.Contains((english ? "/en/contact" : "/contacto") + "?vehiculo=BMW%20M4%20%282023%29&amp;intent=vehicle", html);
+        Assert.Contains(english ? "<dd>12,500 km</dd>" : "<dd>12.500 km</dd>", html);
+        Assert.Contains(english ? "<dd>Petrol</dd>" : "<dd>Gasolina</dd>", html);
+        Assert.Contains(english ? "<html lang=\"en\">" : "<html lang=\"es\">", html);
+        foreach (var (language, path) in new[] { ("es", "/vehiculos"), ("en", "/en/vehicles"), ("x-default", "/en/vehicles") })
+            Assert.Contains($"hreflang=\"{language}\" href=\"{ApiFactory.SiteUrl}{path}/{slug}\"", html);
         Assert.Contains("<li>Asientos M Carbon</li>", html);
         Assert.DoesNotContain("<script>alert(1)</script>", html);
         Assert.Contains("&lt;/script&gt;&lt;script&gt;alert(1)", html);
         Assert.DoesNotContain("REF-SECRET", html);
     }
 
-    [Fact]
-    public async Task Sold_vehicle_keeps_its_page_without_an_offer()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Sold_vehicle_keeps_its_page_without_an_offer(bool english)
     {
+        var prefix = english ? "/en/vehicles" : "/vehiculos";
         var (id, slug, _) = await PublishedVehicle();
         await Json(await SetStatus(id, "Sold"));
-        var response = await api.Anonymous().GetAsync($"/seo/vehiculos/{slug}");
+        var response = await api.Anonymous().GetAsync($"/seo{prefix}/{slug}");
         var html = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.False(JsonLd(html).GetProperty("@graph")[0].TryGetProperty("offers", out _));
-        Assert.Contains("Este vehículo ya no está disponible.", html);
-        Assert.DoesNotContain("Solicitar información", html);
+        Assert.Contains(english ? "This vehicle is no longer available." : "Este vehículo ya no está disponible.", html);
+        Assert.DoesNotContain(english ? "Enquire about this car" : "Solicitar información", html);
     }
 
-    [Fact]
-    public async Task Unknown_or_unpublished_vehicle_is_a_404_kept_out_of_the_index()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Unknown_or_unpublished_vehicle_is_a_404_kept_out_of_the_index(bool english)
     {
+        var prefix = english ? "/en/vehicles" : "/vehiculos";
         var (_, draft) = await CreateVehicle();
         foreach (var slug in new[] { "no-existe", draft })
         {
-            var response = await api.Anonymous().GetAsync($"/seo/vehiculos/{slug}");
+            var response = await api.Anonymous().GetAsync($"/seo{prefix}/{slug}");
             var html = await response.Content.ReadAsStringAsync();
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
             Assert.DoesNotContain("id=\"vehicle-data\"", html);
             Assert.Contains("content=\"noindex\"", html);
+            Assert.DoesNotContain("hreflang", html);
+            Assert.Contains(english ? "Vehicle not found" : "Vehículo no encontrado", html);
             Assert.Contains("<div id=\"root\"></div>", html);
         }
     }
 
-    [Fact]
-    public async Task Without_a_usable_template_the_proxy_is_told_to_fall_back()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Without_a_usable_template_the_proxy_is_told_to_fall_back(bool english)
     {
+        var prefix = english ? "/en/vehicles" : "/vehiculos";
         try
         {
-            api.Template.Html = null;
-            Assert.Equal(HttpStatusCode.ServiceUnavailable, (await api.Anonymous().GetAsync("/seo/vehiculos/cualquiera")).StatusCode);
-            api.Template.Html = "<html><head><title>Sin marcadores</title></head><body><div id=\"root\"></div></body></html>";
-            Assert.Equal(HttpStatusCode.ServiceUnavailable, (await api.Anonymous().GetAsync("/seo/vehiculos/cualquiera")).StatusCode);
+            if (english) api.Template.EnglishHtml = null; else api.Template.Html = null;
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, (await api.Anonymous().GetAsync($"/seo{prefix}/cualquiera")).StatusCode);
+            if (english) api.Template.EnglishHtml = "<html><head><title>Sin marcadores</title></head><body><div id=\"root\"></div></body></html>"; else api.Template.Html = "<html><head><title>Sin marcadores</title></head><body><div id=\"root\"></div></body></html>";
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, (await api.Anonymous().GetAsync($"/seo{prefix}/cualquiera")).StatusCode);
         }
         finally
         {
+            api.Template.EnglishHtml = ApiFactory.FixedSpaTemplate.EnglishShell;
             api.Template.Html = ApiFactory.FixedSpaTemplate.Shell;
         }
     }
@@ -182,9 +205,8 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         foreach (var path in new[] { "/", "/importacion", "/nosotros", "/contacto", "/en", "/en/import", "/en/about", "/en/contact" })
             Assert.Contains($"<url><loc>{ApiFactory.SiteUrl}{path}</loc></url>", xml);
         Assert.Contains($"<loc>{ApiFactory.SiteUrl}/vehiculos</loc><lastmod>2099-05-06</lastmod>", xml);
-        Assert.Contains($"<loc>{ApiFactory.SiteUrl}/en/vehicles</loc></url>", xml);
-        // English vehicle pages stay out until they have their own English text (B4).
-        Assert.DoesNotContain("/en/vehicles/", xml);
+        Assert.Contains($"<loc>{ApiFactory.SiteUrl}/en/vehicles</loc><lastmod>2099-05-06</lastmod>", xml);
+        Assert.Contains($"<loc>{ApiFactory.SiteUrl}/en/vehicles/{listed}</loc><lastmod>2099-03-04</lastmod>", xml);
         Assert.Contains($"<loc>{ApiFactory.SiteUrl}/vehiculos/{listed}</loc><lastmod>2099-03-04</lastmod>", xml);
         Assert.DoesNotContain(draft, xml);
         Assert.DoesNotContain(archived, xml);
@@ -197,9 +219,12 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         await db.Vehicles.Where(x => x.Id == id).ExecuteUpdateAsync(x => x.SetProperty(v => v.UpdatedAt, at));
     }
 
-    [Fact]
-    public async Task Catalogue_links_only_listed_vehicles_in_public_list_order_and_preserves_the_template()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Catalogue_links_only_listed_vehicles_in_public_list_order_and_preserves_the_template(bool english)
     {
+        var prefix = english ? "/en/vehicles" : "/vehiculos";
         var (availableId, available, _) = await PublishedVehicle();
         await Json(await admin.PatchAsync($"/api/admin/vehicles/{availableId}",
             JsonContent.Create(new { make = "BMW <&>", model = "M4 <&>", variant = "Competition <&>" })));
@@ -211,60 +236,69 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         var (soldId, sold, _) = await PublishedVehicle();
         await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{soldId}/status", new { status = "Sold", showWhenSold = true }));
 
-        var response = await api.Anonymous().GetAsync("/seo/vehiculos?marca=BMW");
+        var response = await api.Anonymous().GetAsync($"/seo{prefix}?marca=BMW");
         var html = await response.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
         Assert.Equal("utf-8", response.Content.Headers.ContentType?.CharSet);
         Assert.True(response.Headers.CacheControl?.Public);
         Assert.Equal(TimeSpan.FromSeconds(60), response.Headers.CacheControl?.MaxAge);
-        Assert.Contains($"<a href=\"/vehiculos/{available}\">BMW &lt;&amp;&gt; M4 &lt;&amp;&gt; Competition &lt;&amp;&gt; (2023)</a>", html);
-        Assert.Contains($"<a href=\"/vehiculos/{sold}\">BMW M4 (2023)</a> · Vendido", html);
-        foreach (var slug in new[] { draft, archived, hidden }) Assert.DoesNotContain($"/vehiculos/{slug}\"", html);
+        Assert.Contains($"<a href=\"{prefix}/{available}\">BMW &lt;&amp;&gt; M4 &lt;&amp;&gt; Competition &lt;&amp;&gt; (2023)</a>", html);
+        Assert.Contains($"<a href=\"{prefix}/{sold}\">BMW M4 (2023)</a> · {(english ? "Sold" : "Vendido")}", html);
+        foreach (var slug in new[] { draft, archived, hidden }) Assert.DoesNotContain($"{prefix}/{slug}\"", html);
 
         var cards = await Json(await api.Anonymous().GetAsync("/api/public/vehicles"));
-        var links = System.Text.RegularExpressions.Regex.Matches(html, "<li><a href=\"/vehiculos/([^\"]+)\">");
+        var links = System.Text.RegularExpressions.Regex.Matches(html, $"<li><a href=\"{prefix}/([^\"]+)\">");
         Assert.Equal(cards.EnumerateArray().Select(x => Uri.EscapeDataString(x.GetProperty("slug").GetString()!)),
             links.Select(x => x.Groups[1].Value));
         var empty = System.Text.RegularExpressions.Regex.Replace(html,
             "(?<=<!--vehicle-list-->)[\\s\\S]*?(?=<!--/vehicle-list-->)", "");
-        Assert.Equal(ApiFactory.FixedSpaTemplate.CatalogueShell, empty);
+        Assert.Equal((english ? ApiFactory.FixedSpaTemplate.EnglishCatalogueShell : ApiFactory.FixedSpaTemplate.CatalogueShell), empty);
     }
 
-    [Fact]
-    public async Task Empty_catalogue_keeps_the_markers_empty()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Empty_catalogue_keeps_the_markers_empty(bool english)
     {
+        var prefix = english ? "/en/vehicles" : "/vehiculos";
         // A separate database keeps this independent of the shared fixture's published vehicles.
         var emptyApi = new ApiFactory();
         try
         {
             await emptyApi.InitializeAsync();
-            var response = await emptyApi.Anonymous().GetAsync("/seo/vehiculos");
+            var response = await emptyApi.Anonymous().GetAsync($"/seo{prefix}");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.Equal(ApiFactory.FixedSpaTemplate.CatalogueShell, await response.Content.ReadAsStringAsync());
+            Assert.Equal((english ? ApiFactory.FixedSpaTemplate.EnglishCatalogueShell : ApiFactory.FixedSpaTemplate.CatalogueShell), await response.Content.ReadAsStringAsync());
         }
         finally { await ((IAsyncLifetime)emptyApi).DisposeAsync(); }
     }
 
-    [Fact]
-    public async Task Catalogue_without_a_usable_template_returns_503()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Catalogue_without_a_usable_template_returns_503(bool english)
     {
+        var prefix = english ? "/en/vehicles" : "/vehiculos";
         try
         {
             foreach (var html in new string?[] { null, ApiFactory.FixedSpaTemplate.Shell })
             {
-                api.Template.CatalogueHtml = html;
-                Assert.Equal(HttpStatusCode.ServiceUnavailable, (await api.Anonymous().GetAsync("/seo/vehiculos")).StatusCode);
+                if (english) api.Template.EnglishCatalogueHtml = html; else api.Template.CatalogueHtml = html;
+                Assert.Equal(HttpStatusCode.ServiceUnavailable, (await api.Anonymous().GetAsync($"/seo{prefix}")).StatusCode);
             }
         }
-        finally { api.Template.CatalogueHtml = ApiFactory.FixedSpaTemplate.CatalogueShell; }
+        finally { api.Template.CatalogueHtml = ApiFactory.FixedSpaTemplate.CatalogueShell; api.Template.EnglishCatalogueHtml = ApiFactory.FixedSpaTemplate.EnglishCatalogueShell; }
     }
 
-    [Fact]
-    public async Task Catalogue_without_template_url_is_off()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Catalogue_without_template_url_is_off(bool english)
     {
+        var prefix = english ? "/en/vehicles" : "/vehiculos";
         using var disabled = api.WithWebHostBuilder(builder => builder.UseSetting("Seo:TemplateUrl", ""));
         using var client = disabled.CreateClient();
-        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/seo/vehiculos")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/seo{prefix}")).StatusCode);
     }
 }

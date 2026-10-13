@@ -12,7 +12,7 @@ let initialDataConsumed = false;
 /** Read once, but retain the result for StrictMode's repeated state initializer. */
 export function getInitialVehicle(slug: string, locationKey: string): VehicleDetail | null {
   if (initialDataConsumed || locationKey !== initialKey
-    || !/^\/vehiculos\/[^/]+\/?$/i.test(initialPath)) return null;
+    || !/^\/(?:vehiculos|en\/vehicles)\/[^/]+\/?$/i.test(initialPath)) return null;
   try {
     if (decodeURIComponent(initialPath.replace(/\/$/, '').split('/').pop()!) !== slug) return null;
   } catch { return null; }
