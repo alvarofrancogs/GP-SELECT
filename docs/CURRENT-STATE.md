@@ -355,6 +355,13 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 - **Sin cambio visual:** capturas de la Home antes/después a 390 (DPR 3), 1440 (DPR 2) y 1920 (DPR 1) en 8 posiciones: como mucho un 0,03 % de píxeles con diferencia apreciable (remuestreo). Las imágenes del BMW llegan antes que la escena con un scroll normal en Slow 4G; con un scroll muy brusco llegan ~0,5 s tarde, igual que antes. QA de B10 repetida sin problemas nuevos.
 - **Pendiente (otra unidad, con Astra):** bajar el coste de arranque montando después las escenas que están por debajo del primer viewport. Toca cuándo se crean los pins de ScrollTrigger: riesgo medio. El preloader no retrasa el LCP (el hero se pinta debajo), así que acortarlo no mejora la métrica.
 
+### PERF-START · arranque de la Home (13-10-2026, rama `feat/perf-start`, sobre `feat/perf-c`)
+
+- **Perfil** (CPU ×4, build sin minificar): antes del primer pintado, ~1,4 s en los layout effects; el mayor, la escena del BMW (~0,6 s, `useCarHandoffScene`), varias pantallas por debajo del primer viewport.
+- **Cambio:** la escena monta su HTML como antes (Process lo busca para su handoff), pero construye sus timelines con `requestIdleCallback` (máx. 0,5 s; `setTimeout` donde no existe) después del primer frame, y luego `ScrollTrigger.sort()` + refresh para que las escenas de debajo cuenten su pin. El preloader sigue cubriendo la página en ese momento.
+- **Medido** (mismo laboratorio, mediana de 7): LCP 3,85 → **3,51 s**, FCP 3,30 → **3,03 s**, bloqueo 1,49 → 1,35 s.
+- **Motion idéntico:** los 11 ScrollTrigger (y los 2 con reduced-motion) tienen el mismo `start`/`end` y la página la misma altura en 7 tamaños (360–1920); 162 capturas de la Home antes/después (40 posiciones a 390/1440/1920 y 12 con reduced-motion) idénticas píxel a píxel; navegación interna a la Home con scroll inmediato a la escena y cambio ES→EN a mitad del pin, idénticos y sin errores. QA de B10 repetida.
+
 ### SEO-2 · fichas y sitemap desde el servidor = PASS (05-10-2026, tag `seo-2-pass`)
 
 - `SeoController` (API): `GET /seo/vehiculos/{slug}` devuelve el `spa.html` del frontend con el head del vehículo (title, description, canonical, OG con su foto, JSON-LD `Car` + `Offer` si no está vendido y tiene precio) y su contenido legible en `#root` (GEO), con `max-age=60`. Inexistente o no público → 404 + `noindex`. Sin plantilla o sin marcadores → 503. `GET /seo/sitemap.xml`: rutas estáticas + vehículos listados con `lastmod`.

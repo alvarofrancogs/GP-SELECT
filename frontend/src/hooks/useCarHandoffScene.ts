@@ -91,8 +91,11 @@ export function useCarHandoffScene(locale: string) {
     ScrollTrigger.addEventListener('refreshInit', fit);
     fit();
 
+    // The scene is several screens below the first view, so its timelines are built right after the first
+    // paint: that takes their cost out of the page's start-up (the preloader still covers the page then).
+    // Its markup is already there, so Process finds this frame for its handoff.
     const media = gsap.matchMedia();
-    media.add({
+    const build = () => media.add({
       // Re-run when the layout switches between stacked and side by side.
       desktop: '(min-width: 1024px)',
       reduced: '(prefers-reduced-motion: reduce)',
@@ -227,6 +230,19 @@ export function useCarHandoffScene(locale: string) {
         photo.style.removeProperty('--curtain');
       };
     }, section);
+    const start = () => {
+      build();
+      // Created after the scenes below it: refresh in page order, so their starts include this pin.
+      ScrollTrigger.sort();
+      scheduleScrollRefresh();
+    };
+    // When the browser is idle, so the hero photograph paints first; within half a second in any case.
+    let idle = 0;
+    let timer = 0;
+    const frame = requestAnimationFrame(() => {
+      if (typeof requestIdleCallback === 'function') idle = requestIdleCallback(start, { timeout: 500 });
+      else timer = window.setTimeout(start, 50);
+    });
 
     refreshAfterFonts();
     section.addEventListener('load', scheduleScrollRefresh, true);
@@ -235,6 +251,9 @@ export function useCarHandoffScene(locale: string) {
     scheduleScrollRefresh();
 
     return () => {
+      cancelAnimationFrame(frame);
+      if (idle) cancelIdleCallback(idle);
+      window.clearTimeout(timer);
       observer.disconnect();
       section.removeEventListener('load', scheduleScrollRefresh, true);
       ScrollTrigger.removeEventListener('refreshInit', fit);
