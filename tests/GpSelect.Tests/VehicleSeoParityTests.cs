@@ -26,7 +26,7 @@ public class VehicleSeoParityTests
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         ApiJsonOptions.Configure(options);
         var vehicle = root.GetProperty("vehicle").Deserialize<VehiclePublicDto>(options)!;
-        var head = VehicleSeo.Head(vehicle, root.GetProperty("siteUrl").GetString());
+        var head = VehicleSeo.Head(vehicle, root.GetProperty("siteUrl").GetString(), root.GetProperty("locale").GetString() == "en");
         var expected = root.GetProperty("expected");
         var title = Regex.Match(head, "<title data-page-meta>(.*?)</title>", RegexOptions.Singleline);
         var description = Regex.Match(head, "<meta data-page-meta name=\"description\" content=\"(.*?)\">", RegexOptions.Singleline);

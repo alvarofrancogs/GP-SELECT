@@ -19,7 +19,8 @@ public static class VehicleSeo
     private const string Location = "Murcia · Clientes en España y Europa";
 
     public static string Identity(VehiclePublicDto v) => $"{v.Make} {v.Model} ({v.Year})";
-    public static string Path(VehiclePublicDto v) => $"/vehiculos/{Uri.EscapeDataString(v.Slug)}";
+    public static string CataloguePath(bool english = false) => english ? "/en/vehicles" : "/vehiculos";
+    public static string Path(VehiclePublicDto v, bool english = false) => $"{CataloguePath(english)}/{Uri.EscapeDataString(v.Slug)}";
 
     /// <summary>Visible price in the readable body; reserved vehicles retain their price.</summary>
     public static bool HasPublicPrice(VehiclePublicDto v) => v.Status != VehicleStatus.Sold && v.PriceEur is > 0;
@@ -43,31 +44,33 @@ public static class VehicleSeo
             + $"<div id=\"root\">{body}</div>" + script + template[(root + EmptyRoot.Length)..];
     }
 
-    public static string Head(VehiclePublicDto v, string? siteUrl)
+    public static string Head(VehiclePublicDto v, string? siteUrl, bool english = false)
     {
+        var culture = english ? English : Spanish;
         var identity = Identity(v);
         var name = string.Join(" ", new[] { v.Make, v.Model, v.Variant }.Where(x => !string.IsNullOrEmpty(x)));
-        var kmText = v.MileageKm is { } mileage ? $"{mileage.ToString("#,0", Spanish)} km" : null;
+        var kmText = v.MileageKm is { } mileage ? $"{mileage.ToString("#,0", culture)} km" : null;
         var facts = new List<string>();
         if (kmText is not null) facts.Add(kmText);
-        if (v.PowerHp is { } hp) facts.Add($"{hp.ToString("#,0", Spanish)} CV");
-        if (!string.IsNullOrEmpty(v.Transmission)) facts.Add($"cambio {v.Transmission.ToLower(Spanish)}");
-        var factList = facts.Count > 1 ? string.Join(", ", facts.Take(facts.Count - 1)) + " y " + facts[^1] : string.Join("", facts);
+        if (v.PowerHp is { } hp) facts.Add($"{hp.ToString("#,0", culture)} {(english ? "hp" : "CV")}");
+        if (!string.IsNullOrEmpty(v.Transmission)) facts.Add(english ? $"{Translate(v.Transmission, true)!.ToLower(English)} gearbox" : $"cambio {v.Transmission.ToLower(Spanish)}");
+        var factList = facts.Count > 1 ? string.Join(", ", facts.Take(facts.Count - 1)) + (english ? " and " : " y ") + facts[^1] : string.Join("", facts);
         var titleIdentity = name + (v.Year != 0 ? $" ({v.Year})" : "");
         var fullTitle = $"{titleIdentity} · {kmText} · GP SELECT";
         var title = kmText is not null && fullTitle.Length <= 65 ? fullTitle : $"{titleIdentity} · GP SELECT";
-        var description = $"{(v.Status == VehicleStatus.Sold ? "Vendido: " : "")}{name}{(v.Year != 0 ? $" de {v.Year}" : "")}{(facts.Count > 0 ? " con " + factList : "")}."
+        var description = english
+            ? $"{(v.Status == VehicleStatus.Sold ? "Sold: " : "")}{name}{(v.Year != 0 ? $" from {v.Year}" : "")}{(facts.Count > 0 ? " with " + factList : "")}. Photos, specifications and direct enquiries with GP SELECT."
+            : $"{(v.Status == VehicleStatus.Sold ? "Vendido: " : "")}{name}{(v.Year != 0 ? $" de {v.Year}" : "")}{(facts.Count > 0 ? " con " + factList : "")}."
             + (!string.IsNullOrEmpty(v.Provenance) ? $" Procedencia: {v.Provenance}." : "")
             + " Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.";
-        var url = siteUrl is null ? null : siteUrl + Path(v);
+        var url = siteUrl is null ? null : siteUrl + Path(v, english);
         var image = v.Images.FirstOrDefault();
-        var seller = new Dictionary<string, object?> { ["@type"] = "AutoDealer", ["name"] = "GP SELECT" };
-        if (siteUrl is not null) seller["@id"] = siteUrl + "/#organization";
+        // The published amount includes advisory fees and costs; GP SELECT is not the vehicle seller.
         var offer = new Dictionary<string, object?>
         {
             ["@type"] = "Offer", ["price"] = v.PriceEur, ["priceCurrency"] = "EUR",
+            ["description"] = english ? "Total price including advisory fees and costs." : "Precio total con honorarios de asesoramiento y gastos incluidos.",
             ["availability"] = v.Status == VehicleStatus.Available ? "https://schema.org/InStock" : "https://schema.org/PreOrder",
-            ["seller"] = seller,
         };
         if (url is not null) offer["url"] = url;
         var car = new Dictionary<string, object?>
@@ -78,8 +81,8 @@ public static class VehicleSeo
             ["dateVehicleFirstRegistration"] = v.Year != 0 ? v.Year.ToString(CultureInfo.InvariantCulture) : null,
             ["url"] = url, ["image"] = image is null ? null : Absolute(image, siteUrl), ["description"] = v.Description,
             ["mileageFromOdometer"] = v.MileageKm is { } km ? new Dictionary<string, object?> { ["@type"] = "QuantitativeValue", ["value"] = km, ["unitCode"] = "KMT" } : null,
-            ["fuelType"] = v.FuelType, ["vehicleTransmission"] = v.Transmission, ["color"] = v.ExteriorColour,
-            ["bodyType"] = v.BodyType,
+            ["fuelType"] = Translate(v.FuelType, english), ["vehicleTransmission"] = Translate(v.Transmission, english), ["color"] = Translate(v.ExteriorColour, english),
+            ["bodyType"] = Translate(v.BodyType, english),
             ["driveWheelConfiguration"] = v.Drivetrain switch
             {
                 "Integral" => "https://schema.org/AllWheelDriveConfiguration",
@@ -101,8 +104,8 @@ public static class VehicleSeo
                 ["@type"] = "BreadcrumbList",
                 ["itemListElement"] = new[]
                 {
-                    (Name: "Inicio", Url: siteUrl + "/"),
-                    (Name: "Vehículos", Url: siteUrl + "/vehiculos"),
+                    (Name: english ? "Home" : "Inicio", Url: siteUrl + (english ? "/en" : "/")),
+                    (Name: english ? "Vehicles" : "Vehículos", Url: siteUrl + CataloguePath(english)),
                     (Name: identity, Url: url!),
                 }.Select((x, index) => new Dictionary<string, object?>
                 {
@@ -115,73 +118,84 @@ public static class VehicleSeo
         };
         return Render(
             title: title, description: description,
-            robots: "index,follow", canonical: url, image: image, imageAlt: identity, siteUrl, jsonLd);
+            robots: "index,follow", canonical: url, image: image, imageAlt: identity, siteUrl, jsonLd, english, v.Slug);
     }
 
-    public static string NotFoundHead() => Render(
-        title: "Vehículo no encontrado · GP SELECT",
-        description: "Esta página no está disponible. Consulta el catálogo de GP SELECT o vuelve al inicio para conocer nuestra selección de vehículos europeos.",
-        robots: "noindex", canonical: null, image: null, imageAlt: null, siteUrl: null, jsonLd: null);
+    public static string NotFoundHead(bool english = false) => Render(
+        title: english ? "Vehicle not found · GP SELECT" : "Vehículo no encontrado · GP SELECT",
+        description: english ? "This page is not available. Browse the GP SELECT catalogue or go back to the home page to see our selection of European cars." : "Esta página no está disponible. Consulta el catálogo de GP SELECT o vuelve al inicio para conocer nuestra selección de vehículos europeos.",
+        robots: "noindex", canonical: null, image: null, imageAlt: null, siteUrl: null, jsonLd: null, english: english);
 
     /// <summary>What a reader without JavaScript (and AI crawlers) gets: the same facts the page shows.
     /// The frontend hides it once JavaScript runs and React replaces it.</summary>
-    public static string Body(VehiclePublicDto v)
+    public static string Body(VehiclePublicDto v, bool english = false)
     {
-        var html = new StringBuilder("<div class=\"static-content\"><header><a href=\"/\">GP SELECT</a></header><main>");
-        html.Append("<p><a href=\"/vehiculos\">Vehículos</a></p>");
+        var culture = english ? English : Spanish;
+        var html = new StringBuilder($"<div class=\"static-content\"><header><a href=\"{(english ? "/en" : "/")}\">GP SELECT</a></header><main>");
+        html.Append($"<p><a href=\"{CataloguePath(english)}\">{(english ? "Vehicles" : "Vehículos")}</a></p>");
         html.Append($"<h1>{E($"{v.Make} {v.Model}")}</h1>");
         if (v.Variant is { Length: > 0 }) html.Append($"<p>{E(v.Variant)}</p>");
-        if (v.Status == VehicleStatus.Sold) html.Append("<p>Este vehículo ya no está disponible.</p>");
-        else if (HasPublicPrice(v)) html.Append($"<p>Precio: {E(Price(v.PriceEur!.Value))}</p>");
+        if (v.Status == VehicleStatus.Sold) html.Append(english ? "<p>This vehicle is no longer available.</p>" : "<p>Este vehículo ya no está disponible.</p>");
+        else if (HasPublicPrice(v)) html.Append($"<p>{(english ? "Price" : "Precio")}: {E(Price(v.PriceEur!.Value, english))}</p>");
 
         var specs = new (string Label, string? Value)[]
         {
-            ("Primera matriculación", v.Month is >= 1 and <= 12 ? $"{v.Month:00}/{v.Year}" : v.Year.ToString(CultureInfo.InvariantCulture)),
-            ("Kilometraje", v.MileageKm is { } km ? $"{km.ToString("#,0", Spanish)} km" : null),
-            ("Potencia", v.PowerHp is { } hp ? $"{hp.ToString("#,0", Spanish)} CV" : null),
-            ("Combustible", v.FuelType), ("Transmisión", v.Transmission), ("Carrocería", v.BodyType),
-            ("Tracción", v.Drivetrain), ("Color exterior", v.ExteriorColour), ("Color interior", v.Interior),
-            ("Procedencia", v.Provenance),
+            (english ? "First registration" : "Primera matriculación", v.Month is >= 1 and <= 12 ? $"{v.Month:00}/{v.Year}" : v.Year.ToString(CultureInfo.InvariantCulture)),
+            (english ? "Mileage" : "Kilometraje", v.MileageKm is { } km ? $"{km.ToString("#,0", culture)} km" : null),
+            (english ? "Power" : "Potencia", v.PowerHp is { } hp ? $"{hp.ToString("#,0", culture)} {(english ? "hp" : "CV")}" : null),
+            (english ? "Fuel" : "Combustible", Translate(v.FuelType, english)), (english ? "Transmission" : "Transmisión", Translate(v.Transmission, english)), (english ? "Body style" : "Carrocería", Translate(v.BodyType, english)),
+            (english ? "Drivetrain" : "Tracción", Translate(v.Drivetrain, english)), (english ? "Exterior colour" : "Color exterior", Translate(v.ExteriorColour, english)), (english ? "Interior colour" : "Color interior", Translate(v.Interior, english)),
+            (english ? "Provenance" : "Procedencia", Translate(v.Provenance, english)),
         };
-        html.Append("<section><h2>Especificaciones</h2><dl>");
+        html.Append($"<section><h2>{(english ? "Specifications" : "Especificaciones")}</h2><dl>");
         foreach (var (label, value) in specs.Where(x => !string.IsNullOrWhiteSpace(x.Value)))
             html.Append($"<dt>{E(label)}</dt><dd>{E(value!)}</dd>");
         foreach (var spec in v.CustomSpecifications.Where(x => !string.IsNullOrWhiteSpace(x.Label) && !string.IsNullOrWhiteSpace(x.Value)))
             html.Append($"<dt>{E(spec.Label!)}</dt><dd>{E(spec.Value!)}</dd>");
         html.Append("</dl></section>");
-        if (v.Description is { Length: > 0 }) html.Append($"<section><h2>Descripción</h2><p>{E(v.Description)}</p></section>");
-        if (v.History is { Length: > 0 }) html.Append($"<section><h2>Historial</h2><p>{E(v.History)}</p></section>");
-        if (v.Equipment.Count > 0) html.Append($"<section><h2>Equipamiento</h2><ul>{string.Concat(v.Equipment.Select(x => $"<li>{E(x)}</li>"))}</ul></section>");
+        if (v.Description is { Length: > 0 }) html.Append($"<section><h2>{(english ? "Description" : "Descripción")}</h2><p>{E(v.Description)}</p></section>");
+        if (v.History is { Length: > 0 }) html.Append($"<section><h2>{(english ? "History" : "Historial")}</h2><p>{E(v.History)}</p></section>");
+        if (v.Equipment.Count > 0) html.Append($"<section><h2>{(english ? "Equipment" : "Equipamiento")}</h2><ul>{string.Concat(v.Equipment.Select(x => $"<li>{E(x)}</li>"))}</ul></section>");
         if (v.Status != VehicleStatus.Sold)
             // Same readable vehicle name the SPA puts in the contact form (frontend/src/pages/VehicleDetail.tsx).
-            html.Append($"<p><a href=\"/contacto?vehiculo={Uri.EscapeDataString($"{v.Make} {v.Model}{(v.Variant is { Length: > 0 } ? $" {v.Variant}" : "")} ({v.Year})")}&amp;intent=vehicle\">Solicitar información</a></p>");
-        html.Append($"</main><footer><p>{E(Location)}</p><nav><ul>");
-        foreach (var (href, label) in new[] { ("/", "GP SELECT"), ("/vehiculos", "Vehículos"), ("/importacion", "Importación"), ("/nosotros", "Nosotros"), ("/contacto", "Contacto") })
+            html.Append($"<p><a href=\"{(english ? "/en/contact" : "/contacto")}?vehiculo={Uri.EscapeDataString($"{v.Make} {v.Model}{(v.Variant is { Length: > 0 } ? $" {v.Variant}" : "")} ({v.Year})")}&amp;intent=vehicle\">{(english ? "Enquire about this car" : "Solicitar información")}</a></p>");
+        html.Append($"</main><footer><p>{E(english ? "Murcia · Clients in Spain and Europe" : Location)}</p><nav><ul>");
+        foreach (var (href, label) in english
+            ? new[] { ("/en", "GP SELECT"), ("/en/vehicles", "Vehicles"), ("/en/import", "Import"), ("/en/about", "About us"), ("/en/contact", "Contact") }
+            : new[] { ("/", "GP SELECT"), ("/vehiculos", "Vehículos"), ("/importacion", "Importación"), ("/nosotros", "Nosotros"), ("/contacto", "Contacto") })
             html.Append($"<li><a href=\"{href}\">{E(label)}</a></li>");
         return html.Append("</ul></nav></footer></div>").ToString();
     }
 
     private static readonly CultureInfo Spanish = CultureInfo.GetCultureInfo("es-ES");
-    private static string Price(decimal value) => $"{value.ToString("#,0", Spanish)} €";
+    private static readonly CultureInfo English = CultureInfo.GetCultureInfo("en-GB");
+    private static string Price(decimal value, bool english) => english ? $"€{value.ToString("#,0", English)}" : $"{value.ToString("#,0", Spanish)} €";
     // Same escaping as the client's escapeHtml: accented text stays readable in the source.
     internal static string E(string value) => value.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;")
         .Replace("\"", "&quot;").Replace("'", "&#39;");
     private static string Absolute(string path, string? siteUrl) => siteUrl is null ? path : siteUrl + path;
 
     private static string Render(string title, string description, string robots, string? canonical, string? image, string? imageAlt,
-        string? siteUrl, Dictionary<string, object?>? jsonLd)
+        string? siteUrl, Dictionary<string, object?>? jsonLd, bool english = false, string? vehicleSlug = null)
     {
         var shareImage = Absolute(image ?? DefaultImage, siteUrl);
-        var shareAlt = image is null ? "GP SELECT · Murcia · Clientes en España y Europa" : imageAlt ?? title;
+        var shareAlt = image is null ? (english ? "GP SELECT · Murcia · Clients in Spain and Europe" : "GP SELECT · Murcia · Clientes en España y Europa") : imageAlt ?? title;
         var tags = new List<string> { $"<title data-page-meta>{E(title)}</title>" };
         void Meta(string attribute, string key, string value) => tags.Add($"<meta data-page-meta {attribute}=\"{key}\" content=\"{E(value)}\">");
         Meta("name", "description", description);
         Meta("name", "robots", robots);
         if (canonical is not null) tags.Add($"<link data-page-meta rel=\"canonical\" href=\"{E(canonical)}\">");
+        if (siteUrl is not null && vehicleSlug is not null)
+        {
+            var slug = Uri.EscapeDataString(vehicleSlug);
+            foreach (var (language, path) in new[] { ("es", $"/vehiculos/{slug}"), ("en", $"/en/vehicles/{slug}"), ("x-default", $"/en/vehicles/{slug}") })
+                tags.Add($"<link data-page-meta rel=\"alternate\" hreflang=\"{language}\" href=\"{E(siteUrl + path)}\">");
+        }
         Meta("property", "og:type", "website");
         Meta("property", "og:title", title);
         Meta("property", "og:description", description);
-        Meta("property", "og:locale", "es_ES");
+        Meta("property", "og:locale", english ? "en_GB" : "es_ES");
+        if (vehicleSlug is not null) Meta("property", "og:locale:alternate", english ? "es_ES" : "en_GB");
         Meta("property", "og:site_name", "GP SELECT");
         if (canonical is not null) Meta("property", "og:url", canonical);
         Meta("property", "og:image", shareImage);
@@ -204,6 +218,36 @@ public static class VehicleSeo
             tags.Add($"<script data-page-meta type=\"application/ld+json\">{json}</script>");
         }
         return string.Join("\n    ", tags);
+    }
+
+    // Same known values as frontend/src/i18n/en.ts. Unknown/free text stays as supplied by the author.
+    private static readonly Dictionary<string, string> EnglishValues = new()
+    {
+        ["Gasolina"] = "Petrol",
+        ["Eléctrico"] = "Electric",
+        ["Diésel"] = "Diesel",
+        ["Híbrido"] = "Hybrid",
+        ["Automático"] = "Automatic",
+        ["Manual"] = "Manual",
+        ["Coupé"] = "Coupé",
+        ["Familiar"] = "Estate",
+        ["SUV"] = "SUV",
+        ["Berlina"] = "Saloon",
+        ["Integral"] = "All-wheel drive",
+        ["Trasera"] = "Rear-wheel drive",
+        ["Alemania"] = "Germany",
+        ["Bélgica"] = "Belgium",
+        ["Negro"] = "Black",
+        ["Blanco"] = "White",
+        ["Gris"] = "Grey",
+        ["Azul"] = "Blue",
+        ["Cuero negro"] = "Black leather",
+    };
+    private static string? Translate(string? value, bool english)
+    {
+        if (!english || string.IsNullOrEmpty(value)) return value;
+        return EnglishValues.FirstOrDefault(x => English.CompareInfo.Compare(x.Key, value.Trim(),
+            CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) == 0).Value ?? value;
     }
 
     // The same JSON the public API returns, so the client maps it with fromPublicDetail.

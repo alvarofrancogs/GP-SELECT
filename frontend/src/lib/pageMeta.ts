@@ -44,7 +44,7 @@ export const staticPageMeta: Record<string, PageMeta> = {
   },
   [pagePaths.home.en]: {
     title: 'GP SELECT · Premium car sourcing and import across Europe',
-    description: 'Premium and performance cars from across the EU, sourced for you and delivered to your country. We manage purchase, paperwork and registration from Murcia, Spain.',
+    description: 'Car sourcing and buying advice across Europe. We help you compare vehicles and coordinate purchase and import from Murcia, Spain.',
   },
   [pagePaths.vehicles.en]: {
     title: 'Premium cars sourced in Europe · GP SELECT',
@@ -52,7 +52,7 @@ export const staticPageMeta: Record<string, PageMeta> = {
   },
   [pagePaths.import.en]: {
     title: 'Import a car from Germany or elsewhere in Europe · GP SELECT',
-    description: 'We manage every step of importing a car from Germany or another EU country: search, selection, purchase, paperwork, transport, registration and delivery.',
+    description: 'Advice on importing a car from Germany or another EU country: search, comparison, documentation review and coordination of purchase and import.',
   },
   [pagePaths.about.en]: {
     title: 'About GP SELECT · European car sourcing from Murcia, Spain',
@@ -152,7 +152,7 @@ export function getStaticPageMeta(path: string, siteUrl?: string): PageMeta {
     jsonLd: {
       '@context': 'https://schema.org',
       '@graph': [{
-        '@type': 'AutoDealer', name: 'GP SELECT',
+        '@type': 'AutomotiveBusiness', name: 'GP SELECT',
         description: meta.description,
         ...(siteUrl ? { '@id': `${siteUrl}/#organization`, url: `${siteUrl}/` } : {}),
         logo: assetUrl('/assets/seo/logo.png', siteUrl),
@@ -188,12 +188,12 @@ function importServiceJsonLd(meta: PageMeta, siteUrl?: string): Record<string, u
   const place = places[meta.locale ?? 'es'];
   return {
     '@context': 'https://schema.org', '@type': 'Service',
-    name: english ? 'European car sourcing and import' : 'Búsqueda e importación de coches europeos',
-    serviceType: english ? 'Vehicle import' : 'Importación de vehículos',
+    name: english ? 'European car sourcing and buying advice' : 'Asesoramiento para buscar y comprar coches europeos',
+    serviceType: english ? 'Car buying and import advisory' : 'Asesoramiento para compra e importación de vehículos',
     description: meta.description,
     ...(siteUrl ? { url: `${siteUrl}${meta.path}` } : {}),
     provider: {
-      '@type': 'AutoDealer', name: 'GP SELECT',
+      '@type': 'AutomotiveBusiness', name: 'GP SELECT',
       ...(siteUrl ? { '@id': `${siteUrl}/#organization`, url: `${siteUrl}/` } : {}),
       address: { '@type': 'PostalAddress', addressLocality: 'Murcia', addressRegion: 'Región de Murcia', addressCountry: 'ES' },
     },
@@ -201,43 +201,27 @@ function importServiceJsonLd(meta: PageMeta, siteUrl?: string): Record<string, u
   };
 }
 
-/** The English vehicle page stays out of the index until the vehicle has its own English text (B4). */
-function englishVehicleMeta(vehicle: VehicleDetail): PageMeta {
-  const name = [vehicle.make, vehicle.model, vehicle.variant].filter(Boolean).join(' ');
-  const year = vehicle.firstRegistrationYear;
-  const identity = `${vehicle.make} ${vehicle.model}${year ? ` (${year})` : ''}`;
-  const titleIdentity = `${name}${year ? ` (${year})` : ''}`;
-  const number = (value: number) => value.toLocaleString('en-GB', { useGrouping: true });
-  const km = vehicle.mileageKm != null ? `${number(vehicle.mileageKm)} km` : undefined;
-  const transmission = translateValue(en.vehicles.values, vehicle.transmission);
-  const facts = [km, vehicle.powerHp != null ? `${number(vehicle.powerHp)} hp` : undefined,
-    transmission ? `${transmission.toLocaleLowerCase('en-GB')} gearbox` : undefined].filter(Boolean);
-  const factList = facts.length > 1 ? `${facts.slice(0, -1).join(', ')} and ${facts.at(-1)}` : facts.join('');
-  const fullTitle = `${titleIdentity} · ${km} · GP SELECT`;
-  return {
-    title: km && fullTitle.length <= 65 ? fullTitle : `${titleIdentity} · GP SELECT`,
-    description: `${vehicle.availability === 'sold' ? 'Sold: ' : ''}${name}${year ? ` from ${year}` : ''}${factList ? ` with ${factList}` : ''}. Photos, specifications and direct enquiries with GP SELECT.`,
-    path: pagePath('vehicle', 'en', vehicle.slug), locale: 'en', robots: 'noindex,follow',
-    image: vehicle.images?.[0]?.src, imageAlt: identity,
-  };
-}
-
 export function getVehiclePageMeta(vehicle: VehicleDetail, siteUrl?: string, locale: Locale = 'es'): PageMeta {
-  if (locale === 'en') return englishVehicleMeta(vehicle);
+  const english = locale === 'en';
+  const translate = (value: string | null) => english ? translateValue(en.vehicles.values, value) : value;
   const name = [vehicle.make, vehicle.model, vehicle.variant].filter(Boolean).join(' ');
   const year = vehicle.firstRegistrationYear;
   const identity = `${vehicle.make} ${vehicle.model}${year ? ` (${year})` : ''}`;
   const titleIdentity = `${name}${year ? ` (${year})` : ''}`;
   // Explicit grouping includes four-digit values, unlike Intl's es-ES default.
-  const number = (value: number) => value.toLocaleString('es-ES', { useGrouping: true });
+  const number = (value: number) => value.toLocaleString(english ? 'en-GB' : 'es-ES', { useGrouping: true });
   const km = vehicle.mileageKm != null ? `${number(vehicle.mileageKm)} km` : undefined;
-  const facts = [km, vehicle.powerHp != null ? `${number(vehicle.powerHp)} CV` : undefined,
-    vehicle.transmission ? `cambio ${vehicle.transmission.toLocaleLowerCase('es-ES')}` : undefined].filter(Boolean);
-  const factList = facts.length > 1 ? `${facts.slice(0, -1).join(', ')} y ${facts.at(-1)}` : facts.join('');
+  const transmission = translate(vehicle.transmission);
+  const facts = [km, vehicle.powerHp != null ? `${number(vehicle.powerHp)} ${english ? 'hp' : 'CV'}` : undefined,
+    transmission ? (english ? `${transmission.toLocaleLowerCase('en-GB')} gearbox` : `cambio ${transmission.toLocaleLowerCase('es-ES')}`) : undefined].filter(Boolean);
+  const factList = facts.length > 1 ? `${facts.slice(0, -1).join(', ')}${english ? ' and ' : ' y '}${facts.at(-1)}` : facts.join('');
   const fullTitle = `${titleIdentity} · ${km} · GP SELECT`;
   const title = km && fullTitle.length <= 65 ? fullTitle : `${titleIdentity} · GP SELECT`;
-  const description = `${vehicle.availability === 'sold' ? 'Vendido: ' : ''}${name}${year ? ` de ${year}` : ''}${factList ? ` con ${factList}` : ''}.${vehicle.provenance ? ` Procedencia: ${vehicle.provenance}.` : ''} Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.`;
-  const path = `/vehiculos/${encodeURIComponent(vehicle.slug)}`;
+  const description = english
+    ? `${vehicle.availability === 'sold' ? 'Sold: ' : ''}${name}${year ? ` from ${year}` : ''}${factList ? ` with ${factList}` : ''}. Photos, specifications and direct enquiries with GP SELECT.`
+    : `${vehicle.availability === 'sold' ? 'Vendido: ' : ''}${name}${year ? ` de ${year}` : ''}${factList ? ` con ${factList}` : ''}.${vehicle.provenance ? ` Procedencia: ${vehicle.provenance}.` : ''} Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.`;
+  const path = pagePath('vehicle', locale, vehicle.slug);
+  const alternates = { es: pagePath('vehicle', 'es', vehicle.slug), en: pagePath('vehicle', 'en', vehicle.slug) };
   const image = vehicle.images?.[0]?.src;
   const publicPrice = ['available', 'coming-soon'].includes(vehicle.availability ?? '') && vehicle.priceEur !== null && vehicle.priceEur > 0;
   const driveWheelConfiguration = new Map([
@@ -247,7 +231,7 @@ export function getVehiclePageMeta(vehicle: VehicleDetail, siteUrl?: string, loc
   ]).get(vehicle.drivetrain ?? '');
   return {
     title, description,
-    path, image, imageAlt: identity,
+    path, locale, alternates, image, imageAlt: identity,
     jsonLd: {
       '@context': 'https://schema.org', '@graph': [{ '@type': 'Car', name: identity,
         brand: { '@type': 'Brand', name: vehicle.make }, model: vehicle.model,
@@ -259,25 +243,26 @@ export function getVehiclePageMeta(vehicle: VehicleDetail, siteUrl?: string, loc
         ...(vehicle.mileageKm !== null ? { mileageFromOdometer: {
           '@type': 'QuantitativeValue', value: vehicle.mileageKm, unitCode: 'KMT',
         } } : {}),
-        ...(vehicle.fuelType ? { fuelType: vehicle.fuelType } : {}),
-        ...(vehicle.transmission ? { vehicleTransmission: vehicle.transmission } : {}),
-        ...(vehicle.exteriorColour ? { color: vehicle.exteriorColour } : {}),
-        ...(vehicle.bodyType ? { bodyType: vehicle.bodyType } : {}),
+        ...(vehicle.fuelType ? { fuelType: translate(vehicle.fuelType) } : {}),
+        ...(vehicle.transmission ? { vehicleTransmission: translate(vehicle.transmission) } : {}),
+        ...(vehicle.exteriorColour ? { color: translate(vehicle.exteriorColour) } : {}),
+        ...(vehicle.bodyType ? { bodyType: translate(vehicle.bodyType) } : {}),
         ...(driveWheelConfiguration ? { driveWheelConfiguration } : {}),
         ...(vehicle.powerHp != null ? { vehicleEngine: {
           '@type': 'EngineSpecification',
           enginePower: { '@type': 'QuantitativeValue', value: vehicle.powerHp, unitText: 'CV' },
         } } : {}),
+        // The published amount includes advisory fees and costs. GP SELECT is not the vehicle seller.
         ...(publicPrice ? { offers: {
           '@type': 'Offer', price: vehicle.priceEur, priceCurrency: 'EUR',
+          description: english ? 'Total price including advisory fees and costs.' : 'Precio total con honorarios de asesoramiento y gastos incluidos.',
           availability: `https://schema.org/${vehicle.availability === 'available' ? 'InStock' : 'PreOrder'}`,
-          seller: { '@type': 'AutoDealer', name: 'GP SELECT', ...(siteUrl ? { '@id': `${siteUrl}/#organization` } : {}) },
           ...(siteUrl ? { url: `${siteUrl}${path}` } : {}),
         } } : {}),
       }, ...(siteUrl ? [{
         '@type': 'BreadcrumbList', itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${siteUrl}/` },
-          { '@type': 'ListItem', position: 2, name: 'Vehículos', item: `${siteUrl}/vehiculos` },
+          { '@type': 'ListItem', position: 1, name: english ? 'Home' : 'Inicio', item: `${siteUrl}${pagePath('home', locale)}` },
+          { '@type': 'ListItem', position: 2, name: english ? 'Vehicles' : 'Vehículos', item: `${siteUrl}${pagePath('vehicles', locale)}` },
           { '@type': 'ListItem', position: 3, name: identity, item: `${siteUrl}${path}` },
         ],
       }] : [])],

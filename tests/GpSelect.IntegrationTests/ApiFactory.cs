@@ -72,7 +72,18 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         public string? CatalogueHtml { get; set; } = CatalogueShell;
         public Task<string?> GetAsync(CancellationToken ct) => Task.FromResult(Html);
         public Task<string?> GetAsync(string relativePath, CancellationToken ct) =>
-            Task.FromResult(relativePath == "vehiculos/index.html" ? CatalogueHtml : null);
+            Task.FromResult(relativePath switch
+            {
+                "vehiculos/index.html" => CatalogueHtml,
+                "en/vehicles/index.html" => EnglishCatalogueHtml,
+                "en/spa.html" => EnglishHtml,
+                _ => null,
+            });
+        public static readonly string EnglishShell = Shell.Replace("lang=\"es\"", "lang=\"en\"");
+        public static readonly string EnglishCatalogueShell = CatalogueShell.Replace("lang=\"es\"", "lang=\"en\"")
+            .Replace("Catálogo estático", "Static catalogue").Replace("Vehículos", "Vehicles").Replace("Introducción", "Introduction").Replace("Cierre", "Closing");
+        public string? EnglishHtml { get; set; } = EnglishShell;
+        public string? EnglishCatalogueHtml { get; set; } = EnglishCatalogueShell;
     }
 
     /// <summary>TestServer has no socket: a request can choose its peer address with X-Test-Peer.
