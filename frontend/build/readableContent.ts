@@ -2,6 +2,7 @@ import { es } from '../src/i18n/es';
 import { en } from '../src/i18n/en';
 import { featuredCopy } from '../src/i18n/featuredCopy';
 import { footerCopy } from '../src/i18n/footerCopy';
+import { entityCopy } from '../src/i18n/entityCopy';
 import { servicesCopy } from '../src/i18n/servicesCopy';
 import { escapeHtml, staticPageMeta } from '../src/lib/pageMeta';
 import { qualificationUrl } from '../src/lib/qualification';
@@ -53,6 +54,10 @@ function aboutContent(t: Dictionary, locale: Locale): string {
     + section(text.why.title, paragraph(text.why.body))
     + section(text.audience.title, paragraph(text.audience.intro) + rows(text.audience.rows))
     + section(text.approach.title, paragraph(text.approach.body) + rows(text.approach.rows))
+    + section(text.transparency.title, rows(text.transparency.rows.slice(0, 2))
+      + `<ul><li>${heading(3, text.transparency.rows[2].title)}<p>${escapeHtml(text.transparency.rows[2].body.split(text.transparency.legalLabel)[0])}`
+      + link(localizeHref('/aviso-legal', locale), text.transparency.legalLabel)
+      + `${escapeHtml(text.transparency.rows[2].body.split(text.transparency.legalLabel)[1])}</p></li></ul>`)
     + section(text.closing, paragraph(text.closingNote)
       + link(localizeHref(qualificationUrl({ intent: 'search', source: 'nosotros' }), locale), text.cta)
       + ' ' + link(pagePath('import', locale), text.secondary));
@@ -65,6 +70,9 @@ function importContent(t: Dictionary, locale: Locale): string {
     + section(text.search.title, paragraph(text.search.body))
     + section(text.analysis.title, paragraph(text.analysis.body))
     + section(text.support.title, paragraph(text.support.body) + paragraph(text.support.detail))
+    + section(text.stages.title, paragraph(text.stages.intro) + rows(text.stages.rows))
+    + section(text.taxes.title, paragraph(text.taxes.body))
+    + section(text.faq.title, rows(text.faq.rows))
     + section(text.closing, paragraph(text.closingBody)
       + link(localizeHref(qualificationUrl({ intent: 'search', source: 'importacion' }), locale), text.cta)
       + ' ' + link(localizeHref('/contacto?intent=vehicle', locale), text.secondary));
@@ -75,7 +83,8 @@ function contactContent(t: Dictionary, locale: Locale): string {
   return introduction(text.title, text.lede)
     + paragraph(text.pathsLabel)
     + `<ul><li>${link(localizeHref('/contacto?intent=vehicle', locale), text.vehiclePath)}${paragraph(text.vehicleIntro)}</li>`
-    + `<li>${link(localizeHref('/contacto?intent=search', locale), text.searchPath)}${paragraph(text.searchIntro)}</li></ul>`;
+    + `<li>${link(localizeHref('/contacto?intent=search', locale), text.searchPath)}${paragraph(text.searchIntro)}</li></ul>`
+    + `<ol>${text.nextSteps.map((step) => `<li>${escapeHtml(step.replace(/^\d+\. /, ''))}</li>`).join('')}</ol>`;
 }
 
 // Same text as the React legal page (src/pages/Legal.tsx): always the Spanish, binding version; a missing detail
@@ -155,10 +164,10 @@ export function renderLlmsText(siteUrl?: string): string {
     `- [${label}](${siteUrl || ''}${path}): ${staticPageMeta[path].description}`;
   const pages = (t: Dictionary, locale: Locale) => navigation(t, locale).filter(([path]) => path !== pagePath('contact', locale))
     .map(([path, label]) => entry(path, label)).join('\n');
-  return `# ${es.brand}\n\n> ${staticPageMeta['/'].description}\n\n${footerCopy.es.location}\n\n`
+  return `# ${es.brand}\n\n> ${entityCopy.es}\n\n${footerCopy.es.location}\n\n`
     + `${es.interiors.about.lede}\n\n${es.interiors.import.lede}\n\n`
     + `## ${footerCopy.es.navigation}\n\n${pages(es, 'es')}\n\n`
     + `## ${es.nav.contact}\n\n${entry('/contacto', es.nav.contact)}\n\n`
-    + `## English\n\n${pages(en, 'en')}\n${entry(pagePath('contact', 'en'), en.nav.contact)}\n`;
+    + `## English\n\n> ${entityCopy.en}\n\n${pages(en, 'en')}\n${entry(pagePath('contact', 'en'), en.nav.contact)}\n`;
 }
 

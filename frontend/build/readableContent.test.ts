@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
-import { renderReadableContent } from './readableContent';
+import { renderLlmsText, renderReadableContent } from './readableContent';
+import { entityCopy } from '../src/i18n/entityCopy';
 
 it('leaves one empty vehicle-list marker pair inside the catalogue main', () => {
   const html = renderReadableContent('/vehiculos');
@@ -23,4 +24,41 @@ it('keeps the legal text in Spanish on the English legal pages, with the binding
   expect(html).toContain('<div lang="es"><h1>Política de privacidad</h1>');
   expect(html).toContain('<p lang="en">This legal information is published in Spanish');
   expect(html).not.toContain('href="/cookies"');
+});
+
+it.each([
+  ['/importacion', 'Importación llave en mano: qué gestionamos, paso a paso.', '1 · Búsqueda', 'Impuestos y trámites, según tu país.', '¿Qué incluye el servicio?'],
+  ['/en/import', 'End-to-end import: what we manage, step by step.', '1 · Search', 'Taxes and paperwork depend on your country.', 'What does the service include?'],
+])('includes the new import sections and FAQ in %s without JavaScript', (path, stages, firstStage, taxes, firstQuestion) => {
+  const html = renderReadableContent(path);
+  for (const title of [stages, taxes]) expect(html).toContain(`<h2>${title}</h2>`);
+  for (const title of [firstStage, firstQuestion]) expect(html).toContain(`<h3>${title}</h3>`);
+  expect(html.indexOf(stages)).toBeLessThan(html.indexOf(taxes));
+  expect(html.indexOf(taxes)).toBeLessThan(html.indexOf(firstQuestion));
+  expect(html).not.toContain('FAQPage');
+});
+
+it.each([
+  ['/nosotros', 'Qué hacemos nosotros y qué coordinamos con terceros.', 'Lo que hace GP SELECT', '/aviso-legal'],
+  ['/en/about', 'What we do ourselves, and what we coordinate.', 'What GP SELECT does', '/en/legal-notice'],
+])('includes the new about rows and legal link in %s without JavaScript', (path, title, firstRow, legalPath) => {
+  const html = renderReadableContent(path);
+  expect(html).toContain(`<h2>${title}</h2>`);
+  expect(html).toContain(`<h3>${firstRow}</h3>`);
+  expect(html).toContain(`href="${legalPath}"`);
+});
+
+it('uses the approved entity summary in both languages of llms.txt', () => {
+  const llms = renderLlmsText();
+  expect(llms).toContain(`> ${entityCopy.es}`);
+  expect(llms).toContain(`## English\n\n> ${entityCopy.en}`);
+});
+
+it.each([
+  ['/contacto', 'Quiero que GP SELECT lo busque por mí', 'Leemos tu solicitud y te contactamos.'],
+  ['/en/contact', 'I want GP SELECT to find it for me', 'We read your request and get back to you.'],
+])('renders the updated contact path and next steps in %s', (path, option, firstStep) => {
+  const html = renderReadableContent(path);
+  expect(html).toContain(option);
+  expect(html).toContain(`<ol><li>${firstStep}</li>`);
 });

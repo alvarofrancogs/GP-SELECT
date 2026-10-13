@@ -73,7 +73,7 @@
               "@type": "Offer",
               "price": 119900,
               "priceCurrency": "EUR",
-              "description": "Precio total con honorarios de asesoramiento y gastos incluidos.",
+              "description": "Precio total con honorarios del servicio y gastos incluidos.",
               "availability": "https://schema.org/InStock",
               "url": "https://gp-select.example/vehiculos/porsche-911"
             }
@@ -378,7 +378,7 @@
               "@type": "Offer",
               "price": 119900,
               "priceCurrency": "EUR",
-              "description": "Precio total con honorarios de asesoramiento y gastos incluidos.",
+              "description": "Precio total con honorarios del servicio y gastos incluidos.",
               "availability": "https://schema.org/PreOrder",
               "url": "https://gp-select.example/vehiculos/porsche-911"
             }
@@ -558,7 +558,7 @@
               "@type": "Offer",
               "price": 119900,
               "priceCurrency": "EUR",
-              "description": "Precio total con honorarios de asesoramiento y gastos incluidos.",
+              "description": "Precio total con honorarios del servicio y gastos incluidos.",
               "availability": "https://schema.org/InStock",
               "url": "https://gp-select.example/vehiculos/porsche-911"
             }
@@ -664,7 +664,7 @@
               "@type": "Offer",
               "price": 119900,
               "priceCurrency": "EUR",
-              "description": "Precio total con honorarios de asesoramiento y gastos incluidos.",
+              "description": "Precio total con honorarios del servicio y gastos incluidos.",
               "availability": "https://schema.org/InStock"
             }
           }
@@ -738,7 +738,7 @@
               "@type": "Offer",
               "price": 119900,
               "priceCurrency": "EUR",
-              "description": "Precio total con honorarios de asesoramiento y gastos incluidos.",
+              "description": "Precio total con honorarios del servicio y gastos incluidos.",
               "availability": "https://schema.org/InStock",
               "url": "https://gp-select.example/vehiculos/porsche-911"
             }
@@ -996,7 +996,7 @@
               "@type": "Offer",
               "price": 119900,
               "priceCurrency": "EUR",
-              "description": "Total price including advisory fees and costs.",
+              "description": "Total price including service fees and costs.",
               "availability": "https://schema.org/InStock",
               "url": "https://gp-select.example/en/vehicles/porsche-911"
             }
@@ -1274,7 +1274,7 @@
               "@type": "Offer",
               "price": 119900,
               "priceCurrency": "EUR",
-              "description": "Total price including advisory fees and costs.",
+              "description": "Total price including service fees and costs.",
               "availability": "https://schema.org/InStock"
             }
           }
@@ -1348,7 +1348,7 @@
               "@type": "Offer",
               "price": 119900,
               "priceCurrency": "EUR",
-              "description": "Total price including advisory fees and costs.",
+              "description": "Total price including service fees and costs.",
               "availability": "https://schema.org/InStock",
               "url": "https://gp-select.example/en/vehicles/porsche-911"
             }

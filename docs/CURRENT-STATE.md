@@ -3,7 +3,7 @@
 
 ## PHASE
 
-**Estado vivo (13-10-2026): SEO B4 implementado y validado por petición del usuario, en la rama `feat/seo-b4`, pendiente de integración en `main`. GP SELECT asesora al comprador; no compra ni vende los coches. B2/B3 ya integrados en `main` (PR #6, `487011a`). B5 sigue pendiente.** Anterior: FINAL CLOSURE PASS, 3C PASS (01-10-2026). Arquitectura motion 1A–1F completada; no se modifica en B4.
+**Estado vivo (13-10-2026): SEO B4 integrado en `main` (PR #7). B5 (textos B1) terminado en la rama `feat/seo-b5`, pendiente de revisión. Posicionamiento confirmado por el usuario: GP SELECT busca, acompaña y gestiona todo el proceso (búsqueda, revisión, negociación, transporte, matriculación y entrega). Según la operación, el coche se compra directamente a nombre del cliente o lo compra la empresa de GP SELECT y se lo vende con factura (confirmado por el cliente el 13-10-2026); la web lo dice y no publica el depósito.** Anterior: FINAL CLOSURE PASS, 3C PASS (01-10-2026). Arquitectura motion 1A–1F completada; no se modifica en B5.
 
 Unidades: 1A PASS · 1B PASS · 1C PASS · 1D PASS · 1E PASS · 1F PASS.
 
@@ -307,7 +307,17 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 - **Pruebas:** compilación, typecheck y lint OK; frontend 153/153, backend 146/146 unitarios y 155/155 de integración; las pruebas SEO se repitieron tras confirmar el precio total. Paridad de metadatos y JSON-LD TS/C# con fixtures ES/EN, incluido contenido hostil. Caddy 2.10.2: catálogos y fichas ES/EN con datos reales, sitemap, 301, 404 y fallbacks 503 + Retry-After (API caída y respuesta 503) OK. Chromium a 390/1440: entrada directa EN sin petición duplicada y cambio a ES con canonical/hreflang correctos, sin errores JS.
 - **Revisión (13-10-2026):** añadidos desde `feat/seo-b6` el arreglo de la imagen web (`tsc -b` necesita `tests/fixtures` en el contexto de Docker; fallaba también en `main`) y la tabla compartida `tests/fixtures/vehicle-values-en.json`, comprobada contra `en.ts` y `VehicleSeo.cs`. Frontend 154/154, backend 150/150 unitarios y 155/155 de integración.
 - **`feat/seo-b6`** contiene otro B4 (10-10) más B5 y B6, en conflicto con esta rama. Decisión del usuario: B4 se queda con `feat/seo-b4`; B5 y B6 se rehacen encima aprovechando ese trabajo y después se descarta `feat/seo-b6`.
-- **Siguiente:** integrar la rama `feat/seo-b4` tras su revisión; después B5 (textos comerciales B1). El usuario ha autorizado el commit y push. Despliegue pendiente.
+- **Cerrado:** integrado en `main` con el PR #7 (13-10-2026).
+
+### SEO B5 · textos comerciales B1 (13-10-2026, rama `feat/seo-b5`)
+
+- **Origen:** el B5 de `feat/seo-b6` (10-10) portado sobre `main` tras B4. Textos del documento B1 aprobado en ES/EN: metadatos, frase de entidad (`i18n/entityCopy.ts`) en el `AutomotiveBusiness` y en `llms.txt`, pie («Clientes en toda Europa», también en el HTML de la ficha), Home (hero, Process «De la búsqueda a la entrega», dato «Toda Europa», Servicios), Importación (lede, «Nosotros gestionamos el resto», siete etapas, impuestos por país sin enlace a la guía, FAQ 1–5 y 8 sin FAQPage), Nosotros (fila «Si vives fuera de España», sección de terceros), Vehículos, ficha y Contacto (opción 2 y tres pasos). Ningún texto [P] publicado.
+- **Posicionamiento:** el usuario confirma gestión integral («buscar, acompañar y hacer nosotros todo el proceso»). Se retira el «asesoramiento» que B4 había puesto en las descripciones EN de Home e Importación y en el `Service` (vuelven al texto B1), y el `Offer` dice «honorarios del servicio» en lugar de «honorarios de asesoramiento». Sigue sin `seller`.
+- **Calibración:** textos largos en todas las escenas; ninguna alternativa corta hizo falta. QA Playwright contra `main` a 390/1440/1920 ES/EN (41 posiciones de scroll por combinación): mismas incidencias de maqueta que `main` (solo las palabras del H1 del hero durante su animación), sin scroll horizontal ni recortes; altura de la Home −24 px a 390. Dato «Toda Europa»: una línea más a 390, sin tocar el coche. Importación, Nosotros y Contacto revisados a 390 y 1440. GSAP sin tocar.
+- **Pruebas:** Vitest 163/163, typecheck, lint y build; backend 150/150 unitarios y 155/155 de integración.
+- **Titularidad (13-10-2026, mensaje del cliente al usuario):** el coche va a nombre del cliente o de la empresa de GP SELECT según la operación, y GP SELECT negocia el precio. Sustituye a «el comprador es siempre el cliente» del documento B1: fuera «el coche se compra a tu nombre» y «el comprador eres tú»; FAQ 4 pasa a «¿A nombre de quién va el coche?»; nota en la ficha bajo el precio (también en el HTML de la API) que explica los dos casos; «negociamos» en Servicios, etapa 3 y Nosotros. El `Offer` sigue sin `seller` (depende de la operación). El depósito del 20 % no se publica (decisión del usuario). «Te confirmamos cuál antes de la compra» queda pendiente de confirmar con el cliente; conviene revisión legal.
+- **Pendiente fuera de código:** `og-default.jpg` con «Clientes en toda Europa» y versión inglesa (recurso gráfico). Datos [P] del documento B1 (seguro del transporte, lugar de entrega, honorarios, plazos…).
+- **Siguiente:** revisión y PR de `feat/seo-b5`; después B6 (H1 semánticos con los ledes) desde `feat/seo-b6`, y descartar esa rama.
 
 ### SEO-2 · fichas y sitemap desde el servidor = PASS (05-10-2026, tag `seo-2-pass`)
 
@@ -668,7 +678,7 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 7. **3B copy truth** (**PASS**, 01-10-2026);
 8. **3C final visual / asset polish** (**PASS**, 01-10-2026: UI Simplification, QA A–G y Real Stack Regression incluidas; sin push ni merge);
 9. **Siguiente: por decidir por el usuario**: sustituir las fotos del usuario según lleguen, y después 3D final release QA. SEO y dominio/deploy son fases aparte. NO iniciada.
-10. **SEO Fase B:** B0 aceptado con salvedad y B1 aprobado; B2/B3 integrados en main. B4 implementado y validado (13-10-2026), pendiente de revisión; después B5. Ver el bloque «SEO B4».
+10. **SEO Fase B:** B0 aceptado con salvedad y B1 aprobado; B2/B3 integrados en main. B4 integrado en main (PR #7). B5 terminado en `feat/seo-b5`, pendiente de revisión; después B6. Ver los bloques «SEO B4» y «SEO B5».
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 
