@@ -48,6 +48,21 @@ services:
         dotnet tool restore
         dotnet restore src/GpSelect.Api
         dotnet ef database update --project src/GpSelect.Infrastructure --startup-project src/GpSelect.Infrastructure
+        # With docker-compose.tunnel.yml the Admin must accept the tunnel's address as its origin (CSRF check).
+        if [ -n "$$TUNNEL_METRICS" ]; then
+          echo "Waiting for the public tunnel address..."
+          for i in $$(seq 1 90); do
+            host=$$(curl -fsS "$$TUNNEL_METRICS/quicktunnel" 2>/dev/null | sed -n 's/.*"hostname" *: *"\([^"]*\)".*/\1/p' || true)
+            [ -n "$$host" ] && break
+            sleep 2
+          done
+          if [ -n "$$host" ]; then
+            export Security__AllowedOrigin="https://$$host"
+            echo "Public address: https://$$host"
+          else
+            echo "WARNING: no tunnel address found; changes in the Admin will answer 403 over the tunnel."
+          fi
+        fi
         exec dotnet run --project src/GpSelect.Api --no-launch-profile
     volumes:
       - .:/repo:ro

@@ -19,6 +19,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
   server: {
+    // The temporary public address for phone tests (docker-compose.tunnel.yml); the preview server inherits it.
+    allowedHosts: ['.trycloudflare.com'],
     proxy: {
       '/api': { target: process.env.API_PROXY_TARGET ?? 'http://localhost:5000', changeOrigin: false },
     },
