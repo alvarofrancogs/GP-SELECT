@@ -32,10 +32,13 @@ services:
       Admin__PasswordHash: AQAAAAIAAYagAAAAEGmxAzyeOII0VyaoMXggyJLs2oKL9KPkk5GLqmrsvzav3r3YzqZ2wbFFE6gxyfbTTQ==
       Enquiries__Enabled: "true"
       Storage__Root: /data/uploads
+      # The background workers poll the database every second; do not print each query.
+      Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: Warning
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
       DOTNET_NOLOGO: "1"
+    # bash, not sh: sh drops environment variables with dots in the name (the Logging one above).
     command:
-      - sh
+      - bash
       - -c
       - |
         set -e
