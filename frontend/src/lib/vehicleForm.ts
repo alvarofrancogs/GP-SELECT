@@ -1,6 +1,7 @@
 import type { AdminVehicle, VehiclePatch, VehicleSpecification } from '../types/admin';
 import { adminCopy } from '../i18n/adminCopy';
 import { formatNumber } from './adminFormat';
+import { uuid } from './uuid';
 
 /** Limits mirror VehicleRules in the domain; the server stays the authority. */
 export const LIMITS = {
@@ -37,7 +38,7 @@ export type VehicleForm = Record<TextField | NumberField | 'make' | 'model' | 'f
   specifications: SpecificationRow[];
 };
 
-export const newRowKey = () => crypto.randomUUID();
+export const newRowKey = () => uuid();
 export const maxYear = () => new Date().getFullYear() + 1;
 
 const text = (value: string | null) => value ?? '';
