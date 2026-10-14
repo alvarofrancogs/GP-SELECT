@@ -42,6 +42,8 @@ export function Preloader() {
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const [active, setActive] = useState(() => !shown && !reduced);
   const [speed] = useState(() => seenBefore() ? 0.5 : 1);
+  // The page it was opened on: a redirect while it is up must not start it again.
+  const [onHome] = useState(() => matchPage(pathname)?.page === 'home');
   const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,7 +51,6 @@ export function Preloader() {
     shown = true;
     markSeen();
     const start = performance.now();
-    const onHome = matchPage(pathname)?.page === 'home';
     const tasks = [
       document.fonts.ready,
       prefetchVehicles(),
@@ -64,13 +65,18 @@ export function Preloader() {
     window.addEventListener('wheel', stop, { passive: false });
     window.addEventListener('touchmove', stop, { passive: false });
     window.addEventListener('keydown', stopKeys);
+    // What it covers is out of reach too: Tab cannot land on links nobody can see yet.
+    const behind = Array.from(root.current?.parentElement?.children ?? [])
+      .filter((element): element is HTMLElement => element instanceof HTMLElement && element !== root.current);
+    behind.forEach((element) => { element.inert = true; });
 
     let leaving = false;
+    let exit: gsap.core.Timeline | undefined;
     const leave = () => {
       if (leaving || !root.current) return;
       leaving = true;
-      gsap.timeline({ onComplete: () => setActive(false) })
-        .to('.preloader__logo', { opacity: 0, y: -10, duration: 0.25 * speed, ease: 'power2.in' })
+      exit = gsap.timeline({ onComplete: () => setActive(false) })
+        .to(root.current.querySelector('.preloader__logo'), { opacity: 0, y: -10, duration: 0.25 * speed, ease: 'power2.in' })
         .to(root.current, { yPercent: -100, duration: 0.6 * speed, ease: 'power4.inOut' }, `<${0.05 * speed}`);
     };
     const tick = () => {
@@ -83,11 +89,13 @@ export function Preloader() {
 
     return () => {
       gsap.ticker.remove(tick);
+      exit?.kill();
       window.removeEventListener('wheel', stop);
       window.removeEventListener('touchmove', stop);
       window.removeEventListener('keydown', stopKeys);
+      behind.forEach((element) => { element.inert = false; });
     };
-  }, [active, pathname, speed]);
+  }, [active, onHome, speed]);
 
   if (!active) return null;
 

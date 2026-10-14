@@ -1,7 +1,9 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import type { VehicleImage } from '../types/vehicle';
 import { useLanguage } from '../i18n/useLanguage';
+
+const STRIP = '(max-width: 767px)';
 
 export function VehicleGallery({ images, name }: { images: VehicleImage[]; name: string }) {
   const { copy } = useLanguage();
@@ -24,11 +26,20 @@ export function VehicleGallery({ images, name }: { images: VehicleImage[]; name:
   function select(index: number) {
     const next = (index + images.length) % images.length;
     show(next);
-    if (window.matchMedia('(max-width: 767px)').matches && strip.current) {
+    if (window.matchMedia(STRIP).matches && strip.current) {
       // The strip uses native scrolling; paging never moves the document vertically.
       strip.current.scrollTo({ left: next * strip.current.clientWidth, behavior: 'instant' });
     }
   }
+  // Wider screens stack the photos without scrolling: entering the strip (a phone turned upright) shows the active one.
+  useEffect(() => {
+    const phone = window.matchMedia(STRIP);
+    const sync = () => {
+      if (phone.matches && strip.current) strip.current.scrollTo({ left: active * strip.current.clientWidth, behavior: 'instant' });
+    };
+    phone.addEventListener('change', sync);
+    return () => phone.removeEventListener('change', sync);
+  }, [active]);
   function onKeyDown(event: KeyboardEvent) {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
     event.preventDefault();
@@ -38,7 +49,7 @@ export function VehicleGallery({ images, name }: { images: VehicleImage[]; name:
   return <section className="vehicle-gallery" aria-label={text.gallery} onKeyDown={onKeyDown}>
     <div className="vehicle-gallery__stage" ref={strip} tabIndex={0} aria-label={text.gallery}
       onScroll={(event) => {
-        if (!window.matchMedia('(max-width: 767px)').matches) return;
+        if (!window.matchMedia(STRIP).matches) return;
         const element = event.currentTarget;
         const index = Math.round(element.scrollLeft / element.clientWidth);
         if (index >= 0 && index < images.length) show(index);
@@ -58,7 +69,7 @@ export function VehicleGallery({ images, name }: { images: VehicleImage[]; name:
     </div>
     <div className="vehicle-gallery__caption type-ui">
       <p>{current.temporary ? copy.common.temporaryAsset : name}</p>
-      <button type="button" className="editorial-link" onClick={() => dialog.current?.showModal()}>{text.enlarge}<span aria-hidden="true">→</span></button>
+      <button type="button" className="editorial-link" disabled={failed.has(current.src)} onClick={() => dialog.current?.showModal()}>{text.enlarge}<span aria-hidden="true">→</span></button>
     </div>
     <div className="vehicle-gallery__controls type-ui">
       <button type="button" disabled={images.length < 2} aria-label={text.previous} onClick={() => select(active - 1)}>←</button>
@@ -73,9 +84,9 @@ export function VehicleGallery({ images, name }: { images: VehicleImage[]; name:
       </button>)}</div> : null}
     <dialog className="vehicle-gallery__dialog" ref={dialog} aria-label={`${text.gallery} · ${name}`}>
       <div className="vehicle-gallery__dialog-top type-ui"><p>{name}</p><button type="button" className="editorial-link" autoFocus onClick={() => dialog.current?.close()}>{text.close} ×</button></div>
-      <img src={current.src} alt={current.temporary ? copy.common.temporaryAsset : current.alt ?? name}
-        style={{ objectFit: current.fit }}
-        width={current.width ?? 1500} height={current.height ?? 1000} loading="lazy" />
+      {failed.has(current.src) ? <div className="vehicle-media-empty type-ui">{text.noImage}</div> : <img src={current.src}
+        alt={current.temporary ? copy.common.temporaryAsset : current.alt ?? name} style={{ objectFit: current.fit }}
+        width={current.width ?? 1500} height={current.height ?? 1000} loading="lazy" onError={() => fail(current.src)} />}
       {current.temporary ? <p className="type-ui">{copy.common.temporaryAsset}</p> : null}
       <div className="vehicle-gallery__controls type-ui"><button type="button" aria-label={text.previous} disabled={images.length < 2} onClick={() => select(active - 1)}>←</button><p className="type-numeric" aria-live="polite">{active + 1} / {images.length}</p><button type="button" aria-label={text.next} disabled={images.length < 2} onClick={() => select(active + 1)}>→</button></div>
     </dialog>

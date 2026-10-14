@@ -5,7 +5,6 @@
   --width-body: var(--type-body-width);
   --width-display: var(--type-display-width);
   --width-label: var(--type-label-width);
-  --width-nav: var(--type-ui-width);
   --weight-extended: var(--type-display-weight);
   /* One size in both languages (the Spanish words are the longest): switching language never resizes the headlines. */
   --hero-size: clamp(2.5rem, 6.25vw, 9rem);
@@ -21,7 +20,6 @@
   --header-nav-size: clamp(.75rem, .96vw, 1.15rem);
   --header-brand-size: clamp(1.25rem, 1.603vw, 2.25rem);
   --header-brand-tracking: .15em;
-  --header-nav-tracking: -.025em;
   --text-hero: clamp(5rem, 8.95vw, 12rem);
   --text-display: clamp(4rem, 7vw, 9.5rem);
   --text-h1: clamp(2.8rem, 5.2vw, 6.5rem);
@@ -35,7 +33,6 @@
   --text-brand: clamp(1.4rem, 1.9vw, 2.4rem);
   --weight-display: var(--type-display-weight);
   --weight-body: 350;
-  --weight-fine: 200;
   --tracking-display: var(--type-section-tracking);
   --tracking-body: -.035em;
   --tracking-label: .11em;

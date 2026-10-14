@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { enquiriesEnabled } from '../config/contact';
 import { legalConfig } from '../config/legal';
@@ -6,7 +6,7 @@ import { legalPaths, legalUi } from '../i18n/legalCopy';
 import { useLanguage } from '../i18n/useLanguage';
 import { submitLead, validateLead, type LeadDraft, type LeadField, type LeadIntent } from '../lib/submitLead';
 
-export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: string }) {
+export function ContactForm({ intent, vehicle, onNewEnquiry }: { intent: LeadIntent; vehicle: string; onNewEnquiry: () => void }) {
   const { copy, locale, href } = useLanguage();
   const notice = legalUi[locale].formNotice;
   const text = copy.interiors.contact;
@@ -21,6 +21,16 @@ export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: 
   const [rateLimited, setRateLimited] = useState(false);
   const search = intent === 'search';
   const fields = ['name', 'phone', 'email', 'vehicle', 'message'] as const;
+
+  // The vehicle comes from the address: when it changes (the search path, a new enquiry) only that field follows.
+  useEffect(() => {
+    const input = formRef.current?.elements.namedItem('vehicle');
+    if (input instanceof HTMLInputElement) input.value = vehicle;
+  }, [vehicle]);
+  // On the search path the vehicle is optional: an earlier "missing vehicle" no longer applies.
+  useEffect(() => {
+    if (search) setErrors((current) => current.filter((field) => field !== 'vehicle'));
+  }, [search]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -67,7 +77,10 @@ export function ContactForm({ intent, vehicle }: { intent: LeadIntent; vehicle: 
 
   function edit() {
     // A sent enquiry starts a fresh form, so the same one is not sent twice by accident.
-    if (sent) formRef.current?.reset();
+    if (sent) {
+      formRef.current?.reset();
+      onNewEnquiry();
+    }
     setStatus('idle');
     requestAnimationFrame(() => formRef.current?.querySelector<HTMLInputElement>('input')?.focus());
   }

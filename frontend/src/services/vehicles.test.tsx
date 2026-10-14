@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const dto = { slug: 'bmw-m4', make: 'BMW', model: 'M4', year: 2023, status: 'Available', images: ['/detail'], cardImages: ['/card'] };
 
@@ -124,5 +124,100 @@ describe('initial catalogue data', () => {
     expect(getInitialVehicles('default')).toHaveLength(1);
     consumeInitialVehicles();
     expect(getInitialVehicles('default')).toBeNull();
+  });
+});
+
+describe('start-up list request', () => {
+  const card = { slug: 'bmw-m4', make: 'BMW', model: 'M4', variant: null, year: 2023, month: null, priceEur: 90000, mileageKm: 1000,
+    powerHp: 510, fuelType: null, transmission: null, bodyType: null, status: 'Available', images: ['/card'] };
+
+  it('sends one request when StrictMode runs the start-up screen and its reader twice; a later visit asks again', async () => {
+    window.history.replaceState(null, '', '/');
+    const fetch = vi.fn(async () => ({ ok: true, status: 200, json: async () => [card] }));
+    vi.stubGlobal('fetch', fetch);
+    const { prefetchVehicles, listVehicles } = await import('./vehicles');
+    function StartUp() {
+      useEffect(() => { void prefetchVehicles(); }, []);
+      return null;
+    }
+    function Reader() {
+      const [model, setModel] = useState('loading');
+      useEffect(() => {
+        const request = new AbortController();
+        void listVehicles(request.signal).then((list) => { if (!request.signal.aborted) setModel(list[0].model); });
+        return () => request.abort();
+      }, []);
+      return <p>{model}</p>;
+    }
+    render(<StrictMode><StartUp /><Reader /></StrictMode>);
+    expect(await screen.findByText('M4')).toBeTruthy();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await listVehicles();
+    expect(fetch).toHaveBeenCalledTimes(2);
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('requests shared by readers that ask at once', () => {
+  const card = { slug: 'bmw-m4', make: 'BMW', model: 'M4', variant: null, year: 2023, month: null, priceEur: 90000, mileageKm: 1000,
+    powerHp: 510, fuelType: null, transmission: null, bodyType: null, status: 'Available', images: ['/card'] };
+  /** Answers after a tick, or fails as fetch does when its request is cancelled. */
+  function answering(body: unknown) {
+    const signals: AbortSignal[] = [];
+    const fetch = vi.fn((_url: string, init: { signal: AbortSignal }) => {
+      signals.push(init.signal);
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => resolve({ ok: true, status: 200, json: async () => body }), 20);
+        init.signal.addEventListener('abort', () => { clearTimeout(timer); reject(new DOMException('Aborted', 'AbortError')); });
+      });
+    });
+    vi.stubGlobal('fetch', fetch);
+    return { fetch, signals };
+  }
+  function Reader({ read }: { read: (signal: AbortSignal) => Promise<{ model: string } | null | { model: string }[]> }) {
+    const [model, setModel] = useState('loading');
+    useEffect(() => {
+      const request = new AbortController();
+      read(request.signal).then((data) => {
+        if (!request.signal.aborted) setModel(Array.isArray(data) ? data[0].model : data?.model ?? 'none');
+      }, () => { if (!request.signal.aborted) setModel('error'); });
+      return () => request.abort();
+    }, [read]);
+    return <p>{model}</p>;
+  }
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it('asks once for the list and once for a vehicle when StrictMode mounts the reader twice', async () => {
+    window.history.replaceState(null, '', '/vehiculos');
+    const { fetch, signals } = answering([card]);
+    const { listVehicles } = await import('./vehicles');
+    render(<StrictMode><Reader read={listVehicles} /></StrictMode>);
+    expect(await screen.findByText('M4')).toBeTruthy();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(signals[0].aborted).toBe(false);
+
+    vi.resetModules();
+    document.body.innerHTML = '';
+    const detail = answering({ ...card, cardImages: [] });
+    const { getVehicle } = await import('./vehicles');
+    const read = (signal: AbortSignal) => getVehicle('bmw-m4', signal);
+    render(<StrictMode><Reader read={read} /></StrictMode>);
+    expect(await screen.findByText('M4')).toBeTruthy();
+    expect(detail.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('still cancels the request when its only reader goes away', async () => {
+    window.history.replaceState(null, '', '/vehiculos');
+    const { fetch, signals } = answering([card]);
+    const { listVehicles } = await import('./vehicles');
+    const view = render(<Reader read={listVehicles} />);
+    view.unmount();
+    await Promise.resolve();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(signals[0].aborted).toBe(true);
+    // The next visit asks again.
+    render(<Reader read={listVehicles} />);
+    expect(await screen.findByText('M4')).toBeTruthy();
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 });

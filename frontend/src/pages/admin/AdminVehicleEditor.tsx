@@ -149,7 +149,10 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     try {
       // Remove only staged images; saved images have only been removed from the local draft.
       for (const image of images.filter((item) => item.isStaged)) {
-        await adminApi.removeImage(vehicle.id, image.id);
+        // Already gone (another tab, a cleanup): nothing left to remove.
+        await adminApi.removeImage(vehicle.id, image.id).catch((failure: unknown) => {
+          if (!(failure instanceof ApiError && failure.status === 404)) throw failure;
+        });
         setImages((current) => current.filter((item) => item.id !== image.id));
         setRemoved((current) => current.filter((id) => id !== image.id));
       }

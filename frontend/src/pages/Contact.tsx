@@ -18,11 +18,20 @@ export function Contact() {
   const path: LeadIntent = intent === 'vehicle' || (!intent && vehicle) ? 'vehicle' : 'search';
   const hasChannels = showContactPreview || Boolean(contactConfig.whatsapp || contactConfig.phone || contactConfig.email);
 
-  function selectPath(next: LeadIntent) {
+  // The address keeps the path and the catalogue car; changing them never resets what has been typed.
+  function update(intent: LeadIntent, dropVehicle: boolean) {
     const updated = new URLSearchParams(params);
-    updated.set('intent', next);
+    updated.set('intent', intent);
+    if (dropVehicle) {
+      updated.delete('vehiculo');
+      updated.delete('vehicle');
+    }
     setParams(updated, { replace: true, preventScrollReset: true });
   }
+  // Asking GP SELECT to find a car is not about the catalogue car the visitor came from.
+  const selectPath = (next: LeadIntent) => update(next, next === 'search');
+  // After a sent enquiry the next one starts without the previous car, on the same path.
+  const newEnquiry = () => { if (vehicle) update(path, true); };
 
   return (
     <article className="interior-page contact-page">
@@ -42,7 +51,7 @@ export function Contact() {
           <p className="contact-introduction type-lede">{path === 'search' ? text.searchIntro : text.vehicleIntro}</p>
           {/* What happens after sending: the approved copy carries its own numbers. */}
           <ol className="contact-next type-body">{text.nextSteps.map((step) => <li key={step}>{step}</li>)}</ol>
-          <ContactForm key={vehicle} intent={path} vehicle={vehicle} />
+          <ContactForm intent={path} vehicle={vehicle} onNewEnquiry={newEnquiry} />
         </div>
         <DirectContact />
       </div>

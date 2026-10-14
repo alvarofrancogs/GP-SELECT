@@ -10,11 +10,12 @@
 .interior-page .type-body { font-size: clamp(1rem, 1.15vw, 1.25rem); }
 .interior-page .type-lede { font-size: clamp(1.25rem, 1.85vw, 2rem); }
 .interior-page .type-heading { font-size: clamp(1.4rem, 2.2vw, 2.75rem); }
-.interior-header { padding-top: calc(var(--header-height) + clamp(3rem, 6vw, 7rem)); padding-bottom: clamp(3.5rem, 6vw, 7rem); }
-.interior-header__line { display: grid; grid-template-columns: minmax(0, 2.15fr) minmax(0, 1fr); align-items: end; align-items: last baseline; gap: 3vw; font: inherit; }
-.interior-header__title, .interior-header__lede { display: block; }
-.interior-header__title { font-size: clamp(4rem, 10.5vw, 12rem); white-space: nowrap; }
-.interior-header__lede { max-width: 24ch; }
+/* Compact editorial header (InteriorPageHeader). Two classes deep, so the .interior-page type sizes above never win. */
+.interior-page .interior-header { padding-top: calc(var(--header-height) + clamp(1.5rem, 2.2vw, 2.75rem)); padding-bottom: clamp(2.5rem, 3.3vw, 4rem); }
+.interior-header .interior-header__line { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: start; gap: 5vw; font: inherit; }
+.interior-header .interior-header__title, .interior-header .interior-header__lede { display: block; }
+.interior-header .interior-header__title { font-size: clamp(3.75rem, calc(1rem + 4.166667vw), 6rem); }
+.interior-header .interior-header__lede { max-width: 44ch; font-size: clamp(1.375rem, calc(.625rem + .833333vw), 1.625rem); line-height: 1.35; }
 
 @media (prefers-reduced-motion: no-preference) {
   .interior-header__title { animation: interior-title-focus 650ms var(--ease-cinematic) both; }
@@ -25,13 +26,13 @@
 }
 
 .editorial-media { min-width: 0; margin: 0; }
-.editorial-media img { width: 100%; height: auto; aspect-ratio: 14 / 9; object-fit: cover; background: var(--color-placeholder); }
-.editorial-media--portrait img { aspect-ratio: 9 / 11; }
+.editorial-media img, .editorial-media__empty { width: 100%; height: auto; aspect-ratio: 14 / 9; object-fit: cover; background: var(--color-placeholder); }
+.editorial-media--portrait img, .editorial-media--portrait .editorial-media__empty { aspect-ratio: 9 / 11; }
 .editorial-media figcaption { display: flex; justify-content: space-between; gap: 1rem; padding-top: .75rem; font-size: .7rem; line-height: 1.4; color: var(--color-muted); }
 .editorial-media figcaption span { flex-shrink: 0; }
 .editorial-link { display: inline-flex; align-items: baseline; gap: 1em; width: fit-content; max-width: 100%; min-height: 1.5rem; padding-block: .4em; border: 0; border-bottom: 1px solid currentColor; background: none; text-align: left; }
 .editorial-link > span { flex-shrink: 0; transition: transform var(--duration-ui) var(--ease-out); }
-.editorial-link:hover > span { transform: translateX(.2em); }
+@media (hover: hover) and (pointer: fine) { .editorial-link:hover > span { transform: translateX(.2em); } }
 .interior-band { margin-inline: calc(-1 * var(--page-gutter)); padding: var(--interior-space) var(--page-gutter); background: var(--color-dark); color: var(--color-paper); --interior-rule: var(--color-muted); }
 .interior-band .editorial-media figcaption { color: var(--color-paper); }
 .interior-band .editorial-media img { background: var(--color-muted); }
@@ -50,7 +51,7 @@
 .contact-path > .type-heading { font-size: clamp(1.4rem, 2.05vw, 2.6rem); max-width: 24ch; }
 .contact-path__arrow { font-size: 1.75rem; transition: transform var(--duration-ui) var(--ease-out); }
 .contact-path:has(input:focus-visible) { outline: 2px solid var(--color-ink); outline-offset: 5px; }
-.contact-path:hover .contact-path__arrow { transform: translateX(.2em); }
+@media (hover: hover) and (pointer: fine) { .contact-path:hover .contact-path__arrow { transform: translateX(.2em); } }
 .contact-content { display: grid; grid-template-columns: minmax(0, 1fr); padding-block: clamp(3rem, 5vw, 6rem) var(--interior-space); }
 .contact-content__form { width: 100%; max-width: 64rem; }
 .contact-content--channels { grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 7vw; align-items: start; }
@@ -91,56 +92,6 @@
 .direct-contact dt { margin-bottom: .65rem; opacity: .7; }
 .direct-contact dd { margin: 0; overflow-wrap: anywhere; }
 .direct-contact dd a:hover { text-decoration: underline; text-underline-offset: .3em; }
-
-@media (min-width: 768px) and (max-width: 1199px) {
-  .interior-header__line { grid-template-columns: minmax(0, 1fr) minmax(0, .6fr); }
-  .interior-header__title { font-size: 9vw; }
-  .contact-content--channels { gap: 4vw; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
-  .contact-content--channels .contact-fields { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 767px) {
-  .interior-page { --interior-space: 4.5rem; }
-  .interior-header { padding-top: calc(var(--header-height) + 3rem); padding-bottom: 3.5rem; }
-  .interior-header__line { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
-  .interior-header__title { font-size: clamp(2.75rem, 14vw, 6.5rem); }
-  .interior-header__lede { max-width: 24ch; margin-left: 17%; font-size: 1.15rem; }
-  .editorial-media figcaption { flex-direction: column; gap: .25rem; font-size: .625rem; }
-  .interior-closing h2 { font-size: 2.5rem; }
-  .interior-closing__links { flex-direction: column; gap: 1.5rem; }
-  .interior-closing > .editorial-link { font-size: 1.6rem; }
-  .contact-paths { grid-template-columns: minmax(0, 1fr); }
-  .contact-path { gap: 1rem; padding-block: 1.25rem; }
-  .contact-path:has(input:checked) { padding-top: calc(1.25rem - 1px); }
-  .contact-path + .contact-path:not(:has(input:checked)) { border-top: 0; }
-  .contact-path > .type-heading { font-size: 1.35rem; }
-  .contact-content, .contact-content--channels { grid-template-columns: minmax(0, 1fr); gap: 3.5rem; }
-  .contact-page .contact-introduction { font-size: 1.2rem; }
-  .contact-fields { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
-  .direct-contact { margin-inline: calc(-1 * var(--page-gutter)); padding: 3rem var(--page-gutter); }
-  .direct-contact h2 { max-width: 13ch; font-size: 2.5rem; }
-}
-
-/* Compact editorial headers, shared by every interior with an InteriorPageHeader. */
-:is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header {
-  padding-top: calc(var(--header-height) + clamp(1.5rem, 2.2vw, 2.75rem));
-  padding-bottom: clamp(2.5rem, 3.3vw, 4rem);
-}
-:is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__line {
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-  align-items: start;
-  gap: 5vw;
-}
-:is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__title {
-  font-size: clamp(3.75rem, calc(1rem + 4.166667vw), 6rem);
-  white-space: normal;
-}
-:is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__lede {
-  max-width: 44ch;
-  margin-left: 0;
-  font-size: clamp(1.375rem, calc(.625rem + .833333vw), 1.625rem);
-  line-height: 1.35;
-}
 
 /* Sizes stay local to the two editorial pages, including their closing sections. */
 :is(.about-page, .import-page) .type-section {
@@ -247,22 +198,33 @@
 .import-closing > .type-body { margin-top: 1.5rem; }
 
 @media (min-width: 768px) and (max-width: 1199px) {
-  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__line {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1.75rem;
-  }
-  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__lede {
-    margin-left: 24%;
-    max-width: 44ch;
-  }
+  .interior-header .interior-header__line { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }
+  .interior-header .interior-header__lede { margin-left: 24%; }
+  .contact-content--channels { gap: 4vw; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+  .contact-content--channels .contact-fields { grid-template-columns: 1fr; }
   .about-why, .about-approach, .import-chapter, .import-chapter--support { gap: 5vw; }
 }
 
 @media (max-width: 767px) {
-  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header { padding-top: calc(var(--header-height) + 1.75rem); padding-bottom: 2.5rem; }
-  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__line { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
-  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__title { font-size: clamp(2.375rem, calc(1.21rem + 5.29vw), 3.75rem); }
-  :is(.about-page, .import-page, .contact-page, .vehicles-page) .interior-header__lede { font-size: 1.1875rem; max-width: 44ch; }
+  .interior-page { --interior-space: 4.5rem; }
+  .interior-page .interior-header { padding-top: calc(var(--header-height) + 1.75rem); padding-bottom: 2.5rem; }
+  .interior-header .interior-header__line { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+  .interior-header .interior-header__title { font-size: clamp(2.375rem, calc(1.21rem + 5.29vw), 3.75rem); }
+  .interior-header .interior-header__lede { font-size: 1.1875rem; }
+  .editorial-media figcaption { flex-direction: column; gap: .25rem; font-size: .625rem; }
+  .interior-closing h2 { font-size: 2.5rem; }
+  .interior-closing__links { flex-direction: column; gap: 1.5rem; }
+  .interior-closing > .editorial-link { font-size: 1.6rem; }
+  .contact-paths { grid-template-columns: minmax(0, 1fr); }
+  .contact-path { gap: 1rem; padding-block: 1.25rem; }
+  .contact-path:has(input:checked) { padding-top: calc(1.25rem - 1px); }
+  .contact-path + .contact-path:not(:has(input:checked)) { border-top: 0; }
+  .contact-path > .type-heading { font-size: 1.35rem; }
+  .contact-content, .contact-content--channels { grid-template-columns: minmax(0, 1fr); gap: 3.5rem; }
+  .contact-page .contact-introduction { font-size: 1.2rem; }
+  .contact-fields { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+  .direct-contact { margin-inline: calc(-1 * var(--page-gutter)); padding: 3rem var(--page-gutter); }
+  .direct-contact h2 { max-width: 13ch; font-size: 2.5rem; }
   :is(.about-page, .import-page) .type-section { font-size: clamp(1.875rem, calc(1.23rem + 2.645vw), 2.5rem); }
   :is(.about-page, .import-page) .type-heading { font-size: 1.25rem; }
   :is(.about-page, .import-page) .type-lede { font-size: 1.1875rem; }

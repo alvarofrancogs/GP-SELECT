@@ -11,7 +11,7 @@ interface StatusControlProps {
   onChanged: (status: SettableStatus, showWhenSold: boolean) => void;
 }
 
-/** A local selection is only persisted by the explicit save action. */
+/** Shows and changes the editor's draft status; only the explicit save action persists it. */
 export function StatusControl({ vehicle, disabled, onChanged }: StatusControlProps) {
   const text = adminCopy.status;
   const id = useId();
@@ -50,10 +50,10 @@ export function StatusControl({ vehicle, disabled, onChanged }: StatusControlPro
           <span><span id={`${id}-${status}-name`} className="admin-status-option__name">{text.names[status]}</span>
             <span id={`${id}-${status}-hint`} className="admin-status-option__meta">{visibility(status, showWhenSold)}</span></span>
         </label>)}
-        {selected === 'Sold' || vehicle.status === 'Sold' ? <div className="admin-status-control__sold">
-          <label className="admin-check"><input type="checkbox" checked={showWhenSold} disabled={selected !== 'Sold'}
-            aria-describedby={`${id}-sold-hint`} onChange={(event) => { onChanged(selected === 'Archived' ? 'Draft' : selected, event.target.checked); }} />{text.showWhenSold}</label>
-          <p id={`${id}-sold-hint`} className="admin-field__hint">{selected === 'Sold' ? visibility('Sold', showWhenSold) : text.soldPreference}</p>
+        {selected === 'Sold' ? <div className="admin-status-control__sold">
+          <label className="admin-check"><input type="checkbox" checked={showWhenSold}
+            aria-describedby={`${id}-sold-hint`} onChange={(event) => { onChanged('Sold', event.target.checked); }} />{text.showWhenSold}</label>
+          <p id={`${id}-sold-hint`} className="admin-field__hint">{visibility('Sold', showWhenSold)}</p>
         </div> : null}
       </fieldset>
     </div> : null}

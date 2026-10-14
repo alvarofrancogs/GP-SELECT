@@ -26,7 +26,8 @@ export function Vehicles() {
     consumeInitialVehicles();
     if (initialList && attempt === 0) return;
     const request = new AbortController();
-    listVehicles(request.signal).then((data) => { setVehicles(data); setStatus('ready'); },
+    // The list prefetched by the start-up screen ignores this signal: drop it if the page has gone.
+    listVehicles(request.signal).then((data) => { if (!request.signal.aborted) { setVehicles(data); setStatus('ready'); } },
       () => { if (!request.signal.aborted) setStatus('error'); });
     return () => request.abort();
   }, [attempt, initialList]);

@@ -24,7 +24,7 @@
 .admin-link, .admin-action, .admin-back { display: inline-flex; align-items: center; gap: .5em; min-height: 2.75rem; padding: 0; border: 0; background: none; font-stretch: var(--type-ui-width); font-weight: var(--type-ui-weight); letter-spacing: var(--type-ui-tracking); line-height: var(--type-ui-leading); text-align: left; }
 .admin-link { font-size: .875rem; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .35em; }
 .admin-link > span[aria-hidden] { transition: transform var(--duration-ui) var(--ease-out); }
-.admin-link:hover > span[aria-hidden] { transform: translateX(.2em); }
+@media (hover: hover) and (pointer: fine) { .admin-link:hover > span[aria-hidden] { transform: translateX(.2em); } }
 .admin-link--danger { color: var(--admin-alert); }
 .admin-action { min-height: 2rem; font-size: .8125rem; color: var(--color-muted); }
 .admin-action:hover:not(:disabled) { color: var(--color-ink); text-decoration: underline; text-underline-offset: .3em; }
@@ -268,10 +268,8 @@
   .admin-status-control__current { grid-template-columns: minmax(0, 1fr); }
   .admin-status-control__current .admin-field__hint { grid-column: 1; }
   .admin-section { padding-block: 1.75rem; }
-  .admin-savebar { padding-block: .75rem; }
-  .admin-savebar { flex-wrap: wrap; gap: .5rem 1rem; }
-  .admin-savebar__status { flex-basis: 100%; }
-  .admin-savebar__status { font-size: .75rem; }
+  .admin-savebar { flex-wrap: wrap; gap: .5rem 1rem; padding-block: .75rem; }
+  .admin-savebar__status { flex-basis: 100%; font-size: .75rem; }
   .admin-savebar__actions { gap: 1rem; }
   .admin-savebar .admin-button { padding-inline: 1.1rem; }
   .admin-list-editor__add { grid-template-columns: minmax(0, 1fr) auto; }

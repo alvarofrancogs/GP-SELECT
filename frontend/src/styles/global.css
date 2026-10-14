@@ -54,10 +54,11 @@ dialog { overscroll-behavior: contain; }
 .site-header[data-glass='dark'] { mix-blend-mode: normal; color: var(--color-white); }
 .header-inner { height: var(--header-height); margin-inline: var(--page-gutter); display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
 .header-nav, .header-actions { display: flex; align-items: center; gap: clamp(1rem, 2.9vw, 3.5rem); }
-.header-nav { font-family: var(--font-family); font-stretch: var(--width-nav); font-size: var(--header-nav-size); font-weight: var(--weight-extended-copy); letter-spacing: var(--header-nav-tracking); }
+.header-nav { font-family: var(--font-family); font-size: var(--header-nav-size); }
 .nav-link { position: relative; padding-block: var(--space-2); white-space: nowrap; }
 .nav-link::after { position: absolute; bottom: 0; left: 0; right: 0; height: var(--border-width); content: ''; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform var(--duration-ui) var(--ease-out); }
-.nav-link:hover::after, .nav-link:focus-visible::after, .nav-link.active::after { transform: scaleX(1); }
+.nav-link:focus-visible::after, .nav-link.active::after { transform: scaleX(1); }
+@media (hover: hover) and (pointer: fine) { .nav-link:hover::after { transform: scaleX(1); } }
 .mobile-nav a.active { text-decoration: underline; text-decoration-thickness: var(--border-width); text-underline-offset: .2em; }
 .header-brand { position: absolute; left: 50.55%; transform: translateX(-50%); display: flex; gap: .4em; white-space: nowrap; font-family: var(--font-family); font-stretch: var(--width-extended); font-size: var(--header-brand-size); font-weight: var(--weight-extended-copy); letter-spacing: var(--header-brand-tracking); line-height: 1; }
 .brand-mark, .brand-name { font-weight: 400; }
@@ -69,8 +70,7 @@ dialog { overscroll-behavior: contain; }
 .site-header[data-tone-scene='hero'][data-tone='dark'] .header-brand { filter: drop-shadow(0 0 1px rgb(9 10 12 / .8)) drop-shadow(0 0 3px rgb(9 10 12 / .5)); }
 .header-actions { margin-left: auto; }
 .language-switcher { display: flex; align-items: center; gap: var(--space-2); padding-left: var(--space-6); border-left: var(--border-width) solid currentColor; }
-.language-switcher a { display: inline-flex; align-items: center; justify-content: center; padding: var(--space-1); font-family: var(--font-family); font-stretch: var(--width-extended); font-size: var(--header-nav-size); opacity: .55; }
-.language-switcher a { min-width: 1.5rem; min-height: 1.5rem; }
+.language-switcher a { display: inline-flex; align-items: center; justify-content: center; min-width: 1.5rem; min-height: 1.5rem; padding: var(--space-1); font-family: var(--font-family); font-size: var(--header-nav-size); opacity: .55; }
 /* Touch targets of at least 24 px without moving the type: the brand grows an invisible hit area. */
 .header-brand::after { content: ''; position: absolute; inset: -.375rem -.25rem; }
 .language-switcher a[aria-current='true'] { opacity: 1; text-decoration: underline; text-underline-offset: .35em; }
@@ -92,7 +92,7 @@ dialog { overscroll-behavior: contain; }
 .button--dark { color: var(--color-white); background: var(--color-ink); }
 .button--outline { border-color: currentColor; }
 .button-arrow { font-size: 1.2em; transition: transform var(--duration-ui) var(--ease-out); }
-.button:hover .button-arrow { transform: translateX(var(--space-1)); }
+@media (hover: hover) and (pointer: fine) { .button:hover .button-arrow { transform: translateX(var(--space-1)); } }
 .button--light:hover { background: var(--color-paper); }
 .button--dark:hover { background: var(--color-muted); }
 .eyebrow { font-family: var(--font-family); font-stretch: var(--type-label-width); font-size: var(--text-label); font-weight: var(--type-label-weight); letter-spacing: var(--type-label-tracking); line-height: var(--type-label-leading); text-transform: uppercase; }
@@ -159,10 +159,26 @@ dialog { overscroll-behavior: contain; }
   #main-content { animation: page-in 260ms var(--ease-out) backwards; }
 }
 @keyframes page-in { from { opacity: 0; } }
-/* Language change (LanguageSwitcher.tsx): only the lettering fades out and back in; photographs, cars and
-   backgrounds stay put. !important wins over the scenes' inline (GSAP) opacity only for these 440 ms. */
-html.lang-out :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:not(.header-brand, .catalogue-cta, .language-switcher a), .catalogue-cta__label, button:not(.menu-toggle)) { opacity: 0 !important; transition: opacity 160ms var(--ease-in-out) !important; }
-html.lang-in :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:not(.header-brand, .catalogue-cta, .language-switcher a), .catalogue-cta__label, button:not(.menu-toggle)) { transition: opacity 280ms var(--ease-out) !important; }
+/* Language change (LanguageSwitcher.tsx): only the lettering fades out and back in; photographs, cars, rules and
+   backgrounds stay put. Text blocks, and links or buttons holding a photograph, fade the colour of their text, so the
+   rules, radios and photographs in them stay. A link or button sized by its own words fades whole, so its new width
+   never shows as a jump. !important wins over the scenes' inline (GSAP) styles only for these 440 ms. */
+html.lang-out :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption),
+html.lang-out :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption) * { color: transparent !important; }
+html.lang-out :is(a:not(.header-brand, .footer-brand, .catalogue-cta, .language-switcher a, :has(img)), .catalogue-cta__label, button:not(.menu-toggle, .select__trigger, :has(img))) { opacity: 0 !important; }
+html.lang-out :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption),
+html.lang-out :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption) *,
+html.lang-out :is(a:not(.header-brand, .footer-brand, .catalogue-cta, .language-switcher a, :has(img)), .catalogue-cta__label, button:not(.menu-toggle, .select__trigger, :has(img))) { transition: color 160ms var(--ease-in-out), opacity 160ms var(--ease-in-out) !important; }
+html.lang-in :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption),
+html.lang-in :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption) *,
+html.lang-in :is(a:not(.header-brand, .footer-brand, .catalogue-cta, .language-switcher a, :has(img)), .catalogue-cta__label, button:not(.menu-toggle, .select__trigger, :has(img))) { transition: color 280ms var(--ease-out), opacity 280ms var(--ease-out) !important; }
+/* Text React creates for the new language (lists keyed by their copy, a note only one language has) starts hidden too
+   and fades in with the rest instead of appearing at once. */
+@starting-style {
+  html.lang-in :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption),
+  html.lang-in :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption) * { color: transparent !important; }
+  html.lang-in :is(a:not(.header-brand, .footer-brand, .catalogue-cta, .language-switcher a, :has(img)), .catalogue-cta__label, button:not(.menu-toggle, .select__trigger, :has(img))) { opacity: 0 !important; }
+}
 /* Touch: small links and buttons answer to a taller area (44 px, --tap) around them, invisible and without moving
    anything. Where neighbours are closer, the group sets a smaller --tap so no two areas overlap. */
 @media (pointer: coarse) {

@@ -3,6 +3,7 @@ import { adminApi, uploadImage } from '../../services/adminApi';
 import type { AdminImage } from '../../types/admin';
 import { adminCopy } from '../../i18n/adminCopy';
 import { describeError } from '../../lib/adminErrors';
+import { uuid } from '../../lib/uuid';
 
 const MAX_IMAGES = 30;
 const MAX_BYTES = 20 * 1024 * 1024;
@@ -129,7 +130,7 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
       else if (room <= 0) refused.push(`${file.name}: ${text.limit}`);
       else {
         room -= 1;
-        accepted.push({ key: crypto.randomUUID(), file, preview: URL.createObjectURL(file), imageId: null, uploadUrl: null, expiresAt: null, phase: 'waiting', progress: 0, error: null });
+        accepted.push({ key: uuid(), file, preview: URL.createObjectURL(file), imageId: null, uploadUrl: null, expiresAt: null, phase: 'waiting', progress: 0, error: null });
       }
     }
     setRejected(refused);

@@ -18,12 +18,17 @@ interface SuggestInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 export function SuggestInput({ id, value, suggestions, onChange, className = '', disabled, ...rest }: SuggestInputProps) {
   const listId = `${id}-suggestions`;
   const root = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLUListElement>(null);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const query = fold(value.trim());
   // While typing, only what matches; on focus with a known value, the whole list to pick another.
   const matches = query && !suggestions.some((s) => fold(s) === query) ? suggestions.filter((s) => fold(s).includes(query)) : suggestions;
   const shown = open && matches.length > 0;
+
+  useEffect(() => {
+    if (shown && active >= 0) list.current?.children[active]?.scrollIntoView({ block: 'nearest' });
+  }, [shown, active]);
 
   useEffect(() => {
     if (!shown) return;
@@ -61,7 +66,7 @@ export function SuggestInput({ id, value, suggestions, onChange, className = '',
       onFocus={() => setOpen(true)} onClick={() => setOpen(true)} onKeyDown={onKeyDown}
       onBlur={(event) => { if (!root.current?.contains(event.relatedTarget as Node)) setOpen(false); }}
       onChange={(event) => { onChange(event.target.value); setOpen(true); setActive(-1); }} />
-    <ul id={listId} className="select__list" role="listbox" aria-labelledby={`${id}-label`} hidden={!shown}>
+    <ul ref={list} id={listId} className="select__list" role="listbox" aria-labelledby={`${id}-label`} hidden={!shown}>
       {matches.map((text, index) => <li key={text} id={`${listId}-${index}`} role="option" className="select__option"
         aria-selected={fold(text) === query} data-active={index === active || undefined}
         onPointerDown={(event) => event.preventDefault()} onPointerMove={() => setActive(index)} onClick={() => pick(text)}>
