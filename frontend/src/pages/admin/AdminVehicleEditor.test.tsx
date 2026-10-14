@@ -2,16 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { AdminVehicleEditor } from './AdminVehicleEditor';
-import { adminApi } from '../../services/adminApi';
+import { adminApi, ApiError } from '../../services/adminApi';
 import { adminCopy } from '../../i18n/adminCopy';
 import type { AdminImage, AdminVehicle } from '../../types/admin';
 
 vi.mock('../../services/adminApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/adminApi')>();
-  return { ...actual, adminApi: { getVehicle: vi.fn() } };
+  return { ...actual, adminApi: { getVehicle: vi.fn(), removeImage: vi.fn() } };
 });
 
 const getVehicle = vi.mocked(adminApi.getVehicle);
+const removeImage = vi.mocked(adminApi.removeImage);
 
 const photo = (state: AdminImage['state'], jobPending: boolean): AdminImage => ({
   id: 'p1', state, jobPending, isStaged: true, isCover: false, sortOrder: 0, failureReason: state === 'Failed' ? 'transient' : null,
@@ -92,5 +93,38 @@ describe('editor photo tracking after a reload', () => {
     expect(getVehicle).toHaveBeenCalledTimes(1);
     expect(screen.getByText(adminCopy.photos.incomplete)).toBeTruthy();
     expect(saveButton().disabled).toBe(true);
+  });
+});
+
+describe('discarding a draft with a staged photo', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    getVehicle.mockReset();
+    removeImage.mockReset();
+  });
+  afterEach(() => { vi.useRealTimers(); });
+
+  async function discard() {
+    const button = screen.getByRole('button', { name: adminCopy.editor.discard }) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
+    await act(async () => { button.click(); await vi.advanceTimersByTimeAsync(0); });
+    return button;
+  }
+
+  it('finishes when the photo is already gone from the server', async () => {
+    removeImage.mockRejectedValue(new ApiError(404));
+    await openEditor(photo('Ready', false));
+    const button = await discard();
+    expect(removeImage).toHaveBeenCalledWith('v1', 'p1');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(button.disabled).toBe(true);
+  });
+
+  it('still stops on any other failure', async () => {
+    removeImage.mockRejectedValue(new ApiError(500));
+    await openEditor(photo('Ready', false));
+    const button = await discard();
+    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(button.disabled).toBe(false);
   });
 });

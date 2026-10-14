@@ -128,7 +128,6 @@ export const adminCopy = {
     showWhenSold: 'Mostrar en la web como vendido',
     soldVisibleName: 'Vendido · visible en la web',
     soldVisible: 'En el catálogo, marcado como vendido y sin precio.',
-    soldPreference: 'Esta elección solo se aplica mientras el estado sea Vendido.',
     saveFirst: 'Guarda los cambios antes de cambiar el estado.',
     changing: 'Cambiando estado…',
     changed: (label: string) => `Estado cambiado a ${label}.`,
