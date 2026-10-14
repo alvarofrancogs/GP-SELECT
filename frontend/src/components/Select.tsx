@@ -1,6 +1,8 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import '../styles/select.css';
 
+const fold = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
 export interface SelectOption { value: string; label: string }
 
 interface SelectProps {
@@ -70,11 +72,11 @@ export function Select({ value, options, onChange, labelledBy, id, className = '
   /** Typing jumps to the next option starting with what was typed in the last half second. */
   function typeahead(key: string) {
     const now = Date.now();
-    const text = (now - typed.current.at > 500 ? '' : typed.current.text) + key.toLowerCase();
+    const text = (now - typed.current.at > 500 ? '' : typed.current.text) + fold(key);
     typed.current = { text, at: now };
     const start = open ? active : selectedIndex;
     const order = options.map((_, i) => (start + (text.length === 1 ? 1 : 0) + i) % options.length);
-    const match = order.find((i) => options[i].label.toLowerCase().startsWith(text));
+    const match = order.find((i) => fold(options[i].label).startsWith(text));
     if (match !== undefined) show(match);
   }
 

@@ -75,34 +75,38 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
     const link = linkRef.current;
     if (!link) return;
     let frame = 0;
-    // The surfaces do not change while the page is mounted: query them once, not on every scroll frame.
+    // The surfaces and the pill's height above the bottom edge do not change while scrolling:
+    // read them once (and on resize), not on every scroll frame.
     let light: HTMLElement[] = [];
     let dark: HTMLElement[] = [];
+    let offset = 0;
     const collect = () => {
       light = Array.from(document.querySelectorAll<HTMLElement>(LIGHT_SURFACES));
       dark = Array.from(document.querySelectorAll<HTMLElement>(DARK_SURFACES));
+      offset = link.offsetHeight / 2 + parseFloat(getComputedStyle(link).bottom);
     };
     const covers = (elements: HTMLElement[], y: number) => elements.some((el) => {
       const box = el.getBoundingClientRect();
       return box.top <= y && box.bottom >= y && Number(getComputedStyle(el).opacity) > 0.5;
     });
     const measure = () => {
-      const y = window.innerHeight - link.offsetHeight / 2 - parseFloat(getComputedStyle(link).bottom);
+      const y = window.innerHeight - offset;
       const isLight = covers(light, y) && !covers(dark, y);
       if (isLight) link.dataset.tone = 'light'; else delete link.dataset.tone;
     };
     const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(measure); };
+    const resize = () => { collect(); schedule(); };
     collect();
     schedule();
     window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
+    window.addEventListener('resize', resize);
     // Pinned scenes change under a still scroll position when assets and fonts settle.
-    const settle = window.setTimeout(() => { collect(); schedule(); }, 600);
+    const settle = window.setTimeout(resize, 600);
     return () => {
       cancelAnimationFrame(frame);
       window.clearTimeout(settle);
       window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
+      window.removeEventListener('resize', resize);
     };
   }, [hidden, page]);
 

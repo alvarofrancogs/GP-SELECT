@@ -25,13 +25,13 @@
 }
 
 .editorial-media { min-width: 0; margin: 0; }
-.editorial-media img { width: 100%; height: auto; aspect-ratio: 14 / 9; object-fit: cover; background: var(--color-placeholder); }
-.editorial-media--portrait img { aspect-ratio: 9 / 11; }
+.editorial-media img, .editorial-media__empty { width: 100%; height: auto; aspect-ratio: 14 / 9; object-fit: cover; background: var(--color-placeholder); }
+.editorial-media--portrait img, .editorial-media--portrait .editorial-media__empty { aspect-ratio: 9 / 11; }
 .editorial-media figcaption { display: flex; justify-content: space-between; gap: 1rem; padding-top: .75rem; font-size: .7rem; line-height: 1.4; color: var(--color-muted); }
 .editorial-media figcaption span { flex-shrink: 0; }
 .editorial-link { display: inline-flex; align-items: baseline; gap: 1em; width: fit-content; max-width: 100%; min-height: 1.5rem; padding-block: .4em; border: 0; border-bottom: 1px solid currentColor; background: none; text-align: left; }
 .editorial-link > span { flex-shrink: 0; transition: transform var(--duration-ui) var(--ease-out); }
-.editorial-link:hover > span { transform: translateX(.2em); }
+@media (hover: hover) and (pointer: fine) { .editorial-link:hover > span { transform: translateX(.2em); } }
 .interior-band { margin-inline: calc(-1 * var(--page-gutter)); padding: var(--interior-space) var(--page-gutter); background: var(--color-dark); color: var(--color-paper); --interior-rule: var(--color-muted); }
 .interior-band .editorial-media figcaption { color: var(--color-paper); }
 .interior-band .editorial-media img { background: var(--color-muted); }
@@ -50,7 +50,7 @@
 .contact-path > .type-heading { font-size: clamp(1.4rem, 2.05vw, 2.6rem); max-width: 24ch; }
 .contact-path__arrow { font-size: 1.75rem; transition: transform var(--duration-ui) var(--ease-out); }
 .contact-path:has(input:focus-visible) { outline: 2px solid var(--color-ink); outline-offset: 5px; }
-.contact-path:hover .contact-path__arrow { transform: translateX(.2em); }
+@media (hover: hover) and (pointer: fine) { .contact-path:hover .contact-path__arrow { transform: translateX(.2em); } }
 .contact-content { display: grid; grid-template-columns: minmax(0, 1fr); padding-block: clamp(3rem, 5vw, 6rem) var(--interior-space); }
 .contact-content__form { width: 100%; max-width: 64rem; }
 .contact-content--channels { grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 7vw; align-items: start; }

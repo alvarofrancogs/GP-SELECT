@@ -24,7 +24,7 @@
 .vehicle-card__price { margin-top: 1rem; font-size: clamp(1rem, 1.3vw, 1.5rem); }
 .vehicle-card__availability { margin-top: .6rem; color: var(--color-muted); font-size: .75rem; }
 .vehicle-card__link { margin-top: 1.5rem; font-size: .8rem; }
-.vehicle-card:hover .vehicle-card__link > span { transform: translateX(.2em); }
+@media (hover: hover) and (pointer: fine) { .vehicle-card:hover .vehicle-card__link > span { transform: translateX(.2em); } }
 .vehicle-card:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 8px; }
 .vehicle-closing { margin-top: var(--interior-space); border-top: 1px solid var(--interior-rule); }
 .vehicle-grid + .vehicle-closing { margin-top: 0; }
@@ -70,7 +70,7 @@
 .vehicle-import h2 { font-size: clamp(2.5rem, 4.8vw, 6rem); max-width: 17ch; }
 .vehicle-import .editorial-link { margin-top: 2rem; font-size: .85rem; }
 .vehicle-detail__extra { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: end; gap: 5vw; padding-block: var(--interior-space); }
-.vehicle-detail__extra .editorial-media img { aspect-ratio: 3 / 2; }
+.vehicle-detail__extra .editorial-media img, .vehicle-detail__extra .editorial-media__empty { aspect-ratio: 3 / 2; }
 .vehicle-detail__extra-item img { object-fit: var(--vehicle-image-fit); }
 .vehicle-detail__extra-item:nth-child(even) { margin-bottom: 12%; }
 .vehicle-detail__closing { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2.5rem; border-top: 1px solid var(--interior-rule); }
@@ -94,7 +94,7 @@
 .vehicle-gallery__dialog { width: min(94vw, 1500px); max-width: none; max-height: 94dvh; padding: clamp(1rem, 2.5vw, 3rem); border: 0; background: var(--color-paper); color: var(--color-ink); --interior-rule: var(--color-line); }
 .vehicle-gallery__dialog::backdrop { background: rgb(15 17 18 / .85); }
 .vehicle-gallery__dialog-top { display: flex; justify-content: space-between; align-items: baseline; gap: 1.5rem; font-size: .8rem; margin-bottom: 1.5rem; }
-.vehicle-gallery__dialog > img { width: 100%; height: min(66dvh, 850px); object-fit: contain; }
+.vehicle-gallery__dialog > img, .vehicle-gallery__dialog > .vehicle-media-empty { width: 100%; height: min(66dvh, 850px); object-fit: contain; }
 .vehicle-gallery__dialog > p { margin-top: 1rem; font-size: .75rem; }
 
 @media (min-width: 1800px) {
