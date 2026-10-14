@@ -88,6 +88,20 @@ En Production se valida al arrancar: base64, marcador v3 (`0x01`), cabecera, sal
 
 Sin instalar .NET ni Node: `docker compose -f docker-compose.dev.yml up` desde la raíz del repo y abrir `http://127.0.0.1:5173`. Levanta PostgreSQL, aplica las migraciones, arranca la API en Development y la web con Vite. Admin en `http://127.0.0.1:5173/admin` con `admin@gpselect.local` / `gpselect-local` (solo local). La primera vez tarda unos minutos (descarga de imágenes y paquetes). Para parar: `Ctrl+C`; para borrar también los datos: `docker compose -f docker-compose.dev.yml down -v`.
 
+## Probar desde el móvil (dirección pública temporal)
+
+Para ver la web y probar el Admin y la API desde un móvil (o enseñarla unas horas a alguien de confianza) sin servidor ni dominio:
+
+```bash
+docker compose -f docker-compose.dev.yml -f docker-compose.tunnel.yml up
+```
+
+- Añade un túnel rápido de Cloudflare (`cloudflare/cloudflared`, sin cuenta). En la salida aparece `https://<palabras-al-azar>.trycloudflare.com`: esa es la dirección. Cambia en cada arranque y deja de funcionar al parar con Ctrl+C.
+- La primera vez tarda unos minutos (restaura paquetes, compila la web y aplica las migraciones). Se sirve la web **compilada**, como la recibiría un móvil en producción, y el formulario de contacto envía de verdad (queda guardado en la base de datos local; sin SMTP no se envía email).
+- La API toma esa dirección como `Security__AllowedOrigin` al arrancar (la lee del endpoint `/quicktunnel` de `cloudflared`), así que el Admin acepta cambios desde ella. Si en el log de la API ves «no tunnel address found», el Admin responderá 403.
+- **La dirección es pública:** quien la tenga puede abrir la web y la pantalla de login del Admin. Por eso el Admin usa otra contraseña que la de desarrollo; sustituye `Admin__PasswordHash` en `docker-compose.tunnel.yml` por el de tu contraseña (sección «Generar `Admin__PasswordHash`», más arriba).
+- Los datos viven en los volúmenes de Docker locales (`docker compose ... down -v` los borra).
+
 ## Desarrollo local, paso a paso
 
 ```bash
