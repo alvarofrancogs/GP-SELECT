@@ -85,6 +85,35 @@ export function consumeInitialVehicles(): void {
   initialList = null;
 }
 
+// A request on its way serves every reader that asks for the same address before it settles, and is cancelled
+// only when none is left. In development StrictMode mounts each effect twice; the first run's cancel would
+// otherwise cost a second request.
+const pending = new Map<string, { result: Promise<unknown>; controller: AbortController; readers: number }>();
+
+function shared<T>(url: string, load: (signal: AbortSignal) => Promise<T>, signal?: AbortSignal): Promise<T> {
+  let entry = pending.get(url);
+  if (!entry) {
+    const controller = new AbortController();
+    const created = { result: load(controller.signal), controller, readers: 0 };
+    const settle = () => { if (pending.get(url) === created) pending.delete(url); };
+    created.result.then(settle, settle);
+    pending.set(url, created);
+    entry = created;
+  }
+  const reader = entry;
+  reader.readers += 1;
+  signal?.addEventListener('abort', () => {
+    reader.readers -= 1;
+    // After this task: StrictMode's second run asks again straight away.
+    queueMicrotask(() => {
+      if (reader.readers > 0) return;
+      reader.controller.abort();
+      if (pending.get(url) === reader) pending.delete(url);
+    });
+  }, { once: true });
+  return reader.result as Promise<T>;
+}
+
 // The start-up screen asks for the list while it loads; the first reader within a few seconds reuses it.
 let prefetched: { at: number; list: Promise<VehicleSummary[]> } | null = null;
 const PREFETCH_TTL = 8000;
@@ -98,6 +127,8 @@ async function fetchVehicles(signal?: AbortSignal): Promise<VehicleSummary[]> {
 /** Starts loading the list ahead of time (errors are left to the first real reader). */
 export function prefetchVehicles(): Promise<unknown> {
   if (listEmbedded) return Promise.resolve(); // already in the page
+  // Development's StrictMode runs the start-up screen's effect twice: one request is enough.
+  if (prefetched && Date.now() - prefetched.at < PREFETCH_TTL) return prefetched.list.catch(() => undefined);
   const list = fetchVehicles();
   prefetched = { at: Date.now(), list };
   return list.catch(() => { prefetched = null; });
@@ -107,16 +138,23 @@ export function prefetchVehicles(): Promise<unknown> {
 export function listVehicles(signal?: AbortSignal): Promise<VehicleSummary[]> {
   if (prefetched && Date.now() - prefetched.at < PREFETCH_TTL) {
     const { list } = prefetched;
-    prefetched = null; // single use: later visits always ask the API again
+    // Single use: later visits always ask the API again. Cleared after this task, so StrictMode's second run of the
+    // same effect (development) still finds it instead of sending another request.
+    queueMicrotask(() => { prefetched = null; });
     return list;
   }
-  return fetchVehicles(signal);
+  return shared(API, fetchVehicles, signal);
 }
 
-/** Resolves to null when the vehicle is not public (404); any other failure throws. */
-export async function getVehicle(slug: string, signal?: AbortSignal): Promise<VehicleDetail | null> {
-  const response = await fetch(`${API}/${encodeURIComponent(slug)}`, { signal });
+async function fetchVehicle(url: string, signal: AbortSignal): Promise<VehicleDetail | null> {
+  const response = await fetch(url, { signal });
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`Vehicle detail failed (${response.status})`);
   return fromPublicDetail((await response.json()) as VehiclePublicDto);
+}
+
+/** Resolves to null when the vehicle is not public (404); any other failure throws. */
+export function getVehicle(slug: string, signal?: AbortSignal): Promise<VehicleDetail | null> {
+  const url = `${API}/${encodeURIComponent(slug)}`;
+  return shared(url, (own) => fetchVehicle(url, own), signal);
 }
