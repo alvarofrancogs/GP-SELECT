@@ -8,7 +8,7 @@ import { Preloader } from '../components/Preloader';
 import { useLanguage } from '../i18n/useLanguage';
 import { siteUrl, usePageMeta } from '../lib/usePageMeta';
 import { getStaticPageMeta, legalPageMeta, notFoundMeta, staticPageMeta } from '../lib/pageMeta';
-import { matchPage, pageKey, pagePath } from '../i18n/routes';
+import { localeOf, localizeHref, matchPage, pageKey, pagePath } from '../i18n/routes';
 
 /** Resets the scroll before the page below creates its pins. Layout effects run in tree order, so this
     must sit before <main>: otherwise the Home would be built (and painted) at the previous page's scroll. */
@@ -57,7 +57,8 @@ export function SiteLayout() {
     link.setAttribute('aria-disabled', 'true');
     try {
       await Promise.all(animations.map((animation) => animation.finished));
-      void navigate(href('/vehiculos'));
+      // The language may have switched during the fade: open the catalogue in the current one.
+      void navigate(localizeHref('/vehiculos', localeOf(window.location.pathname)));
     } catch { /* Another navigation cancels the pending exit. */ }
     finally { link.removeAttribute('aria-disabled'); }
   }

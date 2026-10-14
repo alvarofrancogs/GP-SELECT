@@ -31,6 +31,8 @@ export function Select({ value, options, onChange, labelledBy, id, className = '
   const trigger = useRef<HTMLButtonElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const typed = useRef({ text: '', at: 0 });
+  // Whether the highlighted option was reached with the mouse rather than the keyboard.
+  const pointed = useRef(false);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [above, setAbove] = useState(false);
@@ -40,6 +42,7 @@ export function Select({ value, options, onChange, labelledBy, id, className = '
 
   function show(index = selectedIndex) {
     if (disabled || !options.length) return;
+    pointed.current = false;
     setActive(index);
     setOpen(true);
   }
@@ -100,10 +103,12 @@ export function Select({ value, options, onChange, labelledBy, id, className = '
       Home: () => show(0),
       End: () => show(last),
     };
-    if (open && event.key === 'Tab') { choose(active); return; }
+    // Tab keeps an option chosen with the keyboard (APG); one the mouse only passed over is not a choice.
+    if (open && event.key === 'Tab') { if (pointed.current) setOpen(false); else choose(active); return; }
     const action = keys[event.key];
     if (action) {
       event.preventDefault();
+      pointed.current = false;
       action();
     } else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
       event.preventDefault();
@@ -124,7 +129,7 @@ export function Select({ value, options, onChange, labelledBy, id, className = '
     <ul ref={list} id={listId} className="select__list" role="listbox" aria-labelledby={labelledBy} tabIndex={-1} hidden={!open}>
       {options.map((option, index) => <li key={option.value} id={optionId(index)} role="option" className="select__option"
         aria-selected={option.value === value} data-active={index === active || undefined}
-        onPointerDown={(event) => event.preventDefault()} onPointerMove={() => setActive(index)}
+        onPointerDown={(event) => event.preventDefault()} onPointerMove={() => { pointed.current = true; setActive(index); }}
         onClick={() => { choose(index); trigger.current?.focus(); }}>
         <span>{option.label}</span>
       </li>)}

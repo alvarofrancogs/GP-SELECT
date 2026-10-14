@@ -65,6 +65,10 @@ export function Preloader() {
     window.addEventListener('wheel', stop, { passive: false });
     window.addEventListener('touchmove', stop, { passive: false });
     window.addEventListener('keydown', stopKeys);
+    // What it covers is out of reach too: Tab cannot land on links nobody can see yet.
+    const behind = Array.from(root.current?.parentElement?.children ?? [])
+      .filter((element): element is HTMLElement => element instanceof HTMLElement && element !== root.current);
+    behind.forEach((element) => { element.inert = true; });
 
     let leaving = false;
     let exit: gsap.core.Timeline | undefined;
@@ -89,6 +93,7 @@ export function Preloader() {
       window.removeEventListener('wheel', stop);
       window.removeEventListener('touchmove', stop);
       window.removeEventListener('keydown', stopKeys);
+      behind.forEach((element) => { element.inert = false; });
     };
   }, [active, onHome, speed]);
 
