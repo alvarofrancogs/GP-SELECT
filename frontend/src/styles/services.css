@@ -81,12 +81,13 @@
 
 @media (max-width: 767px) {
   .services-section {
-    --text-services-title: clamp(2.667rem, 10.833vw, 5rem);
+    /* «e importación.» fills the column at 390; the cap keeps it inside below ~370 px. */
+    --text-services-title: min(clamp(2.667rem, 10.833vw, 5rem), 11.5vw);
     --text-services-row: clamp(.9375rem, 4.083vw, 1.25rem);
     --services-copy-inset: 0;
     --services-section-space: var(--space-6);
   }
-  .services-grid { grid-template-columns: 1fr; min-height: auto; }
+  .services-grid { grid-template-columns: minmax(0, 1fr); min-height: auto; }
   .services-content { padding-bottom: var(--space-7); }
   .services-description { max-width: 34ch; }
   .services-accordion { margin-top: var(--space-6); }

@@ -96,8 +96,11 @@ export function useCarHandoffScene(locale: string) {
     // Its markup is already there, so Process finds this frame for its handoff.
     const media = gsap.matchMedia();
     const build = () => media.add({
-      // Re-run when the layout switches between stacked and side by side.
+      // Re-run when the layout switches between stacked and side by side. One of the two always matches,
+      // so the callback runs on every screen (GSAP skips it when no condition matches: a short phone in
+      // landscape was left with every state of the scene shown at once in the same box).
       desktop: '(min-width: 1024px)',
+      mobile: '(max-width: 1023px)',
       reduced: '(prefers-reduced-motion: reduce)',
       enoughHeight: '(min-height: 600px)',
     }, (context) => {

@@ -36,6 +36,7 @@ export function Select({ value, options, onChange, labelledBy, id, className = '
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [above, setAbove] = useState(false);
+  const [alignEnd, setAlignEnd] = useState(false);
   const selectedIndex = Math.max(0, options.findIndex((option) => option.value === value));
   const selected = options[selectedIndex];
   const optionId = (index: number) => `${baseId}-option-${index}`;
@@ -52,16 +53,24 @@ export function Select({ value, options, onChange, labelledBy, id, className = '
     if (option && option.value !== value) onChange(option.value);
   }
 
-  // Opens upwards when the list would not fit below the trigger.
+  // Opens upwards when the list would not fit below the trigger, and lines up with the trigger's right
+  // edge when it would cross the page's (on a narrow screen the list is wider than its trigger).
   useLayoutEffect(() => {
     if (!open || !trigger.current || !list.current) return;
     const box = trigger.current.getBoundingClientRect();
     const needed = Math.min(list.current.scrollHeight, 288) + 12;
     setAbove(window.innerHeight - box.bottom < needed && box.top > window.innerHeight - box.bottom);
+    setAlignEnd(box.left + list.current.offsetWidth > document.documentElement.clientWidth);
   }, [open]);
 
+  // Keeps the active option in view by scrolling the list only: scrollIntoView also scrolled the page.
   useEffect(() => {
-    if (open) list.current?.children[active]?.scrollIntoView({ block: 'nearest' });
+    const box = list.current;
+    const option = box?.children[active] as HTMLElement | undefined;
+    if (!open || !box || !option) return;
+    const bottom = option.offsetTop + option.offsetHeight;
+    if (option.offsetTop < box.scrollTop) box.scrollTop = option.offsetTop;
+    else if (bottom > box.scrollTop + box.clientHeight) box.scrollTop = bottom - box.clientHeight;
   }, [open, active]);
 
   // A press anywhere else closes the list without choosing.
@@ -116,7 +125,7 @@ export function Select({ value, options, onChange, labelledBy, id, className = '
     }
   }
 
-  return <div ref={root} className={`select ${className}`.trim()} data-open={open || undefined} data-above={above || undefined}>
+  return <div ref={root} className={`select ${className}`.trim()} data-open={open || undefined} data-above={above || undefined} data-align-end={alignEnd || undefined}>
     <button ref={trigger} id={baseId} type="button" className="select__trigger" role="combobox" disabled={disabled}
       aria-haspopup="listbox" aria-expanded={open} aria-controls={listId} aria-labelledby={labelledBy}
       aria-activedescendant={open ? optionId(active) : undefined} {...aria}

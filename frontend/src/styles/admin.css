@@ -112,7 +112,9 @@
 .admin-row__facts { display: contents; }
 .admin-row__thumb { display: grid; place-items: center; aspect-ratio: 4 / 3; overflow: hidden; background: var(--color-placeholder); font-size: .6875rem; color: var(--color-muted); }
 .admin-row__thumb img { width: 100%; height: 100%; object-fit: cover; }
-.admin-row__name { display: grid; gap: .1rem; width: fit-content; }
+/* A long model or reference wraps inside its column instead of widening the row (as in the editor title). */
+.admin-row__identity { min-width: 0; overflow-wrap: anywhere; }
+.admin-row__name { display: grid; gap: .1rem; width: fit-content; max-width: 100%; }
 .admin-row__model { font-stretch: var(--type-heading-width); font-weight: var(--type-heading-weight); letter-spacing: var(--type-heading-tracking); font-size: 1.0625rem; line-height: 1.2; }
 .admin-row__variant { font-stretch: var(--type-fine-width); font-weight: 300; letter-spacing: -.02em; font-size: .9375rem; }
 .admin-row__name:hover .admin-row__model { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .25em; }

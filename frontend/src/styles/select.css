@@ -28,6 +28,7 @@
   transform-origin: top;
   animation: select-unfold 260ms var(--ease-cinematic) both;
 }
+.select[data-align-end] .select__list { left: auto; right: 0; }
 .select[data-above] .select__list { top: auto; bottom: calc(100% + .4rem); border-top: 0; border-bottom: 2px solid var(--color-ink); transform-origin: bottom; animation-name: select-unfold-up; }
 .select__list:focus { outline: none; }
 .select__option {
