@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type InputHTMLAttributes, type KeyboardEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type InputHTMLAttributes, type KeyboardEvent } from 'react';
+import { opensAbove, scrollOptionIntoView } from '../lib/listbox';
 import '../styles/select.css';
 
 const fold = (text: string) => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -18,16 +19,24 @@ interface SuggestInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 export function SuggestInput({ id, value, suggestions, onChange, className = '', disabled, ...rest }: SuggestInputProps) {
   const listId = `${id}-suggestions`;
   const root = useRef<HTMLDivElement>(null);
+  const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
+  const [above, setAbove] = useState(false);
   const query = fold(value.trim());
   // While typing, only what matches; on focus with a known value, the whole list to pick another.
   const matches = query && !suggestions.some((s) => fold(s) === query) ? suggestions.filter((s) => fold(s).includes(query)) : suggestions;
   const shown = open && matches.length > 0;
 
+  // Like Select: upwards when the list would run past the bottom of the screen. Measured again when typing
+  // changes how many suggestions there are.
+  useLayoutEffect(() => {
+    if (shown && input.current && list.current) setAbove(opensAbove(input.current, list.current));
+  }, [shown, matches.length]);
+
   useEffect(() => {
-    if (shown && active >= 0) list.current?.children[active]?.scrollIntoView({ block: 'nearest' });
+    if (shown && active >= 0 && list.current) scrollOptionIntoView(list.current, active);
   }, [shown, active]);
 
   useEffect(() => {
@@ -59,8 +68,8 @@ export function SuggestInput({ id, value, suggestions, onChange, className = '',
     }
   }
 
-  return <div ref={root} className="select select--suggest" data-open={shown || undefined}>
-    <input {...rest} id={id} className={className} value={value} disabled={disabled} autoComplete="off"
+  return <div ref={root} className="select select--suggest" data-open={shown || undefined} data-above={above || undefined}>
+    <input {...rest} ref={input} id={id} className={className} value={value} disabled={disabled} autoComplete="off"
       role="combobox" aria-autocomplete="list" aria-expanded={shown} aria-controls={listId}
       aria-activedescendant={shown && active >= 0 ? `${listId}-${active}` : undefined}
       onFocus={() => setOpen(true)} onClick={() => setOpen(true)} onKeyDown={onKeyDown}
