@@ -10,7 +10,7 @@ Un servidor con Docker y un solo comando. Todo se ha probado en local en modo pr
 | `api` | API .NET en `Production`. Aplica las migraciones al arrancar. Guarda sus claves de sesión en un volumen, así que un reinicio no cierra la sesión del admin. |
 | `db` | PostgreSQL 16. |
 | `seaweedfs` + `storage-setup` | Almacenamiento S3 propio (opcional, perfil `self-hosted-storage`). Crea el bucket privado y una clave para la API limitada a ese bucket. |
-| `backup` | Un volcado diario de la base de datos en `deploy/backups/`. Conserva 14 días y solo borra los antiguos tras un volcado correcto. `docker compose ps` lo marca `unhealthy` si no hay ninguno de las últimas 26 h. |
+| `backup` | Un volcado diario de la base de datos en `deploy/backups/`. Conserva 14 días, pero nunca borra el más reciente: si los volcados fallan, queda el último correcto. `docker compose ps` lo marca `unhealthy` a los 5 minutos como mucho de pasar 26 h sin ninguno. |
 | `offsite` | Copia diaria a un bucket externo independiente (perfil `offsite-backup`): dumps y, con SeaweedFS, fotos con historial. |
 
 ## Requisitos
