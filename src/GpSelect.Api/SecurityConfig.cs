@@ -44,9 +44,11 @@ public static partial class SecurityConfig
     public const int LoginGlobalPermits = 30;
     public static readonly TimeSpan LoginGlobalWindow = TimeSpan.FromMinutes(10);
 
-    /// <summary>Login attempts are limited per client address first, then all addresses together: an attacker spread
-    /// over many addresses still gets only a few dozen guesses per window. The order matters: an attempt its own
-    /// address may not make never reaches the shared quota, so one address cannot use it up and lock the admin out.
+    /// <summary>Login attempts are limited per client address first, then all unknown clients together: an attacker
+    /// spread over many addresses still gets only a few dozen guesses per window. The order matters: an attempt its
+    /// own address may not make never reaches the shared quota, so one address cannot use it up. A browser the admin
+    /// signed in from (<see cref="AdminDevice"/>) has a quota of the same size of its own, so attackers using up the
+    /// shared one cannot lock the admin out of it either.
     /// The login is recognised by the endpoint routing chose (its <see cref="LoginRateLimitAttribute"/>), so every
     /// spelling the router accepts (trailing slash, any case) shares the same quota.</summary>
     public static PartitionedRateLimiter<HttpContext> LoginLimiter(int globalPermits = LoginGlobalPermits) => PartitionedRateLimiter.CreateChained(
@@ -54,7 +56,8 @@ public static partial class SecurityConfig
             ? RateLimitPartition.GetFixedWindowLimiter(LoginPartitionKey(ctx.Connection.RemoteIpAddress), _ => new() { PermitLimit = LoginPermitsPerAddress, Window = LoginAddressWindow, QueueLimit = 0 })
             : RateLimitPartition.GetNoLimiter("other")),
         PartitionedRateLimiter.Create<HttpContext, string>(ctx => IsLogin(ctx)
-            ? RateLimitPartition.GetFixedWindowLimiter("login-all", _ => new() { PermitLimit = globalPermits, Window = LoginGlobalWindow, QueueLimit = 0 })
+            ? RateLimitPartition.GetFixedWindowLimiter(AdminDevice.Id(ctx) is { } device ? "device:" + device : "login-all",
+                _ => new() { PermitLimit = globalPermits, Window = LoginGlobalWindow, QueueLimit = 0 })
             : RateLimitPartition.GetNoLimiter("other")));
 
     private static bool IsLogin(HttpContext ctx) => ctx.GetEndpoint()?.Metadata.GetMetadata<LoginRateLimitAttribute>() is not null;

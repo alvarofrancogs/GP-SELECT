@@ -84,7 +84,7 @@ export const legalPages: Record<LegalDoc, LegalPageCopy> = {
           { p: ['Solo almacenamiento técnico en tu navegador, necesario para que la web funcione:'] },
           { list: [
             ['Pantalla de carga (almacenamiento de sesión, «gp-select.preloader.seen»): evita repetir la animación completa al recargar. Se borra al cerrar la pestaña.'],
-            ['Sesión del área de administración (cookie técnica): solo se crea cuando inicia sesión el personal autorizado de GP SELECT.'],
+            ['Sesión y dispositivo del área de administración (cookies técnicas): solo se crean cuando inicia sesión el personal autorizado de GP SELECT. La del dispositivo («gp_admin_device») dura 180 días y evita que los intentos de acceso de terceros bloqueen su entrada.'],
           ] },
         ],
       },
