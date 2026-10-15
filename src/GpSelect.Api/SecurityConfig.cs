@@ -3,7 +3,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace GpSelect.Api;
 
@@ -40,17 +39,28 @@ public static partial class SecurityConfig
             saltLength > bytes.Length - 13 || bytes.Length - 13 - saltLength < 16 ? error : null;
     }
 
+    public const int LoginPermitsPerAddress = 5;
+    public static readonly TimeSpan LoginAddressWindow = TimeSpan.FromMinutes(1);
     public const int LoginGlobalPermits = 30;
     public static readonly TimeSpan LoginGlobalWindow = TimeSpan.FromMinutes(10);
 
-    /// <summary>All login attempts together, on top of the per-address limit: an attacker spread over many addresses
-    /// still gets only a few dozen guesses per window. The admin is never locked out for longer than one window.
-    /// The login is recognised by the endpoint routing chose (its "login" policy), so every spelling the router
-    /// accepts (trailing slash, any case) shares the same quota.</summary>
-    public static PartitionedRateLimiter<HttpContext> LoginGlobalLimiter(int permits = LoginGlobalPermits) => PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
-        ctx.GetEndpoint()?.Metadata.GetMetadata<EnableRateLimitingAttribute>()?.PolicyName == "login"
-            ? RateLimitPartition.GetFixedWindowLimiter("login-all", _ => new() { PermitLimit = permits, Window = LoginGlobalWindow, QueueLimit = 0 })
-            : RateLimitPartition.GetNoLimiter("other"));
+    /// <summary>Login attempts are limited per client address first, then all unknown clients together: an attacker
+    /// spread over many addresses still gets only a few dozen guesses per window. The order matters: an attempt its
+    /// own address may not make never reaches the shared quota, so one address cannot use it up. A browser the admin
+    /// signed in from (<see cref="AdminDevice"/>) has a quota of the same size of its own, so attackers using up the
+    /// shared one cannot lock the admin out of it either.
+    /// The login is recognised by the endpoint routing chose (its <see cref="LoginRateLimitAttribute"/>), so every
+    /// spelling the router accepts (trailing slash, any case) shares the same quota.</summary>
+    public static PartitionedRateLimiter<HttpContext> LoginLimiter(int globalPermits = LoginGlobalPermits) => PartitionedRateLimiter.CreateChained(
+        PartitionedRateLimiter.Create<HttpContext, string>(ctx => IsLogin(ctx)
+            ? RateLimitPartition.GetFixedWindowLimiter(LoginPartitionKey(ctx.Connection.RemoteIpAddress), _ => new() { PermitLimit = LoginPermitsPerAddress, Window = LoginAddressWindow, QueueLimit = 0 })
+            : RateLimitPartition.GetNoLimiter("other")),
+        PartitionedRateLimiter.Create<HttpContext, string>(ctx => IsLogin(ctx)
+            ? RateLimitPartition.GetFixedWindowLimiter(AdminDevice.Id(ctx) is { } device ? "device:" + device : "login-all",
+                _ => new() { PermitLimit = globalPermits, Window = LoginGlobalWindow, QueueLimit = 0 })
+            : RateLimitPartition.GetNoLimiter("other")));
+
+    private static bool IsLogin(HttpContext ctx) => ctx.GetEndpoint()?.Metadata.GetMetadata<LoginRateLimitAttribute>() is not null;
 
     /// <summary>The login limit is per client address, never per a value the client sends.
     /// IPv6 clients are grouped by /64, the block a single subscriber usually controls.</summary>
@@ -84,3 +94,7 @@ public static partial class SecurityConfig
     [GeneratedRegex("^[A-Za-z0-9._-]{1,64}$")]
     private static partial Regex PlainId();
 }
+
+/// <summary>Marks the admin login for <see cref="SecurityConfig.LoginLimiter"/>.</summary>
+[AttributeUsage(AttributeTargets.Method)]
+public sealed class LoginRateLimitAttribute : Attribute;

@@ -149,7 +149,8 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
 
         var login = await client.PostAsJsonAsync("/api/admin/auth/login", new { email = ApiFactory.AdminEmail, password = ApiFactory.AdminPassword });
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
-        var cookie = Assert.Single(login.Headers.GetValues("Set-Cookie")).ToLowerInvariant();
+        // The other cookie is the known-device one (LoginGlobalLimitTests).
+        var cookie = Assert.Single(login.Headers.GetValues("Set-Cookie"), x => x.StartsWith(".AspNetCore.Cookies=", StringComparison.Ordinal)).ToLowerInvariant();
         Assert.Contains("httponly", cookie);
         Assert.Contains("secure", cookie);
         Assert.Contains("samesite=strict", cookie);

@@ -52,9 +52,9 @@ public sealed class DebtCloseTests(ApiFactory api) : IClassFixture<ApiFactory>
     [Fact]
     public async Task Global_login_limit_counts_every_address_together_and_only_logins()
     {
-        using var limiter = SecurityConfig.LoginGlobalLimiter();
-        // Routing has already chosen the endpoint when the limiter runs; the login is the one with the "login" policy.
-        var login = new Endpoint(null, new EndpointMetadataCollection(new EnableRateLimitingAttribute("login")), "login");
+        using var limiter = SecurityConfig.LoginLimiter();
+        // Routing has already chosen the endpoint when the limiter runs; the login is the one marked for it.
+        var login = new Endpoint(null, new EndpointMetadataCollection(new LoginRateLimitAttribute()), "login");
         var me = new Endpoint(null, new EndpointMetadataCollection(), "me");
         static HttpContext Request(Endpoint? endpoint, string ip)
         {
@@ -63,7 +63,10 @@ public sealed class DebtCloseTests(ApiFactory api) : IClassFixture<ApiFactory>
             context.Connection.RemoteIpAddress = System.Net.IPAddress.Parse(ip);
             return context;
         }
-        for (var i = 0; i < SecurityConfig.LoginGlobalPermits; i++)
+        // Attempts refused to their own address do not count towards the shared quota.
+        for (var i = 0; i < SecurityConfig.LoginPermitsPerAddress * 3; i++)
+            Assert.Equal(i < SecurityConfig.LoginPermitsPerAddress, (await limiter.AcquireAsync(Request(login, "203.0.113.200"))).IsAcquired);
+        for (var i = SecurityConfig.LoginPermitsPerAddress; i < SecurityConfig.LoginGlobalPermits; i++)
             Assert.True((await limiter.AcquireAsync(Request(login, $"203.0.113.{i}"))).IsAcquired);
         Assert.False((await limiter.AcquireAsync(Request(login, "198.51.100.1"))).IsAcquired);
         Assert.True((await limiter.AcquireAsync(Request(me, "198.51.100.1"))).IsAcquired);

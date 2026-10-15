@@ -54,6 +54,9 @@ public sealed class ImageProcessingWorker(IServiceScopeFactory scopes, IObjectSt
             // The tracked image may be stale: the admin can remove it while it is processed. Finish it with a
             // conditional update, in one transaction with the cover change, so a removed image stays removed.
             await using var tx = await db.Database.BeginTransactionAsync(ct);
+            // Gallery edits hold the vehicle lock while they change its photos. Take it first, in their order (vehicle,
+            // then images), so the cover is chosen from committed rows and the two never deadlock.
+            await db.LockVehicleAsync(image.VehicleUnitId, ct);
             var finished = await db.Images.Where(x => x.Id == image.Id && x.State == ImageState.Processing).ExecuteUpdateAsync(u => u
                 .SetProperty(x => x.State, ImageState.Ready).SetProperty(x => x.CardKey, prefix + "/card.jpg")
                 .SetProperty(x => x.DetailKey, prefix + "/detail.jpg").SetProperty(x => x.FailureReason, (string?)null), ct);

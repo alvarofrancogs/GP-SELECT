@@ -40,7 +40,7 @@ El middleware CSRF de `Program.cs` rechaza con **403 `csrf_failed`** cualquier `
 
 ### Límite del login y proxy inverso
 
-`POST /api/admin/auth/login` admite 5 intentos por minuto **por cliente** (ventana fija). La clave es la dirección IP; en IPv6, el prefijo /64. Ningún valor que envíe el cliente cambia la clave. Al superarlo, **429** `rate_limited` (problem+json con `correlationId`) y `Retry-After` en segundos, sin cookie. El Admin muestra «Demasiados intentos».
+`POST /api/admin/auth/login` admite 5 intentos por minuto **por cliente** (ventana fija). La clave es la dirección IP; en IPv6, el prefijo /64. Ningún valor que envíe el cliente cambia la clave. Al superarlo, **429** `rate_limited` (problem+json con `correlationId`) y `Retry-After` en segundos, sin cookie. El Admin muestra «Demasiados intentos». Después, los intentos que su IP sí puede hacer cuentan en un cupo de 30 cada 10 minutos común a todos los clientes desconocidos. Un navegador donde el admin ya entró lleva la cookie firmada `gp_admin_device` (180 días, ligada al email y la contraseña) y tiene un cupo propio del mismo tamaño, así que los ataques desde fuera no le bloquean.
 
 - Sin proxy, la IP es la de la conexión y `X-Forwarded-For` se ignora.
 - **Con proxy inverso** (nginx, Caddy, balanceador…), la conexión llega desde el proxy y todos los clientes compartirían un único cupo: alguien podría bloquear el login del administrador. Hay que poner la IP del proxy en `Security__TrustedProxies`. Solo entonces se usa `X-Forwarded-For` (la última entrada, la que añade el proxy), y nunca si llega de otra dirección. Solo direcciones literales; los rangos CIDR no se aceptan.

@@ -17,6 +17,8 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
     internal static readonly Expression<Func<VehicleUnit, bool>> WithPublicDetail = x =>
         x.Status == VehicleStatus.ComingSoon || x.Status == VehicleStatus.Available || x.Status == VehicleStatus.Reserved
         || (x.Status == VehicleStatus.Sold && (x.ShowWhenSold || x.PublishedAt != null));
+    // SQL twin of the photo filter in PublicMapping. Removed photos keep their rows, so they are left out in the query.
+    internal static readonly Expression<Func<VehicleImage, bool>> PublicPhoto = x => x.State == ImageState.Ready && !x.IsStaged;
 
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<VehiclePublicCardDto>>> List(CancellationToken ct) => Ok(await Cards(db, ct));
@@ -28,7 +30,7 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
         var vehicles = await db.Vehicles.AsNoTracking().Where(Listed).OrderBy(x => x.Status == VehicleStatus.Sold)
             .ThenByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id).Take(VehicleQueryLimits.MaxVehicles).ToListAsync(ct);
         var ids = vehicles.Select(x => x.Id).ToList();
-        var images = (await db.Images.AsNoTracking().Where(x => ids.Contains(x.VehicleUnitId)).ToListAsync(ct)).ToLookup(x => x.VehicleUnitId);
+        var images = (await db.Images.AsNoTracking().Where(x => ids.Contains(x.VehicleUnitId)).Where(PublicPhoto).ToListAsync(ct)).ToLookup(x => x.VehicleUnitId);
         return vehicles.Select(v => PublicMapping.MapCard(v, images[v.Id])).ToList();
     }
 
@@ -37,7 +39,7 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
     {
         var v = await db.Vehicles.AsNoTracking().Where(WithPublicDetail).FirstOrDefaultAsync(x => x.PublicSlug == slug);
         if (v is null) return NotFound();
-        return Ok(PublicMapping.Map(v, await db.Images.AsNoTracking().Where(x => x.VehicleUnitId == v.Id).ToListAsync()));
+        return Ok(PublicMapping.Map(v, await db.Images.AsNoTracking().Where(x => x.VehicleUnitId == v.Id).Where(PublicPhoto).ToListAsync()));
     }
 
     [HttpGet("{slug}/images/{imageId:guid}/detail")]
