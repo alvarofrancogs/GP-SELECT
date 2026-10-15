@@ -381,6 +381,7 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 - **P2 · Admin con nombres largos:** el bloque de identidad de la fila se contrae y parte palabras (`overflow-wrap: anywhere`), como el título del editor. Modelo de 60 caracteres: documento de 320/390/768/1440 px, acciones legibles.
 - **P2 · Servicios a 320:** columna móvil `minmax(0, 1fr)` y titular limitado a `11.5vw`; solo cambia por debajo de ~370 px (390 idéntico, 36,8 px a 320).
 - **P2 · desplegables a 320:** la lista se alinea al borde derecho del control cuando se saldría de la página, y la opción activa se desplaza solo dentro de la lista (antes `scrollIntoView` movía la página). Escritorio sin cambios.
+- **Sugerencias del editor del Admin (`SuggestInput`, fuera del informe, pedido por el usuario):** cerca del borde inferior la lista pasaba de la pantalla y cada flecha bajaba la página 40 px. Ahora se abre hacia arriba cuando no cabe, como `Select`, y solo se desplaza la lista. Ambos comparten `lib/listbox.ts` (con tests).
 - **P2 · fallo al descargar el Admin:** `pages/AdminRoute.tsx` muestra «Cargando el panel…» y, si falla, una pantalla con «Recargar» y «Volver a la web» (estilos globales: el CSS del Admin viene en el mismo paquete que falla). Test en `AdminRoute.test.tsx`.
 - Verificado: lint, build y 208/208 tests; Playwright sobre el build con API simulada, antes y después. Pendiente: Safari/iOS y Firefox.
 

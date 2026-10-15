@@ -1,4 +1,5 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { opensAbove, scrollOptionIntoView } from '../lib/listbox';
 import '../styles/select.css';
 
 const fold = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -57,20 +58,12 @@ export function Select({ value, options, onChange, labelledBy, id, className = '
   // edge when it would cross the page's (on a narrow screen the list is wider than its trigger).
   useLayoutEffect(() => {
     if (!open || !trigger.current || !list.current) return;
-    const box = trigger.current.getBoundingClientRect();
-    const needed = Math.min(list.current.scrollHeight, 288) + 12;
-    setAbove(window.innerHeight - box.bottom < needed && box.top > window.innerHeight - box.bottom);
-    setAlignEnd(box.left + list.current.offsetWidth > document.documentElement.clientWidth);
+    setAbove(opensAbove(trigger.current, list.current));
+    setAlignEnd(trigger.current.getBoundingClientRect().left + list.current.offsetWidth > document.documentElement.clientWidth);
   }, [open]);
 
-  // Keeps the active option in view by scrolling the list only: scrollIntoView also scrolled the page.
   useEffect(() => {
-    const box = list.current;
-    const option = box?.children[active] as HTMLElement | undefined;
-    if (!open || !box || !option) return;
-    const bottom = option.offsetTop + option.offsetHeight;
-    if (option.offsetTop < box.scrollTop) box.scrollTop = option.offsetTop;
-    else if (bottom > box.scrollTop + box.clientHeight) box.scrollTop = bottom - box.clientHeight;
+    if (open && list.current) scrollOptionIntoView(list.current, active);
   }, [open, active]);
 
   // A press anywhere else closes the list without choosing.
