@@ -2,6 +2,8 @@ using GpSelect.Domain;
 using GpSelect.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using Xunit;
 
 namespace GpSelect.IntegrationTests;
@@ -91,6 +93,63 @@ public sealed class ImageWorkerTests(ApiFactory api) : IClassFixture<ApiFactory>
         var savedImage = await readScope.ServiceProvider.GetRequiredService<GpSelectDbContext>().Images.SingleAsync(x => x.Id == imageId);
         Assert.Equal(ImageState.Failed, savedImage.State);
         Assert.Equal(ImageJobState.Queued, savedJob.State);
+    }
+
+    [Fact]
+    public async Task Worker_waits_for_a_gallery_edit_in_progress_before_choosing_the_cover()
+    {
+        byte[] png;
+        using (var picture = new Image<Rgba32>(8, 6, new Rgba32(40, 40, 40)))
+        using (var buffer = new MemoryStream())
+        {
+            picture.SaveAsPng(buffer);
+            png = buffer.ToArray();
+        }
+        var storage = api.Services.GetRequiredService<IObjectStorage>();
+        var vehicle = VehicleUnit.Create("BMW", "M4", 2024, 1, $"worker-test-{Guid.NewGuid():N}");
+        var cover = VehicleImage.Create(vehicle.Id, $"vehicles/{vehicle.Id}/cover.png", "image/png", 100);
+        cover.Ready("card.jpg", "detail.jpg");
+        cover.SetCover(true);
+        var upload = VehicleImage.Create(vehicle.Id, $"quarantine/{vehicle.Id}/{Guid.NewGuid():N}.png", "image/png", png.Length);
+        upload.Order(1);
+        await storage.PutAsync(upload.OriginalKey, new MemoryStream(png), "image/png", CancellationToken.None);
+        using (var scope = api.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
+            db.Vehicles.Add(vehicle);
+            db.Images.AddRange(cover, upload);
+            await db.SaveChangesAsync();
+        }
+
+        // The admin removes the cover and holds the vehicle lock while the upload finishes processing.
+        var job = ImageProcessingJob.Create(upload.Id);
+        using (var adminScope = api.Services.CreateScope())
+        {
+            var adminDb = adminScope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
+            await using var tx = await adminDb.Database.BeginTransactionAsync();
+            var locked = await adminDb.LockVehicleAsync(vehicle.Id);
+            var active = await adminDb.Images.Where(x => x.VehicleUnitId == vehicle.Id && x.State != ImageState.Deleted).ToListAsync();
+            await adminDb.SaveGalleryAsync(VehicleGallery.Remove(locked!, active.Single(x => x.Id == cover.Id), active));
+
+            using (var queueScope = api.Services.CreateScope())
+            {
+                var queueDb = queueScope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
+                queueDb.ImageJobs.Add(job);
+                await queueDb.SaveChangesAsync();
+            }
+            // The derivatives are written just before the worker saves the result.
+            var detail = $"vehicles/{vehicle.Id}/{upload.Id}/detail.jpg";
+            for (var i = 0; i < 120 && await storage.HeadAsync(detail, CancellationToken.None) is null; i++)
+                await Task.Delay(250);
+            await Task.Delay(1000);
+            await tx.CommitAsync();
+        }
+
+        await WaitForJobAsync(job.Id, x => x.State == ImageJobState.Complete);
+        using var readScope = api.Services.CreateScope();
+        var saved = await readScope.ServiceProvider.GetRequiredService<GpSelectDbContext>().Images.AsNoTracking().SingleAsync(x => x.Id == upload.Id);
+        Assert.Equal(ImageState.Ready, saved.State);
+        Assert.True(saved.IsCover);
     }
 
     private async Task<ImageProcessingJob> WaitForJobAsync(Guid jobId, Func<ImageProcessingJob, bool> done)

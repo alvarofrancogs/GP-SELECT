@@ -22,6 +22,32 @@ public sealed class LoginGlobalLimitTests(ApiFactory api) : IClassFixture<ApiFac
         return (await client.SendAsync(request)).StatusCode;
     }
 
+    private static async Task<HttpStatusCode> Login(HttpClient client, string address, string password)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/admin/auth/login")
+        {
+            Content = JsonContent.Create(new { email = ApiFactory.AdminEmail, password }),
+        };
+        request.Headers.Add("X-Test-Peer", address);
+        return (await client.SendAsync(request)).StatusCode;
+    }
+
+    [Fact]
+    public async Task One_address_cannot_use_up_the_shared_quota_and_lock_the_admin_out()
+    {
+        using var host = api.WithWebHostBuilder(b => b.UseSetting("Security:LoginGlobalPermits", "10"));
+        using var client = host.CreateClient();
+
+        var statuses = new List<HttpStatusCode>();
+        for (var i = 0; i < 30; i++)
+            statuses.Add(await Login(client, "198.51.103.7", "wrong-password"));
+
+        Assert.All(statuses.Take(5), x => Assert.Equal(HttpStatusCode.Unauthorized, x));
+        Assert.All(statuses.Skip(5), x => Assert.Equal(HttpStatusCode.TooManyRequests, x));
+        // Only the five attempts that address was allowed count towards the shared quota.
+        Assert.Equal(HttpStatusCode.OK, await Login(client, "198.51.103.8", ApiFactory.AdminPassword));
+    }
+
     [Theory]
     [InlineData("/api/admin/auth/login")]
     [InlineData("/api/admin/auth/login/")]

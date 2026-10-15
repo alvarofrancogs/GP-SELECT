@@ -167,6 +167,10 @@ services:
       - ./backup.sh:/backup.sh:ro
       - ./backups:/backups
     entrypoint: ["/bin/sh", "/backup.sh"]
+    # Unhealthy in `docker compose ps` when no dump has succeeded in the last 26 hours.
+    healthcheck:
+      test: ["CMD-SHELL", "find /backups -name 'gpselect-*.dump' -mmin -1560 | grep -q ."]
+      interval: 1h
     networks: [internal]
     depends_on:
       db:
