@@ -4,6 +4,7 @@ import type { AdminImage } from '../../types/admin';
 import { adminCopy } from '../../i18n/adminCopy';
 import { describeError } from '../../lib/adminErrors';
 import { uuid } from '../../lib/uuid';
+import { useFocusAfterRemove } from '../../hooks/useFocusAfterRemove';
 
 const MAX_IMAGES = 30;
 const MAX_BYTES = 20 * 1024 * 1024;
@@ -16,6 +17,8 @@ interface Upload {
   preview: string;
   imageId: string | null;
   uploadUrl: string | null;
+  /** Idempotency-Key of the current intent and its completion: retries reuse it; only a new intent gets a new one. */
+  requestKey: string;
   /** When the signed upload URL stops working (ms since epoch); a retry after it asks for a new one. */
   expiresAt: number | null;
   phase: 'waiting' | 'uploading' | 'queued' | 'failed';
@@ -46,6 +49,8 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
   const mounted = useRef(true);
   const input = useRef<HTMLInputElement>(null);
   const grid = useRef<HTMLOListElement>(null);
+  const pick = useRef<HTMLButtonElement>(null);
+  const focusAfterRemove = useFocusAfterRemove(grid, pick);
   const [focusMove, setFocusMove] = useState<number | null>(null);
   const focusDir = useRef<'earlier' | 'later'>('later');
   const [rejected, setRejected] = useState<string[]>([]);
@@ -96,7 +101,7 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
         try {
           let { imageId, uploadUrl } = upload;
           if (!imageId || !uploadUrl) {
-            const intent = await adminApi.imageIntent(vehicleId, upload.file);
+            const intent = await adminApi.imageIntent(vehicleId, upload.file, upload.requestKey);
             ({ imageId, uploadUrl } = intent);
             // A minute of margin: the PUT of a large photo on a slow line can outlast the signature.
             patch(upload.key, { imageId, uploadUrl, expiresAt: Date.now() + (intent.expiresInSeconds - 60) * 1000 });
@@ -104,7 +109,7 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
               isCover: false, isStaged: true, sortOrder: 0, failureReason: null, jobPending: false });
           }
           await uploadImage(uploadUrl, upload.file, (progress) => patch(upload.key, { progress }));
-          await adminApi.completeImage(vehicleId, imageId);
+          await adminApi.completeImage(vehicleId, imageId, upload.requestKey);
           patch(upload.key, { phase: 'queued' });
           setLive(text.announceUploaded(upload.file.name));
           // The upload is complete; a failed refresh must not trigger another PUT.
@@ -130,7 +135,7 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
       else if (room <= 0) refused.push(`${file.name}: ${text.limit}`);
       else {
         room -= 1;
-        accepted.push({ key: uuid(), file, preview: URL.createObjectURL(file), imageId: null, uploadUrl: null, expiresAt: null, phase: 'waiting', progress: 0, error: null });
+        accepted.push({ key: uuid(), file, preview: URL.createObjectURL(file), imageId: null, uploadUrl: null, requestKey: uuid(), expiresAt: null, phase: 'waiting', progress: 0, error: null });
       }
     }
     setRejected(refused);
@@ -143,7 +148,7 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
     // An expired signature would fail forever: start over with a new intent and drop the old pending photo.
     if (upload.expiresAt !== null && Date.now() > upload.expiresAt) {
       if (upload.imageId) onRemove(upload.imageId);
-      patch(upload.key, { imageId: null, uploadUrl: null, expiresAt: null });
+      patch(upload.key, { imageId: null, uploadUrl: null, requestKey: uuid(), expiresAt: null });
     }
     patch(upload.key, { phase: 'waiting', error: null });
     void pump();
@@ -197,7 +202,7 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
       onDragOver={(event) => { if (isFileDrag(event)) { event.preventDefault(); setDropActive(true); } }}
       onDragLeave={() => setDropActive(false)} onDrop={onDropZone}>
       <p className="type-ui">{text.drop}{' '}
-        <button type="button" className="admin-link" onClick={() => input.current?.click()} disabled={total >= MAX_IMAGES}>{text.pick}</button>
+        <button ref={pick} type="button" className="admin-link" onClick={() => input.current?.click()} disabled={total >= MAX_IMAGES}>{text.pick}</button>
       </p>
       <p className="admin-field__hint">{text.formats}</p>
       <input ref={input} type="file" accept={TYPES.join(',')} multiple hidden
@@ -245,15 +250,15 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
           {image.state === 'Failed' ? <p className="admin-field__hint">{text.failedHint}</p> : null}
           {disabled ? null : <div className="admin-photo__actions">
             {image.state === 'Ready' && image.id !== coverId ? <button type="button" className="admin-action" disabled={!canReorder}
-              onClick={() => move(index, 0)}>{text.makeCover}<span className="sr-only">, {label}</span></button> : null}
+              onClick={() => move(index, 0, true)}>{text.makeCover}<span className="sr-only">, {label}</span></button> : null}
             {local?.phase === 'failed' ? <button type="button" className="admin-action"
               onClick={() => retry(local)}>{text.retry}</button> : null}
-            <button type="button" className="admin-action" disabled={local?.phase === 'uploading' || local?.phase === 'waiting'}
-              onClick={() => local ? discard(local) : onRemove(image.id)}>{text.remove}<span className="sr-only">, {label}</span></button>
+            <button type="button" className="admin-action" data-remove disabled={local?.phase === 'uploading' || local?.phase === 'waiting'}
+              onClick={() => { if (local) discard(local); else onRemove(image.id); focusAfterRemove(index); }}>{text.remove}<span className="sr-only">, {label}</span></button>
           </div>}
         </li>;
       })}
-      {pendingLocal.map((upload) => <li key={upload.key} className="admin-photo" data-state={upload.phase}>
+      {pendingLocal.map((upload, pendingIndex) => <li key={upload.key} className="admin-photo" data-state={upload.phase}>
         <div className="admin-photo__media"><img src={upload.preview} alt={upload.file.name} /></div>
         <div className="admin-photo__line">
           <span className="admin-photo__unsaved">{text.unsaved}</span>
@@ -265,7 +270,8 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
           <p className="admin-field__error">{upload.error}</p>
           <div className="admin-photo__actions">
             <button type="button" className="admin-action" onClick={() => retry(upload)}>{text.retry}</button>
-            <button type="button" className="admin-action" onClick={() => void discard(upload)}>{text.dismiss}</button>
+            <button type="button" className="admin-action" data-remove
+              onClick={() => { discard(upload); focusAfterRemove(ordered.length + pendingIndex); }}>{text.dismiss}</button>
           </div>
         </> : null}
       </li>)}

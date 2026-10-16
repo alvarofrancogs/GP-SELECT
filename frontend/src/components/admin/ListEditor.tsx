@@ -1,6 +1,7 @@
-import { useId, useState, type KeyboardEvent } from 'react';
+import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import { adminCopy } from '../../i18n/adminCopy';
 import { LIMITS } from '../../lib/vehicleForm';
+import { useFocusAfterRemove } from '../../hooks/useFocusAfterRemove';
 
 interface ListEditorProps {
   items: string[];
@@ -17,6 +18,9 @@ export function ListEditor({ items, onChange, label, error, disabled }: ListEdit
   const [draft, setDraft] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const full = items.length >= LIMITS.equipmentItems;
+  const list = useRef<HTMLUListElement>(null);
+  const input = useRef<HTMLInputElement>(null);
+  const focusAfterRemove = useFocusAfterRemove(list, input);
 
   function add() {
     const value = draft.trim().replace(/\s+/g, ' ');
@@ -37,16 +41,17 @@ export function ListEditor({ items, onChange, label, error, disabled }: ListEdit
   return <div className="admin-list-editor">
     <div className="admin-list-editor__add">
       <label htmlFor={`${id}-input`} className="sr-only">{label}</label>
-      <input id={`${id}-input`} value={draft} maxLength={LIMITS.equipmentItem} placeholder={text.placeholder} disabled={disabled || full}
+      <input ref={input} id={`${id}-input`} value={draft} maxLength={LIMITS.equipmentItem} placeholder={text.placeholder} disabled={disabled || full}
         aria-describedby={`${id}-feedback`} aria-invalid={message || error ? true : undefined}
         onChange={(event) => { setDraft(event.target.value); setMessage(null); }} onKeyDown={onKeyDown} />
       <button type="button" className="admin-link" onClick={add} disabled={disabled || full || !draft.trim()}>{text.add}</button>
       <span className="admin-counter type-numeric">{text.count(items.length)}</span>
     </div>
     <p id={`${id}-feedback`} className="admin-field__error" role="status">{feedback ?? ''}</p>
-    {items.length ? <ul className="admin-list-editor__items">{items.map((item, index) => <li key={item}>
+    {items.length ? <ul className="admin-list-editor__items" ref={list}>{items.map((item, index) => <li key={item}>
       <span>{item}</span>
-      <button type="button" className="admin-action" disabled={disabled} onClick={() => onChange(items.filter((_, i) => i !== index))}>
+      <button type="button" className="admin-action" data-remove disabled={disabled}
+        onClick={() => { onChange(items.filter((_, i) => i !== index)); focusAfterRemove(index); }}>
         {text.remove}<span className="sr-only"> {item}</span>
       </button>
     </li>)}</ul> : <p className="admin-empty-line">{text.empty}</p>}

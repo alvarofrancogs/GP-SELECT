@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { adminCopy } from '../../i18n/adminCopy';
 import { LIMITS, newRowKey, type SpecificationRow } from '../../lib/vehicleForm';
+import { useFocusAfterRemove } from '../../hooks/useFocusAfterRemove';
 
 interface KeyValueEditorProps {
   rows: SpecificationRow[];
@@ -14,6 +15,8 @@ export function KeyValueEditor({ rows, onChange, errors, disabled }: KeyValueEdi
   const text = adminCopy.specifications;
   const [focusKey, setFocusKey] = useState<string | null>(null);
   const list = useRef<HTMLOListElement>(null);
+  const addButton = useRef<HTMLButtonElement>(null);
+  const focusAfterRemove = useFocusAfterRemove(list, addButton);
   const full = rows.length >= LIMITS.specRows;
 
   useEffect(() => {
@@ -46,13 +49,14 @@ export function KeyValueEditor({ rows, onChange, errors, disabled }: KeyValueEdi
         <input id={`${id}-value`} value={row.value} maxLength={LIMITS.specValue} disabled={disabled}
           aria-invalid={error && !row.value.trim() ? true : undefined} aria-describedby={error ? `${id}-error` : undefined}
           onChange={(event) => update(row.key, { value: event.target.value })} />
-        <button type="button" className="admin-action" disabled={disabled} onClick={() => onChange(rows.filter((r) => r.key !== row.key))}>
+        <button type="button" className="admin-action" data-remove disabled={disabled}
+          onClick={() => { onChange(rows.filter((r) => r.key !== row.key)); focusAfterRemove(index); }}>
           {text.remove}<span className="sr-only"> {text.row(index + 1)}</span>
         </button>
         {error ? <p id={`${id}-error`} className="admin-field__error">{error}</p> : null}
       </li>;
     })}</ol>
-    <button type="button" className="admin-link" onClick={add} disabled={disabled || full}>{text.add}<span aria-hidden="true">+</span></button>
+    <button ref={addButton} type="button" className="admin-link" onClick={add} disabled={disabled || full}>{text.add}<span aria-hidden="true">+</span></button>
     {full ? <p className="admin-field__hint">{text.full}</p> : null}
   </div>;
 }
