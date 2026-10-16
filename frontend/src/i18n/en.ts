@@ -216,7 +216,7 @@ export const en: Dictionary = {
   brand: 'GP SELECT',
   languages: { label: 'Language', es: 'Español', en: 'English' },
   nav: {
-    label: 'Main navigation', home: 'Home', vehicles: 'Stock', import: 'Import',
+    label: 'Main navigation', home: 'Home', vehicles: 'Vehicles', import: 'Import',
     services: 'Services', about: 'About', contact: 'Contact', admin: 'Administration',
   },
   hero: {
