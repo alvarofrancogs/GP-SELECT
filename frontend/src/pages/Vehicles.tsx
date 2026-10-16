@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useNavigationType, useSearchParams } from 'react-router-dom';
 import { InteriorPageHeader } from '../components/InteriorPageHeader';
 import { VehicleGrid } from '../components/VehicleGrid';
 import { VehicleFilters } from '../components/VehicleFilters';
@@ -9,6 +9,7 @@ import { filterVehicles, sanitizeParams, sortVehicles, vehicleFilterKeys } from 
 import type { FacetKey } from '../lib/vehicleFacets';
 import type { VehicleSummary } from '../types/vehicle';
 import { qualificationUrl } from '../lib/qualification';
+import { catalogueReturn } from '../lib/catalogueReturn';
 import '../styles/interiors.css';
 import '../styles/vehicles.css';
 
@@ -16,7 +17,15 @@ export function Vehicles() {
   const { copy, href } = useLanguage();
   const text = copy.vehicles;
   const [params, setParams] = useSearchParams();
-  const { key } = useLocation();
+  const { key, search, state } = useLocation();
+  const navigationType = useNavigationType();
+  // Back from a vehicle page (browser back or its «← Vehicles» link) to the same filters: the same batch and scroll.
+  // A fresh visit from the menu, or a reload (the return point lives in memory), starts at the top.
+  const [restore] = useState(() => {
+    const point = catalogueReturn();
+    const back = navigationType === 'POP' || (state as { fromVehicle?: boolean } | null)?.fromVehicle;
+    return back && point?.search === search ? point : null;
+  });
   // Rendering the list at once keeps the closing section from moving down when it arrives.
   const [initialList] = useState(() => getInitialVehicles(key));
   const [vehicles, setVehicles] = useState<VehicleSummary[]>(initialList ?? []);
@@ -37,6 +46,11 @@ export function Vehicles() {
     if (clean.toString() !== params.toString()) setParams(clean, { replace: true, preventScrollReset: true });
   }, [clean, params, setParams]);
   const shown = useMemo(() => sortVehicles(filterVehicles(vehicles, clean), clean.get('sort')), [vehicles, clean]);
+  // Runs after SiteLayout's scroll reset (tree order), once the list is on the page.
+  const ready = status === 'ready';
+  useLayoutEffect(() => {
+    if (ready && restore) window.scrollTo({ top: restore.scrollY, behavior: 'instant' });
+  }, [ready, restore]);
   const searchUrl = href(qualificationUrl({ intent: 'import', source: 'vehicles' }));
   function clear() {
     const next = new URLSearchParams(clean);
@@ -55,7 +69,7 @@ export function Vehicles() {
     {status === 'ready' && !vehicles.length ? <div className="vehicle-state"><h2 className="type-section">{text.emptyCatalogue}</h2><div className="vehicle-state__links"><Link className="editorial-link type-ui" to={searchUrl}>{text.search}<span aria-hidden="true">→</span></Link></div></div> : null}
     {status === 'ready' && vehicles.length ? <>
       <VehicleFilters vehicles={vehicles} params={clean} count={shown.length} onClear={clear} onChange={change} />
-      {shown.length ? <VehicleGrid key={clean.toString()} vehicles={shown} /> : <div className="vehicle-state">
+      {shown.length ? <VehicleGrid key={clean.toString()} vehicles={shown} initialCount={search === restore?.search ? restore.count : undefined} /> : <div className="vehicle-state">
         <h2 className="type-section">{text.empty}</h2><div className="vehicle-state__links"><button className="editorial-link type-ui" onClick={clear}>{text.clear}</button><Link className="editorial-link type-ui" to={searchUrl}>{text.search}<span aria-hidden="true">→</span></Link></div>
       </div>}
     </> : null}

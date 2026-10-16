@@ -56,6 +56,16 @@ Cada punto se reprodujo antes en el stack `gpselect-audit` (build de `main`, con
 - **Navegador:** 9 rutas × 1440/390 (Home con scroll completo, catálogo, ficha, Importación, Contacto, EN, 404, Admin) sin imágenes rotas, sin desborde ni errores de consola inesperados; catálogo tras dos recargas OK. Gemini Flash quedó BLOCKED: su Playwright no acepta el certificado local de Caddy (`local_certs`); lo hizo Opus con Playwright.
 - Sin cambios de código de la app: no se repitieron los tests de .NET ni de Vitest.
 
+### Fase 2 · accesibilidad y UX (16-10-2026, rama `fix/preprod-phase2`)
+
+- **FE-01:** `opacity` en lugar de `autoAlpha` en el handoff de Process y en las líneas de `CarHandoffScene`; el pin no recibe puntero (no tiene controles). Árbol de accesibilidad con la página arriba: de `region` vacía a 3 titulares, 3 descripciones con su dato, interludio e imágenes. Scroll idéntico píxel a píxel hasta el cielo nublado (1440/390, bajada y subida).
+- **VIS-01:** modo estático (reduced-motion o < 600 px de alto) con tres fotogramas (claro + A, claro + B, nublado + interludio + C) en rejilla texto/coche (apilado < 768). Header por fotograma (`data-handoff-tone`). Composición de Astra; aprobada por el usuario tras ver capturas.
+- **VIS-02:** sombreado grafito (`.car-handoff__contrast`, 32 %) con difuminado ancho en los carriles de texto del estado C y dato al 100 %. Medido sobre el fondo real: descripción 3,84 → 5,09:1 y dato 2,66 → 5,66:1 (1440); 4,19 / 3,26 → 7,0:1 (390). Opus ensanchó el difuminado: el de Astra dejaba una franja clara tras el coche.
+- **VIS-04:** `.vehicle-import` con `overflow-wrap: normal` (heredaba `break-word` de la ficha) y titular móvil `clamp(1.875rem, 9vw, 2.6rem)`: «¿Buscas otra / configuración?» en dos líneas de 320 a 767, ES y EN.
+- **VIS-05:** Contacto < 1024 px: el contacto directo va entre las opciones y el formulario (segunda copia en el DOM, una sola visible; orden de foco = orden visual) y sin la franja de 72 px ante el pie. Escritorio sin cambios.
+- **FE-02:** `lib/catalogueReturn.ts` (en memoria: una recarga empieza arriba) guarda filtros, scroll y tanda al abrir una ficha del catálogo; atrás del navegador y «← Vehículos» vuelven a la misma tarjeta, con la misma tanda («Ver más») y los filtros. Desde el menú, catálogo nuevo arriba.
+- **Verificación:** typecheck, lint, Vitest 225/225, build; navegador con build antes/después (preview) y stack de producción local con 12 coches: todo lo anterior a 390/768/1024/1440/1920 y 844×390, ES y EN, sin errores ni desborde.
+
 ### Fase 3 · Admin y backend menor (16-10-2026, PR #23)
 
 - **BE-03:** `VehicleRules.RejectControl` rechaza también `UnicodeCategory.Format` (ancho cero, overrides e isolates bidi, BOM, guion suave) en vehículos y consultas; el joiner (U+200D) solo se admite dentro de un emoji compuesto (👨‍👩‍👧, 🏳️‍🌈, ❤️‍🔥).
@@ -800,7 +810,7 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 8. **3C final visual / asset polish** (**PASS**, 01-10-2026: UI Simplification, QA A–G y Real Stack Regression incluidas; sin push ni merge);
 9. **Siguiente: por decidir por el usuario**: sustituir las fotos del usuario según lleguen, y después 3D final release QA. SEO y dominio/deploy son fases aparte. NO iniciada.
 10. **SEO Fase B:** B0 aceptado con salvedad y B1 aprobado; B2/B3 integrados en main. B4 y B5 integrados en main (PR #7 y #8). B6 en `feat/seo-b6-headings`, pendiente de revisión; después B8. Plan en `docs/SEO-PHASE-B.md`.
-11. **Auditoría preproducción (16-10-2026):** fases 1 y 3 integradas (PR #22 y #23); fase 2 en curso en `fix/preprod-phase2` (Astra en high, una ejecución cada vez), empezando por FE-01, VIS-01 y VIS-02. Ver «PREPROD-AUDIT».
+11. **Auditoría preproducción (16-10-2026):** fases 1 y 3 integradas (PR #22 y #23); fase 2 en `fix/preprod-phase2`: FE-01, VIS-01, VIS-02, VIS-04, VIS-05 y FE-02 hechos; quedan los P3 (VIS-03, VIS-06 a VIS-11, FE-03, FE-04, FE-05). Ver «PREPROD-AUDIT».
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 

@@ -47,6 +47,8 @@ export function Contact() {
         ))}
       </fieldset>
       <div className={`contact-content${hasChannels ? ' contact-content--channels' : ''}`}>
+        {/* CSS exposes one contact slot at a time, keeping reading and focus order aligned. */}
+        {hasChannels ? <div className="contact-content__direct-mobile"><DirectContact /></div> : null}
         <div className="contact-content__form">
           <p className="contact-introduction type-lede">{path === 'search' ? text.searchIntro : text.vehicleIntro}</p>
           {/* What happens after sending: the approved copy carries its own numbers. */}

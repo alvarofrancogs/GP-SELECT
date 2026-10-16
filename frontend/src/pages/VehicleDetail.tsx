@@ -13,6 +13,7 @@ import { consumeInitialVehicle, getInitialVehicle, getVehicle } from '../service
 import type { VehicleDetail as Vehicle } from '../types/vehicle';
 import { formatKm, formatPower, formatPrice, formatRegistration, translateValue } from '../lib/vehicleFormat';
 import { qualificationUrl } from '../lib/qualification';
+import { catalogueReturn } from '../lib/catalogueReturn';
 import '../styles/interiors.css';
 import '../styles/vehicles.css';
 
@@ -24,7 +25,9 @@ export function VehicleDetail({ slug }: { slug: string }) {
 function VehicleDetailContent({ slug }: { slug: string }) {
   const { copy, locale, href } = useLanguage();
   const text = copy.vehicles;
-  const { key } = useLocation();
+  const { key, state } = useLocation();
+  // Opened from the catalogue: «← Vehicles» goes back to the same filters, batch and scroll.
+  const [from] = useState(() => (state as { fromCatalogue?: boolean } | null)?.fromCatalogue ? catalogueReturn() : null);
   const [initialVehicle] = useState(() => getInitialVehicle(slug, key));
   const [vehicle, setVehicle] = useState<Vehicle | null>(initialVehicle);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(initialVehicle ? 'ready' : 'loading');
@@ -46,7 +49,7 @@ function VehicleDetailContent({ slug }: { slug: string }) {
     robots: status === 'ready' ? 'noindex' : 'index,follow',
     tabTitle: status === 'ready' ? `${text.notFound} · GP SELECT` : undefined,
   });
-  const back = <Link className="editorial-link type-ui" to={href('/vehiculos')}><span aria-hidden="true">←</span>{text.back}</Link>;
+  const back = <Link className="editorial-link type-ui" to={href('/vehiculos') + (from?.search ?? '')} state={from ? { fromVehicle: true } : undefined}><span aria-hidden="true">←</span>{text.back}</Link>;
   if (status !== 'ready') return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state" role={status === 'error' ? 'alert' : 'status'}>{status === 'error' ? <h1 className="type-lede">{text.detailError}</h1> : <p className="type-lede">{text.loading}</p>}{status === 'error' ? <button className="editorial-link type-ui" onClick={() => { setStatus('loading'); setAttempt(attempt + 1); }}>{text.retry}</button> : null}</div></article>;
   if (!vehicle) return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state"><h1 className="type-display">{text.notFound}</h1><Link className="editorial-link type-ui" to={href(qualificationUrl({ intent: 'import', source: 'vehicle-not-found' }))}>{text.search}<span aria-hidden="true">→</span></Link></div></article>;
 
