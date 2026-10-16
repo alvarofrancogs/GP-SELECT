@@ -24,10 +24,10 @@ export const legalConfig: LegalConfig = {
   holder: 'Miguel Reverte Peñalver',
   taxId: '49442146N',
   address: null,
-  email: null,
+  email: 'info@gpselect.com',
   phone: '+34 661 631 555',
   registry: null,
-  retention: null,
+  retention: '12 meses',
   updated: '9 de octubre de 2026',
 };
 
