@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -79,14 +80,26 @@ public static class VehicleRules
         return clean;
     }
 
-    /// <summary>Only line breaks and tabs are allowed; NUL and the rest cannot reach the database or an email.</summary>
+    /// <summary>Only line breaks and tabs are allowed; NUL and the rest cannot reach the database or an email.
+    /// Invisible format characters (zero-width, bidi overrides, BOM, soft hyphen) are rejected too: they allow text with
+    /// nothing visible and spoofed email subjects. The only exception is the joiner inside an emoji sequence.</summary>
     public static void RejectControl(string? value, string field)
     {
         if (value is null) return;
-        foreach (var c in value)
-            if (char.IsControl(c) && c is not ('\n' or '\r' or '\t'))
-                throw new DomainException("invalid_text", $"{field} contains control characters", field);
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            var invalid = char.IsControl(c) ? c is not ('\n' or '\r' or '\t')
+                : char.GetUnicodeCategory(c) == UnicodeCategory.Format && !EmojiJoiner(value, i);
+            if (invalid) throw new DomainException("invalid_text", $"{field} contains control characters", field);
+        }
     }
+
+    // A zero-width joiner right after an emoji (its low surrogate or the emoji variation selector) and before another.
+    private static bool EmojiJoiner(string value, int i) =>
+        value[i] == '‍' && i > 0 && i + 1 < value.Length
+        && (char.IsLowSurrogate(value[i - 1]) || value[i - 1] == '️')
+        && (char.IsHighSurrogate(value[i + 1]) || value[i + 1] is >= '☀' and <= '➿');
 
     public static int? Range(int? value, int min, int max, string field) =>
         value is null || (value >= min && value <= max) ? value : throw new DomainException("out_of_range", $"{field} must be between {min} and {max}", field);

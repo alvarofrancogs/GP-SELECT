@@ -2,7 +2,6 @@ import type {
   AdminSession, AdminVehicle, AdminVehicleRow, CreateVehicleRequest, ImageIntent, ImageStatus, ProblemDetails,
   SettableStatus, VehiclePatch, VehiclePreview, VehicleSaveRequest,
 } from '../types/admin';
-import { uuid } from '../lib/uuid';
 
 /** Same origin as the site: Vite proxies /api in development, production serves both together. */
 const BASE = '/api/admin';
@@ -85,11 +84,13 @@ export const adminApi = {
   restoreVehicle: (id: string) => request<AdminVehicle>(`/vehicles/${id}/restore`, { method: 'POST' }),
   previewVehicle: (id: string) => request<VehiclePreview>(`/vehicles/${id}/preview`),
 
-  imageIntent: (vehicleId: string, file: File, staged = true) => request<ImageIntent>(`/vehicles/${vehicleId}/images/intent`, {
-    method: 'POST', body: json({ mimeType: file.type, sizeBytes: file.size, staged }), headersExtra: { 'Idempotency-Key': uuid() },
+  /** The caller keeps `idempotencyKey` for the whole upload: a retry after a lost answer must reuse it, or the server
+      would create a second photo (intent) or refuse the one already completed (complete). */
+  imageIntent: (vehicleId: string, file: File, idempotencyKey: string, staged = true) => request<ImageIntent>(`/vehicles/${vehicleId}/images/intent`, {
+    method: 'POST', body: json({ mimeType: file.type, sizeBytes: file.size, staged }), headersExtra: { 'Idempotency-Key': idempotencyKey },
   }),
-  completeImage: (vehicleId: string, imageId: string) => request<{ imageId: string; state: string }>(
-    `/vehicles/${vehicleId}/images/${imageId}/complete`, { method: 'POST', headersExtra: { 'Idempotency-Key': uuid() } }),
+  completeImage: (vehicleId: string, imageId: string, idempotencyKey: string) => request<{ imageId: string; state: string }>(
+    `/vehicles/${vehicleId}/images/${imageId}/complete`, { method: 'POST', headersExtra: { 'Idempotency-Key': idempotencyKey } }),
   imageStatus: (vehicleId: string, imageId: string) => request<ImageStatus>(`/vehicles/${vehicleId}/images/${imageId}/status`),
   setCover: (vehicleId: string, imageId: string) => request<unknown>(`/vehicles/${vehicleId}/images/${imageId}/cover`, { method: 'POST' }),
   removeImage: (vehicleId: string, imageId: string) => request<void>(`/vehicles/${vehicleId}/images/${imageId}/remove`, { method: 'POST' }),

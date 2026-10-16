@@ -103,6 +103,30 @@ public class VehicleContractTests
         Assert.Equal("uno\ndos\ttres", v.Description);
     }
 
+    [Theory]
+    [InlineData("​")]          // zero-width space: text with nothing visible
+    [InlineData("M4‮gpj.exe")] // right-to-left override: reversed, spoofed text
+    [InlineData("M4⁦x⁩")] // bidi isolates
+    [InlineData("﻿M4")]        // byte order mark
+    [InlineData("M­4")]        // soft hyphen
+    [InlineData("‍‍")]    // a joiner with no emoji around it
+    public void Text_rejects_invisible_format_characters(string text)
+    {
+        var e = Fails(() => NewVehicle().Apply(new VehicleChanges { Model = text }));
+        Assert.Equal(("invalid_text", "model"), (e.Code, e.Field));
+        var enquiry = Assert.Throws<DomainException>(() =>
+            Enquiry.Create(EnquiryIntent.Search, "María Pérez", "customer@example.test", null, null, "Hola " + text, DateTimeOffset.UtcNow));
+        Assert.Equal(("invalid_text", "message"), (enquiry.Code, enquiry.Field));
+    }
+
+    [Fact]
+    public void Text_keeps_emoji_sequences_joined_with_zwj()
+    {
+        var v = NewVehicle();
+        v.Apply(new VehicleChanges { Description = "Familia 👨‍👩‍👧 · arcoíris 🏳️‍🌈 · ❤️‍🔥" });
+        Assert.Equal("Familia 👨‍👩‍👧 · arcoíris 🏳️‍🌈 · ❤️‍🔥", v.Description);
+    }
+
     [Fact]
     public void Price_allows_at_most_two_decimals()
     {
