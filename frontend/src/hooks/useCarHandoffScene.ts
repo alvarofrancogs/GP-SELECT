@@ -48,6 +48,7 @@ function fitHeadlines(section: HTMLElement) {
   const car = section.querySelector<HTMLElement>('[data-car]');
   if (!car) return;
   const stacked = window.matchMedia(STACKED).matches;
+  const isStatic = section.dataset.motion === 'static';
   const center = section.clientWidth / 2;
   const half = (car.offsetWidth * CAR_SHARE * GAP_FACTOR) / 2 + GAP_MARGIN;
   let side = Infinity;
@@ -59,7 +60,7 @@ function fitHeadlines(section: HTMLElement) {
     // Lanes measured from the section edges, so a stacked headline gets the whole side.
     const leftLane = center - half - box.left;
     const rightLane = box.right - (center + half);
-    if (stacked) {
+    if (stacked || isStatic) {
       fitWord(left, box.width);
       fitWord(right, box.width);
       return;
@@ -69,7 +70,7 @@ function fitHeadlines(section: HTMLElement) {
     fitWord(right, layout === 'left' ? leftLane : rightLane);
   });
   // Supporting lines never cross into the car's lane.
-  section.style.setProperty('--handoff-side', stacked ? 'none' : `${Math.floor(side)}px`);
+  section.style.setProperty('--handoff-side', stacked || isStatic ? 'none' : `${Math.floor(side)}px`);
 }
 
 export function useCarHandoffScene(locale: string) {
@@ -106,21 +107,29 @@ export function useCarHandoffScene(locale: string) {
     }, (context) => {
       const { desktop, reduced, enoughHeight } = context.conditions!;
       section.dataset.motion = reduced || !enoughHeight ? 'static' : 'scroll';
+      fit();
       if (reduced || !enoughHeight) {
-        // Two still frames: dark lettering over the bright one, white over the overcast one,
-        // switched when a frame reaches the middle of the header.
-        const headerLine = () => `${(document.querySelector('.site-header')?.clientHeight ?? 0) / 2}px`;
-        section.querySelectorAll<HTMLElement>('.car-handoff__panel').forEach((panel, index) => {
+        // Each still frame publishes its tone at the middle of the header, including after refresh.
+        const panels = Array.from(section.querySelectorAll<HTMLElement>('.car-handoff__panel'));
+        const headerLine = () => (document.querySelector('.site-header')?.clientHeight ?? 0) / 2;
+        const publishTone = () => {
+          const line = headerLine();
+          const active = panels.find((panel) => {
+            const box = panel.getBoundingClientRect();
+            return box.top <= line && box.bottom > line;
+          });
+          section.dataset.headerTone = active?.dataset.handoffTone ?? '';
+        };
+        panels.forEach((panel) => {
           ScrollTrigger.create({
             trigger: panel,
-            start: () => `top ${headerLine()}`,
-            end: () => `bottom ${headerLine()}`,
-            onToggle: ({ isActive }) => {
-              if (isActive) section.dataset.headerTone = index === 0 ? 'light' : 'dark';
-              else if (section.dataset.headerTone === (index === 0 ? 'light' : 'dark')) section.dataset.headerTone = '';
-            },
+            start: () => `top ${headerLine()}px`,
+            end: () => `bottom ${headerLine()}px`,
+            onToggle: publishTone,
+            onRefresh: publishTone,
           });
         });
+        publishTone();
         return;
       }
 
@@ -162,10 +171,10 @@ export function useCarHandoffScene(locale: string) {
       scene.to({}, { duration: DISTANCE }, 0);
 
       const enter = (targets: gsap.TweenTarget, at: number) => scene.fromTo(targets,
-        { autoAlpha: 0, yPercent: 30, filter: 'blur(10px)' },
-        { autoAlpha: 1, yPercent: 0, filter: 'blur(0px)', duration: 0.27, stagger: 0.054, ease: 'power3.out' }, at);
+        { opacity: 0, yPercent: 30, filter: 'blur(10px)' },
+        { opacity: 1, yPercent: 0, filter: 'blur(0px)', duration: 0.27, stagger: 0.054, ease: 'power3.out' }, at);
       const leave = (targets: gsap.TweenTarget, at: number) => scene.to(targets,
-        { autoAlpha: 0, yPercent: -20, filter: 'blur(8px)', duration: 0.18, stagger: 0.036 }, at);
+        { opacity: 0, yPercent: -20, filter: 'blur(8px)', duration: 0.18, stagger: 0.036 }, at);
 
       enter(lines('a'), 0.55);
       // Once the car has parked, the first headline drops out of the frame behind it, a little
@@ -173,9 +182,9 @@ export function useCarHandoffScene(locale: string) {
       // Stacked above the car, it leaves through the top instead, as Jesko's mobile layout does,
       // fading before it reaches the header.
       const stacked = () => window.matchMedia(STACKED).matches;
-      scene.fromTo(select('[data-text="a"]'), { y: 0, autoAlpha: 1 }, {
+      scene.fromTo(select('[data-text="a"]'), { y: 0, opacity: 1 }, {
         y: () => (stacked() ? -0.1 : 1) * vh(),
-        autoAlpha: () => (stacked() ? 0 : 1),
+        opacity: () => (stacked() ? 0 : 1),
         duration: 0.85,
       }, 1.85);
       enter(lines('b'), 2.6);
@@ -189,6 +198,7 @@ export function useCarHandoffScene(locale: string) {
         { backgroundColor: '#b9bfc9', duration: weatherTo - weatherFrom }, weatherFrom);
       // Ink over the bright sky, white over the overcast one: switched while no lettering is shown.
       scene.fromTo(section, { '--handoff-ink': '#101112' }, { '--handoff-ink': '#fffcf7', duration: 0.05 }, AT.ink);
+      scene.fromTo(select('[data-handoff-contrast]'), { opacity: 0 }, { opacity: 1, duration: 0.05 }, AT.ink);
       enter(lines('c'), 4.25);
 
       // Car timeline: same range, heavier scrub for some inertia. The world never moves, only the car.

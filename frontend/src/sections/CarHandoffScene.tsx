@@ -37,7 +37,7 @@ export function CarHandoffScene() {
   return (
     <section id="coches" ref={sectionRef} className="car-handoff" aria-labelledby="car-handoff-title">
       <div ref={pinRef} className="car-handoff__pin" data-handoff-target="process">
-        <div className="car-handoff__panel">
+        <div className="car-handoff__panel" data-handoff-tone="light">
           <div className="car-handoff__world" data-handoff-world>
             <AssetSlot asset={sceneAssets.handoffBright} label={copy.common.backgroundAsset} background priority="low" />
             <div className="car-handoff__overcast" data-handoff-overcast>
@@ -57,7 +57,18 @@ export function CarHandoffScene() {
             </div>
           </div>
         </div>
-        <div className="car-handoff__panel car-handoff__panel--overcast">
+        <div className="car-handoff__panel" data-handoff-tone="light">
+          <div className="car-handoff__world car-handoff__world--static" aria-hidden="true">
+            <AssetSlot asset={sceneAssets.handoffBright} label="" background priority="low" />
+          </div>
+          <div className="car-handoff__car car-handoff__car--static" aria-hidden="true">
+            <div className="car-handoff__layer">
+              <AssetSlot asset={sceneAssets.carA} label="" priority="low" />
+            </div>
+          </div>
+          <HandoffText state={stateB} name="b" layout="left" />
+        </div>
+        <div className="car-handoff__panel car-handoff__panel--overcast" data-handoff-tone="dark">
           <div className="car-handoff__world car-handoff__world--static" aria-hidden="true">
             <AssetSlot asset={sceneAssets.handoffOvercast} label={copy.common.backgroundAsset} background priority="low" />
           </div>
@@ -66,7 +77,7 @@ export function CarHandoffScene() {
               <AssetSlot asset={sceneAssets.carCutaway} label="" priority="low" />
             </div>
           </div>
-          <HandoffText state={stateB} name="b" layout="left" />
+          <div className="car-handoff__contrast" data-handoff-contrast aria-hidden="true" />
           <p className="car-handoff__interlude" data-text="interlude"><span data-line>{text.interlude}</span></p>
           <HandoffText state={stateC} name="c" layout="right" />
         </div>
