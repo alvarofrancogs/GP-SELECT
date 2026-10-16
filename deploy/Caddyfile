@@ -12,6 +12,9 @@
 		Referrer-Policy strict-origin-when-cross-origin
 		X-Frame-Options DENY
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		# The two hashes are the inline script and style of readableHead (frontend/build/readableContent.ts); a test
+		# fails if they change. Photos come from the API (blob: is the Admin's preview); uploads go to the S3 origin.
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-Du+OJKJSbdUgz5nrHeWWINvez6XKDDU/tyj/5c2uvwo='; style-src 'self' 'sha256-RWuQU7Q9ANjzhuofOlyK79BY+DIKy3DzVxMhIgq0wN0='; img-src 'self' blob:; connect-src 'self' {$CSP_UPLOAD_ORIGIN}; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 		-Server
 	}
 }

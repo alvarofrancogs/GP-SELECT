@@ -1,5 +1,7 @@
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
-import { renderLlmsText, renderReadableContent } from './readableContent';
+import { readableHead, renderLlmsText, renderReadableContent } from './readableContent';
 import { entityCopy } from '../src/i18n/entityCopy';
 import { es } from '../src/i18n/es';
 import { en } from '../src/i18n/en';
@@ -121,4 +123,13 @@ it.each([
 ])('links %s to %s in its content', (path, target) => {
   const main = renderReadableContent(path).split('</main>')[0];
   expect(main).toContain(`href="${target}"`);
+});
+
+it('lists the hash of every inline script and style in the Caddy CSP', () => {
+  // Tests run from frontend/.
+  const caddyfile = readFileSync('../deploy/Caddyfile', 'utf8');
+  const inline = [...readableHead.matchAll(/<(script|style)>([\s\S]*?)<\/\1>/g)];
+  expect(inline).toHaveLength(2);
+  for (const [, tag, body] of inline)
+    expect(caddyfile, tag).toContain(`'sha256-${createHash('sha256').update(body).digest('base64')}'`);
 });
