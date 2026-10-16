@@ -10,13 +10,20 @@ Un servidor con Docker y un solo comando. Todo se ha probado en local en modo pr
 | `api` | API .NET en `Production`. Aplica las migraciones al arrancar. Guarda sus claves de sesión en un volumen, así que un reinicio no cierra la sesión del admin. |
 | `db` | PostgreSQL 16. |
 | `seaweedfs` + `storage-setup` | Almacenamiento S3 propio (opcional, perfil `self-hosted-storage`). Crea el bucket privado y una clave para la API limitada a ese bucket. |
-| `backup` | Un volcado diario de la base de datos en `deploy/backups/`. Conserva 14 días, pero nunca borra el más reciente: si los volcados fallan, queda el último correcto. `docker compose ps` lo marca `unhealthy` a los 5 minutos como mucho de pasar 26 h sin ninguno. |
-| `offsite` | Copia diaria a un bucket externo independiente (perfil `offsite-backup`): dumps y, con SeaweedFS, fotos con historial. |
+| `backup` | Un volcado diario de la base de datos en `deploy/backups/`. Conserva 14 días exactos (también los manuales), pero nunca borra el más reciente: si los volcados fallan, queda el último correcto. `docker compose ps` lo marca `unhealthy` a los 5 minutos como mucho de pasar 26 h sin ninguno. |
+| `offsite` | Copia diaria a un bucket externo independiente (perfil `offsite-backup`): dumps (30 días, siempre queda el último) y, con SeaweedFS, fotos con historial. |
 
 ## Requisitos
 
-- Un servidor Linux con Docker y el plugin `docker compose`. Con 2 GB de RAM basta: la API tiene un límite de 1 GB porque procesar una foto muy grande ocupa unos 0,7 GB.
+- Un servidor Linux con Docker y el plugin `docker compose`, 2 GB de RAM y **2 GB de swap** (obligatorio: compilar la web o la API en el servidor puede quedarse sin memoria sin él). `update.sh` compila las imágenes de una en una por el mismo motivo. En marcha, la API tiene un límite de 1 GB; procesar una foto de 40 MP alcanza unos 183 MB.
+
+  ```bash
+  sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+  echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+  ```
+
 - Un dominio con un registro DNS **A** apuntando al servidor (`DOMAIN=gpselect.com`, el único dominio previsto).
+- **Sin registros AAAA** (IPv6) para ningún nombre: Docker no tiene IPv6 en su red, así que todas las visitas por IPv6 llegarían con la misma IP interna y compartirían el límite de intentos del login. Si algún día se quiere IPv6, hay que activarlo antes en la red de Docker.
 - Dominios secundarios: `REDIRECT_DOMAINS=www.gpselect.com`. Cada nombre necesita un registro **A** al servidor; Caddy obtiene sus certificados y redirige con 308, conservando ruta y query. No incluir el dominio principal ni el de S3. Vacío desactiva estas redirecciones.
 - Si usas el almacenamiento propio, un segundo registro **A** para las subidas (`s3.gpselect.com`).
 - Los puertos 80 y 443 abiertos.
@@ -27,7 +34,7 @@ Un servidor con Docker y un solo comando. Todo se ha probado en local en modo pr
 git clone <repo> gpselect && cd gpselect/deploy
 cp .env.example .env
 nano .env        # rellenar todo (ver abajo)
-docker compose up -d --build
+./update.sh
 docker compose ps        # storage-setup aparece «Exited (0)»: es normal
 ```
 
@@ -52,15 +59,18 @@ MinIO ya no publica imágenes de Docker: por eso la opción propia usa SeaweedFS
 
 ```bash
 cd gpselect && git pull
-cd deploy && docker compose up -d --build
+deploy/update.sh
 ```
+
+`update.sh` descarga las imágenes base al día (PostgreSQL, SeaweedFS, rclone y las bases de la web y la API), compila la API y después la web, y reinicia lo que haya cambiado. **Ejecutarlo al menos una vez al mes aunque no haya cambios de código**: es la forma de recibir los parches de seguridad. Caddy está fijado en la 2.11 (con la que se validaron sus reglas) y recibe sus parches igual; cambiar de versión menor exige probar antes las redirecciones, los 404, los 503 y las cabeceras.
 
 La API aplica sola las migraciones nuevas. Los volúmenes (base de datos, fotos, claves y certificados) se conservan.
 
 ## Copias de seguridad
 
 - **Base de datos:** se vuelca todos los días en `deploy/backups/gpselect-AAAAMMDD-HHMM.dump`. Para hacer una copia en el momento:
-  `docker compose exec backup sh -c 'pg_dump -Fc -f /backups/manual-$(date +%Y%m%d-%H%M).dump'`
+  `docker compose exec backup sh -c 'pg_dump -Fc -f /backups/gpselect-$(date +%Y%m%d-%H%M)-manual.dump'`
+  Como las diarias, se borra a los 14 días (es lo que dice la política de privacidad). Para guardarla más tiempo, sacarla del servidor.
 - **Fotos con la opción A:**
   `docker run --rm -v gpselect_storage-data:/data -v "$PWD/backups:/b" alpine tar czf /b/fotos-$(date +%Y%m%d).tgz -C /data .`
 - **Fuera del servidor:** activar la copia opcional de abajo; los volúmenes y dumps locales no sobreviven a la pérdida del servidor.
@@ -77,7 +87,7 @@ docker compose start api
 1. Crear en Cloudflare R2 un bucket privado **separado** del de fotos, por ejemplo `gpselect-backups`. Crear un [token R2](https://developers.cloudflare.com/r2/api/tokens/) con **Object Read & Write**, limitado solo a ese bucket. No reutilizar las claves de la API.
 2. Rellenar `OFFSITE_BUCKET` y `RCLONE_CONFIG_OFFSITE_ENDPOINT` (`https://<account-id>.r2.cloudflarestorage.com`), `RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID` y `RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY`. `RCLONE_CONFIG_OFFSITE_PROVIDER` vale `Cloudflare` por defecto; admite otro proveedor S3 compatible. No hay archivo `rclone.conf`.
 3. En `.env`, usar `COMPOSE_PROFILES=self-hosted-storage,offsite-backup` con SeaweedFS, o `COMPOSE_PROFILES=offsite-backup` con fotos externas. Usar esta variable también al ejecutar los comandos de abajo: el script la lee para decidir si copia las fotos.
-4. Ejecutar `docker compose up -d offsite`. Empieza 15 minutos después de arrancar (`OFFSITE_START_DELAY`, en segundos), detrás del dump diario, y después cada 24 h. `OFFSITE_KEEP_DAYS` conserva 30 días de dumps por defecto. Si falla, el log indica el paso (`config`, `dumps`, `db-copy`, `db-retention` o `photos`); `docker compose restart offsite` lo reintenta tras el retraso. `OFFSITE_BUCKET` no puede ser el bucket de las fotos.
+4. Ejecutar `docker compose up -d offsite`. Empieza 15 minutos después de arrancar (`OFFSITE_START_DELAY`, en segundos), detrás del dump diario, y después cada 24 h. `OFFSITE_KEEP_DAYS` conserva 30 días de dumps por defecto; el más reciente no se borra nunca, aunque los volcados locales lleven tiempo fallando. Si falla, el log indica el paso (`config`, `dumps`, `db-copy`, `db-retention` o `photos`); `docker compose restart offsite` lo reintenta tras el retraso. `OFFSITE_BUCKET` no puede ser el bucket de las fotos.
 
 Los dumps van a `db/` (solo `.dump`, nunca `.part`); las fotos propias a `photos/`. El [sync con backup-dir](https://rclone.org/docs/#backup-dir-dir) mueve versiones sustituidas o borradas a `photos-history/<fecha-UTC>/`, fuera del espejo. Ese historial no se purga automáticamente. Con fotos externas se omite esta copia: las conserva el proveedor fuera del servidor; configurar allí su protección frente a borrados accidentales.
 
@@ -112,6 +122,14 @@ docker compose start api offsite
 
 Elegir un dump compatible con las fotos recuperadas: restaurar solo el objeto no revierte una eliminación en la BD. La copia diaria de fotos y el dump no forman un snapshot atómico.
 
+## Vigilancia
+
+Ningún servicio avisa solo: los fallbacks responden 200 aunque la API esté caída y Let's Encrypt ya no envía avisos de caducidad. Antes de abrir:
+
+- **Monitor externo** (UptimeRobot, Better Stack…), cada 5 minutos, sobre `https://<DOMAIN>/api/public/vehicles`: debe responder 200 (con la API caída responde 502). Activar también su aviso de caducidad del certificado.
+- **Copias:** crear dos checks en [healthchecks.io](https://healthchecks.io) (periodo 1 día, margen 2 h) y poner sus URL en `BACKUP_PING_URL` y `OFFSITE_PING_URL`. Cada copia correcta hace ping; una fallida llama a `<URL>/fail`; si el contenedor se para, avisa la falta de ping. Después, `docker compose up -d backup offsite`.
+- Los logs de la API ya no guardan cada petición de ASP.NET, solo sus avisos y errores: `docker compose logs api` queda para lo importante.
+
 ## Formulario de contacto
 
 Viene desactivado (`ENQUIRIES_ENABLED=false`). Completar los datos legales y configurar un proveedor SMTP (Brevo, Zoho, Google Workspace, etc.) con estos valores en `.env`:
@@ -125,7 +143,7 @@ Viene desactivado (`ENQUIRIES_ENABLED=false`). Completar los datos legales y con
 | `ENQUIRIES_NOTIFICATION_EMAIL` | buzón receptor; Reply-To será el cliente |
 | `ENQUIRIES_RETENTION_DAYS` | `30` por defecto, mínimo `1`; afecta a PostgreSQL, no al buzón ni a backups |
 
-Después poner `ENQUIRIES_ENABLED=true` y ejecutar `docker compose up -d --build` para recompilar la web. En Production el API rechaza el arranque del formulario activo sin Host, From o destinatario. El mantenimiento borra consultas caducadas cada hora, incluso si su aviso no se entregó.
+Después poner `ENQUIRIES_ENABLED=true` y ejecutar `./update.sh` para recompilar la web. En Production el API rechaza el arranque del formulario activo sin Host, From o destinatario. El mantenimiento borra consultas caducadas cada hora, incluso si su aviso no se entregó.
 
 ## Comprobaciones rápidas
 

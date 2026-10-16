@@ -21,7 +21,8 @@
 	encode zstd gzip
 	root * /srv
 
-	# Hashed build files never change; other assets can be replaced; pages are always revalidated.
+	# Hashed build files never change; other assets can be replaced; pages are always revalidated,
+	# unless the API already set its own short cache (vehicle pages, catalogue, sitemap).
 	@hashed path_regexp ^/assets/[^/]+-[A-Za-z0-9_-]{8}\.(js|css|woff2)$
 	@assets {
 		path /assets/*
@@ -30,7 +31,7 @@
 	@pages not path /assets/* /api/*
 	header @hashed Cache-Control "public, max-age=31536000, immutable"
 	header @assets Cache-Control "public, max-age=604800"
-	header @pages Cache-Control "no-cache"
+	header @pages ?Cache-Control "no-cache"
 
 	# Public page variants go straight to their canonical URL; vehicle slug case is preserved.
 	map {path} {canonical} {
@@ -151,7 +152,10 @@
 		file_server
 	}
 
+	# Error responses skip the headers above: set them again.
 	handle_errors {
+		import security
+		header Cache-Control "no-cache"
 		@catalogue_down {
 			path /vehiculos
 			expression {err.status_code} >= 500
