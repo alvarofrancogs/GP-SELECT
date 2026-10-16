@@ -1,10 +1,11 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 
-/** Reveal one batch and keep keyboard navigation at its first new item. */
-export function useProgressiveList<T extends HTMLElement>(size: number, resetKey: string, itemSelector: string, focusSelector?: string) {
+/** Reveal one batch and keep keyboard navigation at its first new item. `initialCount` starts with more revealed
+    (coming back to a list the visitor had already extended). */
+export function useProgressiveList<T extends HTMLElement>(size: number, resetKey: string, itemSelector: string, focusSelector?: string, initialCount = size) {
   const containerRef = useRef<T>(null);
-  const [page, setPage] = useState({ key: resetKey, count: size, from: 0 });
+  const [page, setPage] = useState({ key: resetKey, count: Math.max(size, initialCount), from: 0 });
   const count = page.key === resetKey ? page.count : size;
   if (page.key !== resetKey) setPage({ key: resetKey, count: size, from: 0 });
 

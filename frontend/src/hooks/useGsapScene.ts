@@ -206,7 +206,8 @@ export function useGsapScene(kind: SceneKind, id: string) {
           const incoming = document.querySelector('[data-handoff-target="process"]');
           if (incoming) {
             const veil = incoming.querySelector('[data-handoff-veil]');
-            handoffTimeline.fromTo(incoming, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.01 }, revealAt);
+            // Opacity keeps the scene readable by assistive technology before the handoff.
+            handoffTimeline.fromTo(incoming, { opacity: 0 }, { opacity: 1, duration: 0.01 }, revealAt);
             if (veil) {
               handoffTimeline.fromTo(veil, { yPercent: 0 }, { yPercent: -100, duration: 1 - revealAt - 0.01, ease: 'power1.inOut' }, revealAt + 0.01);
             }

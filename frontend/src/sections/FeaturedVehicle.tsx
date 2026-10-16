@@ -24,7 +24,7 @@ export function FeaturedVehicle() {
   const vehicles = state.status === 'ready' ? state.vehicles : EMPTY;
   const { index, paused, togglePaused } = useFeaturedRotation(sectionRef, vehicles);
   const vehicle = vehicles[index] ?? null;
-  useFeaturedVehicleScene(sectionRef, `${state.status}:${vehicle?.slug ?? ''}`, locale);
+  useFeaturedVehicleScene(sectionRef, vehicle !== null);
 
   useEffect(() => {
     const request = new AbortController();
@@ -36,14 +36,14 @@ export function FeaturedVehicle() {
   }, []);
 
   const name = vehicle ? `${vehicle.make} ${vehicle.model}` : '';
-  // Optional data is never rendered empty: a missing value drops its whole row.
+  // Keep animation targets mounted across rotations; missing values hide their whole row.
   const specs = vehicle ? [
     [labels.registration, formatRegistration(vehicle.firstRegistrationYear, vehicle.firstRegistrationMonth, locale)],
     [labels.mileage, formatKm(vehicle.mileageKm, locale)],
     [labels.fuelType, translateValue(labels.values, vehicle.fuelType)],
     [labels.power, formatPower(vehicle.powerHp, locale)],
     [labels.transmission, translateValue(labels.values, vehicle.transmission)],
-  ].filter((row): row is [string, string] => Boolean(row[1])) : [];
+  ] : [];
   // The API sends the cover first.
   const photo = failedPhoto === vehicle?.slug ? undefined : vehicle?.images?.[0];
 
@@ -74,14 +74,12 @@ export function FeaturedVehicle() {
               <div className="featured__identity">
                 <p className="featured__make">{vehicle.make}</p>
                 <h3>{vehicle.model}</h3>
-                {vehicle.variant ? <p className="featured__variant">{vehicle.variant}</p> : null}
-                {vehicle.availability === 'sold' ? <p className="featured__availability type-ui">{labels.sold}</p> : null}
+                <p className="featured__variant" hidden={!vehicle.variant}>{vehicle.variant}</p>
+                <p className="featured__availability type-ui" hidden={vehicle.availability !== 'sold'}>{labels.sold}</p>
               </div>
-              {specs.length ? (
-                <dl className="featured__specs">
-                  {specs.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
-                </dl>
-              ) : null}
+              <dl className="featured__specs" hidden={!specs.some(([, value]) => Boolean(value))}>
+                {specs.map(([label, value], index) => <div key={index} hidden={!value}><dt>{label}</dt><dd>{value}</dd></div>)}
+              </dl>
               <span className="featured__link">{text.view}<span className="sr-only"> · {name}</span><span className="featured__arrow" aria-hidden="true">→</span></span>
             </div>
           </Link>

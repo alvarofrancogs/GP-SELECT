@@ -123,7 +123,9 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Contains(english ? "<html lang=\"en\">" : "<html lang=\"es\">", html);
         foreach (var (language, path) in new[] { ("es", "/vehiculos"), ("en", "/en/vehicles"), ("x-default", "/en/vehicles") })
             Assert.Contains($"hreflang=\"{language}\" href=\"{ApiFactory.SiteUrl}{path}/{slug}\"", html);
-        Assert.Contains("<li>Asientos M Carbon</li>", html);
+        // The Admin's free text is Spanish: on English pages it says so, for screen readers and search engines.
+        Assert.Contains(english ? "<ul lang=\"es\"><li>Asientos M Carbon</li>" : "<ul><li>Asientos M Carbon</li>", html);
+        Assert.Contains(english ? "<p lang=\"es\">Unidad cuidada" : "<p>Unidad cuidada", html);
         Assert.DoesNotContain("<script>alert(1)</script>", html);
         Assert.Contains("&lt;/script&gt;&lt;script&gt;alert(1)", html);
         Assert.DoesNotContain("REF-SECRET", html);

@@ -5,9 +5,11 @@
   z-index: 2;
   background: var(--color-dark);
   color: var(--color-paper);
-  /* Room at the bottom so the fixed catalogue pill never covers the last line. */
-  padding: var(--space-8) var(--page-gutter) calc(var(--space-6) + 4.5rem);
+  padding: var(--space-8) var(--page-gutter) var(--space-6);
 }
+
+/* Reserve room only when CatalogueCta actually renders its fixed link. */
+.site-footer:has(+ .catalogue-cta) { padding-bottom: calc(var(--space-6) + 4.5rem); }
 
 .footer-main {
   display: grid;

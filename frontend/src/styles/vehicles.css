@@ -66,7 +66,8 @@
 .vehicle-detail__section > div > .vehicle-specs { margin-bottom: 1.75rem; }
 .vehicle-equipment { margin: 0; padding-left: 1.1rem; columns: 2; column-gap: 3rem; }
 .vehicle-equipment li { break-inside: avoid; padding-left: .35rem; margin-bottom: 1rem; }
-.vehicle-import { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: end; gap: 10vw; }
+/* Editorial copy must not inherit the inventory's emergency word breaks. */
+.vehicle-import { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: end; gap: 10vw; overflow-wrap: normal; }
 .vehicle-import h2 { font-size: clamp(2.5rem, 4.8vw, 6rem); max-width: 17ch; }
 .vehicle-import .editorial-link { margin-top: 2rem; font-size: .85rem; }
 .vehicle-detail__extra { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: end; gap: 5vw; padding-block: var(--interior-space); }
@@ -74,6 +75,8 @@
 .vehicle-detail__extra-item img { object-fit: var(--vehicle-image-fit); }
 .vehicle-detail__extra-item:nth-child(even) { margin-bottom: 12%; }
 .vehicle-detail__closing { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2.5rem; border-top: 1px solid var(--interior-rule); }
+/* Without the extra gallery, the dark band's edge is already the divider. */
+.interior-band + .vehicle-detail__closing { border-top: 0; }
 .vehicle-detail__closing h2 { max-width: min(22ch, 100%); font-size: clamp(2rem, 3.6vw, 4.5rem); }
 
 .vehicle-gallery { min-width: 0; }
@@ -139,7 +142,7 @@
   .vehicle-detail__section > .vehicle-specs { column-gap: 1.5rem; }
   .vehicle-equipment { columns: 1; }
   .vehicle-import { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
-  .vehicle-import h2 { font-size: 2.6rem; }
+  .vehicle-import h2 { font-size: clamp(1.875rem, 9vw, 2.6rem); }
   .vehicle-detail__extra { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
   .vehicle-detail__extra-item:nth-child(even) { margin-bottom: 0; margin-left: 15%; }
   .vehicle-detail__closing { align-items: flex-start; flex-direction: column; }

@@ -4,7 +4,8 @@ import type { VehicleSummary } from '../types/vehicle';
 import { useLanguage } from '../i18n/useLanguage';
 import { formatKm, formatPower, formatPrice, translateValue } from '../lib/vehicleFormat';
 
-export function VehicleCard({ vehicle }: { vehicle: VehicleSummary }) {
+/** `state` travels with the link (the catalogue marks its own cards so the vehicle page can lead back to it). */
+export function VehicleCard({ vehicle, state }: { vehicle: VehicleSummary; state?: unknown }) {
   const { copy, locale, href } = useLanguage();
   const text = copy.vehicles;
   const [failed, setFailed] = useState(false);
@@ -14,7 +15,7 @@ export function VehicleCard({ vehicle }: { vehicle: VehicleSummary }) {
   const facts = [vehicle.firstRegistrationYear, formatKm(vehicle.mileageKm, locale)].filter((v) => v !== null).join(' · ');
   const mechanical = [formatPower(vehicle.powerHp, locale), translate(vehicle.fuelType), translate(vehicle.transmission)].filter(Boolean).join(' · ');
   return (
-    <Link className="vehicle-card" to={href(`/vehiculos/${encodeURIComponent(vehicle.slug)}`)}>
+    <Link className="vehicle-card" to={href(`/vehiculos/${encodeURIComponent(vehicle.slug)}`)} state={state}>
       <figure className="vehicle-card__media editorial-media">
         {image ? <img src={image.src} alt={image.temporary ? '' : image.alt ?? name}
           style={{ objectFit: image.fit }} data-fit={image.fit}

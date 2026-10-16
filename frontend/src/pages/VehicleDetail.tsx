@@ -13,6 +13,7 @@ import { consumeInitialVehicle, getInitialVehicle, getVehicle } from '../service
 import type { VehicleDetail as Vehicle } from '../types/vehicle';
 import { formatKm, formatPower, formatPrice, formatRegistration, translateValue } from '../lib/vehicleFormat';
 import { qualificationUrl } from '../lib/qualification';
+import { catalogueReturn } from '../lib/catalogueReturn';
 import '../styles/interiors.css';
 import '../styles/vehicles.css';
 
@@ -24,7 +25,9 @@ export function VehicleDetail({ slug }: { slug: string }) {
 function VehicleDetailContent({ slug }: { slug: string }) {
   const { copy, locale, href } = useLanguage();
   const text = copy.vehicles;
-  const { key } = useLocation();
+  const { key, state } = useLocation();
+  // Opened from the catalogue: «← Vehicles» goes back to the same filters, batch and scroll.
+  const [from] = useState(() => (state as { fromCatalogue?: boolean } | null)?.fromCatalogue ? catalogueReturn() : null);
   const [initialVehicle] = useState(() => getInitialVehicle(slug, key));
   const [vehicle, setVehicle] = useState<Vehicle | null>(initialVehicle);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(initialVehicle ? 'ready' : 'loading');
@@ -46,7 +49,7 @@ function VehicleDetailContent({ slug }: { slug: string }) {
     robots: status === 'ready' ? 'noindex' : 'index,follow',
     tabTitle: status === 'ready' ? `${text.notFound} · GP SELECT` : undefined,
   });
-  const back = <Link className="editorial-link type-ui" to={href('/vehiculos')}><span aria-hidden="true">←</span>{text.back}</Link>;
+  const back = <Link className="editorial-link type-ui" to={href('/vehiculos') + (from?.search ?? '')} state={from ? { fromVehicle: true } : undefined}><span aria-hidden="true">←</span>{text.back}</Link>;
   if (status !== 'ready') return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state" role={status === 'error' ? 'alert' : 'status'}>{status === 'error' ? <h1 className="type-lede">{text.detailError}</h1> : <p className="type-lede">{text.loading}</p>}{status === 'error' ? <button className="editorial-link type-ui" onClick={() => { setStatus('loading'); setAttempt(attempt + 1); }}>{text.retry}</button> : null}</div></article>;
   if (!vehicle) return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state"><h1 className="type-display">{text.notFound}</h1><Link className="editorial-link type-ui" to={href(qualificationUrl({ intent: 'import', source: 'vehicle-not-found' }))}>{text.search}<span aria-hidden="true">→</span></Link></div></article>;
 
@@ -75,12 +78,14 @@ export function VehicleDetailView({ vehicle, back, className = '' }: { vehicle: 
     { label: text.fuelType, value: translate(vehicle.fuelType) },
     { label: text.transmission, value: translate(vehicle.transmission) },
   ];
+  // The Admin writes its free text in Spanish: English pages mark it, for screen readers and search engines.
+  const freeText = locale === 'en' ? 'es' : undefined;
   const specifications = [
     { label: text.bodyType, value: translate(vehicle.bodyType) },
     { label: text.drivetrain, value: translate(vehicle.drivetrain) },
     { label: text.exteriorColour, value: translate(vehicle.exteriorColour) },
     { label: text.interiorColour, value: translate(vehicle.interiorColour) },
-    ...(vehicle.customSpecifications ?? []),
+    ...(vehicle.customSpecifications ?? []).map((row) => ({ ...row, lang: freeText })),
   ];
   const extraImages = vehicle.images?.slice(1) ?? [];
   return <article className={`interior-page vehicle-detail ${className}`.trim()}>
@@ -100,11 +105,11 @@ export function VehicleDetailView({ vehicle, back, className = '' }: { vehicle: 
       </aside>
     </div>
     <div className="vehicle-detail__body">
-      {vehicle.description ? <section className="vehicle-detail__section" aria-labelledby="vehicle-description"><h2 id="vehicle-description" className="type-heading">{text.description}</h2><p className="type-body">{vehicle.description}</p></section> : null}
+      {vehicle.description ? <section className="vehicle-detail__section" aria-labelledby="vehicle-description"><h2 id="vehicle-description" className="type-heading">{text.description}</h2><p className="type-body" lang={freeText}>{vehicle.description}</p></section> : null}
       {specifications.some((row) => row.value) ? <section className="vehicle-detail__section" aria-labelledby="vehicle-specifications"><h2 id="vehicle-specifications" className="type-heading">{text.specifications}</h2><VehicleSpecs rows={specifications} /></section> : null}
-      {vehicle.equipment?.length ? <section className="vehicle-detail__section" aria-labelledby="vehicle-equipment"><h2 id="vehicle-equipment" className="type-heading">{text.equipment}</h2><ul className="vehicle-equipment type-body">{vehicle.equipment.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}</ul></section> : null}
-      {vehicle.history ? <section className="vehicle-detail__section" aria-labelledby="vehicle-history"><h2 id="vehicle-history" className="type-heading">{text.history}</h2><p className="type-body">{vehicle.history}</p></section> : null}
-      {vehicle.provenance ? <section className="vehicle-detail__section" aria-labelledby="vehicle-provenance"><h2 id="vehicle-provenance" className="type-heading">{text.provenance}</h2><p className="type-lede">{translate(vehicle.provenance)}</p></section> : null}
+      {vehicle.equipment?.length ? <section className="vehicle-detail__section" aria-labelledby="vehicle-equipment"><h2 id="vehicle-equipment" className="type-heading">{text.equipment}</h2><ul className="vehicle-equipment type-body" lang={freeText}>{vehicle.equipment.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}</ul></section> : null}
+      {vehicle.history ? <section className="vehicle-detail__section" aria-labelledby="vehicle-history"><h2 id="vehicle-history" className="type-heading">{text.history}</h2><p className="type-body" lang={freeText}>{vehicle.history}</p></section> : null}
+      {vehicle.provenance ? <section className="vehicle-detail__section" aria-labelledby="vehicle-provenance"><h2 id="vehicle-provenance" className="type-heading">{text.provenance}</h2><p className="type-body">{translate(vehicle.provenance)}</p></section> : null}
     </div>
     <section className="interior-band vehicle-import"><h2 className="type-section">{text.importTitle}</h2><div><p className="type-body">{text.importBody}</p><Link className="editorial-link type-ui" to={href('/importacion')}>{text.importLink}<span aria-hidden="true">→</span></Link></div></section>
     {extraImages.length > 1 ? <div className="vehicle-detail__extra">{extraImages.map((image, index) => <div key={`${image.src}-${index}`} className="vehicle-detail__extra-item" style={{ '--vehicle-image-fit': image.fit } as CSSProperties}><EditorialMedia asset={image} label={image.alt ?? `${name} · ${text.image} ${index + 2}`} /></div>)}</div> : null}

@@ -157,21 +157,23 @@ public static class VehicleSeo
             (english ? "Drivetrain" : "Tracción", Translate(v.Drivetrain, english)), (english ? "Exterior colour" : "Color exterior", Translate(v.ExteriorColour, english)), (english ? "Interior colour" : "Color interior", Translate(v.Interior, english)),
             (english ? "Provenance" : "Procedencia", Translate(v.Provenance, english)),
         };
+        // The Admin writes its free text in Spanish: English pages mark it, for screen readers and search engines.
+        var freeText = english ? " lang=\"es\"" : "";
         html.Append($"<section><h2>{(english ? "Specifications" : "Especificaciones")}</h2><dl>");
         foreach (var (label, value) in specs.Where(x => !string.IsNullOrWhiteSpace(x.Value)))
             html.Append($"<dt>{E(label)}</dt><dd>{E(value!)}</dd>");
         foreach (var spec in v.CustomSpecifications.Where(x => !string.IsNullOrWhiteSpace(x.Label) && !string.IsNullOrWhiteSpace(x.Value)))
-            html.Append($"<dt>{E(spec.Label!)}</dt><dd>{E(spec.Value!)}</dd>");
+            html.Append($"<dt{freeText}>{E(spec.Label!)}</dt><dd{freeText}>{E(spec.Value!)}</dd>");
         html.Append("</dl></section>");
-        if (v.Description is { Length: > 0 }) html.Append($"<section><h2>{(english ? "Description" : "Descripción")}</h2><p>{E(v.Description)}</p></section>");
-        if (v.History is { Length: > 0 }) html.Append($"<section><h2>{(english ? "History" : "Historial")}</h2><p>{E(v.History)}</p></section>");
-        if (v.Equipment.Count > 0) html.Append($"<section><h2>{(english ? "Equipment" : "Equipamiento")}</h2><ul>{string.Concat(v.Equipment.Select(x => $"<li>{E(x)}</li>"))}</ul></section>");
+        if (v.Description is { Length: > 0 }) html.Append($"<section><h2>{(english ? "Description" : "Descripción")}</h2><p{freeText}>{E(v.Description)}</p></section>");
+        if (v.History is { Length: > 0 }) html.Append($"<section><h2>{(english ? "History" : "Historial")}</h2><p{freeText}>{E(v.History)}</p></section>");
+        if (v.Equipment.Count > 0) html.Append($"<section><h2>{(english ? "Equipment" : "Equipamiento")}</h2><ul{freeText}>{string.Concat(v.Equipment.Select(x => $"<li>{E(x)}</li>"))}</ul></section>");
         if (v.Status != VehicleStatus.Sold)
             // Same readable vehicle name the SPA puts in the contact form (frontend/src/pages/VehicleDetail.tsx).
             html.Append($"<p><a href=\"{(english ? "/en/contact" : "/contacto")}?vehiculo={Uri.EscapeDataString($"{v.Make} {v.Model}{(v.Variant is { Length: > 0 } ? $" {v.Variant}" : "")} ({v.Year})")}&amp;intent=vehicle\">{(english ? "Enquire about this car" : "Solicitar información")}</a></p>");
         html.Append($"</main><footer><p>{E(english ? EnglishLocation : SpanishLocation)}</p><nav><ul>");
         var navigation = english
-            ? new[] { ("/en", "GP SELECT"), ("/en/vehicles", "Stock"), ("/en/import", "Import"), ("/en/about", "About"), ("/en/contact", "Contact") }
+            ? new[] { ("/en", "GP SELECT"), ("/en/vehicles", "Vehicles"), ("/en/import", "Import"), ("/en/about", "About"), ("/en/contact", "Contact") }
             : new[] { ("/", "GP SELECT"), ("/vehiculos", "Vehículos"), ("/importacion", "Importación"), ("/nosotros", "Nosotros"), ("/contacto", "Contacto") };
         foreach (var (href, label) in navigation)
             html.Append($"<li><a href=\"{href}\">{E(label)}</a></li>");
