@@ -23,7 +23,7 @@ export interface LegalConfig {
 export const legalConfig: LegalConfig = {
   holder: 'Miguel Reverte Peñalver',
   taxId: '49442146N',
-  address: null,
+  address: 'Avenida Alicante, 251, 30007 Murcia (Murcia)',
   email: 'info@gpselect.com',
   phone: '+34 661 631 555',
   registry: null,
