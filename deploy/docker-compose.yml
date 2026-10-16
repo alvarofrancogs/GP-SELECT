@@ -1,5 +1,5 @@
 # GP SELECT in production: one server with Docker. Guide: deploy/README.md.
-# Start or update: docker compose up -d --build   (from this folder, with .env filled in)
+# Start or update: ./update.sh   (from this folder, with .env filled in)
 name: gpselect
 
 x-logging: &logging
@@ -70,11 +70,15 @@ services:
       Smtp__Password: ${SMTP_PASSWORD:-}
       Smtp__From: ${SMTP_FROM:-}
       Smtp__Security: ${SMTP_SECURITY:-StartTls}
+      # ASP.NET writes ~14 lines per request and HttpClient 4 per template download; only their warnings and errors
+      # are kept. The API's own logs are unchanged.
+      Logging__LogLevel__Microsoft.AspNetCore: Warning
+      Logging__LogLevel__System.Net.Http.HttpClient: Warning
       Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: Warning
     volumes:
       - api-keys:/data/keys
     networks: [internal]
-    # Processing a very large photo can take ~0.7 GB (docs/CURRENT-STATE.md, backend debt).
+    # Photo processing peaked at 183 MB with a 40 MP original (decoding is capped at 2400 px).
     mem_limit: 1g
     depends_on:
       db:
@@ -103,6 +107,8 @@ services:
 
   # Self-hosted S3 storage (profile self-hosted-storage): SeaweedFS with one key for the API, limited to its bucket.
   # With an external provider (Cloudflare R2, Backblaze B2…) leave the profile off and set S3_ENDPOINT in .env.
+  # Replacing the image's entrypoint drops its defaults: -volume.max=0 sizes the volume count from free disk space
+  # (without it, 8 volumes of 1 GB and uploads stop when they fill); no preallocation, so each volume uses what it holds.
   seaweedfs:
     logging: *logging
     image: chrislusf/seaweedfs:4.08
@@ -118,7 +124,8 @@ services:
         {"identities":[{"name":"gpselect-api","credentials":[{"accessKey":"$$S3_ACCESS_KEY","secretKey":"$$S3_SECRET_KEY"}],
           "actions":["Read:$$S3_BUCKET","Write:$$S3_BUCKET","List:$$S3_BUCKET"]}]}
         JSON
-        exec weed server -dir=/data -s3 -s3.port=8333 -s3.config=/tmp/s3.json -master.volumeSizeLimitMB=1024
+        exec weed server -dir=/data -s3 -s3.port=8333 -s3.config=/tmp/s3.json -master.volumeSizeLimitMB=1024 \
+          -volume.max=0 -master.volumePreallocate=false
     volumes:
       - storage-data:/data
     networks: [internal]
@@ -163,6 +170,7 @@ services:
       PGUSER: gpselect
       PGPASSWORD: ${DB_PASSWORD}
       BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+      BACKUP_PING_URL: ${BACKUP_PING_URL:-}
     volumes:
       - ./backup.sh:/backup.sh:ro
       - ./backups:/backups
@@ -188,6 +196,7 @@ services:
       OFFSITE_BUCKET: ${OFFSITE_BUCKET:-}
       OFFSITE_KEEP_DAYS: ${OFFSITE_KEEP_DAYS:-30}
       OFFSITE_START_DELAY: ${OFFSITE_START_DELAY:-900}
+      OFFSITE_PING_URL: ${OFFSITE_PING_URL:-}
       RCLONE_CONFIG: /dev/null
       RCLONE_CONFIG_OFFSITE_TYPE: s3
       RCLONE_CONFIG_OFFSITE_PROVIDER: ${RCLONE_CONFIG_OFFSITE_PROVIDER:-Cloudflare}

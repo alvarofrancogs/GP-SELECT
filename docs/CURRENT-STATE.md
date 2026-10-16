@@ -3,7 +3,9 @@
 
 ## PHASE
 
-**Estado vivo (13-10-2026): SEO B4 y B5 integrados en `main` (PR #7 y #8). B6 (encabezados) terminado en `feat/seo-b6-headings`, pendiente de revisión; plan y estado de cada bloque en `docs/SEO-PHASE-B.md`. Posicionamiento confirmado por el usuario: GP SELECT busca, acompaña y gestiona todo el proceso (búsqueda, revisión, negociación, transporte, matriculación y entrega). Según la operación, el coche se compra directamente a nombre del cliente o lo compra la empresa de GP SELECT y se lo vende con factura (confirmado por el cliente el 13-10-2026); la web lo dice y no publica el depósito.** Anterior: FINAL CLOSURE PASS, 3C PASS (01-10-2026). Arquitectura motion 1A–1F completada; no se modifica en B6.
+**Estado vivo (16-10-2026): auditoría preproducción sobre `main` @ `1734f12` → NO-GO. Fase 1 del plan (config y scripts de despliegue) en la rama `fix/preprod-phase1`, sin push ni merge hasta que la apruebe el usuario.** Detalle abajo, en «PREPROD-AUDIT».
+
+**Anterior (13-10-2026): SEO B4 y B5 integrados en `main` (PR #7 y #8). B6 (encabezados) terminado en `feat/seo-b6-headings`, pendiente de revisión; plan y estado de cada bloque en `docs/SEO-PHASE-B.md`. Posicionamiento confirmado por el usuario: GP SELECT busca, acompaña y gestiona todo el proceso (búsqueda, revisión, negociación, transporte, matriculación y entrega). Según la operación, el coche se compra directamente a nombre del cliente o lo compra la empresa de GP SELECT y se lo vende con factura (confirmado por el cliente el 13-10-2026); la web lo dice y no publica el depósito.** Anterior: FINAL CLOSURE PASS, 3C PASS (01-10-2026). Arquitectura motion 1A–1F completada; no se modifica en B6.
 
 Unidades: 1A PASS · 1B PASS · 1C PASS · 1D PASS · 1E PASS · 1F PASS.
 
@@ -16,6 +18,43 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
 **FINAL VISUAL POLISH PASS — en curso.** 2F-A PASS (29-09-2026) · 2F-B PASS (29-09-2026) · 2F-C.1 PASS (30-09-2026) · 2F-C.2 PASS (30-09-2026) · HOME HANDOFF FIX PASS (30-09-2026) · 2F-C.3 PASS (30-09-2026) · 2G PASS (30-09-2026).
 
 **FINAL CLOSURE PASS (desde 30-09-2026):** 3A production readiness (**PASS técnico**, aceptado por el usuario) → Final Technical / UX QA (**TECHNICALLY READY**) → 3B copy truth (**PASS**) → 3C final visual / asset polish → 3D final release QA. Una fase cada vez; cada una con su tag `<fase>-pass`.
+
+## PREPROD-AUDIT · auditoría preproducción (16-10-2026)
+
+Informe completo: [GP SELECT · Auditoría preproducción](https://claude.ai/code/artifact/83b242cd-7aac-4b47-9845-5c7b04e7903c). Cuatro auditores Claude READ-ONLY (frontend, backend, infraestructura + SEO, diseño) en lugar de Astra, que agotó la cuota de Codex en ~5 min; Opus contrastó cada hallazgo con el código y con un stack de producción local (Caddy, API, Postgres, SeaweedFS; proyecto `gpselect-audit`, 3 coches subidos por la API del Admin).
+
+**Veredicto: NO-GO.** 0 P0, 1 P1, 10 P2 y 20 P3. Todas las pruebas pasan (Vitest 214/214, 153/153 unitarios, 161/161 integración, npm audit 0). Faltan servidor, dominio y proveedor de email.
+
+| Sev. | Incidencias |
+|---|---|
+| P1 | **INF-01** SeaweedFS pierde `-volume.max=0` al sustituir el entrypoint: 8 volúmenes de 1 GB (~8 GB de fotos, ~ficha 35–40) |
+| P2 | INF-02 sin avisos de caída, copias o certificado; logs de ASP.NET verbosos · INF-03 «Actualizar» no baja parches de imágenes base; `caddy:2-alpine` flota · INF-04 compilar web + API en paralelo con 2 GB sin swap (OOM; la cifra de 0,7 GB está desfasada) · INF-05 `offsite.sh` puede borrar el último dump remoto · FE-01 `autoAlpha` oculta `#coches` a lectores de pantalla · FE-02 volver al catálogo pierde scroll, tanda y filtros · VIS-01 reduced-motion / < 600 px sin «Potencia / Control» · VIS-02 contraste del panel nublado (≈ 3,9:1 y 3,0:1) · VIS-04 «?» huérfano en fichas ES móviles · VIS-05 Contacto móvil: WhatsApp detrás del formulario y franja crema |
+| P3 | X-01 plantilla de la API desfasada 60 s si solo se despliega la web · X-02 doble `Cache-Control` · X-03 volcados `manual-*` sin purga; purga real a 15 días frente a 14 en privacidad · X-04 `handle_errors` sin `(security)` · INF-06 IPv6 comparte el límite de login · DB-01 bucle de reinicios con la migración antigua de B9 (solo el stack local `gpselect`) · BE-03 Unicode `Format` (invisibles, bidi) aceptado · FE-03 `lang="es"` en el texto libre de fichas EN · FE-04 preloader descarga el catálogo en `/contacto` y fichas · FE-05 `ScrollTrigger.refresh()` en cada rotación del destacado · FE-06 Idempotency-Key nueva en cada reintento · FE-07 foco a `<body>` en el Admin · VIS-03 contraste del header sobre el hero · VIS-06 a VIS-11 detalles de diseño · DOC-01 README desfasado |
+
+**Plan:**
+
+1. **Fase 1 · antes de desplegar (config y scripts, sin Astra):** INF-01 (primero), X-04, X-02, INF-03, INF-04, INF-05, X-03, INF-02, INF-06, DOC-01. **Hecha en `fix/preprod-phase1`, pendiente de aprobación** (detalle debajo).
+2. **Fase 2 · accesibilidad y UX (Astra para motion y composición):** FE-01, VIS-01, VIS-02; VIS-04, VIS-05, FE-02; después VIS-03, VIS-06 a VIS-11, FE-03, FE-04, FE-05. Muy recomendable, no bloqueante.
+3. **Fase 3 · Admin y backend menor:** FE-06, FE-07, BE-03.
+4. **Fase 4 · servidor real:** DNS y certificados (`gpselect.com`, `www`, `s3`), pruebas de humo (redirecciones, 404, 503, cabeceras, Admin, S3, copia y restauración), SMTP real y formulario, Safari/iOS y Firefox.
+
+**CONDITIONAL GO cuando:** fase 1 terminada y verificada · formulario activo con SMTP probado, o retirado · humo de la fase 4 superado en el servidor real · revisión legal y de la guía hecha o aceptada.
+
+### Fase 1 · config y scripts (16-10-2026, rama `fix/preprod-phase1`)
+
+Cada punto se reprodujo antes en el stack `gpselect-audit` (build de `main`, con los datos de la auditoría) o en un contenedor de prueba, y se verificó después recreando ese stack desde la rama con `deploy/update.sh`.
+
+- **INF-01:** SeaweedFS con `-volume.max=0 -master.volumePreallocate=false`. `dir/status`: Max 8 / Free 0 → Max 903 / Free 895 con los mismos datos; alta, subida firmada a S3, Ready y publicación de un coche nuevo; 16/16 fotos servidas (las antiguas también).
+- **X-02:** `header @pages ?Cache-Control "no-cache"`: un solo `Cache-Control` (antes dos en catálogo, fichas y sitemap); manda el de la API (`max-age=60` / `300`), y `no-cache` en el resto.
+- **X-04:** `handle_errors` importa `(security)` y pone `no-cache`: 404, 502, 503 de fichas y catálogo de reserva con HSTS, X-Frame-Options y sin `Server: Caddy`. Con la API parada: fichas 503 + `Retry-After: 300`, catálogo y sitemap 200, `/api/public/vehicles` 502.
+- **INF-03 / INF-04:** `deploy/update.sh` (primer arranque y actualizaciones): `pull --ignore-buildable`, `build --pull` de la API y después de la web, `up -d`, `image prune`. Caddy fijado en `caddy:2.11-alpine` (2.11.7; `caddy validate` OK). README: ejecutarlo al menos una vez al mes; 2 GB de swap obligatorios; cifra de memoria corregida (183 MB de pico). **El OOM con 2 GB no se ha medido** (queda para el servidor real).
+- **INF-05:** `offsite.sh` nunca borra el dump remoto más reciente (por fecha). Prueba con remoto `local` de rclone y dumps de 35–45 días: antes el remoto quedaba vacío tras dos pasadas con `SUCCESS`; ahora queda el último. Caso normal: borra los de > 30 días y conserva el resto.
+- **X-03:** purga local exacta (`-mmin`, 14 × 1440); el más reciente se busca por fecha. Manuales como `gpselect-AAAAMMDD-HHMM-manual.dump`: se purgan igual. Prueba: 335 h se queda, 337 h se borra.
+- **INF-02:** logs `Microsoft.AspNetCore` y `System.Net.Http.HttpClient` a Warning: 28 líneas → 0 por carga del catálogo; los logs propios y de migraciones siguen. `BACKUP_PING_URL` y `OFFSITE_PING_URL` opcionales (estilo healthchecks.io, `/fail` si falla; un ping caído no rompe la copia; HTTPS probado desde ambas imágenes). README «Vigilancia»: monitor externo sobre `/api/public/vehicles` y caducidad del certificado (Let's Encrypt ya no avisa).
+- **INF-06:** README: sin registros AAAA mientras la red de Docker no tenga IPv6.
+- **DOC-01:** README raíz al día (save, status, restore, preview, enquiries, `/seo/*`, 500 vehículos con Reserved y vendidos visibles, variables de producción, PostgreSQL 16, sin Swagger); `PUT …/images/{id}/upload` marcado como código muerto (retirarlo es cambio de backend, fuera de esta fase). `SEO-PHASE-B.md` ya no da por hecho el `lang="es"` (FE-03).
+- **Navegador:** 9 rutas × 1440/390 (Home con scroll completo, catálogo, ficha, Importación, Contacto, EN, 404, Admin) sin imágenes rotas, sin desborde ni errores de consola inesperados; catálogo tras dos recargas OK. Gemini Flash quedó BLOCKED: su Playwright no acepta el certificado local de Caddy (`local_certs`); lo hizo Opus con Playwright.
+- Sin cambios de código de la app: no se repitieron los tests de .NET ni de Vitest.
 
 ## 3C FINAL VISUAL / ASSET POLISH = PASS (01-10-2026)
 
@@ -754,6 +793,7 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 8. **3C final visual / asset polish** (**PASS**, 01-10-2026: UI Simplification, QA A–G y Real Stack Regression incluidas; sin push ni merge);
 9. **Siguiente: por decidir por el usuario**: sustituir las fotos del usuario según lleguen, y después 3D final release QA. SEO y dominio/deploy son fases aparte. NO iniciada.
 10. **SEO Fase B:** B0 aceptado con salvedad y B1 aprobado; B2/B3 integrados en main. B4 y B5 integrados en main (PR #7 y #8). B6 en `feat/seo-b6-headings`, pendiente de revisión; después B8. Plan en `docs/SEO-PHASE-B.md`.
+11. **Auditoría preproducción (16-10-2026):** fase 1 en `fix/preprod-phase1`, pendiente de aprobación; después, fase 2 (Astra en high, una ejecución cada vez) y fase 3. Ver «PREPROD-AUDIT».
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 

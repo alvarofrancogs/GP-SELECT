@@ -12,6 +12,7 @@ ARG VITE_ENQUIRIES_ENABLED=false
 ENV VITE_SITE_URL=$VITE_SITE_URL VITE_ENQUIRIES_ENABLED=$VITE_ENQUIRIES_ENABLED
 RUN npm run build
 
-FROM caddy:2-alpine
+# Minor version pinned: the Caddyfile was validated with 2.11; patches arrive with ./update.sh (build --pull).
+FROM caddy:2.11-alpine
 COPY --from=build /app/dist /srv
 COPY deploy/Caddyfile /etc/caddy/Caddyfile

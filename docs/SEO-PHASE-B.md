@@ -22,7 +22,7 @@ Orden aprobado: B0 → B1 → B2 y B3 → B5, B6 y B7 → B4 → B8 → B9 → B
 
 ## Decisiones que cambiaron después del plan
 
-- **Fichas EN (B4):** el plan las dejaba en `noindex` y sin hreflang. El 10-10-2026 el usuario decidió **indexarlas ya**, con hreflang recíproco; los textos libres del Admin siguen en español con `lang="es"`. Sin campos EN en el Admin.
+- **Fichas EN (B4):** el plan las dejaba en `noindex` y sin hreflang. El 10-10-2026 el usuario decidió **indexarlas ya**, con hreflang recíproco; los textos libres del Admin siguen en español; el `lang="es"` previsto para ellos **no está implementado** (FE-03 de la auditoría preproducción del 16-10-2026, fase 2). Sin campos EN en el Admin.
 - **Schema:** el plan mantenía `AutoDealer`; B1 lo cambió a `AutomotiveBusiness` y quitó `seller` del Offer (hecho en B4). El usuario confirmó que el precio publicado es el total con honorarios y gastos: el Offer se mantiene y lo indica en su descripción.
 - **Titularidad (13-10-2026):** según la operación, el coche va a nombre del cliente o lo compra la empresa de GP SELECT y se lo vende con factura. Sustituye a «el comprador es siempre el cliente» de B1; los textos se corrigieron en B5 (PR #8).
 - **Ramas:** B4 se rehízo en `feat/seo-b4` y B5 y B6 se portaron encima desde `feat/seo-b6`, que se descarta tras B6.

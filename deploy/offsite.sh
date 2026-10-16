@@ -2,6 +2,8 @@
 set -u
 
 # The failing step is reported by name only: provider output can contain signed URLs or credentials.
+# OFFSITE_PING_URL (optional, healthchecks.io style): pinged after each good pass, with /fail after a failed one.
+ping() { [ -z "${OFFSITE_PING_URL:-}" ] || wget -q -T 10 -O /dev/null "$OFFSITE_PING_URL$1" 2>/dev/null || true; }
 step=config
 run_backup() {
   step=config
@@ -16,8 +18,13 @@ run_backup() {
   find /backups -maxdepth 1 -name '*.dump' | grep -q . || return 1
   step=db-copy
   rclone copy /backups "offsite:$OFFSITE_BUCKET/db" --include '*.dump' --max-depth 1 || return 1
+  # Copies keep the dump's own date, so if local dumps stop, every remote one ages out: the newest always stays.
   step=db-retention
-  rclone delete "offsite:$OFFSITE_BUCKET/db" --include '*.dump' --min-age "${OFFSITE_KEEP_DAYS}d" || return 1
+  remote=$(rclone lsf "offsite:$OFFSITE_BUCKET/db" --include '*.dump' --format tp --separator '|') || return 1
+  newest=$(printf '%s\n' "$remote" | sort | tail -n 1 | cut -d '|' -f 2)
+  [ -n "$newest" ] || return 1
+  rclone delete "offsite:$OFFSITE_BUCKET/db" --filter "- /$newest" --filter '+ *.dump' --filter '- *' \
+    --min-age "${OFFSITE_KEEP_DAYS}d" || return 1
   case ",$COMPOSE_PROFILES," in
     *,self-hosted-storage,*)
       step=photos
@@ -32,8 +39,10 @@ sleep "${OFFSITE_START_DELAY:-900}"
 while true; do
   if run_backup >/dev/null 2>&1; then
     echo "offsite: SUCCESS $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    ping ""
   else
     echo "offsite: FAILED at step $step $(date -u +%Y-%m-%dT%H:%M:%SZ)" >&2
+    ping /fail
   fi
   sleep 86400
 done
