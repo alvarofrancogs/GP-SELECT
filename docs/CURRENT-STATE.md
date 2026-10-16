@@ -3,7 +3,7 @@
 
 ## PHASE
 
-**Estado vivo (16-10-2026): auditoría preproducción sobre `main` @ `1734f12` → NO-GO. Fase 1 del plan (config y scripts de despliegue) en la rama `fix/preprod-phase1`, sin push ni merge hasta que la apruebe el usuario.** Detalle abajo, en «PREPROD-AUDIT».
+**Estado vivo (16-10-2026): auditoría preproducción sobre `main` @ `1734f12` → NO-GO. Fases 1 y 3 integradas en `main` (PR #22 y #23). Fase 2 (accesibilidad y UX, con Astra) en curso en `fix/preprod-phase2`.** Detalle abajo, en «PREPROD-AUDIT».
 
 **Anterior (13-10-2026): SEO B4 y B5 integrados en `main` (PR #7 y #8). B6 (encabezados) terminado en `feat/seo-b6-headings`, pendiente de revisión; plan y estado de cada bloque en `docs/SEO-PHASE-B.md`. Posicionamiento confirmado por el usuario: GP SELECT busca, acompaña y gestiona todo el proceso (búsqueda, revisión, negociación, transporte, matriculación y entrega). Según la operación, el coche se compra directamente a nombre del cliente o lo compra la empresa de GP SELECT y se lo vende con factura (confirmado por el cliente el 13-10-2026); la web lo dice y no publica el depósito.** Anterior: FINAL CLOSURE PASS, 3C PASS (01-10-2026). Arquitectura motion 1A–1F completada; no se modifica en B6.
 
@@ -33,9 +33,9 @@ Informe completo: [GP SELECT · Auditoría preproducción](https://claude.ai/cod
 
 **Plan:**
 
-1. **Fase 1 · antes de desplegar (config y scripts, sin Astra):** INF-01 (primero), X-04, X-02, INF-03, INF-04, INF-05, X-03, INF-02, INF-06, DOC-01. **Hecha en `fix/preprod-phase1`, pendiente de aprobación** (detalle debajo).
+1. **Fase 1 · antes de desplegar (config y scripts, sin Astra):** INF-01 (primero), X-04, X-02, INF-03, INF-04, INF-05, X-03, INF-02, INF-06, DOC-01. **Integrada en `main` (PR #22)** (detalle debajo).
 2. **Fase 2 · accesibilidad y UX (Astra para motion y composición):** FE-01, VIS-01, VIS-02; VIS-04, VIS-05, FE-02; después VIS-03, VIS-06 a VIS-11, FE-03, FE-04, FE-05. Muy recomendable, no bloqueante.
-3. **Fase 3 · Admin y backend menor:** FE-06, FE-07, BE-03.
+3. **Fase 3 · Admin y backend menor:** FE-06, FE-07, BE-03. **Integrada en `main` (PR #23)** (detalle debajo).
 4. **Fase 4 · servidor real:** DNS y certificados (`gpselect.com`, `www`, `s3`), pruebas de humo (redirecciones, 404, 503, cabeceras, Admin, S3, copia y restauración), SMTP real y formulario, Safari/iOS y Firefox.
 
 **CONDITIONAL GO cuando:** fase 1 terminada y verificada · formulario activo con SMTP probado, o retirado · humo de la fase 4 superado en el servidor real · revisión legal y de la guía hecha o aceptada.
@@ -55,6 +55,13 @@ Cada punto se reprodujo antes en el stack `gpselect-audit` (build de `main`, con
 - **DOC-01:** README raíz al día (save, status, restore, preview, enquiries, `/seo/*`, 500 vehículos con Reserved y vendidos visibles, variables de producción, PostgreSQL 16, sin Swagger); `PUT …/images/{id}/upload` marcado como código muerto (retirarlo es cambio de backend, fuera de esta fase). `SEO-PHASE-B.md` ya no da por hecho el `lang="es"` (FE-03).
 - **Navegador:** 9 rutas × 1440/390 (Home con scroll completo, catálogo, ficha, Importación, Contacto, EN, 404, Admin) sin imágenes rotas, sin desborde ni errores de consola inesperados; catálogo tras dos recargas OK. Gemini Flash quedó BLOCKED: su Playwright no acepta el certificado local de Caddy (`local_certs`); lo hizo Opus con Playwright.
 - Sin cambios de código de la app: no se repitieron los tests de .NET ni de Vitest.
+
+### Fase 3 · Admin y backend menor (16-10-2026, PR #23)
+
+- **BE-03:** `VehicleRules.RejectControl` rechaza también `UnicodeCategory.Format` (ancho cero, overrides e isolates bidi, BOM, guion suave) en vehículos y consultas; el joiner (U+200D) solo se admite dentro de un emoji compuesto (👨‍👩‍👧, 🏳️‍🌈, ❤️‍🔥).
+- **FE-06:** cada subida guarda una `requestKey` para su intent y su confirmación (`adminApi.imageIntent` / `completeImage` la reciben); un reintento tras perder la respuesta repite la misma clave y el servidor la reproduce. Solo el intent nuevo tras caducar la firma usa otra.
+- **FE-07:** `hooks/useFocusAfterRemove.ts`: al quitar equipamiento (`ListEditor`, que tenía el mismo fallo), una especificación o una foto, el foco pasa al `[data-remove]` siguiente, al anterior o al control de añadir; «Hacer portada» deja el foco en la foto movida.
+- **Verificación:** 160/160 unitarios y 162/162 de integración (8 nuevos, en rojo antes); Vitest 221/221 (7 nuevos, los de foco en rojo con `main`), typecheck, lint y build. Navegador sobre el stack de producción local: respuesta del intent cortada → «Reintentar» → +1 foto sin fantasma y «Guardar cambios» correcto; foco con teclado en equipamiento, portada y quitar foto; sin errores.
 
 ## 3C FINAL VISUAL / ASSET POLISH = PASS (01-10-2026)
 
@@ -793,7 +800,7 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 8. **3C final visual / asset polish** (**PASS**, 01-10-2026: UI Simplification, QA A–G y Real Stack Regression incluidas; sin push ni merge);
 9. **Siguiente: por decidir por el usuario**: sustituir las fotos del usuario según lleguen, y después 3D final release QA. SEO y dominio/deploy son fases aparte. NO iniciada.
 10. **SEO Fase B:** B0 aceptado con salvedad y B1 aprobado; B2/B3 integrados en main. B4 y B5 integrados en main (PR #7 y #8). B6 en `feat/seo-b6-headings`, pendiente de revisión; después B8. Plan en `docs/SEO-PHASE-B.md`.
-11. **Auditoría preproducción (16-10-2026):** fase 1 en `fix/preprod-phase1`, pendiente de aprobación; después, fase 2 (Astra en high, una ejecución cada vez) y fase 3. Ver «PREPROD-AUDIT».
+11. **Auditoría preproducción (16-10-2026):** fases 1 y 3 integradas (PR #22 y #23); fase 2 en curso en `fix/preprod-phase2` (Astra en high, una ejecución cada vez), empezando por FE-01, VIS-01 y VIS-02. Ver «PREPROD-AUDIT».
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 
