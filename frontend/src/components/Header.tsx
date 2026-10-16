@@ -11,7 +11,7 @@ import { matchPage, pageKey } from '../i18n/routes';
 const MENU_CLOSE_MS = 420;
 // Everything behind the open menu: out of the tab order and the accessibility tree while it covers them.
 const BEHIND_MENU = '#main-content, .site-footer, .catalogue-cta, .skip-link';
-// The Home's scroll scenes keep the see-through header, always on screen.
+// The Home's scroll scenes keep the see-through header when it returns.
 const SCENES = '#hero, #criterio, #coches';
 // Scroll needed in one direction before the header hides or comes back (ignores jitter).
 const QUICK_RETURN_PX = 8;
@@ -95,7 +95,7 @@ export function Header() {
   }, [page]);
 
   // Quick return: reading down the page the header slides away, so text never runs under the logo and
-  // links; any scroll up brings it back over glass. Over the Home's scenes and at the top it stays.
+  // links; any scroll up brings it back. Home scenes stay see-through; other content gets glass.
   useEffect(() => {
     const header = headerRef.current;
     const backdrop = backdropRef.current;
@@ -117,8 +117,8 @@ export function Header() {
       }
       const surface = surfaceAt(header.offsetHeight / 2);
       const pastTop = y > header.offsetHeight;
-      // Never hidden over a scene, at the top or while keyboard focus is in it.
-      const hidden = surface !== null && pastTop && goingDown && !header.contains(document.activeElement);
+      // Never hidden at the top or while keyboard focus is in it; CSS also keeps the open menu visible.
+      const hidden = pastTop && goingDown && !header.contains(document.activeElement);
       const glass = surface !== null && pastTop ? surface : null;
       [header, backdrop].forEach((element) => {
         set(element, 'hidden', hidden ? '' : null);

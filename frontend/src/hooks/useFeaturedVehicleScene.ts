@@ -6,7 +6,7 @@ import { observeResize, refreshAfterFonts, scheduleScrollRefresh } from '../lib/
 gsap.registerPlugin(ScrollTrigger);
 
 /** Entrance for the featured vehicle: the heading follows the scroll; the piece plays one composed reveal. */
-export function useFeaturedVehicleScene(sectionRef: RefObject<HTMLElement | null>, vehicleKey: string, locale: string) {
+export function useFeaturedVehicleScene(sectionRef: RefObject<HTMLElement | null>, hasVehicle: boolean) {
   useLayoutEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -27,19 +27,18 @@ export function useFeaturedVehicleScene(sectionRef: RefObject<HTMLElement | null
     }, section);
 
     const observer = observeResize(section);
-    section.addEventListener('load', scheduleScrollRefresh, true);
+    // Covers have a fixed aspect ratio: only a real section resize needs a refresh.
     refreshAfterFonts();
     scheduleScrollRefresh();
     return () => {
       observer.disconnect();
-      section.removeEventListener('load', scheduleScrollRefresh, true);
       media.revert();
     };
-  }, [sectionRef, locale]);
+  }, [sectionRef]);
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
-    if (!section) return;
+    if (!section || !hasVehicle) return;
     const media = gsap.matchMedia();
     media.add('(prefers-reduced-motion: no-preference) and (min-height: 600px)', () => {
 
@@ -67,5 +66,5 @@ export function useFeaturedVehicleScene(sectionRef: RefObject<HTMLElement | null
 
     scheduleScrollRefresh();
     return () => media.revert();
-  }, [sectionRef, vehicleKey, locale]);
+  }, [sectionRef, hasVehicle]);
 }

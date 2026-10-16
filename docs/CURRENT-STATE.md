@@ -65,6 +65,8 @@ Cada punto se reprodujo antes en el stack `gpselect-audit` (build de `main`, con
 - **VIS-05:** Contacto < 1024 px: el contacto directo va entre las opciones y el formulario (segunda copia en el DOM, una sola visible; orden de foco = orden visual) y sin la franja de 72 px ante el pie. Escritorio sin cambios.
 - **FE-02:** `lib/catalogueReturn.ts` (en memoria: una recarga empieza arriba) guarda filtros, scroll y tanda al abrir una ficha del catálogo; atrás del navegador y «← Vehículos» vuelven a la misma tarjeta, con la misma tanda («Ver más») y los filtros. Desde el menú, catálogo nuevo arriba.
 - **Verificación:** typecheck, lint, Vitest 225/225, build; navegador con build antes/después (preview) y stack de producción local con 12 coches: todo lo anterior a 390/768/1024/1440/1920 y 844×390, ES y EN, sin errores ni desborde.
+- **P3 (16-10-2026):** VIS-03 idioma inactivo sin `opacity: .55` (el subrayado marca el activo). **VIS-06:** el header «quick return» se esconde también al bajar por `#hero`, `#criterio` y `#coches` y vuelve al subir con el tono de la escena (antes, siempre visible ahí: cambio de comportamiento aprobado en 07-10, pendiente del visto bueno del usuario). VIS-07 sin filete tras la banda oscura (Importación y fichas sin galería extra). VIS-08 «Procedencia» en `type-body`. VIS-09 H1 de la 404 con `font-stretch` de display. VIS-10 el pie reserva el hueco del CTA solo si lo hay (`:has(+ .catalogue-cta)`). **FE-05:** la rotación del destacado ya no reconstruye la escena ni refresca ScrollTrigger (nodos estables con `hidden`; los `pin-spacer` no cambian en 23 s con dos rotaciones). **FE-03:** `lang="es"` en descripción, historial, equipamiento y especificaciones propias de las fichas EN (SPA y `VehicleSeo.cs`). **FE-04:** el preloader solo precarga el listado en la Home (0 peticiones en Contacto e Importación).
+- **Sin hacer:** VIS-11 (EN llama al catálogo «Stock», «Vehicles» y «View catalogue»): decisión de copy del usuario. X-01 y DB-01 no estaban en ninguna fase.
 
 ### Fase 3 · Admin y backend menor (16-10-2026, PR #23)
 
@@ -810,7 +812,7 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 8. **3C final visual / asset polish** (**PASS**, 01-10-2026: UI Simplification, QA A–G y Real Stack Regression incluidas; sin push ni merge);
 9. **Siguiente: por decidir por el usuario**: sustituir las fotos del usuario según lleguen, y después 3D final release QA. SEO y dominio/deploy son fases aparte. NO iniciada.
 10. **SEO Fase B:** B0 aceptado con salvedad y B1 aprobado; B2/B3 integrados en main. B4 y B5 integrados en main (PR #7 y #8). B6 en `feat/seo-b6-headings`, pendiente de revisión; después B8. Plan en `docs/SEO-PHASE-B.md`.
-11. **Auditoría preproducción (16-10-2026):** fases 1 y 3 integradas (PR #22 y #23); fase 2 en `fix/preprod-phase2`: FE-01, VIS-01, VIS-02, VIS-04, VIS-05 y FE-02 hechos; quedan los P3 (VIS-03, VIS-06 a VIS-11, FE-03, FE-04, FE-05). Ver «PREPROD-AUDIT».
+11. **Auditoría preproducción (16-10-2026):** fases 1 y 3 integradas (PR #22 y #23); fase 2 en `fix/preprod-phase2`: hecha salvo VIS-11 (copy, decide el usuario); pendiente de aprobación. Ver «PREPROD-AUDIT».
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 

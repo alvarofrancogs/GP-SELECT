@@ -75,6 +75,8 @@
 .vehicle-detail__extra-item img { object-fit: var(--vehicle-image-fit); }
 .vehicle-detail__extra-item:nth-child(even) { margin-bottom: 12%; }
 .vehicle-detail__closing { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2.5rem; border-top: 1px solid var(--interior-rule); }
+/* Without the extra gallery, the dark band's edge is already the divider. */
+.interior-band + .vehicle-detail__closing { border-top: 0; }
 .vehicle-detail__closing h2 { max-width: min(22ch, 100%); font-size: clamp(2rem, 3.6vw, 4.5rem); }
 
 .vehicle-gallery { min-width: 0; }

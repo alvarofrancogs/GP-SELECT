@@ -5,6 +5,8 @@
   color: var(--color-ink);
 }
 
+.featured [hidden] { display: none; }
+
 .featured__title {
   margin-bottom: var(--space-8);
   font-family: var(--font-family);

@@ -162,6 +162,8 @@
   border-top: 1px solid var(--interior-rule);
   padding-block: clamp(2rem, 3vw, 3.5rem) clamp(3.5rem, 5vw, 6rem);
 }
+/* The dark band's edge already separates these sections. */
+.interior-band + .import-brief { border-top: 0; }
 .import-brief h2 { max-width: 18ch; margin-bottom: 1.5rem; }
 .import-brief__copy .type-body { max-width: 45ch; }
 .import-brief__list { list-style: none; padding: 0; margin: 0; }

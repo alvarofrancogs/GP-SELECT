@@ -36,9 +36,9 @@ dialog { overscroll-behavior: contain; }
 .site-header[data-tone-scene='hero'][data-tone='light'] { color: #000; }
 .site-header[data-tone-scene='hero'][data-tone='dark'] { text-shadow: 0 0 1px rgb(9 10 12 / .8), 0 0 3px rgb(9 10 12 / .5), 0 0 .5em rgb(9 10 12 / .3); }
 .site-header[data-tone-scene='hero'][data-tone='dark'] button { text-shadow: inherit; }
-/* Quick return (Header.tsx): over the pages' content the header slides away while reading down and comes
-   back on the way up over frosted glass, the same glass as the catalogue pill. At the top of a page and over
-   the Home's scenes it stays as it was: always there and see-through. The glass sits outside the header,
+/* Quick return (Header.tsx): the header slides away while reading down and comes back on the way up.
+   Over page content it uses frosted glass, the same glass as the catalogue pill; at the top and over
+   the Home's scenes it stays see-through. The glass sits outside the header,
    which is blended. Over the glass the header drops the blend for crisp ink (or white over dark bands). */
 .site-header, .header-backdrop { transition: transform 260ms var(--ease-out); }
 .site-header[data-hidden], .header-backdrop[data-hidden] { transform: translateY(-100%); }
@@ -70,10 +70,10 @@ dialog { overscroll-behavior: contain; }
 .site-header[data-tone-scene='hero'][data-tone='dark'] .header-brand { filter: drop-shadow(0 0 1px rgb(9 10 12 / .8)) drop-shadow(0 0 3px rgb(9 10 12 / .5)); }
 .header-actions { margin-left: auto; }
 .language-switcher { display: flex; align-items: center; gap: var(--space-2); padding-left: var(--space-6); border-left: var(--border-width) solid currentColor; }
-.language-switcher a { display: inline-flex; align-items: center; justify-content: center; min-width: 1.5rem; min-height: 1.5rem; padding: var(--space-1); font-family: var(--font-family); font-size: var(--header-nav-size); opacity: .55; }
+.language-switcher a { display: inline-flex; align-items: center; justify-content: center; min-width: 1.5rem; min-height: 1.5rem; padding: var(--space-1); font-family: var(--font-family); font-size: var(--header-nav-size); }
 /* Touch targets of at least 24 px without moving the type: the brand grows an invisible hit area. */
 .header-brand::after { content: ''; position: absolute; inset: -.375rem -.25rem; }
-.language-switcher a[aria-current='true'] { opacity: 1; text-decoration: underline; text-underline-offset: .35em; }
+.language-switcher a[aria-current='true'] { text-decoration: underline; text-underline-offset: .35em; }
 .menu-toggle { display: none; border: 0; background: none; padding: var(--space-3); margin-right: calc(var(--space-3) * -1); color: inherit; }
 /* Two rules that cross into an X; drawn, not a glyph. */
 .menu-toggle__icon { position: relative; display: block; width: 1.5rem; height: .75rem; }
@@ -98,7 +98,7 @@ dialog { overscroll-behavior: contain; }
 .eyebrow { font-family: var(--font-family); font-stretch: var(--type-label-width); font-size: var(--text-label); font-weight: var(--type-label-weight); letter-spacing: var(--type-label-tracking); line-height: var(--type-label-leading); text-transform: uppercase; }
 .header-nav, .mobile-nav, .language-switcher a { font-stretch: var(--type-ui-width); font-weight: var(--type-ui-weight); letter-spacing: var(--type-ui-tracking); line-height: var(--type-ui-leading); }
 .planned-page { min-height: 100svh; display: flex; align-items: center; padding-block: calc(var(--header-height) + var(--space-7)); }
-.planned-page h1 { max-width: 15ch; margin-block: var(--space-6); font: var(--weight-display) var(--text-h1)/1 var(--font-family); letter-spacing: var(--tracking-display); }
+.planned-page h1 { max-width: 15ch; margin-block: var(--space-6); font: var(--weight-display) var(--text-h1)/1 var(--font-family); font-stretch: var(--type-display-width); letter-spacing: var(--tracking-display); }
 .planned-page p { max-width: 46ch; margin-block: var(--space-5); font-size: var(--text-body); line-height: 1.5; }
 .planned-page__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-5) var(--space-6); margin-top: var(--space-6); }
 

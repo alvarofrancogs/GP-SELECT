@@ -51,10 +51,11 @@ export function Preloader() {
     shown = true;
     markSeen();
     const start = performance.now();
+    // Only the Home needs the vehicle list at start-up (its featured vehicle). The catalogue arrives with its
+    // list in the page, and Contact or a vehicle page never needs the whole inventory.
     const tasks = [
       document.fonts.ready,
-      prefetchVehicles(),
-      ...(onHome ? [loadImage(sceneAssets.heroBackground), loadImage(sceneAssets.heroCar)] : []),
+      ...(onHome ? [prefetchVehicles(), loadImage(sceneAssets.heroBackground), loadImage(sceneAssets.heroCar)] : []),
     ];
     let done = 0;
     tasks.forEach((task) => void Promise.resolve(task).finally(() => { done += 1; }));
