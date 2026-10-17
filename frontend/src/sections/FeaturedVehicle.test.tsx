@@ -76,6 +76,10 @@ describe('featured vehicle scene lifetime', () => {
     expect(motion.timeline).toHaveBeenCalledWith(expect.objectContaining({
       scrollTrigger: expect.objectContaining({ id: 'featured-piece', toggleActions: 'play none none reverse' }),
     }));
+    // Invalidating on refresh dropped the start state of the staggered lines after the first: they blinked.
+    const triggers = motion.timeline.mock.calls.map(([options]) => options.scrollTrigger);
+    expect(triggers.map(({ id }) => id)).toEqual(['featured-enter', 'featured-piece']);
+    expect(triggers.some((trigger) => trigger.invalidateOnRefresh)).toBe(false);
 
     motion.index = 1;
     rerender(<Page />);
