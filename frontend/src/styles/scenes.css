@@ -9,6 +9,15 @@
 /* Avoid overflow: hidden on ScrollTrigger pins: Chrome counts each pin/unpin as a full-screen layout shift.
    The section clips the X axis; clip-path preserves the visual crop and flow-root preserves the BFC. */
 .scroll-scene__pin { position: relative; height: 100vh; height: 100lvh; display: flow-root; clip-path: inset(0); isolation: isolate; }
+/* While fixed, a pin's height is frozen in pixels (ScrollTrigger). When a phone's toolbar hides, the screen grows without
+   a refresh (GSAP ignores those resizes on touch screens) and the page showed as a paper band under the scene. There the
+   pinned scene paints up to a quarter of its height below itself, over its section, which takes the colour of the
+   Porsche at the foot of the hero (the car itself overflows into that band). */
+@media (max-width: 1023px), (pointer: coarse) {
+  .scroll-scene__pin.is-pinned { clip-path: inset(0 0 -25% 0); }
+  .scroll-scene.hero-scene[data-motion='scroll'] { background: rgb(66 55 50); }
+  .hero-handoff::after { content: ''; position: absolute; top: 100%; left: 0; right: 0; height: 25%; background: var(--color-handoff-edge); }
+}
 .scene-background { position: absolute; inset: 0; z-index: var(--z-background); }
 .hero-scene .scene-background { bottom: -3%; }
 .asset-slot { position: relative; width: 100%; height: 100%; }
