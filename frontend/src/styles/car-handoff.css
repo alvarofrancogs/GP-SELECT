@@ -110,7 +110,8 @@
      as large as that room allows, so a short phone keeps every line the desktop shows. */
   .car-handoff {
     --car-top: calc(16% + var(--hero-size) * 2.2 + var(--space-5) + 10.5rem);
-    --car-height: min(38%, calc(100% - var(--car-top) - 5.75rem));
+    /* Keep space below the car while it is still at its larger arrival scale. */
+    --car-height: min(38%, calc(100% - var(--car-top) - 7.25rem));
   }
   .car-handoff .hero-title { top: 16%; flex-direction: column; gap: var(--space-2); }
   .car-handoff .hero-title > span:last-child { align-self: flex-end; }
@@ -118,8 +119,9 @@
   .car-handoff [data-layout='left'] .hero-title > span:last-child { align-self: flex-start; }
   /* Right under the two-line headline (fitted words never grow past --hero-size), so the fact clears the car. */
   .car-handoff .hero-description, .car-handoff [data-layout] .hero-description { top: calc(16% + var(--hero-size) * 2.2 + var(--space-5)); bottom: auto; }
-  .car-handoff [data-layout='right'] .hero-description { left: auto; right: var(--page-gutter); text-align: right; }
-  .car-handoff [data-layout='right'] .car-handoff__fact { margin-left: auto; }
+  /* Long supporting copy keeps the same reading edge in all three phone states. */
+  .car-handoff [data-layout='right'] .hero-description { left: var(--page-gutter); right: var(--page-gutter); text-align: left; }
+  .car-handoff [data-layout='right'] .car-handoff__fact { margin-left: 0; }
   .car-handoff__fact { max-width: 40ch; margin-top: var(--space-3); font-size: .75rem; }
   .car-handoff__interlude { top: 16%; bottom: auto; left: var(--page-gutter); right: var(--page-gutter); max-width: none; text-align: left; font-size: 1.375rem; }
   .car-handoff__contrast { background: linear-gradient(to bottom, rgb(16 17 18 / .32) 70%, transparent); }
