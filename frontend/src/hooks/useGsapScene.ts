@@ -8,9 +8,10 @@ gsap.registerPlugin(ScrollTrigger);
 
 export type SceneKind = 'hero' | 'process';
 
+// Scroll per scene, in viewports: 15 % shorter since 17-10-2026 (it took too much scrolling).
 const scrollDistance: Record<SceneKind, { desktop: number; mobile: number }> = {
-  hero: { desktop: 2.5, mobile: 2 },
-  process: { desktop: 3, mobile: 2.5 },
+  hero: { desktop: 2.125, mobile: 1.7 },
+  process: { desktop: 2.55, mobile: 2.125 },
 };
 
 // Scrub smoothing in seconds: the car scene carries more inertia than lettering.
@@ -28,7 +29,8 @@ const HERO_DEPTH = 1.06;
 // `dark` is the handoff layer's opacity at which the sky has turned mid-grey (it used to be reached at 0.72 of the pin).
 const HERO_TONE = { light: 0.45, dark: 0.44 };
 // The hero is fully darkened by the time Process starts to rise over it (scroll distance, in viewports).
-const HERO_DARKEN_BY = 1.45;
+// Process rises over the hero's last viewport, so this moved with the shorter scene (1.45 → 1.075).
+const HERO_DARKEN_BY = 1.075;
 // Process lands instead of stopping dead: its lettering rises this much lower (in viewports) and, once
 // pinned, keeps rising and slows to rest over twice that scroll. power1.out starts at twice its average
 // speed, so the lettering leaves the scroll at the scroll's own speed, with no hard stop.
