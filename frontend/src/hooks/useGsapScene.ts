@@ -226,9 +226,9 @@ export function useGsapScene(kind: SceneKind, id: string) {
       section,
     );
 
-    // Fonts, replacement assets and translations may change the layout.
+    // Fonts and translations may change the layout. Images do not: their boxes are sized by CSS, and a
+    // refresh for each late image interrupted the scroll on phones.
     refreshAfterFonts();
-    section.addEventListener('load', scheduleScrollRefresh, true);
     const observer = new MutationObserver(scheduleScrollRefresh);
     // Ignore child-list changes: ScrollTrigger temporarily reparents the pin on refresh.
     observer.observe(section, { characterData: true, subtree: true });
@@ -236,7 +236,6 @@ export function useGsapScene(kind: SceneKind, id: string) {
 
     return () => {
       observer.disconnect();
-      section.removeEventListener('load', scheduleScrollRefresh, true);
       matchMedia.revert();
       delete section.dataset.motion;
       delete section.dataset.progress;
