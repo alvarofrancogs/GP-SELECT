@@ -53,6 +53,10 @@
   background: var(--color-placeholder);
 }
 .featured__image, .featured__image img, .featured__empty { width: 100%; height: 100%; }
+/* Rotation: the photograph and its data fade out, change and fade back in (FeaturedVehicle, SWAP_OUT_MS).
+   Their wrappers only: the entrance animates the lines and the frame inside them. */
+.featured__image, .featured__data { transition: opacity 380ms var(--ease-out); }
+.featured--swapping :is(.featured__image, .featured__data) { opacity: 0; transition-duration: 200ms; transition-timing-function: var(--ease-in); }
 .featured__image img { object-fit: cover; transition: transform 700ms var(--ease-cinematic); }
 .featured__empty { background: linear-gradient(150deg, #dcdcd7, var(--color-placeholder) 55%, #cfd0cb); }
 
