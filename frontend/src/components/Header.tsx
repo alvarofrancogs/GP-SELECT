@@ -15,6 +15,18 @@ const BEHIND_MENU = '#main-content, .site-footer, .catalogue-cta, .skip-link';
 const SCENES = '#hero, #criterio, #coches';
 // Scroll needed in one direction before the header hides or comes back (ignores jitter).
 const QUICK_RETURN_PX = 8;
+// Where the header has no blend (global.css): a blended fixed header flickers over scrolling scenes on touch screens.
+const PLAIN_HEADER = '(max-width: 1199px), (pointer: coarse)';
+// Without the blend, these dark layers turn the header white when no scene sets its tone: Process, its veil lifting
+// off the car scene (no pointer events, so measured by position), dark bands and the footer.
+const DARK_LAYERS = '.process-scene, [data-handoff-veil], .interior-band, .site-footer';
+
+function darkUnder(y: number) {
+  return Array.from(document.querySelectorAll<HTMLElement>(DARK_LAYERS)).some((layer) => {
+    const box = layer.getBoundingClientRect();
+    return box.top <= y && box.bottom > y && Number(getComputedStyle(layer).opacity) > 0.5;
+  });
+}
 
 /** Tone of the full-width surface under the header line, or null over a scene. */
 function surfaceAt(y: number): 'light' | 'dark' | null {
@@ -58,6 +70,7 @@ export function Header() {
       .map((id) => document.getElementById(id))
       .filter((scene): scene is HTMLElement => scene !== null);
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const plain = window.matchMedia(PLAIN_HEADER);
     let frame = 0;
     function updateContrast() {
       if (!header) return;
@@ -69,6 +82,9 @@ export function Header() {
         delete header.dataset.tone;
         delete header.dataset.toneScene;
       }
+      // Without the blend, the header takes the colour of whatever is under it when no scene sets its tone.
+      if (!source && plain.matches && darkUnder(header.offsetHeight / 2)) header.dataset.surface = 'dark';
+      else delete header.dataset.surface;
     }
     // Never cancel a pending frame: while a scrubbed scene keeps publishing its tone, that would
     // starve the update and leave the previous contrast on screen.
@@ -83,14 +99,18 @@ export function Header() {
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     reducedMotion.addEventListener('change', onScroll);
+    // Pins and late images move the page under a still scroll position while it settles.
+    const settle = window.setTimeout(onScroll, 600);
     return () => {
       cancelAnimationFrame(frame);
+      window.clearTimeout(settle);
       observer.disconnect();
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
       reducedMotion.removeEventListener('change', onScroll);
       delete header.dataset.tone;
       delete header.dataset.toneScene;
+      delete header.dataset.surface;
     };
   }, [page]);
 

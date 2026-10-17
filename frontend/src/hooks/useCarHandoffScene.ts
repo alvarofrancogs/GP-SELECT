@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { refreshAfterFonts, scheduleScrollRefresh } from '../lib/scrollRefresh';
+import { TOUCH_MOTION, blur } from '../lib/touchMotion';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -33,6 +34,8 @@ const AT = {
 };
 
 const STACKED = '(max-width: 1023px)';
+// A finger's own momentum already smooths the scroll: with the full lag, the car kept drifting after it.
+const TOUCH_LAG = 0.5;
 
 /** Shrinks a word from its CSS size (the hero's) only when it does not fit its room. */
 function fitWord(word: HTMLElement, room: number) {
@@ -104,8 +107,9 @@ export function useCarHandoffScene(locale: string) {
       mobile: '(max-width: 1023px)',
       reduced: '(prefers-reduced-motion: reduce)',
       enoughHeight: '(min-height: 600px)',
+      touch: TOUCH_MOTION,
     }, (context) => {
-      const { desktop, reduced, enoughHeight } = context.conditions!;
+      const { desktop, reduced, enoughHeight, touch } = context.conditions!;
       section.dataset.motion = reduced || !enoughHeight ? 'static' : 'scroll';
       fit();
       if (reduced || !enoughHeight) {
@@ -164,17 +168,17 @@ export function useCarHandoffScene(locale: string) {
           pin,
           pinSpacing: true,
           anticipatePin: 1,
-          scrub: 0.5,
+          scrub: 0.5 * (touch ? TOUCH_LAG : 1),
           onUpdate: ({ progress }) => { section.dataset.progress = progress.toFixed(4); },
         },
       });
       scene.to({}, { duration: DISTANCE }, 0);
 
       const enter = (targets: gsap.TweenTarget, at: number) => scene.fromTo(targets,
-        { opacity: 0, yPercent: 30, filter: 'blur(10px)' },
-        { opacity: 1, yPercent: 0, filter: 'blur(0px)', duration: 0.27, stagger: 0.054, ease: 'power3.out' }, at);
+        { opacity: 0, yPercent: 30, ...blur(touch, 10) },
+        { opacity: 1, yPercent: 0, ...blur(touch, 0), duration: 0.27, stagger: 0.054, ease: 'power3.out' }, at);
       const leave = (targets: gsap.TweenTarget, at: number) => scene.to(targets,
-        { opacity: 0, yPercent: -20, filter: 'blur(8px)', duration: 0.18, stagger: 0.036 }, at);
+        { opacity: 0, yPercent: -20, ...blur(touch, 8), duration: 0.18, stagger: 0.036 }, at);
 
       enter(lines('a'), 0.55);
       // Once the car has parked, the first headline drops out of the frame behind it, a little
@@ -204,7 +208,7 @@ export function useCarHandoffScene(locale: string) {
       // Car timeline: same range, heavier scrub for some inertia. The world never moves, only the car.
       const cars = gsap.timeline({
         defaults: { ease: 'none' },
-        scrollTrigger: { ...trigger, id: 'scene-car-handoff-cars', scrub: 1 },
+        scrollTrigger: { ...trigger, id: 'scene-car-handoff-cars', scrub: touch ? TOUCH_LAG : 1 },
       });
       cars.to({}, { duration: DISTANCE }, 0);
       // It rises at the speed of the scroll until it reaches its box, as if the page carried it…

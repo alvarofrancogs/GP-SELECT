@@ -1,10 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigationType, useSearchParams } from 'react-router-dom';
 import { InteriorPageHeader } from '../components/InteriorPageHeader';
-import { VehicleGrid } from '../components/VehicleGrid';
+import { VehicleGrid, VehicleGridPlaceholder } from '../components/VehicleGrid';
 import { VehicleFilters } from '../components/VehicleFilters';
 import { useLanguage } from '../i18n/useLanguage';
-import { consumeInitialVehicles, getInitialVehicles, listVehicles } from '../services/vehicles';
+import { consumeInitialVehicles, getInitialVehicles, lastVehicles, listVehicles } from '../services/vehicles';
 import { filterVehicles, sanitizeParams, sortVehicles, vehicleFilterKeys } from '../lib/vehicleFacets';
 import type { FacetKey } from '../lib/vehicleFacets';
 import type { VehicleSummary } from '../types/vehicle';
@@ -28,8 +28,10 @@ export function Vehicles() {
   });
   // Rendering the list at once keeps the closing section from moving down when it arrives.
   const [initialList] = useState(() => getInitialVehicles(key));
-  const [vehicles, setVehicles] = useState<VehicleSummary[]>(initialList ?? []);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(initialList ? 'ready' : 'loading');
+  // A list already read in this visit (the Home's featured car, an earlier catalogue) is shown while a fresh one loads.
+  const [known] = useState(() => initialList ? null : lastVehicles());
+  const [vehicles, setVehicles] = useState<VehicleSummary[]>(initialList ?? known ?? []);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(initialList || known ? 'ready' : 'loading');
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     consumeInitialVehicles();
@@ -37,9 +39,10 @@ export function Vehicles() {
     const request = new AbortController();
     // The list prefetched by the start-up screen ignores this signal: drop it if the page has gone.
     listVehicles(request.signal).then((data) => { if (!request.signal.aborted) { setVehicles(data); setStatus('ready'); } },
-      () => { if (!request.signal.aborted) setStatus('error'); });
+      // A failed refresh keeps the list on screen.
+      () => { if (!request.signal.aborted && !(known && attempt === 0)) setStatus('error'); });
     return () => request.abort();
-  }, [attempt, initialList]);
+  }, [attempt, initialList, known]);
   // The URL is the source of truth; selections that no longer exist are dropped before rendering.
   const clean = useMemo(() => status === 'ready' ? sanitizeParams(vehicles, params) : params, [status, vehicles, params]);
   useEffect(() => {
@@ -64,7 +67,7 @@ export function Vehicles() {
   }
   return <article className="interior-page vehicles-page">
     <InteriorPageHeader {...text} />
-    {status === 'loading' ? <p className="vehicle-state type-lede" role="status">{text.loading}</p> : null}
+    {status === 'loading' ? <VehicleGridPlaceholder label={text.loading} /> : null}
     {status === 'error' ? <div className="vehicle-state" role="alert"><p className="type-lede">{text.error}</p><button className="editorial-link type-ui" onClick={() => { setStatus('loading'); setAttempt(attempt + 1); }}>{text.retry}</button></div> : null}
     {status === 'ready' && !vehicles.length ? <div className="vehicle-state"><h2 className="type-section">{text.emptyCatalogue}</h2><div className="vehicle-state__links"><Link className="editorial-link type-ui" to={searchUrl}>{text.search}<span aria-hidden="true">→</span></Link></div></div> : null}
     {status === 'ready' && vehicles.length ? <>

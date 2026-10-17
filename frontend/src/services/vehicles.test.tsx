@@ -206,6 +206,15 @@ describe('requests shared by readers that ask at once', () => {
     expect(detail.fetch).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the last list read for the next catalogue visit', async () => {
+    window.history.replaceState(null, '', '/');
+    answering([card]);
+    const { lastVehicles, listVehicles } = await import('./vehicles');
+    expect(lastVehicles()).toBeNull();
+    await listVehicles();
+    expect(lastVehicles()).toMatchObject([{ slug: 'bmw-m4', model: 'M4' }]);
+  });
+
   it('still cancels the request when its only reader goes away', async () => {
     window.history.replaceState(null, '', '/vehiculos');
     const { fetch, signals } = answering([card]);

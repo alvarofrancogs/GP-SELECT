@@ -38,6 +38,8 @@
   --cta-fill-ink: var(--color-white);
 }
 .catalogue-cta[aria-disabled='true'] { cursor: progress; }
+/* Over content it would cover (CatalogueCta.tsx) it steps aside; keyboard focus still brings it back. */
+.catalogue-cta[data-away]:not(:focus-visible) { opacity: 0; pointer-events: none; }
 
 .catalogue-cta__body {
   position: relative;
@@ -113,6 +115,12 @@
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .catalogue-cta__body { background: rgb(18 19 21 / .86); }
+  .catalogue-cta[data-tone='light'] .catalogue-cta__body { background: rgb(245 242 236 / .92); }
+}
+
+/* Touch screens: no live blur behind the pill while the scenes move under it (it flickered): the solid tint above. */
+@media (max-width: 1023px), (pointer: coarse) {
+  .catalogue-cta__body { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgb(18 19 21 / .86); will-change: auto; }
   .catalogue-cta[data-tone='light'] .catalogue-cta__body { background: rgb(245 242 236 / .92); }
 }
 
