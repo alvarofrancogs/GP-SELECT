@@ -74,6 +74,14 @@ if (typeof document !== 'undefined' && /^\/(?:vehiculos|en\/vehicles)\/?$/i.test
   script?.remove();
 }
 const listEmbedded = initialList !== null;
+// The last list read in this visit: a later catalogue shows it straight away while it asks for a fresh one,
+// instead of an empty page that jumps when the list arrives.
+let lastList: VehicleSummary[] | null = initialList;
+
+/** The last list read in this visit, if any. */
+export function lastVehicles(): VehicleSummary[] | null {
+  return lastList;
+}
 
 /** The first catalogue render of the document's own history entry starts from the embedded list. */
 export function getInitialVehicles(locationKey: string): VehicleSummary[] | null {
@@ -121,7 +129,8 @@ const PREFETCH_TTL = 8000;
 async function fetchVehicles(signal?: AbortSignal): Promise<VehicleSummary[]> {
   const response = await fetch(API, { signal });
   if (!response.ok) throw new Error(`Vehicle list failed (${response.status})`);
-  return ((await response.json()) as VehiclePublicCardDto[]).map(fromPublicCard);
+  lastList = ((await response.json()) as VehiclePublicCardDto[]).map(fromPublicCard);
+  return lastList;
 }
 
 /** Starts loading the list ahead of time (errors are left to the first real reader). */

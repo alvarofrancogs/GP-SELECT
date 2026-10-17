@@ -7,6 +7,11 @@
 .vehicle-filters__toggle { display: none; }
 .vehicle-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: clamp(1.5rem, 3vw, 4rem); }
 .vehicle-grid__more { display: flex; justify-content: center; }
+/* Loading (VehicleGridPlaceholder): the filters' and cards' boxes, with quiet bars where their text will be. */
+.vehicle-placeholder__filters { min-height: 162px; }
+.vehicle-placeholder__card :is(span, p) { display: block; width: fit-content; min-width: 45%; color: transparent; background: linear-gradient(var(--color-placeholder), var(--color-placeholder)) 0 50% / 100% .6em no-repeat; }
+.vehicle-placeholder__card .vehicle-card__variant { min-width: 65%; }
+.vehicle-placeholder__card .vehicle-card__link { min-width: 25%; }
 .vehicle-card { scroll-margin-top: calc(var(--header-height) + 1.5rem); }
 /* Five shared content tracks align each row without fixed card heights. */
 .vehicle-card { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: subgrid; grid-row: span 5; row-gap: 0; margin-bottom: clamp(4.5rem, 8vw, 10rem); }
@@ -101,12 +106,14 @@
 .vehicle-gallery__dialog > p { margin-top: 1rem; font-size: .75rem; }
 
 @media (min-width: 1800px) {
+  .vehicle-placeholder__filters { min-height: 111px; }
   .vehicle-filters { display: flex; align-items: center; gap: 2rem; }
   .vehicle-filters__fields { flex: 1; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1.25rem; }
   .vehicle-filter { grid-template-columns: minmax(0, 1fr); gap: .1rem; }
   .vehicle-filters__result { border: 0; flex-direction: column; align-items: flex-end; gap: .5rem; }
 }
 @media (min-width: 768px) and (max-width: 1199px) {
+  .vehicle-placeholder__filters { min-height: 195px; }
   .vehicle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .vehicle-filters__fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .vehicle-filter { grid-template-columns: minmax(0, 1fr); gap: .1rem; }
@@ -115,6 +122,7 @@
   .vehicle-detail__section { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 3vw; }
 }
 @media (max-width: 767px) {
+  .vehicle-placeholder__filters { min-height: 78px; }
   .vehicle-filters { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; padding-block: 1rem; }
   .vehicle-filters__toggle { display: inline-flex; min-height: 2.75rem; align-items: center; }
   .vehicle-filters__fields { display: none; flex: 0 0 100%; order: 3; width: 100%; grid-template-columns: minmax(0, 1fr); padding-top: 2rem; }

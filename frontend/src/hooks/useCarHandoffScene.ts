@@ -2,11 +2,18 @@ import { useLayoutEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { refreshAfterFonts, scheduleScrollRefresh } from '../lib/scrollRefresh';
+import { TOUCH_MOTION, blur } from '../lib/touchMotion';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Process has handed over the frame by this scroll (viewports into the scene): fixed by the CSS overlap.
+const HANDOVER = 0.75;
+// Everything after the handover runs on 15 % less scroll since 17-10-2026 (it took too much scrolling).
+const PACE = 0.85;
+/** A position of the original choreography (in viewports) on the shorter scroll. */
+const at = (t: number) => (t <= HANDOVER ? t : HANDOVER + (t - HANDOVER) * PACE);
 // Pin length in viewport heights; afterwards the scene leaves with the page.
-const DISTANCE = 4.9;
+const DISTANCE = at(4.9);
 // Gap between the headlines, as a multiple of the car width, plus a margin per side.
 const GAP_FACTOR = 1.3;
 const GAP_MARGIN = 24;
@@ -26,13 +33,15 @@ const CURTAIN_FROM = 240;
 const AT = {
   shown: 0.68, // Process has handed over the frame
   rise: 0.7,
-  shrink: [0.7, 3.1],
-  curtain: [3.1, 4.15],
-  weather: [1.5, 4.15],
-  ink: 3.5,
+  shrink: [0.7, at(3.1)],
+  curtain: [at(3.1), at(4.15)],
+  weather: [at(1.5), at(4.15)],
+  ink: at(3.5),
 };
 
 const STACKED = '(max-width: 1023px)';
+// A finger's own momentum already smooths the scroll: with the full lag, the car kept drifting after it.
+const TOUCH_LAG = 0.5;
 
 /** Shrinks a word from its CSS size (the hero's) only when it does not fit its room. */
 function fitWord(word: HTMLElement, room: number) {
@@ -104,8 +113,9 @@ export function useCarHandoffScene(locale: string) {
       mobile: '(max-width: 1023px)',
       reduced: '(prefers-reduced-motion: reduce)',
       enoughHeight: '(min-height: 600px)',
+      touch: TOUCH_MOTION,
     }, (context) => {
-      const { desktop, reduced, enoughHeight } = context.conditions!;
+      const { desktop, reduced, enoughHeight, touch } = context.conditions!;
       section.dataset.motion = reduced || !enoughHeight ? 'static' : 'scroll';
       fit();
       if (reduced || !enoughHeight) {
@@ -164,17 +174,17 @@ export function useCarHandoffScene(locale: string) {
           pin,
           pinSpacing: true,
           anticipatePin: 1,
-          scrub: 0.5,
+          scrub: 0.5 * (touch ? TOUCH_LAG : 1),
           onUpdate: ({ progress }) => { section.dataset.progress = progress.toFixed(4); },
         },
       });
       scene.to({}, { duration: DISTANCE }, 0);
 
-      const enter = (targets: gsap.TweenTarget, at: number) => scene.fromTo(targets,
-        { opacity: 0, yPercent: 30, filter: 'blur(10px)' },
-        { opacity: 1, yPercent: 0, filter: 'blur(0px)', duration: 0.27, stagger: 0.054, ease: 'power3.out' }, at);
-      const leave = (targets: gsap.TweenTarget, at: number) => scene.to(targets,
-        { opacity: 0, yPercent: -20, filter: 'blur(8px)', duration: 0.18, stagger: 0.036 }, at);
+      const enter = (targets: gsap.TweenTarget, position: number) => scene.fromTo(targets,
+        { opacity: 0, yPercent: 30, ...blur(touch, 10) },
+        { opacity: 1, yPercent: 0, ...blur(touch, 0), duration: 0.27 * PACE, stagger: 0.054 * PACE, ease: 'power3.out' }, position);
+      const leave = (targets: gsap.TweenTarget, position: number) => scene.to(targets,
+        { opacity: 0, yPercent: -20, ...blur(touch, 8), duration: 0.18 * PACE, stagger: 0.036 * PACE }, position);
 
       enter(lines('a'), 0.55);
       // Once the car has parked, the first headline drops out of the frame behind it, a little
@@ -185,26 +195,26 @@ export function useCarHandoffScene(locale: string) {
       scene.fromTo(select('[data-text="a"]'), { y: 0, opacity: 1 }, {
         y: () => (stacked() ? -0.1 : 1) * vh(),
         opacity: () => (stacked() ? 0 : 1),
-        duration: 0.85,
-      }, 1.85);
-      enter(lines('b'), 2.6);
-      leave(lines('b'), 3.25);
-      enter(lines('interlude'), 3.6);
-      leave(lines('interlude'), 4.0);
+        duration: 0.85 * PACE,
+      }, at(1.85));
+      enter(lines('b'), at(2.6));
+      leave(lines('b'), at(3.25));
+      enter(lines('interlude'), at(3.6));
+      leave(lines('interlude'), at(4.0));
       // Weather closes in progressively: bright → overcast, and one light dims world and car together.
       const [weatherFrom, weatherTo] = AT.weather;
       scene.fromTo(select('[data-handoff-overcast]'), { opacity: 0 }, { opacity: 1, duration: weatherTo - weatherFrom }, weatherFrom);
       scene.fromTo(select('[data-handoff-grade]'), { backgroundColor: '#ffffff' },
         { backgroundColor: '#b9bfc9', duration: weatherTo - weatherFrom }, weatherFrom);
       // Ink over the bright sky, white over the overcast one: switched while no lettering is shown.
-      scene.fromTo(section, { '--handoff-ink': '#101112' }, { '--handoff-ink': '#fffcf7', duration: 0.05 }, AT.ink);
-      scene.fromTo(select('[data-handoff-contrast]'), { opacity: 0 }, { opacity: 1, duration: 0.05 }, AT.ink);
-      enter(lines('c'), 4.25);
+      scene.fromTo(section, { '--handoff-ink': '#101112' }, { '--handoff-ink': '#fffcf7', duration: 0.05 * PACE }, AT.ink);
+      scene.fromTo(select('[data-handoff-contrast]'), { opacity: 0 }, { opacity: 1, duration: 0.05 * PACE }, AT.ink);
+      enter(lines('c'), at(4.25));
 
       // Car timeline: same range, heavier scrub for some inertia. The world never moves, only the car.
       const cars = gsap.timeline({
         defaults: { ease: 'none' },
-        scrollTrigger: { ...trigger, id: 'scene-car-handoff-cars', scrub: 1 },
+        scrollTrigger: { ...trigger, id: 'scene-car-handoff-cars', scrub: touch ? TOUCH_LAG : 1 },
       });
       cars.to({}, { duration: DISTANCE }, 0);
       // It rises at the speed of the scroll until it reaches its box, as if the page carried it…
@@ -230,9 +240,9 @@ export function useCarHandoffScene(locale: string) {
         end: 'bottom top',
         invalidateOnRefresh: true,
         onUpdate: ({ start, end, scroll }) => {
-          const at = (scroll() - start) / vh();
+          const scrolled = (scroll() - start) / vh();
           const covered = end - scroll() <= headerHalf;
-          const tone = at < AT.shown || covered ? '' : at < AT.ink ? 'light' : 'dark';
+          const tone = scrolled < AT.shown || covered ? '' : scrolled < AT.ink ? 'light' : 'dark';
           if (section.dataset.headerTone !== tone) section.dataset.headerTone = tone;
         },
         onToggle: ({ isActive }) => { if (!isActive) section.dataset.headerTone = ''; },

@@ -11,7 +11,7 @@
 }
 /* See the ScrollTrigger pin clipping note in scenes.css. */
 /* This scene has no controls. Its transparent pin must let Process receive pointer events. */
-.car-handoff__pin { position: relative; height: 100svh; display: flow-root; clip-path: inset(0); isolation: isolate; background: var(--color-paper); pointer-events: none; }
+.car-handoff__pin { position: relative; height: 100vh; height: 100lvh; display: flow-root; clip-path: inset(0); isolation: isolate; background: var(--color-paper); pointer-events: none; }
 .car-handoff__panel { position: absolute; inset: 0; }
 
 /* The world stays still while the car moves: only the weather changes. */

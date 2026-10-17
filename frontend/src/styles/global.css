@@ -52,6 +52,12 @@ dialog { overscroll-behavior: contain; }
 .header-backdrop[data-glass='dark'] { background: rgb(9 10 12 / .55); box-shadow: inset 0 -1px 0 rgb(255 252 247 / .1); }
 .site-header[data-glass='light'] { mix-blend-mode: normal; color: var(--color-ink); }
 .site-header[data-glass='dark'] { mix-blend-mode: normal; color: var(--color-white); }
+/* Touch screens: a blended fixed header flickers over scrolling, transformed scenes. There it takes the colour
+   of the surface under it instead (Header.tsx); scene tones, glass and the open menu still win. */
+@media (max-width: 1199px), (pointer: coarse) {
+  .site-header { mix-blend-mode: normal; color: var(--color-ink); }
+  .site-header[data-surface='dark'] { color: var(--color-white); }
+}
 .header-inner { height: var(--header-height); margin-inline: var(--page-gutter); display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
 .header-nav, .header-actions { display: flex; align-items: center; gap: clamp(1rem, 2.9vw, 3.5rem); }
 .header-nav { font-family: var(--font-family); font-size: var(--header-nav-size); }

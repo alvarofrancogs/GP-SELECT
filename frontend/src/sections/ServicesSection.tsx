@@ -6,6 +6,7 @@ import { AssetSlot } from '../components/AssetSlot';
 import { servicesCopy, type ServiceId } from '../i18n/servicesCopy';
 import { useLanguage } from '../i18n/useLanguage';
 import { observeResize } from '../lib/scrollRefresh';
+import { TOUCH_MOTION, blur } from '../lib/touchMotion';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -23,7 +24,12 @@ export function ServicesSection() {
     if (!section || !media) return;
 
     const matchMedia = gsap.matchMedia();
-    matchMedia.add('(prefers-reduced-motion: no-preference) and (min-height: 600px)', () => {
+    matchMedia.add({
+      motion: '(prefers-reduced-motion: no-preference) and (min-height: 600px)',
+      touch: TOUCH_MOTION,
+    }, (context) => {
+      const { motion, touch } = context.conditions!;
+      if (!motion) return;
       const select = gsap.utils.selector(section);
       // Natural flow is the curtain: no extra pin or fixed accordion height.
       const entrance = gsap.timeline({
@@ -39,8 +45,8 @@ export function ServicesSection() {
       });
       entrance.to({}, { duration: 1 }, 0);
       entrance.fromTo(select('.services-title > span'),
-        { opacity: 0, y: 28, filter: 'blur(8px)' },
-        { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.32, stagger: 0.08 }, 0.22);
+        { opacity: 0, y: 28, ...blur(touch, 8) },
+        { opacity: 1, y: 0, ...blur(touch, 0), duration: 0.32, stagger: 0.08 }, 0.22);
       entrance.fromTo(select('.services-description, .service-item'),
         { opacity: 0, y: 20 },
         { opacity: 1, y: 0, duration: 0.24, stagger: 0.055 }, 0.4);

@@ -2,18 +2,22 @@ import { useLayoutEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { refreshAfterFonts, scheduleScrollRefresh } from '../lib/scrollRefresh';
+import { TOUCH_MOTION, blur } from '../lib/touchMotion';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export type SceneKind = 'hero' | 'process';
 
+// Scroll per scene, in viewports: 15 % shorter since 17-10-2026 (it took too much scrolling).
 const scrollDistance: Record<SceneKind, { desktop: number; mobile: number }> = {
-  hero: { desktop: 2.5, mobile: 2 },
-  process: { desktop: 3, mobile: 2.5 },
+  hero: { desktop: 2.125, mobile: 1.7 },
+  process: { desktop: 2.55, mobile: 2.125 },
 };
 
 // Scrub smoothing in seconds: the car scene carries more inertia than lettering.
 const scrubLag: Record<SceneKind, number> = { hero: 0.7, process: 0.5 };
+// A finger's own momentum already smooths the scroll: with the full lag, the lettering kept drifting after it.
+const TOUCH_LAG = 0.5;
 
 // Hero car: the side-on Porsche drives off to the left. Travel is the whole story; the scale
 // only adds a touch of depth and must never read as a camera zoom.
@@ -25,7 +29,8 @@ const HERO_DEPTH = 1.06;
 // `dark` is the handoff layer's opacity at which the sky has turned mid-grey (it used to be reached at 0.72 of the pin).
 const HERO_TONE = { light: 0.45, dark: 0.44 };
 // The hero is fully darkened by the time Process starts to rise over it (scroll distance, in viewports).
-const HERO_DARKEN_BY = 1.45;
+// Process rises over the hero's last viewport, so this moved with the shorter scene (1.45 → 1.075).
+const HERO_DARKEN_BY = 1.075;
 // Process lands instead of stopping dead: its lettering rises this much lower (in viewports) and, once
 // pinned, keeps rising and slows to rest over twice that scroll. power1.out starts at twice its average
 // speed, so the lettering leaves the scroll at the scroll's own speed, with no hard stop.
@@ -57,9 +62,10 @@ export function useGsapScene(kind: SceneKind, id: string) {
         mobile: '(max-width: 1023px)',
         reducedMotion: '(prefers-reduced-motion: reduce)',
         enoughHeight: '(min-height: 600px)',
+        touch: TOUCH_MOTION,
       },
       (context) => {
-        const { desktop, reducedMotion, enoughHeight } = context.conditions!;
+        const { desktop, reducedMotion, enoughHeight, touch } = context.conditions!;
         const select = gsap.utils.selector(section);
         const backgrounds = select('[data-scene-background]');
         const media = select('[data-scene-media]');
@@ -78,6 +84,9 @@ export function useGsapScene(kind: SceneKind, id: string) {
         }
 
         const distance = scrollDistance[kind][desktop ? 'desktop' : 'mobile'];
+        // The pin's own height (the large viewport, scenes.css), not innerHeight: on phones innerHeight changes
+        // with the URL bar while the CSS overlaps do not, and the scenes came apart.
+        const stage = () => pin.offsetHeight;
         const timeline = gsap.timeline({
           defaults: { ease: 'none' },
           scrollTrigger: {
@@ -85,8 +94,8 @@ export function useGsapScene(kind: SceneKind, id: string) {
             trigger: section,
             pin,
             start: 'top top',
-            end: () => `+=${window.innerHeight * distance}`,
-            scrub: scrubLag[kind],
+            end: () => `+=${stage() * distance}`,
+            scrub: scrubLag[kind] * (touch ? TOUCH_LAG : 1),
             pinSpacing: true,
             // Process starts with its words already placed: pre-pinning would make them jump.
             anticipatePin: kind === 'process' ? 0 : 1,
@@ -117,7 +126,7 @@ export function useGsapScene(kind: SceneKind, id: string) {
               x: () => window.innerWidth * (index === 0 ? -0.18 : 0.12),
               yPercent: index === 0 ? -65 : -38,
               opacity: 0,
-              filter: 'blur(12px)',
+              ...blur(touch, 12),
               duration: 0.34,
             }, 0.12 + index * 0.04);
           });
@@ -130,7 +139,7 @@ export function useGsapScene(kind: SceneKind, id: string) {
             defaults: { ease: 'none' },
             scrollTrigger: {
               trigger: section, start: 'top top', scrub: true, invalidateOnRefresh: true,
-              end: () => `+=${window.innerHeight * distance}`,
+              end: () => `+=${stage() * distance}`,
             },
           }) : null;
           if (darken) {
@@ -160,17 +169,17 @@ export function useGsapScene(kind: SceneKind, id: string) {
         }
 
         if (kind === 'process' && words.length) {
-          gsap.set(words, { opacity: 0.26, filter: 'blur(0.4px)' });
-          gsap.set(words[0], { opacity: 1, filter: 'blur(0px)' });
+          gsap.set(words, { opacity: 0.26, ...blur(touch, 0.4) });
+          gsap.set(words[0], { opacity: 1, ...blur(touch, 0) });
           // Animate the whole row so its number, word and detail share one envelope.
           // Equal dominant intervals: 0–18%, 18–36%, 36–54%, 54–72%.
           // Each continuous crossfade is centred on the boundary between steps.
           words.forEach((word, index) => {
             if (index > 0) {
-              timeline.to(word, { opacity: 1, filter: 'blur(0px)', duration: 0.16 }, index * 0.18 - 0.08);
+              timeline.to(word, { opacity: 1, ...blur(touch, 0), duration: 0.16 }, index * 0.18 - 0.08);
             }
             if (index < words.length - 1) {
-              timeline.to(word, { opacity: 0.26, filter: 'blur(0.4px)', duration: 0.16 }, (index + 1) * 0.18 - 0.08);
+              timeline.to(word, { opacity: 0.26, ...blur(touch, 0.4), duration: 0.16 }, (index + 1) * 0.18 - 0.08);
             }
           });
           timeline.to(words, { y: -18, duration: 1 }, 0);
@@ -187,14 +196,14 @@ export function useGsapScene(kind: SceneKind, id: string) {
             scrollTrigger: {
               trigger: section,
               start: 'top top',
-              end: () => `+=${window.innerHeight * distance}`,
+              end: () => `+=${stage() * distance}`,
               scrub: true,
               invalidateOnRefresh: true,
             },
           });
           handoffTimeline.to({}, { duration: 1 }, 0);
           const list = words[0].parentElement;
-          handoffTimeline.fromTo([list, ...ui], { y: () => window.innerHeight * PROCESS_LANDING }, {
+          handoffTimeline.fromTo([list, ...ui], { y: () => stage() * PROCESS_LANDING }, {
             y: 0,
             ease: 'power1.out',
             duration: (PROCESS_LANDING * 2) / distance,
