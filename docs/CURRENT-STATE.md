@@ -815,6 +815,7 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 11. **Auditoría preproducción (16-10-2026):** fases 1 y 3 integradas (PR #22 y #23); fase 2 en `fix/preprod-phase2`: completa (PR #24), pendiente de merge. Ver «PREPROD-AUDIT».
 12. **Auditoría móvil (17-10-2026):** web desplegada en `gpselect.31-70-158-233.sslip.io` (IONOS). MOB-01 a MOB-05 arreglados por Opus en `fix/mobile-audit` (Astra y Gemini no disponibles desde la nube); pendiente la prueba en móvil real y la revisión de Astra y Gemini. Ver `docs/MOBILE-AUDIT.md`.
 13. **Segunda ronda iPhone (17-10-2026):** MOB-10 a MOB-14 en `fix/mobile-ios` (refresh forzado en mitad del scroll, parpadeo doble al cambiar de idioma, re-pin anticipado del coche al subir, refresh al volver a la Home, texto anidado que aparecía de golpe en el fundido del idioma). Pendiente la prueba en el iPhone del usuario; si quedan saltos al fijarse las escenas, valorar pins con `position: sticky`. Ver `docs/MOBILE-AUDIT.md`.
+14. **Tercera ronda iPhone (17-10-2026):** MOB-15 a MOB-19 en `fix/mobile-ios` (cambio rápido de idioma, hueco blanco bajo las escenas al esconderse la barra, cielo del BMW en móvil, dato del BMW en móvil, menos recorrido en móvil). Implementado por Opus (Astra sin cuota); pendiente la prueba en el iPhone y la revisión de Astra.
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 

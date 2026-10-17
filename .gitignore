@@ -13,3 +13,4 @@ obj/
 *.mp4
 !.env.example
 deploy/backups/
+.claude/settings.local.json
