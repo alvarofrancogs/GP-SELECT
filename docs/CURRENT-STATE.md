@@ -813,6 +813,7 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 9. **Siguiente: por decidir por el usuario**: sustituir las fotos del usuario según lleguen, y después 3D final release QA. SEO y dominio/deploy son fases aparte. NO iniciada.
 10. **SEO Fase B:** B0 aceptado con salvedad y B1 aprobado; B2/B3 integrados en main. B4 y B5 integrados en main (PR #7 y #8). B6 en `feat/seo-b6-headings`, pendiente de revisión; después B8. Plan en `docs/SEO-PHASE-B.md`.
 11. **Auditoría preproducción (16-10-2026):** fases 1 y 3 integradas (PR #22 y #23); fase 2 en `fix/preprod-phase2`: completa (PR #24), pendiente de merge. Ver «PREPROD-AUDIT».
+12. **Auditoría móvil (17-10-2026):** web desplegada en `gpselect.31-70-158-233.sslip.io` (IONOS). MOB-01 a MOB-05 arreglados por Opus en `fix/mobile-audit` (Astra y Gemini no disponibles desde la nube); pendiente la prueba en móvil real y la revisión de Astra y Gemini. Ver `docs/MOBILE-AUDIT.md`.
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 

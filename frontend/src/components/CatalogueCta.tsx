@@ -14,6 +14,9 @@ const MAGNET_MAX = 6; // px
 const LIGHT_SURFACES = '#servicios, #seleccion, .interior-page, .planned-page, .car-handoff__pin';
 // The veil is Process's dark lifting off the car scene: dark until it has passed the pill.
 const DARK_SURFACES = '.interior-band, [data-handoff-veil]';
+// Content the pill would cover: it steps aside over the footer and, on phones, over the featured car's details.
+const AWAY = '.site-footer';
+const AWAY_STACKED = '.site-footer, #seleccion';
 
 /** The one global conversion: a small editorial glass button, fixed at the bottom centre of the public site. */
 export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElement) => void }) {
@@ -79,10 +82,12 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
     // read them once (and on resize), not on every scroll frame.
     let light: HTMLElement[] = [];
     let dark: HTMLElement[] = [];
+    let away: HTMLElement[] = [];
     let offset = 0;
     const collect = () => {
       light = Array.from(document.querySelectorAll<HTMLElement>(LIGHT_SURFACES));
       dark = Array.from(document.querySelectorAll<HTMLElement>(DARK_SURFACES));
+      away = Array.from(document.querySelectorAll<HTMLElement>(window.matchMedia('(max-width: 1023px)').matches ? AWAY_STACKED : AWAY));
       offset = link.offsetHeight / 2 + parseFloat(getComputedStyle(link).bottom);
     };
     const covers = (elements: HTMLElement[], y: number) => elements.some((el) => {
@@ -93,6 +98,7 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
       const y = window.innerHeight - offset;
       const isLight = covers(light, y) && !covers(dark, y);
       if (isLight) link.dataset.tone = 'light'; else delete link.dataset.tone;
+      if (covers(away, y)) link.dataset.away = ''; else delete link.dataset.away;
     };
     const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(measure); };
     const resize = () => { collect(); schedule(); };
