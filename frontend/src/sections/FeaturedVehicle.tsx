@@ -12,6 +12,8 @@ import '../styles/featured-vehicle.css';
 
 type State = { status: 'loading' } | { status: 'error' } | { status: 'ready'; vehicles: VehicleSummary[] };
 const EMPTY: VehicleSummary[] = [];
+// Must match the fade-out of .featured--swapping (featured-vehicle.css).
+const SWAP_OUT_MS = 200;
 
 /** The public inventory, starting with the API's first vehicle. No price: curiosity, not a listing. */
 export function FeaturedVehicle() {
@@ -23,7 +25,15 @@ export function FeaturedVehicle() {
   const sectionRef = useRef<HTMLElement>(null);
   const vehicles = state.status === 'ready' ? state.vehicles : EMPTY;
   const { index, paused, togglePaused } = useFeaturedRotation(sectionRef, vehicles);
-  const vehicle = vehicles[index] ?? null;
+  // The car on screen follows the rotation after a short fade-out, so one car never cuts straight to the next.
+  const [shown, setShown] = useState(index);
+  const swapping = shown !== index;
+  useEffect(() => {
+    if (!swapping) return;
+    const timer = window.setTimeout(() => setShown(index), SWAP_OUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [index, swapping]);
+  const vehicle = vehicles[shown] ?? null;
   useFeaturedVehicleScene(sectionRef, vehicle !== null);
 
   useEffect(() => {
@@ -48,12 +58,12 @@ export function FeaturedVehicle() {
   const photo = failedPhoto === vehicle?.slug ? undefined : vehicle?.images?.[0];
 
   return (
-    <section ref={sectionRef} id="seleccion" className="featured" aria-labelledby="featured-title" aria-busy={state.status === 'loading'}>
+    <section ref={sectionRef} id="seleccion" className={swapping ? 'featured featured--swapping' : 'featured'} aria-labelledby="featured-title" aria-busy={state.status === 'loading'}>
       <Container>
         <h2 id="featured-title" className="featured__title"><span>{text.title}</span>{' '}<span>{text.titleFine}</span></h2>
         {vehicles.length > 1 ? <div className="featured__rotation type-ui">
-          <span className="type-numeric" aria-hidden="true">{String(index + 1).padStart(2, '0')} / {String(vehicles.length).padStart(2, '0')}</span>
-          <span className="sr-only">{text.position(index + 1, vehicles.length)}</span>
+          <span className="type-numeric" aria-hidden="true">{String(shown + 1).padStart(2, '0')} / {String(vehicles.length).padStart(2, '0')}</span>
+          <span className="sr-only">{text.position(shown + 1, vehicles.length)}</span>
           <button type="button" className="featured__pause" aria-pressed={paused} onClick={togglePaused}>
             <span className="featured__pause-box" aria-hidden="true" />{text.pause}
           </button>

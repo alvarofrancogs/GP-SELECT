@@ -1,9 +1,11 @@
 import { useEffect, useState, type RefObject } from 'react';
 import type { VehicleSummary } from '../types/vehicle';
 
-const INTERVAL = 10_000;
+const INTERVAL = 7_000;
 
-/** Count only visible, uninterrupted reading time; decode the next cover before replacing the piece. */
+/** Count only visible, uninterrupted reading time; decode the next cover before replacing the piece.
+    Keyboard focus inside holds the car; the pointer does not: the section fills the screen, so a resting mouse froze
+    the rotation for good, and the focus a click leaves on «Pause» kept it frozen after resuming. */
 export function useFeaturedRotation(sectionRef: RefObject<HTMLElement | null>, vehicles: VehicleSummary[]) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -18,8 +20,8 @@ export function useFeaturedRotation(sectionRef: RefObject<HTMLElement | null>, v
     let disposed = false;
     let ready = !nextPhoto;
     let inView = false;
-    let hovered = window.matchMedia('(hover: hover)').matches && section.matches(':hover');
-    let focused = section.contains(document.activeElement);
+    const keyboardFocus = () => section.querySelector(':focus-visible') !== null;
+    let focused = keyboardFocus();
     let remaining = INTERVAL;
     let started = 0;
     let timer: number | undefined;
@@ -33,7 +35,7 @@ export function useFeaturedRotation(sectionRef: RefObject<HTMLElement | null>, v
 
     function sync() {
       stop();
-      if (disposed || paused || motion.matches || document.hidden || !inView || hovered || focused) return;
+      if (disposed || paused || motion.matches || document.hidden || !inView || focused) return;
       if (remaining === 0 && !ready) return;
       started = performance.now();
       timer = window.setTimeout(() => {
@@ -51,14 +53,10 @@ export function useFeaturedRotation(sectionRef: RefObject<HTMLElement | null>, v
     }
 
     const observer = new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; sync(); });
-    const enter = (event: PointerEvent) => { if (event.pointerType !== 'touch') { hovered = true; sync(); } };
-    const leave = () => { hovered = false; sync(); };
-    const focusIn = () => { focused = true; sync(); };
-    const focusOut = (event: FocusEvent) => { focused = event.relatedTarget instanceof Node && section.contains(event.relatedTarget); sync(); };
+    const focusIn = () => { focused = keyboardFocus(); sync(); };
+    // Focus moving to another element inside fires focusin again right after.
+    const focusOut = () => { focused = false; sync(); };
     observer.observe(section);
-    section.addEventListener('pointerenter', enter);
-    section.addEventListener('pointerleave', leave);
-    section.addEventListener('pointercancel', leave);
     section.addEventListener('focusin', focusIn);
     section.addEventListener('focusout', focusOut);
     document.addEventListener('visibilitychange', sync);
@@ -68,9 +66,6 @@ export function useFeaturedRotation(sectionRef: RefObject<HTMLElement | null>, v
       disposed = true;
       stop();
       observer.disconnect();
-      section.removeEventListener('pointerenter', enter);
-      section.removeEventListener('pointerleave', leave);
-      section.removeEventListener('pointercancel', leave);
       section.removeEventListener('focusin', focusIn);
       section.removeEventListener('focusout', focusOut);
       document.removeEventListener('visibilitychange', sync);

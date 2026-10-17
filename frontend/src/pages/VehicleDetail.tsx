@@ -31,6 +31,8 @@ function VehicleDetailContent({ slug }: { slug: string }) {
   const [initialVehicle] = useState(() => getInitialVehicle(slug, key));
   const [vehicle, setVehicle] = useState<Vehicle | null>(initialVehicle);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(initialVehicle ? 'ready' : 'loading');
+  // Data that had to be waited for settles in (vehicles.css) instead of popping up.
+  const [waited] = useState(!initialVehicle);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     consumeInitialVehicle();
@@ -53,7 +55,7 @@ function VehicleDetailContent({ slug }: { slug: string }) {
   if (status !== 'ready') return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state" role={status === 'error' ? 'alert' : 'status'}>{status === 'error' ? <h1 className="type-lede">{text.detailError}</h1> : <p className="type-lede">{text.loading}</p>}{status === 'error' ? <button className="editorial-link type-ui" onClick={() => { setStatus('loading'); setAttempt(attempt + 1); }}>{text.retry}</button> : null}</div></article>;
   if (!vehicle) return <article className="interior-page vehicle-detail vehicle-detail--state">{back}<div className="vehicle-state"><h1 className="type-display">{text.notFound}</h1><Link className="editorial-link type-ui" to={href(qualificationUrl({ intent: 'import', source: 'vehicle-not-found' }))}>{text.search}<span aria-hidden="true">→</span></Link></div></article>;
 
-  return <VehicleDetailView vehicle={vehicle} back={back} />;
+  return <VehicleDetailView vehicle={vehicle} back={back} className={waited ? 'vehicle-detail--arrive' : ''} />;
 }
 
 /** Presentational detail, shared with the private admin preview. */

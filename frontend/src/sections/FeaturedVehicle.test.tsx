@@ -83,7 +83,11 @@ describe('featured vehicle scene lifetime', () => {
 
     motion.index = 1;
     rerender(<Page />);
-    expect(screen.getByRole('heading', { name: 'RS 3' })).toBeTruthy();
+    // The car on screen fades out first, then the next one comes in.
+    expect(container.querySelector('.featured--swapping')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'M4' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'RS 3' })).toBeTruthy();
+    expect(container.querySelector('.featured--swapping')).toBeNull();
     fireEvent.load(container.querySelector('img')!);
     expect(motion.timeline).toHaveBeenCalledTimes(timelineCount);
     expect(motion.refresh).toHaveBeenCalledTimes(refreshCount);
