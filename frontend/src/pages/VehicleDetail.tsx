@@ -99,7 +99,6 @@ export function VehicleDetailView({ vehicle, back, className = '' }: { vehicle: 
       <aside className="vehicle-detail__data" aria-label={text.specifications}>
         {sold ? <p className="vehicle-detail__price type-ui" role="status">{text.soldNotice}</p> : <p className="vehicle-detail__price type-ui type-numeric">{formatPrice(vehicle.priceEur, locale, text.onRequest)}</p>}
         {vehicle.availability === 'reserved' || vehicle.availability === 'coming-soon' ? <p className="vehicle-detail__availability type-ui">{vehicle.availability === 'reserved' ? text.reserved : text.comingSoon}</p> : null}
-        {sold ? null : <p className="vehicle-detail__availability type-ui">{text.ownership}</p>}
         <VehicleSpecs rows={core} />
         <Button to={contactUrl}>{cta}</Button>
         {contactConfig.whatsapp ? <a className="editorial-link type-ui" href={whatsappUrl(contactConfig.whatsapp, whatsappMessage)} target="_blank" rel="noreferrer">{text.whatsapp}<span aria-hidden="true">→</span></a>

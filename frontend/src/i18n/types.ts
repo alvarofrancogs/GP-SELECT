@@ -91,7 +91,6 @@ export interface VehicleCopy extends InteriorHeaderCopy {
   onRequest: string;
   comingSoon: string;
   reserved: string;
-  ownership: string;
   sold: string;
   showMore: string;
   empty: string;
