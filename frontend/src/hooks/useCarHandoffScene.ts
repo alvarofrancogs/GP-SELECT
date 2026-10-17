@@ -101,9 +101,9 @@ export function useCarHandoffScene(locale: string) {
     ScrollTrigger.addEventListener('refreshInit', fit);
     fit();
 
-    // The scene is several screens below the first view, so its timelines are built right after the first
-    // paint: that takes their cost out of the page's start-up (the preloader still covers the page then).
-    // Its markup is already there, so Process finds this frame for its handoff.
+    // The scene is several screens below the first view, so on the first visit its timelines are built right
+    // after the first paint: that takes their cost out of the page's start-up (the preloader still covers the
+    // page then). Its markup is already there, so Process finds this frame for its handoff.
     const media = gsap.matchMedia();
     const build = () => media.add({
       // Re-run when the layout switches between stacked and side by side. One of the two always matches,
@@ -173,7 +173,9 @@ export function useCarHandoffScene(locale: string) {
           id: 'scene-car-handoff',
           pin,
           pinSpacing: true,
-          anticipatePin: 1,
+          // On touch, anticipation snaps the visible final frame back to the top when scrolling up.
+          // Going down, Process keeps this pin invisible until after its start.
+          anticipatePin: touch ? 0 : 1,
           scrub: 0.5 * (touch ? TOUCH_LAG : 1),
           onUpdate: ({ progress }) => { section.dataset.progress = progress.toFixed(4); },
         },
@@ -259,16 +261,23 @@ export function useCarHandoffScene(locale: string) {
       ScrollTrigger.sort();
       scheduleScrollRefresh();
     };
-    // When the browser is idle, so the hero photograph paints first; within half a second in any case.
+    // Under the preloader, when the browser is idle, so the hero photograph paints first; within half a
+    // second in any case. Without it (back to the Home from another page) at once: a pin makes GSAP queue
+    // a forced refresh for the next frame, and built late that refresh stopped the visitor's first scroll.
     let idle = 0;
     let timer = 0;
-    const frame = requestAnimationFrame(() => {
-      if (typeof requestIdleCallback === 'function') idle = requestIdleCallback(start, { timeout: 500 });
-      else timer = window.setTimeout(start, 50);
-    });
+    let frame = 0;
+    if (document.querySelector('.preloader')) {
+      frame = requestAnimationFrame(() => {
+        if (typeof requestIdleCallback === 'function') idle = requestIdleCallback(start, { timeout: 500 });
+        else timer = window.setTimeout(start, 50);
+      });
+    } else {
+      start();
+    }
 
+    // Images never change the layout (boxes sized by CSS): only fonts and translations ask for a refresh.
     refreshAfterFonts();
-    section.addEventListener('load', scheduleScrollRefresh, true);
     const observer = new MutationObserver(scheduleScrollRefresh);
     observer.observe(section, { characterData: true, subtree: true });
     scheduleScrollRefresh();
@@ -278,7 +287,6 @@ export function useCarHandoffScene(locale: string) {
       if (idle) cancelIdleCallback(idle);
       window.clearTimeout(timer);
       observer.disconnect();
-      section.removeEventListener('load', scheduleScrollRefresh, true);
       ScrollTrigger.removeEventListener('refreshInit', fit);
       media.revert();
       delete section.dataset.motion;
