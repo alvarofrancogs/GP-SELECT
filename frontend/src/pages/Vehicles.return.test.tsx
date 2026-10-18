@@ -10,7 +10,7 @@ import type { VehicleSummary } from '../types/vehicle';
 const cars: VehicleSummary[] = Array.from({ length: 20 }, (_, i) => ({
   slug: `car-${i}`, make: 'BMW', model: `M${i}`, variant: null, firstRegistrationYear: 2020, firstRegistrationMonth: null,
   mileageKm: 1000 * i, priceEur: 50000 + i, powerHp: 300, fuelType: i % 2 ? 'Gasolina' : 'Diésel', transmission: 'Automático',
-  bodyType: 'Coupé', availability: 'available', images: null,
+  bodyType: 'Coupé', availability: 'available', images: null, video: null,
 }));
 
 vi.mock('../services/vehicles', async (importOriginal) => {

@@ -2,18 +2,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { ImageUploader } from './ImageUploader';
-import { adminApi, ApiError, uploadImage } from '../../services/adminApi';
+import { adminApi, ApiError, uploadFile } from '../../services/adminApi';
 import { adminCopy } from '../../i18n/adminCopy';
 import type { AdminImage } from '../../types/admin';
 
 vi.mock('../../services/adminApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/adminApi')>();
-  return { ...actual, uploadImage: vi.fn(), adminApi: { imageIntent: vi.fn(), completeImage: vi.fn() } };
+  return { ...actual, uploadFile: vi.fn(), adminApi: { imageIntent: vi.fn(), completeImage: vi.fn() } };
 });
 
 const intent = vi.mocked(adminApi.imageIntent);
 const complete = vi.mocked(adminApi.completeImage);
-const put = vi.mocked(uploadImage);
+const put = vi.mocked(uploadFile);
 const lost = () => new ApiError(0);
 
 function renderUploader() {
@@ -73,7 +73,7 @@ describe('ImageUploader retries', () => {
   });
 });
 
-const photo = (id: string): AdminImage => ({ id, state: 'Ready', cardUrl: `/${id}.jpg`, detailUrl: null, isCover: false,
+const photo = (id: string): AdminImage => ({ id, kind: 'Photo', state: 'Ready', cardUrl: `/${id}.jpg`, detailUrl: null, isCover: false,
   isStaged: false, sortOrder: 0, failureReason: null, jobPending: false });
 
 function Gallery() {

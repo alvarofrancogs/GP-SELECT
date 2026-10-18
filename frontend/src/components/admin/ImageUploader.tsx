@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react';
-import { adminApi, uploadImage } from '../../services/adminApi';
+import { adminApi, uploadFile } from '../../services/adminApi';
 import type { AdminImage } from '../../types/admin';
 import { adminCopy } from '../../i18n/adminCopy';
 import { describeError } from '../../lib/adminErrors';
@@ -105,10 +105,10 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
             ({ imageId, uploadUrl } = intent);
             // A minute of margin: the PUT of a large photo on a slow line can outlast the signature.
             patch(upload.key, { imageId, uploadUrl, expiresAt: Date.now() + (intent.expiresInSeconds - 60) * 1000 });
-            onImageAdded({ id: imageId, state: 'PendingUpload', cardUrl: null, detailUrl: null,
+            onImageAdded({ id: imageId, kind: 'Photo', state: 'PendingUpload', cardUrl: null, detailUrl: null,
               isCover: false, isStaged: true, sortOrder: 0, failureReason: null, jobPending: false });
           }
-          await uploadImage(uploadUrl, upload.file, (progress) => patch(upload.key, { progress }));
+          await uploadFile(uploadUrl, upload.file, (progress) => patch(upload.key, { progress }));
           await adminApi.completeImage(vehicleId, imageId, upload.requestKey);
           patch(upload.key, { phase: 'queued' });
           setLive(text.announceUploaded(upload.file.name));

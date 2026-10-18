@@ -16,4 +16,6 @@ export interface VehiclePublicCardDto {
   bodyType: string | null;
   status: VehiclePublicStatus;
   images: string[];
+  /** Optional so a response from an older API still renders. */
+  videoUrl?: string | null;
 }

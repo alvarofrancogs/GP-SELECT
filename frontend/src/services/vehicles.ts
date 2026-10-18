@@ -49,6 +49,7 @@ export function fromPublicCard(dto: VehiclePublicCardDto): VehicleSummary {
     transmission: dto.transmission ?? null, bodyType: dto.bodyType ?? null,
     availability: availabilityByStatus[dto.status] ?? null,
     images: dto.images.map((src) => ({ src, fit: 'cover', alt: null, temporary: false, width: null, height: null })),
+    video: dto.videoUrl ?? null,
   };
 }
 
