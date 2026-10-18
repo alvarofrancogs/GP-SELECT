@@ -117,4 +117,24 @@ describe('VehicleGallery with a video', () => {
     expect(enlarged().currentTime).toBe(4.1);
     expect(playingNow.has(enlarged())).toBe(true);
   });
+  it('ignores a late loadedmetadata after the dialog closed and keeps the inline state', () => {
+    gallery('/m4.mp4');
+    loaded = false;
+    inline().currentTime = 4.1;
+    open();
+    vi.mocked(HTMLMediaElement.prototype.play).mockClear();
+    const dialogVideo = enlarged();
+    close();
+    fireEvent(dialogVideo, new Event('loadedmetadata'));
+    expect(playingNow.has(dialogVideo)).toBe(false);
+    expect(inline().currentTime).toBe(4.1);
+    expect(playingNow.has(inline())).toBe(true);
+  });
+  it('tries a new video again after one failed', () => {
+    const view = gallery('/a.mp4');
+    fireEvent.error(inline());
+    expect(document.querySelector('video')).toBeNull();
+    view.rerender(<MemoryRouter><LanguageProvider><VehicleGallery images={images} name="BMW M4" video="/b.mp4" /></LanguageProvider></MemoryRouter>);
+    expect(inline().getAttribute('src')).toBe('/b.mp4');
+  });
 });

@@ -8,10 +8,11 @@ const STRIP = '(max-width: 767px)';
 
 /** A seek before the metadata is loaded is dropped: wait for it (and ask for it) when it is missing. */
 function whenReady(video: HTMLVideoElement, run: () => void) {
-  if (video.readyState >= 1) { run(); return; }
+  if (video.readyState >= 1) { run(); return () => {}; }
   video.addEventListener('loadedmetadata', run, { once: true });
   video.preload = 'auto';
   video.load();
+  return () => video.removeEventListener('loadedmetadata', run);
 }
 
 export function VehicleGallery({ images, name, video = null }: { images: VehicleImage[]; name: string; video?: string | null }) {
@@ -24,15 +25,21 @@ export function VehicleGallery({ images, name, video = null }: { images: Vehicle
   const dialog = useRef<HTMLDialogElement>(null);
   const dialogVideo = useRef<HTMLVideoElement>(null);
   // With a video, images[0] is its poster: slide 0 plays the video and the photos follow.
-  const [videoFailed, setVideoFailed] = useState(false);
+  const [failedVideo, setFailedVideo] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const hasVideo = Boolean(video) && !videoFailed;
+  const hasVideo = Boolean(video) && failedVideo !== video;
   const playing = hasVideo && active === 0;
   // The inline video stays quiet while the dialog is open: the dialog owns playback then.
   // `held`: the video was paused in the dialog, so closing it must not restart the inline one.
   const [held, setHeld] = useState(false);
   const { videoRef } = useGalleryVideo(playing && !dialogOpen && !held);
   const startOnOpen = useRef(false);
+  const wasPlaying = useRef(false);
+  const seeked = useRef(false);
+  // The pending wait for metadata: it must not fire after the dialog closed or the slide changed.
+  const pending = useRef<() => void>(() => {});
+  const cancelPending = () => { pending.current(); pending.current = () => {}; };
+  useEffect(() => () => pending.current(), []);
   const handBack = useRef<{ time: number; muted: boolean; playing: boolean } | null>(null);
   const current = images[active];
   // Hidden slides are stacked in view, so native lazy loading would fetch every photo at full size.
@@ -41,6 +48,7 @@ export function VehicleGallery({ images, name, video = null }: { images: Vehicle
   const [reached, setReached] = useState(() => new Set(around(0)));
 
   function show(index: number) {
+    cancelPending();
     setActive(index);
     setHeld(false);
     setReached((previous) => around(index).every((i) => previous.has(i)) ? previous : new Set([...previous, ...around(index)]));
@@ -65,16 +73,23 @@ export function VehicleGallery({ images, name, video = null }: { images: Vehicle
   // The enlarged video continues where the inline one is, and starts only if the inline one was playing.
   function openDialog() {
     const inline = videoRef.current;
-    startOnOpen.current = playing && Boolean(inline) && !inline!.paused;
+    cancelPending();
+    wasPlaying.current = playing && Boolean(inline) && !inline!.paused;
+    startOnOpen.current = wasPlaying.current;
     inline?.pause();
     setDialogOpen(true);
     dialog.current?.showModal();
   }
   function onDialogClose() {
     const enlarged = dialogVideo.current;
-    if (enlarged) {
-      handBack.current = { time: enlarged.currentTime, muted: enlarged.muted, playing: !enlarged.paused };
-      setHeld(enlarged.paused);
+    const inline = videoRef.current;
+    cancelPending();
+    if (enlarged && inline) {
+      // Without metadata the dialog never took over: the inline video keeps its own time and state.
+      handBack.current = seeked.current
+        ? { time: enlarged.currentTime, muted: enlarged.muted, playing: !enlarged.paused }
+        : { time: inline.currentTime, muted: inline.muted, playing: wasPlaying.current };
+      setHeld(!handBack.current.playing);
       enlarged.pause();
     }
     setDialogOpen(false);
@@ -88,7 +103,10 @@ export function VehicleGallery({ images, name, video = null }: { images: Vehicle
       const start = startOnOpen.current;
       startOnOpen.current = false;
       enlarged.muted = muted;
-      whenReady(enlarged, () => {
+      cancelPending();
+      seeked.current = false;
+      pending.current = whenReady(enlarged, () => {
+        seeked.current = true;
         enlarged.currentTime = currentTime;
         if (start) void enlarged.play().catch(() => {});
       });
@@ -96,7 +114,8 @@ export function VehicleGallery({ images, name, video = null }: { images: Vehicle
       const { time, muted, playing: resume } = handBack.current;
       handBack.current = null;
       inline.muted = muted;
-      whenReady(inline, () => {
+      cancelPending();
+      pending.current = whenReady(inline, () => {
         inline.currentTime = time;
         if (resume) void inline.play().catch(() => {});
         else inline.pause();
@@ -121,7 +140,7 @@ export function VehicleGallery({ images, name, video = null }: { images: Vehicle
       {images.map((image, index) => {
         const ready = reached.has(index);
         return <figure key={`${image.src}-${index}`} className={`vehicle-gallery__slide${index === active ? ' is-active' : ''}`}>
-          {index === 0 && hasVideo ? <video ref={videoRef} src={video!} poster={image.src} controls muted playsInline loop preload="metadata" onError={() => setVideoFailed(true)}
+          {index === 0 && hasVideo ? <video ref={videoRef} src={video!} poster={image.src} controls muted playsInline loop preload="metadata" onError={() => setFailedVideo(video)}
             aria-label={`${text.video} · ${name}`} width={image.width ?? 1500} height={image.height ?? 1000} />
           : failed.has(image.src) ? <div className="vehicle-media-empty type-ui">{text.noImage}</div> : <img src={ready ? image.src : undefined}
             srcSet={ready && image.smallSrc ? `${image.smallSrc} 800w, ${image.src} 2400w` : undefined}
