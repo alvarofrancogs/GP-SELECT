@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { VehiclePublicCardDto } from '../types/inventory';
 
 const dto = { slug: 'bmw-m4', make: 'BMW', model: 'M4', year: 2023, status: 'Available', images: ['/detail'], cardImages: ['/card'] };
 
@@ -17,6 +18,25 @@ function embed(text = JSON.stringify(dto), id = 'vehicle-data') {
   script.textContent = text;
   document.body.append(script);
 }
+
+it('maps videoUrl to video and defaults to null', async () => {
+  const { fromPublicCard, fromPublicDetail } = await import('./vehicles');
+  const card: VehiclePublicCardDto = {
+    slug: 'x', make: 'BMW', model: 'M4', variant: null, year: 2023, month: null,
+    priceEur: 90000, mileageKm: 1000, powerHp: 510, fuelType: null,
+    transmission: null, bodyType: null, status: 'Available', images: ['/poster'],
+  };
+  const withVideo = { ...card, videoUrl: '/api/public/vehicles/x/video/1' };
+  expect(fromPublicCard(withVideo).video).toBe('/api/public/vehicles/x/video/1');
+  expect(fromPublicCard(card).video).toBeNull();
+  expect(fromPublicCard({ ...card, videoUrl: null }).video).toBeNull();
+
+  const detail = {
+    ...withVideo, drivetrain: null, exteriorColour: null, interior: null,
+    description: null, history: null, provenance: null, equipment: [], customSpecifications: [],
+  };
+  expect(fromPublicDetail(detail).video).toBe('/api/public/vehicles/x/video/1');
+});
 
 describe('initial vehicle data', () => {
   it.each(['/vehiculos/bmw-m4', '/en/vehicles/bmw-m4'])('maps %s and retains it for both initializers', async (path) => {

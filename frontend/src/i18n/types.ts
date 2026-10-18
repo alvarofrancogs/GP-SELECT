@@ -130,6 +130,7 @@ export interface VehicleCopy extends InteriorHeaderCopy {
   enlarge: string;
   close: string;
   image: string;
+  video: string;
   noImage: string;
   values: Record<string, string>;
 }

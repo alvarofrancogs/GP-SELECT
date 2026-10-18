@@ -220,6 +220,25 @@
 .admin-photo__progress::-webkit-progress-value { background: var(--color-ink); }
 .admin-photo__progress::-moz-progress-bar { background: var(--color-ink); }
 
+/* Video: one dashed box, apart from the photo grid */
+.admin-video { gap: 1rem; padding: 1.5rem 1.75rem; border: 1px dashed var(--color-muted); transition: border-color var(--duration-ui), background var(--duration-ui); }
+.admin-video[data-ready] { border-style: solid; border-color: var(--color-line); }
+.admin-video[data-busy] { border-color: var(--color-ink); background: var(--color-white); }
+.admin-video { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.admin-video > * { min-width: 0; }
+.admin-video__media { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: start; gap: 1.5rem; }
+.admin-video__media > * { min-width: 0; }
+.admin-video__player { display: block; width: 100%; max-width: 100%; height: auto; aspect-ratio: 16 / 9; background: var(--color-ink); }
+.admin-video__poster { margin: 0; }
+.admin-video__poster .admin-field__hint { margin-top: .4rem; }
+.admin-video__warnings .admin-field__hint { overflow-wrap: anywhere; }
+.admin-video__notes { display: grid; gap: .25rem; }
+.admin-video__notes .admin-field__hint, .admin-video__warnings .admin-field__hint { margin: 0; }
+.admin-video__warnings { display: grid; gap: .35rem; padding: .75rem 1rem; border-left: 3px solid var(--color-ink); background: var(--color-placeholder); }
+.admin-video__warnings .admin-field__hint { color: var(--color-ink); }
+.admin-video__status p { margin: 0; font-size: .875rem; }
+.admin-video__actions { padding-top: .75rem; border-top: 1px solid var(--color-line); }
+
 /* Dialog */
 .admin-dialog { width: min(calc(100% - 2rem), 34rem); max-width: none; padding: 2rem; border: 0; background: var(--color-paper); color: var(--color-ink); }
 .admin-dialog::backdrop { background: rgb(9 10 12 / .6); }
@@ -283,9 +302,10 @@
   .admin-photos__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 1rem; }
   .admin-photo__actions { gap: 0 .75rem; }
   .admin-dropzone { padding: 1.25rem; }
-  .admin-create__actions { justify-content: flex-start; flex-direction: row-reverse; }
+  .admin-video { padding: 1.25rem; }
+      .admin-create__actions { justify-content: flex-start; flex-direction: row-reverse; }
   .admin-dialog { padding: 1.5rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .admin-link > span[aria-hidden] { transition: none; }
+  .admin-link > span[aria-hidden], .admin-video { transition: none; }
 }

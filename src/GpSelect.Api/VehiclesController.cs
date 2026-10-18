@@ -12,7 +12,8 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
         var pendingJobs = await db.ImageJobs.AsNoTracking()
             .Where(j => ids.Contains(j.ImageId) && (j.State == ImageJobState.Queued || j.State == ImageJobState.Processing))
             .Select(j => j.ImageId).ToListAsync();
-        return AdminMapping.Map(v, images, pendingJobs.ToHashSet());
+        var videos = await db.Videos.AsNoTracking().Where(x => x.VehicleUnitId == v.Id && x.State != VideoState.Deleted).ToListAsync();
+        return AdminMapping.Map(v, images, videos, pendingJobs.ToHashSet());
     }
 
     /// <summary>Two queries for the whole list: vehicles, then their active images grouped in memory.</summary>
@@ -63,8 +64,8 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
         catch (DomainException e) { return DomainProblem(e); }
     }
 
-    /// <summary>The editor's single save: fields, photos (staged uploads kept, removals, order and so the cover) and
-    /// status, in one transaction. Any error answers like the individual endpoints and leaves the vehicle unchanged.</summary>
+    /// <summary>The editor's single save: fields, photos (staged uploads kept, removals, order and so the cover), the
+    /// video and status, in one transaction. Any error answers like the individual endpoints and leaves the vehicle unchanged.</summary>
     [HttpPost("{id:guid}/save")]
     public async Task<IActionResult> Save(Guid id, SaveVehicleRequest r)
     {
@@ -73,6 +74,8 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
         var images = await db.Images.Where(x => x.VehicleUnitId == id && x.State != ImageState.Deleted).ToListAsync();
         var oldCover = images.FirstOrDefault(x => x.IsCover)?.Id;
         var removed = new List<VehicleImage>();
+        var removedVideos = new List<VehicleVideo>();
+        VehicleVideo? publishing = null;
         try
         {
             VehicleGallery.EnsureEditable(v);
@@ -89,14 +92,22 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
                 var removing = r.Gallery.Removed ?? [];
                 // Only the staged photos this editor lists are kept: another tab's uploads stay staged.
                 var keeping = r.Gallery.Order ?? [];
-                foreach (var image in images.Where(x => x.IsStaged && keeping.Contains(x.Id) && !removing.Contains(x.Id))) image.Publish();
+                foreach (var image in VehicleGallery.Photos(images).Where(x => x.IsStaged && keeping.Contains(x.Id) && !removing.Contains(x.Id))) image.Publish();
                 foreach (var imageId in removing.Distinct())
                 {
-                    var image = images.FirstOrDefault(x => x.Id == imageId) ?? throw new DomainException("invalid_gallery", "Unknown photo", "gallery");
+                    var image = images.FirstOrDefault(x => x.Id == imageId && x.Kind == ImageKind.Photo) ?? throw new DomainException("invalid_gallery", "Unknown photo", "gallery");
                     VehicleGallery.Remove(v, image, images);
                     removed.Add(image);
                 }
                 if (r.Gallery.Order is not null) VehicleGallery.Reorder(images, r.Gallery.Order);
+            }
+            if (r.Video is not null)
+            {
+                var videos = await db.Videos.Where(x => x.VehicleUnitId == id && x.State != VideoState.Deleted).ToListAsync();
+                var waiting = images.Where(x => x.Kind == ImageKind.VideoPoster && x.State == ImageState.PendingUpload).Select(x => x.Id).ToList();
+                var queued = (await db.ImageJobs.Where(j => waiting.Contains(j.ImageId) && (j.State == ImageJobState.Queued || j.State == ImageJobState.Processing))
+                    .Select(j => j.ImageId).ToListAsync()).ToHashSet();
+                publishing = ApplyVideo(v, r.Video.Keep, videos, images, queued, removed, removedVideos);
             }
             VehicleGallery.EnsureCover(images);
             if (target is not null && !leaves) v.ChangeStatus(target.Value, images, r.Status!.ShowWhenSold);
@@ -107,11 +118,46 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
         var removedIds = removed.Select(x => x.Id).ToList();
         foreach (var job in await db.ImageJobs.Where(j => removedIds.Contains(j.ImageId) && (j.State == ImageJobState.Queued || j.State == ImageJobState.Processing)).ToListAsync()) job.Cancel();
         await db.SaveGalleryAsync(cover is not null && cover.Id != oldCover ? cover : null);
+        // One published video per vehicle is a unique index: the old one is saved as deleted above, before this one is published.
+        if (publishing is not null) { publishing.Publish(); await db.SaveChangesAsync(); }
         await tx.CommitAsync();
-        foreach (var key in removed.SelectMany(x => new[] { x.OriginalKey, x.CardKey, x.DetailKey }).OfType<string>())
-            try { await storage.DeleteAsync(key, HttpContext.RequestAborted); } catch (Exception ex) { HttpContext.RequestServices.GetRequiredService<ILogger<VehiclesController>>().LogWarning(ex, "Image cleanup failed for {Key}", key); }
+        foreach (var key in removed.SelectMany(x => new[] { x.OriginalKey, x.CardKey, x.DetailKey }).Concat(removedVideos.Select(x => x.Key)).OfType<string>())
+            try { await storage.DeleteAsync(key, HttpContext.RequestAborted); } catch (Exception ex) { HttpContext.RequestServices.GetRequiredService<ILogger<VehiclesController>>().LogWarning(ex, "Media cleanup failed for {Key}", key); }
         return Ok(await Map(v));
     }
+
+    /// <summary>Keeps the video the editor chose. A staged, ready video replaces the published one: its poster is published
+    /// now and the video itself is returned, to be published once the old one is saved as deleted. Null removes the
+    /// published video. A removed video's poster goes like a photo, so a listed vehicle keeps a ready image.
+    /// <paramref name="queued"/> holds the pending posters the worker still has a job for.</summary>
+    private static VehicleVideo? ApplyVideo(VehicleUnit v, Guid? keep, List<VehicleVideo> videos, List<VehicleImage> images, HashSet<Guid> queued, List<VehicleImage> removed, List<VehicleVideo> removedVideos)
+    {
+        var current = videos.FirstOrDefault(x => !x.IsStaged);
+        VehicleVideo? kept = null;
+        if (keep is not null)
+        {
+            // Validated even when it is the current video: its poster may have failed after it was published.
+            kept = videos.FirstOrDefault(x => x.Id == keep && x.State == VideoState.Ready) ?? throw new DomainException("invalid_video", "The video is not uploaded to this vehicle", "video");
+            var poster = PosterOf(kept, images);
+            // A poster still waiting for its upload, with no job, will never be processed.
+            if (poster is null || poster.State == ImageState.Failed || (poster.State == ImageState.PendingUpload && !queued.Contains(poster.Id)))
+                throw new DomainException("video_poster_failed", "The video's cover image could not be processed; upload the video again", "video");
+            // Also for the current video: a poster uploaded again after a failure is staged until this save.
+            poster.Publish();
+            if (kept == current) return null;
+        }
+        if (current is not null)
+        {
+            var poster = PosterOf(current, images);
+            if (poster is not null) { VehicleGallery.Remove(v, poster, images); removed.Add(poster); }
+            current.Delete();
+            removedVideos.Add(current);
+        }
+        return kept;
+    }
+
+    private static VehicleImage? PosterOf(VehicleVideo video, IEnumerable<VehicleImage> images) =>
+        images.FirstOrDefault(x => x.Kind == ImageKind.VideoPoster && x.VideoId == video.Id && x.State != ImageState.Deleted);
 
     [HttpPost("{id:guid}/publish")]
     public async Task<IActionResult> Publish(Guid id, [FromBody] PublishRequest? request)
@@ -135,8 +181,13 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
     {
         var v = await db.Vehicles.FindAsync(id); if (v is null) return NotFound();
         Response.Headers["X-Robots-Tag"] = "noindex, nofollow";
-        var dto = PublicMapping.Map(v, await db.Images.Where(x => x.VehicleUnitId == id).ToListAsync());
-        return Ok(dto with { Images = dto.Images.Select(x => x.Replace($"/api/public/vehicles/{Uri.EscapeDataString(v.PublicSlug)}/images/", $"/api/admin/vehicles/{v.Id}/preview/images/")).ToList() });
+        var video = await db.Videos.AsNoTracking().SingleOrDefaultAsync(x => x.VehicleUnitId == id && !x.IsStaged && x.State == VideoState.Ready);
+        var dto = PublicMapping.Map(v, await db.Images.Where(x => x.VehicleUnitId == id).ToListAsync(), video);
+        return Ok(dto with
+        {
+            Images = dto.Images.Select(x => x.Replace($"/api/public/vehicles/{Uri.EscapeDataString(v.PublicSlug)}/images/", $"/api/admin/vehicles/{v.Id}/preview/images/")).ToList(),
+            VideoUrl = dto.VideoUrl?.Replace($"/api/public/vehicles/{Uri.EscapeDataString(v.PublicSlug)}/video/", $"/api/admin/vehicles/{v.Id}/video/")
+        });
     }
 
     [HttpGet("{id:guid}/preview/images/{imageId:guid}/detail")]
@@ -157,7 +208,7 @@ public static class DomainProblems
 {
     public static int StatusFor(string code) => code switch
     {
-        "archived" or "last_public_image" => StatusCodes.Status409Conflict,
+        "archived" or "last_public_image" or "invalid_video" or "video_poster_failed" => StatusCodes.Status409Conflict,
         "incomplete" or "images_required" or "price_zero" => StatusCodes.Status422UnprocessableEntity,
         "enquiries_unavailable" => StatusCodes.Status503ServiceUnavailable,
         _ => StatusCodes.Status400BadRequest,

@@ -151,6 +151,13 @@ namespace GpSelect.Infrastructure.Migrations
                     b.Property<bool>("IsStaged")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Photo");
+
                     b.Property<string>("MimeType")
                         .IsRequired()
                         .HasColumnType("text");
@@ -173,6 +180,9 @@ namespace GpSelect.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("VehicleUnitId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("VideoId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -295,6 +305,53 @@ namespace GpSelect.Infrastructure.Migrations
                     b.ToTable("Vehicles");
                 });
 
+            modelBuilder.Entity("GpSelect.Domain.VehicleVideo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsStaged")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("MimeType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("StorageCleanedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("VehicleUnitId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key");
+
+                    b.HasIndex(new[] { "VehicleUnitId" }, "IX_Videos_VehicleUnitId_Published")
+                        .IsUnique()
+                        .HasFilter("\"IsStaged\" = FALSE AND \"State\" <> 'Deleted'");
+
+                    b.ToTable("Videos");
+                });
+
             modelBuilder.Entity("GpSelect.Infrastructure.IdempotencyRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -341,6 +398,15 @@ namespace GpSelect.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("GpSelect.Domain.VehicleImage", b =>
+                {
+                    b.HasOne("GpSelect.Domain.VehicleUnit", null)
+                        .WithMany()
+                        .HasForeignKey("VehicleUnitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("GpSelect.Domain.VehicleVideo", b =>
                 {
                     b.HasOne("GpSelect.Domain.VehicleUnit", null)
                         .WithMany()

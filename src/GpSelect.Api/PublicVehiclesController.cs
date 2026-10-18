@@ -31,7 +31,9 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
             .ThenByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id).Take(VehicleQueryLimits.MaxVehicles).ToListAsync(ct);
         var ids = vehicles.Select(x => x.Id).ToList();
         var images = (await db.Images.AsNoTracking().Where(x => ids.Contains(x.VehicleUnitId)).Where(PublicPhoto).ToListAsync(ct)).ToLookup(x => x.VehicleUnitId);
-        return vehicles.Select(v => PublicMapping.MapCard(v, images[v.Id])).ToList();
+        var videos = await db.Videos.AsNoTracking().Where(x => ids.Contains(x.VehicleUnitId) && !x.IsStaged && x.State == VideoState.Ready)
+            .ToDictionaryAsync(x => x.VehicleUnitId, ct);
+        return vehicles.Select(v => PublicMapping.MapCard(v, images[v.Id], videos.GetValueOrDefault(v.Id))).ToList();
     }
 
     [HttpGet("{slug}")]
@@ -39,7 +41,21 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
     {
         var v = await db.Vehicles.AsNoTracking().Where(WithPublicDetail).FirstOrDefaultAsync(x => x.PublicSlug == slug);
         if (v is null) return NotFound();
-        return Ok(PublicMapping.Map(v, await db.Images.AsNoTracking().Where(x => x.VehicleUnitId == v.Id).Where(PublicPhoto).ToListAsync()));
+        var images = await db.Images.AsNoTracking().Where(x => x.VehicleUnitId == v.Id).Where(PublicPhoto).ToListAsync();
+        var video = await db.Videos.AsNoTracking().SingleOrDefaultAsync(x => x.VehicleUnitId == v.Id && !x.IsStaged && x.State == VideoState.Ready);
+        return Ok(PublicMapping.Map(v, images, video));
+    }
+
+    [HttpGet("{slug}/video/{videoId:guid}")]
+    public async Task<IActionResult> Video(string slug, Guid videoId)
+    {
+        var vehicle = await db.Vehicles.AsNoTracking().Where(WithPublicDetail).Where(x => x.PublicSlug == slug)
+            .Select(x => (Guid?)x.Id).FirstOrDefaultAsync();
+        if (vehicle is null) return NotFound();
+        var video = await db.Videos.AsNoTracking().SingleOrDefaultAsync(x => x.Id == videoId && x.VehicleUnitId == vehicle
+            && !x.IsStaged && x.State == VideoState.Ready);
+        if (video is null) return NotFound();
+        return await StoredVideos.Serve(this, storage, video.Key, video.SizeBytes, "public,max-age=86400");
     }
 
     [HttpGet("{slug}/images/{imageId:guid}/detail")]

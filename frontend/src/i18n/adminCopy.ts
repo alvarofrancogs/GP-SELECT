@@ -1,5 +1,53 @@
 import type { VehicleStatus } from '../types/admin';
 
+export const videoCopy = {
+  es: {
+    title: 'Vídeo',
+    coverNote: 'La portada del coche será el primer fotograma (segundo 0) de este vídeo',
+    previewNote: 'En el catálogo se verán los 10 primeros segundos; en la página del coche, el vídeo completo',
+    help: 'Recomendado: 1080p, MP4 optimizado para web, 5–8 Mbps. Máximo 100 MB',
+    bitrateWarning: 'Este vídeo pesa mucho para su duración y puede tardar en arrancar en móviles',
+    fastStartWarning: 'Este vídeo no está optimizado para web: el navegador tendrá que descargarlo entero antes de reproducirlo. Expórtalo con la opción "Web Optimized" / "Fast Start"',
+    wrongType: 'Formato no admitido. Usa MP4 (H.264).',
+    tooLarge: 'Supera 100 MB.',
+    unreadable: 'El navegador no puede leer este vídeo. Expórtalo como MP4 (H.264).',
+    pick: 'Elegir vídeo',
+    posterLabel: 'Portada · segundo 0',
+    change: 'Cambiar',
+    remove: 'Quitar',
+  },
+  en: {
+    title: 'Video',
+    coverNote: 'The car cover will be the first frame (second 0) of this video',
+    previewNote: 'The catalogue will show the first 10 seconds; the car page will show the full video',
+    help: 'Recommended: 1080p, web-optimized MP4, 5–8 Mbps. Maximum 100 MB',
+    bitrateWarning: 'This video is large for its duration and may take a while to start on mobile devices',
+    fastStartWarning: 'This video is not optimized for the web: the browser will have to download it in full before playing it. Export it with the "Web Optimized" / "Fast Start" option',
+    wrongType: 'Unsupported format. Use MP4 (H.264).',
+    tooLarge: 'Exceeds 100 MB.',
+    unreadable: 'The browser cannot read this video. Export it as MP4 (H.264).',
+    pick: 'Choose video',
+    posterLabel: 'Cover · frame 0',
+    change: 'Change',
+    remove: 'Remove',
+  },
+} as const;
+
+export const videoErrorCopy = {
+  es: {
+    video_too_large: videoCopy.es.tooLarge,
+    video_wrong_type: videoCopy.es.wrongType,
+    invalid_video: 'El vídeo no es válido o no está listo. Cámbialo y vuelve a intentarlo.',
+    video_poster_failed: 'No se pudo procesar la portada del vídeo. Cambia el vídeo y vuelve a intentarlo.',
+  },
+  en: {
+    video_too_large: videoCopy.en.tooLarge,
+    video_wrong_type: videoCopy.en.wrongType,
+    invalid_video: 'The video is invalid or not ready. Replace it and try again.',
+    video_poster_failed: 'The video cover could not be processed. Replace the video and try again.',
+  },
+} as const;
+
 /** The Admin is Spanish-only for now; its strings live here instead of the public dictionaries. */
 export const adminCopy = {
   brand: 'GP SELECT',
@@ -189,6 +237,8 @@ export const adminCopy = {
     row: (n: number) => `Especificación ${n}`,
   },
 
+  video: videoCopy.es,
+
   photos: {
     count: (n: number) => `${n} / 30`,
     drop: 'Arrastra fotografías aquí o',
@@ -196,6 +246,7 @@ export const adminCopy = {
     formats: 'JPEG, PNG o WebP. Hasta 20 MB por archivo.',
     orderHint: 'La primera foto lista es la portada. Arrastra o usa ← → para cambiar el orden.',
     empty: 'Sin fotografías. Para publicar hace falta al menos una lista, que será la portada.',
+    emptyWithVideo: 'Sin fotografías.',
     unsaved: 'Sin guardar',
     cover: 'Portada',
     makeCover: 'Hacer portada',
@@ -250,6 +301,7 @@ export const adminCopy = {
     range: (min: string, max: string) => `Debe estar entre ${min} y ${max}.`,
     tooLong: (max: number) => `Máximo ${max} caracteres.`,
     codes: {
+      ...videoErrorCopy.es,
       required: 'Obligatorio.',
       too_long: 'Texto demasiado largo.',
       out_of_range: 'Valor fuera de rango.',
