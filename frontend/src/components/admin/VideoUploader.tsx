@@ -117,7 +117,9 @@ export function VideoUploader({ vehicleId, videos, images, disabled, onBusyChang
       if (!mounted.current) return;
       videoStage = false;
       const i = current.image;
-      if (!i.uploaded && i.expiresAt !== null && Date.now() > i.expiresAt) current.image = transfer<ImageIntent>();
+      const failedPoster = i.intent && poster?.id === i.intent.imageId && posterFailed;
+      // Only replace the failed generation: stale metadata must not rotate the key of a newer retry.
+      if (failedPoster || (!i.uploaded && i.expiresAt !== null && Date.now() > i.expiresAt)) current.image = transfer<ImageIntent>();
       const imageTransfer = current.image;
       if (!imageTransfer.intent) {
         const intent = await adminApi.imageIntent(vehicleId, current.poster, imageTransfer.requestKey, true, { videoId: videoTransfer.intent.videoId });
@@ -200,7 +202,7 @@ export function VideoUploader({ vehicleId, videos, images, disabled, onBusyChang
     <div className="admin-photo__actions">
       <button type="button" className="admin-action" disabled={disabled || busy} onClick={() => input.current?.click()}>{text.change}</button>
       {video || keep || retryable ? <button type="button" className="admin-action" disabled={disabled || busy} onClick={remove}>{text.remove}</button> : null}
-      {retryable ? <button type="button" className="admin-action" disabled={disabled || busy}
+      {retryable || (posterFailed && posterPreview) ? <button type="button" className="admin-action" disabled={disabled || busy}
         onClick={() => { if (upload.current) void send(upload.current); }}>{adminCopy.errors.retry}</button> : null}
     </div>
   </div>;

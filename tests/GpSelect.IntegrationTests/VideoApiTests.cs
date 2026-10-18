@@ -209,6 +209,53 @@ public sealed class VideoApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Equal(HttpStatusCode.NotFound, (await ImageIntent(id, new { mimeType = "image/png", sizeBytes = 100, kind = "videoPoster", videoId = Guid.NewGuid() })).StatusCode);
     }
 
+    [Theory]
+    [InlineData(ImageState.PendingUpload, ImageJobState.Queued)]
+    [InlineData(ImageState.Failed, ImageJobState.Processing)]
+    public async Task Poster_intent_replaces_a_poster_that_never_uploaded_or_failed(ImageState state, ImageJobState jobState)
+    {
+        var id = await CreateVehicle();
+        var videoId = await UploadVideo(id);
+        var body = new { mimeType = "image/png", sizeBytes = Png().Length, kind = "videoPoster", videoId };
+        var first = (await Json(await ImageIntent(id, body))).GetProperty("imageId").GetGuid();
+        await Db(async db =>
+        {
+            var image = await db.Images.SingleAsync(x => x.Id == first);
+            if (state == ImageState.Failed) image.Fail("Test failure");
+            image.SetCover(true);
+            var job = ImageProcessingJob.Create(first);
+            if (jobState == ImageJobState.Processing) job.Claim();
+            db.ImageJobs.Add(job);
+            // Keep the worker from claiming this synthetic queued job before the replacement request.
+            db.Entry(job).Property(x => x.NextAttemptAt).CurrentValue = DateTimeOffset.UtcNow.AddDays(1);
+            return await db.SaveChangesAsync();
+        });
+
+        // ImageIntent uses a new Idempotency-Key for every request.
+        var replacement = (await Json(await ImageIntent(id, body))).GetProperty("imageId").GetGuid();
+        Assert.NotEqual(first, replacement);
+        await Db(async db =>
+        {
+            var active = await db.Images.Where(x => x.VideoId == videoId && x.Kind == ImageKind.VideoPoster && x.State != ImageState.Deleted).ToListAsync();
+            Assert.Equal(replacement, Assert.Single(active).Id);
+            var deleted = await db.Images.SingleAsync(x => x.Id == first);
+            Assert.Equal(ImageState.Deleted, deleted.State);
+            Assert.False(deleted.IsCover);
+            var cancelled = await db.ImageJobs.SingleAsync(x => x.ImageId == first);
+            Assert.Equal(ImageJobState.Failed, cancelled.State);
+            Assert.Equal("Cancelled", cancelled.Error);
+            Assert.Null(cancelled.ClaimedAt);
+            return 0;
+        });
+
+        foreach (var protectedState in new[] { ImageState.Processing, ImageState.Ready })
+        {
+            await Db(db => db.Images.Where(x => x.Id == replacement).ExecuteUpdateAsync(u => u.SetProperty(x => x.State, protectedState)));
+            Assert.Equal(HttpStatusCode.Conflict, (await ImageIntent(id, body)).StatusCode);
+            Assert.Equal(1, await Db(db => db.Images.CountAsync(x => x.VideoId == videoId && x.State != ImageState.Deleted)));
+        }
+    }
+
     // --- Public ---------------------------------------------------------------------------------
 
     [Fact]

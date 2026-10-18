@@ -45,7 +45,7 @@ describe('video upload', () => {
       static revokeObjectURL = vi.fn();
     });
   });
-  afterEach(() => { vi.unstubAllGlobals(); });
+  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
   it('uploads the video before a staged JPEG File poster and reports busy through both transfers', async () => {
     const view = open();
@@ -94,6 +94,46 @@ describe('video upload', () => {
     expect(extractPoster).not.toHaveBeenCalled();
     expect(videoIntent).not.toHaveBeenCalled();
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('recovers an expired poster PUT with a new intent and key using the same poster file', async () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    put.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new ApiError(0));
+    open();
+    choose();
+    await screen.findByText(adminCopy.errors.network);
+    const original = imageIntent.mock.calls[0];
+    imageIntent.mockResolvedValueOnce({ imageId: 'poster2', uploadUrl: '/upload/new-poster', expiresInSeconds: 3600 });
+    now.mockReturnValue(1_000_000 + 3600_000);
+    onChange.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: adminCopy.errors.retry }));
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith('video1'));
+    expect(imageIntent.mock.calls[1][2]).not.toBe(original[2]);
+    expect(imageIntent.mock.calls[1][1]).toBe(original[1]);
+    expect(put).toHaveBeenLastCalledWith('/upload/new-poster', original[1], expect.any(Function));
+    expect(completeImage).toHaveBeenCalledWith('v1', 'poster2', imageIntent.mock.calls[1][2]);
+    expect(videoIntent).toHaveBeenCalledTimes(1);
+    expect(completeVideo).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries a server-reported failed poster with a new intent and the retained poster file', async () => {
+    const view = open();
+    choose();
+    await waitFor(() => expect(onBusyChange).toHaveBeenLastCalledWith(false));
+    const original = imageIntent.mock.calls[0];
+    view.rerender(<VideoUploader vehicleId="v1"
+      videos={[{ id: 'video1', state: 'Ready', isStaged: true, sizeBytes: 3, url: '/video1', posterImageId: 'poster1' }]}
+      images={[{ id: 'poster1', kind: 'VideoPoster', state: 'Failed', isStaged: true, isCover: false, sortOrder: 0,
+        cardUrl: null, detailUrl: null, failureReason: 'failed', jobPending: false }]}
+      onChange={onChange} onBusyChange={onBusyChange} />);
+    imageIntent.mockResolvedValueOnce({ imageId: 'poster2', uploadUrl: '/upload/new-poster', expiresInSeconds: 3600 });
+    onChange.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: adminCopy.errors.retry }));
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith('video1'));
+    expect(imageIntent.mock.calls[1][2]).not.toBe(original[2]);
+    expect(imageIntent.mock.calls[1][1]).toBe(original[1]);
+    expect(put).toHaveBeenLastCalledWith('/upload/new-poster', original[1], expect.any(Function));
+    expect(videoIntent).toHaveBeenCalledTimes(1);
   });
 
   it('shows bitrate and fast start warnings without blocking the upload', async () => {

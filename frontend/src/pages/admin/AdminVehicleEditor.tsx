@@ -70,9 +70,15 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
   const actionRef = useRef(false);
   const galleryVersion = useRef(0);
   const reloadSequence = useRef(0);
+  const mounted = useRef(true);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const archived = vehicle.status === 'Archived';
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
   const savedSignature = useMemo(() => formSignature(toForm(vehicle)), [vehicle]);
   const visibleImages = images.filter((image) => image.kind !== 'VideoPoster' && !removed.includes(image.id));
@@ -105,7 +111,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     const version = galleryVersion.current;
     const sequence = ++reloadSequence.current;
     const updated = await adminApi.getVehicle(initial.id);
-    if (version !== galleryVersion.current || sequence !== reloadSequence.current || actionRef.current) return;
+    if (!mounted.current || version !== galleryVersion.current || sequence !== reloadSequence.current || actionRef.current) return;
     setVideos(updated.videos);
     setImages((current) => {
       const byId = new Map(updated.images.map((image) => [image.id, image]));
@@ -116,9 +122,12 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
   }, [initial.id]);
 
   const videoChanged = useCallback((keep: string | null | undefined) => {
+    if (!mounted.current) return;
+    const version = galleryVersion.current;
     setVideoKeep(keep);
     setSave({ kind: 'idle' });
     if (keep) void reload().catch((failure) => {
+      if (!mounted.current || version !== galleryVersion.current || actionRef.current) return;
       setSave({ kind: 'error', message: describeError(failure), reference: errorReference(failure) });
     });
   }, [reload]);
@@ -133,7 +142,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     const version = galleryVersion.current;
     const timer = window.setTimeout(() => {
       void reload().catch((failure) => {
-        if (version !== galleryVersion.current || actionRef.current) return;
+        if (!mounted.current || version !== galleryVersion.current || actionRef.current) return;
         setSave({ kind: 'error', message: describeError(failure), reference: errorReference(failure) });
       });
     }, 1500);

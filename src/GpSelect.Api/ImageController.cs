@@ -58,8 +58,19 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
             // The poster is frame 0 of a video of this vehicle; it stays out of the photos and their limit.
             if (request.VideoId is not { } videoId || !await db.Videos.AnyAsync(x => x.Id == videoId && x.VehicleUnitId == vehicleId && x.State != VideoState.Deleted))
                 return NotFound();
-            if (await db.Images.AnyAsync(x => x.VideoId == videoId && x.State != ImageState.Deleted))
+            // Lock the poster too: the worker must not advance it to Processing between this check and deletion.
+            var existing = await db.Images.FromSqlInterpolated($"SELECT * FROM \"Images\" WHERE \"Kind\" = 'VideoPoster' AND \"VideoId\" = {videoId} AND \"State\" <> 'Deleted' FOR UPDATE")
+                .SingleOrDefaultAsync();
+            if (existing is { State: ImageState.Processing or ImageState.Ready })
                 return Problem(statusCode: 409, title: "The video already has a poster");
+            if (existing is not null)
+            {
+                // A fresh intent can recover an abandoned upload or a failed poster without replacing the video.
+                existing.SetCover(false);
+                existing.Delete();
+                foreach (var job in await db.ImageJobs.Where(j => j.ImageId == existing.Id && (j.State == ImageJobState.Queued || j.State == ImageJobState.Processing)).ToListAsync())
+                    job.Cancel();
+            }
             image = VehicleImage.CreatePoster(vehicleId, videoId, originalKey, request.MimeType, request.SizeBytes);
         }
         else

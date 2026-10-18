@@ -59,8 +59,9 @@ describe('editor video saving', () => {
     getVehicle.mockResolvedValue(data);
     saveVehicle.mockResolvedValue(data);
     const router = createMemoryRouter([{ path: '/admin/vehiculos/:id', element: <AdminVehicleEditor /> }], { initialEntries: ['/admin/vehiculos/v1'] });
-    render(<RouterProvider router={router} />);
+    const view = render(<RouterProvider router={router} />);
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    return view;
   }
 
   async function saveChanges() {
@@ -147,6 +148,33 @@ describe('editor video saving', () => {
     await act(async () => { screen.getByRole('button', { name: adminCopy.editor.discard }).click(); await vi.advanceTimersByTimeAsync(0); });
     expect(removeImage).not.toHaveBeenCalled();
     expect(saveButton().disabled).toBe(true);
+  });
+
+  it.each(['resolve', 'reject'] as const)('ignores a video reload that will %s after unmount', async (outcome) => {
+    const data = withVideo();
+    const view = await open(data);
+    let resolve!: (value: AdminVehicle) => void;
+    let reject!: (reason: unknown) => void;
+    const delayed = new Promise<AdminVehicle>((yes, no) => { resolve = yes; reject = no; });
+    getVehicle.mockReturnValue(delayed);
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText(adminCopy.video.title, { selector: 'input' }), { target: { files: [new File(['mp4'], 'car.mp4', { type: 'video/mp4' })] } });
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(getVehicle.mock.calls.length).toBeGreaterThan(1);
+    view.unmount();
+    const readResult = vi.fn(() => data.videos);
+    const result = { ...data, get videos() { return readResult(); } };
+    const failure = new ApiError(500);
+    const readError = vi.fn(() => 'invalid_video');
+    Object.defineProperty(failure, 'code', { get: readError });
+    await act(async () => {
+      if (outcome === 'resolve') resolve(result);
+      else reject(failure);
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(readResult).not.toHaveBeenCalled();
+    expect(readError).not.toHaveBeenCalled();
   });
 });
 
