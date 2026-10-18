@@ -15,9 +15,13 @@ const vehicle = (video: string | null): VehicleSummary => ({
   availability: 'available', images, video,
 });
 
+let loaded = true;
 const playingNow = new Set<HTMLMediaElement>();
 beforeEach(() => {
   playingNow.clear();
+  loaded = true;
+  Object.defineProperty(HTMLMediaElement.prototype, 'readyState', { configurable: true, get(this: HTMLMediaElement) { return loaded || !this.closest('dialog') ? 4 : 0; } });
+  HTMLMediaElement.prototype.load = vi.fn();
   window.matchMedia = vi.fn((query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {},
     addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as typeof window.matchMedia;
   vi.stubGlobal('IntersectionObserver', vi.fn(function () { return { observe() {}, unobserve() {}, disconnect() {} }; }));
@@ -101,5 +105,16 @@ describe('VehicleGallery with a video', () => {
     previous();
     expect(playingNow.has(inline())).toBe(false);
     expect(playingNow.has(enlarged())).toBe(false);
+  });
+  it('applies the dialog seek once its metadata has loaded', () => {
+    gallery('/m4.mp4');
+    loaded = false;
+    inline().currentTime = 4.1;
+    open();
+    expect(enlarged().currentTime).not.toBe(4.1);
+    expect(playingNow.has(enlarged())).toBe(false);
+    fireEvent(enlarged(), new Event('loadedmetadata'));
+    expect(enlarged().currentTime).toBe(4.1);
+    expect(playingNow.has(enlarged())).toBe(true);
   });
 });

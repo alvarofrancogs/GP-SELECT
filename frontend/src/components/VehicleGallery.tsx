@@ -6,6 +6,14 @@ import { useGalleryVideo } from '../hooks/usePreviewVideo';
 
 const STRIP = '(max-width: 767px)';
 
+/** A seek before the metadata is loaded is dropped: wait for it (and ask for it) when it is missing. */
+function whenReady(video: HTMLVideoElement, run: () => void) {
+  if (video.readyState >= 1) { run(); return; }
+  video.addEventListener('loadedmetadata', run, { once: true });
+  video.preload = 'auto';
+  video.load();
+}
+
 export function VehicleGallery({ images, name, video = null }: { images: VehicleImage[]; name: string; video?: string | null }) {
   const { copy } = useLanguage();
   const text = copy.vehicles;
@@ -76,17 +84,23 @@ export function VehicleGallery({ images, name, video = null }: { images: Vehicle
     const inline = videoRef.current;
     const enlarged = dialogVideo.current;
     if (dialogOpen && enlarged && inline) {
-      enlarged.muted = inline.muted;
-      enlarged.currentTime = inline.currentTime;
-      if (startOnOpen.current) void enlarged.play().catch(() => {});
+      const { muted, currentTime } = inline;
+      const start = startOnOpen.current;
       startOnOpen.current = false;
+      enlarged.muted = muted;
+      whenReady(enlarged, () => {
+        enlarged.currentTime = currentTime;
+        if (start) void enlarged.play().catch(() => {});
+      });
     } else if (!dialogOpen && handBack.current && inline) {
       const { time, muted, playing: resume } = handBack.current;
       handBack.current = null;
       inline.muted = muted;
-      inline.currentTime = time;
-      if (resume) void inline.play().catch(() => {});
-      else inline.pause();
+      whenReady(inline, () => {
+        inline.currentTime = time;
+        if (resume) void inline.play().catch(() => {});
+        else inline.pause();
+      });
     }
   }, [dialogOpen, playing, videoRef]);
   function onKeyDown(event: KeyboardEvent) {
