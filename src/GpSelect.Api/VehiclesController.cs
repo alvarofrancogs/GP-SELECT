@@ -174,8 +174,13 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
     {
         var v = await db.Vehicles.FindAsync(id); if (v is null) return NotFound();
         Response.Headers["X-Robots-Tag"] = "noindex, nofollow";
-        var dto = PublicMapping.Map(v, await db.Images.Where(x => x.VehicleUnitId == id).ToListAsync());
-        return Ok(dto with { Images = dto.Images.Select(x => x.Replace($"/api/public/vehicles/{Uri.EscapeDataString(v.PublicSlug)}/images/", $"/api/admin/vehicles/{v.Id}/preview/images/")).ToList() });
+        var video = await db.Videos.AsNoTracking().SingleOrDefaultAsync(x => x.VehicleUnitId == id && !x.IsStaged && x.State == VideoState.Ready);
+        var dto = PublicMapping.Map(v, await db.Images.Where(x => x.VehicleUnitId == id).ToListAsync(), video);
+        return Ok(dto with
+        {
+            Images = dto.Images.Select(x => x.Replace($"/api/public/vehicles/{Uri.EscapeDataString(v.PublicSlug)}/images/", $"/api/admin/vehicles/{v.Id}/preview/images/")).ToList(),
+            VideoUrl = dto.VideoUrl?.Replace($"/api/public/vehicles/{Uri.EscapeDataString(v.PublicSlug)}/video/", $"/api/admin/vehicles/{v.Id}/video/")
+        });
     }
 
     [HttpGet("{id:guid}/preview/images/{imageId:guid}/detail")]

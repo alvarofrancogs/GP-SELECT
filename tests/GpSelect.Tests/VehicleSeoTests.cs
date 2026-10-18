@@ -14,7 +14,7 @@ public class VehicleSeoTests
     [Fact]
     public void Fill_embeds_the_public_contract_after_root_without_script_breakout()
     {
-        var dto = PublicMapping.Map(VehicleUnit.Create("BMW", "M4", 2023, 6, "bmw-m4"), [])
+        var dto = PublicMapping.Map(VehicleUnit.Create("BMW", "M4", 2023, 6, "bmw-m4"), [], null)
             with { Description = "</script><script>alert(1)</script> & >", Status = VehicleStatus.Available };
         var html = VehicleSeo.Fill(Template, "head", "<main>body</main>", dto)!;
         Assert.Contains("<div id=\"root\"><main>body</main></div>" + Script, html);
@@ -46,7 +46,7 @@ public class VehicleSeoTests
     [InlineData("<!--/page-meta--><!--page-meta--><div id=\"root\"></div>")]
     public void Fill_with_data_still_rejects_missing_or_invalid_markers(string template)
     {
-        var dto = PublicMapping.Map(VehicleUnit.Create("BMW", "M4", 2023, 6, "bmw-m4"), []);
+        var dto = PublicMapping.Map(VehicleUnit.Create("BMW", "M4", 2023, 6, "bmw-m4"), [], null);
         Assert.Null(VehicleSeo.Fill(template, "head", "body", dto));
     }
 }

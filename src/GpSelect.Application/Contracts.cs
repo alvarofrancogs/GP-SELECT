@@ -36,12 +36,12 @@ public sealed record VideoAdminDto(Guid Id, VideoState State, bool IsStaged, lon
 
 // Public contracts. Internal fields (InternalReference, Vin, InternalNotes, PurchaseCostEur) never appear here.
 public sealed record VehiclePublicCardDto(string Slug, string Make, string Model, string? Variant, int Year, int? Month, decimal? PriceEur,
-    int? MileageKm, int? PowerHp, string? FuelType, string? Transmission, string? BodyType, VehicleStatus Status, IReadOnlyList<string> Images);
+    int? MileageKm, int? PowerHp, string? FuelType, string? Transmission, string? BodyType, VehicleStatus Status, IReadOnlyList<string> Images, string? VideoUrl);
 public sealed record VehiclePublicDto(string Slug, string Make, string Model, string? Variant, int Year, int? Month, decimal? PriceEur,
     int? MileageKm, int? PowerHp, string? FuelType, string? Transmission, string? BodyType, string? Drivetrain, string? ExteriorColour,
     string? Interior, string? Description, string? History, string? Provenance, IReadOnlyList<string> Equipment,
     IReadOnlyList<VehicleSpecification> CustomSpecifications, VehicleStatus Status, IReadOnlyList<string> Images,
-    IReadOnlyList<string> CardImages);
+    IReadOnlyList<string> CardImages, string? VideoUrl);
 
 public static class PublicMapping
 {
@@ -49,25 +49,42 @@ public static class PublicMapping
     // A sold vehicle's price is never shown, so it is not published either (nor counted in the catalogue's price filters).
     private static decimal? PublicPrice(VehicleUnit v) => v.Status == VehicleStatus.Sold ? null : v.PriceEur;
 
+    private static bool IsVideoCover(VehicleUnit v, VehicleImage image, VehicleVideo? video) =>
+        video is { IsStaged: false, State: VideoState.Ready } && video.VehicleUnitId == v.Id
+        && image.VehicleUnitId == v.Id && image.Kind == ImageKind.VideoPoster && image.VideoId == video.Id
+        && image.State == ImageState.Ready && !image.IsStaged && image.IsCover;
+
+    private static List<VehicleImage> Gallery(VehicleUnit v, IEnumerable<VehicleImage> images, VehicleVideo? video, bool detail) =>
+        VehicleGallery.InPublicOrder(images.Where(x => x.State == ImageState.Ready && !x.IsStaged
+            && x.CardKey is not null && (!detail || x.DetailKey is not null)
+            // Without a usable video cover, the gallery starts with a photo.
+            && (x.Kind == ImageKind.Photo || IsVideoCover(v, x, video)))).ToList();
+
+    private static string? VideoUrl(VehicleUnit v, IReadOnlyList<VehicleImage> gallery, VehicleVideo? video) =>
+        gallery.Count > 0 && IsVideoCover(v, gallery[0], video)
+            ? $"/api/public/vehicles/{Uri.EscapeDataString(v.PublicSlug)}/video/{video!.Id}" : null;
+
     // CardImages holds the 800 px version of each photo, in the same order as Images (thumbnails, small screens).
-    public static VehiclePublicDto Map(VehicleUnit v, IEnumerable<VehicleImage> images)
+    public static VehiclePublicDto Map(VehicleUnit v, IEnumerable<VehicleImage> images, VehicleVideo? video)
     {
-        var gallery = VehicleGallery.InPublicOrder(images.Where(x => x.State == ImageState.Ready && !x.IsStaged
-            && x.DetailKey is not null && x.CardKey is not null)).ToList();
+        var gallery = Gallery(v, images, video, detail: true);
         return new(
             v.PublicSlug, v.Make, v.Model, v.Variant, v.FirstRegistrationYear, v.FirstRegistrationMonth, PublicPrice(v),
             v.MileageKm, v.PowerHp, v.FuelType, v.Transmission, v.BodyType, v.Drivetrain, v.ExteriorColour,
             v.Interior, v.Description, v.History, v.Provenance, VehicleContent.ReadEquipment(v.EquipmentJson),
             VehicleContent.ReadSpecifications(v.CustomSpecificationsJson), v.Status,
             gallery.Select(x => $"{Base(v)}/{x.Id}/detail").ToList(),
-            gallery.Select(x => $"{Base(v)}/{x.Id}/card").ToList());
+            gallery.Select(x => $"{Base(v)}/{x.Id}/card").ToList(), VideoUrl(v, gallery, video));
     }
 
-    public static VehiclePublicCardDto MapCard(VehicleUnit v, IEnumerable<VehicleImage> images) => new(
-        v.PublicSlug, v.Make, v.Model, v.Variant, v.FirstRegistrationYear, v.FirstRegistrationMonth, PublicPrice(v),
-        v.MileageKm, v.PowerHp, v.FuelType, v.Transmission, v.BodyType, v.Status,
-        VehicleGallery.InPublicOrder(images.Where(x => x.State == ImageState.Ready && !x.IsStaged && x.CardKey is not null))
-            .Select(x => $"{Base(v)}/{x.Id}/card").ToList());
+    public static VehiclePublicCardDto MapCard(VehicleUnit v, IEnumerable<VehicleImage> images, VehicleVideo? video)
+    {
+        var gallery = Gallery(v, images, video, detail: false);
+        return new(
+            v.PublicSlug, v.Make, v.Model, v.Variant, v.FirstRegistrationYear, v.FirstRegistrationMonth, PublicPrice(v),
+            v.MileageKm, v.PowerHp, v.FuelType, v.Transmission, v.BodyType, v.Status,
+            gallery.Select(x => $"{Base(v)}/{x.Id}/card").ToList(), VideoUrl(v, gallery, video));
+    }
 }
 
 public static class AdminMapping

@@ -1,6 +1,7 @@
 using GpSelect.Domain;
 using GpSelect.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -8,6 +9,113 @@ namespace GpSelect.IntegrationTests;
 
 public sealed class BackendMaintenanceTests(ApiFactory api) : IClassFixture<ApiFactory>
 {
+    [Fact]
+    public async Task Deleted_video_storage_is_cleaned()
+    {
+        using var scope = api.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
+        var storage = scope.ServiceProvider.GetRequiredService<IObjectStorage>();
+        var vehicle = VehicleUnit.Create("BMW", "M4", 2024, 1, $"maintenance-{Guid.NewGuid():N}");
+        var video = VehicleVideo.Create(vehicle.Id, 3);
+        video.Delete(); db.Vehicles.Add(vehicle); db.Videos.Add(video); await db.SaveChangesAsync();
+        using var content = new MemoryStream(new byte[] { 1, 2, 3 });
+        await storage.PutAsync(video.Key, content, "video/mp4", CancellationToken.None);
+        var maintenance = scope.ServiceProvider.GetRequiredService<BackendMaintenance>();
+        var now = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+
+        await maintenance.RunAsync(now, CancellationToken.None);
+        Assert.Null(await storage.HeadAsync(video.Key, CancellationToken.None));
+        Assert.Equal(now, await db.Videos.Where(x => x.Id == video.Id).Select(x => x.StorageCleanedAt).SingleAsync());
+        // A late upload is removed during the retry window without moving the first-clean timestamp.
+        content.Position = 0;
+        await storage.PutAsync(video.Key, content, "video/mp4", CancellationToken.None);
+        await maintenance.RunAsync(now.AddHours(1), CancellationToken.None);
+        Assert.Null(await storage.HeadAsync(video.Key, CancellationToken.None));
+        var saved = await db.Videos.AsNoTracking().SingleAsync(x => x.Id == video.Id);
+        Assert.Equal(VideoState.Deleted, saved.State);
+        Assert.Equal(now, saved.StorageCleanedAt);
+    }
+
+    [Theory]
+    [InlineData(25, false)]
+    [InlineData(24, false)]
+    [InlineData(23, true)]
+    public async Task Deleted_video_cleanup_retries_only_within_24_hours(int hoursSinceCleaned, bool retried)
+    {
+        using var scope = api.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
+        var storage = scope.ServiceProvider.GetRequiredService<IObjectStorage>();
+        var now = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+        var vehicle = VehicleUnit.Create("BMW", "M4", 2024, 1, $"maintenance-{Guid.NewGuid():N}");
+        var video = VehicleVideo.Create(vehicle.Id, 3);
+        video.Delete(); db.Vehicles.Add(vehicle); db.Videos.Add(video);
+        db.Entry(video).Property(x => x.StorageCleanedAt).CurrentValue = now.AddHours(-hoursSinceCleaned);
+        await db.SaveChangesAsync();
+        using var content = new MemoryStream(new byte[] { 1, 2, 3 });
+        await storage.PutAsync(video.Key, content, "video/mp4", CancellationToken.None);
+
+        await scope.ServiceProvider.GetRequiredService<BackendMaintenance>().RunAsync(now, CancellationToken.None);
+        Assert.Equal(!retried, await storage.HeadAsync(video.Key, CancellationToken.None) is not null);
+        Assert.Equal(now.AddHours(-hoursSinceCleaned), await db.Videos.Where(x => x.Id == video.Id).Select(x => x.StorageCleanedAt).SingleAsync());
+    }
+
+    [Theory]
+    [InlineData(25, false, false, false)]
+    [InlineData(24, false, false, true)]
+    [InlineData(23, false, false, true)]
+    [InlineData(25, true, false, true)]
+    [InlineData(25, false, true, true)]
+    public async Task Only_abandoned_video_intents_are_removed(int ageHours, bool completed, bool archived, bool kept)
+    {
+        using var scope = api.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
+        var storage = scope.ServiceProvider.GetRequiredService<IObjectStorage>();
+        var now = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+        var vehicle = VehicleUnit.Create("BMW", "M4", 2024, 1, $"maintenance-{Guid.NewGuid():N}");
+        if (archived) vehicle.Archive();
+        var video = VehicleVideo.Create(vehicle.Id, 3);
+        if (completed) video.MarkReady();
+        db.Vehicles.Add(vehicle); db.Videos.Add(video);
+        db.Entry(video).Property(x => x.CreatedAt).CurrentValue = now.AddHours(-ageHours);
+        await db.SaveChangesAsync();
+        using var content = new MemoryStream(new byte[] { 1, 2, 3 });
+        await storage.PutAsync(video.Key, content, "video/mp4", CancellationToken.None);
+
+        await scope.ServiceProvider.GetRequiredService<BackendMaintenance>().RunAsync(now, CancellationToken.None);
+        Assert.Equal(kept, await db.Videos.AnyAsync(x => x.Id == video.Id));
+        Assert.Equal(kept, await storage.HeadAsync(video.Key, CancellationToken.None) is not null);
+    }
+
+    [Fact]
+    public async Task Sweep_keeps_live_video_keys()
+    {
+        using var scope = api.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
+        var storage = scope.ServiceProvider.GetRequiredService<IObjectStorage>();
+        var root = scope.ServiceProvider.GetRequiredService<IConfiguration>()["Storage:Root"]!;
+        var now = DateTimeOffset.UtcNow;
+        var vehicle = VehicleUnit.Create("BMW", "M4", 2024, 1, $"sweep-{Guid.NewGuid():N}");
+        var published = VehicleVideo.Create(vehicle.Id, 3); published.MarkReady(); published.Publish();
+        var staged = VehicleVideo.Create(vehicle.Id, 3); staged.MarkReady();
+        var pending = VehicleVideo.Create(vehicle.Id, 3);
+        var deleted = VehicleVideo.Create(vehicle.Id, 3); deleted.Delete();
+        db.Vehicles.Add(vehicle); db.Videos.AddRange(published, staged, pending, deleted);
+        await db.SaveChangesAsync();
+        var orphan = $"vehicles/{vehicle.Id}/videos/{Guid.NewGuid():N}.mp4";
+        foreach (var key in new[] { published.Key, staged.Key, pending.Key, deleted.Key, orphan })
+        {
+            using var content = new MemoryStream(new byte[] { 1, 2, 3 });
+            await storage.PutAsync(key, content, "video/mp4", CancellationToken.None);
+            File.SetLastWriteTimeUtc(Path.Combine(root, key.Replace('/', Path.DirectorySeparatorChar)), now.AddHours(-49).UtcDateTime);
+        }
+
+        await scope.ServiceProvider.GetRequiredService<BackendMaintenance>().SweepOrphansAsync(now, CancellationToken.None);
+        foreach (var key in new[] { published.Key, staged.Key, pending.Key })
+            Assert.NotNull(await storage.HeadAsync(key, CancellationToken.None));
+        Assert.Null(await storage.HeadAsync(deleted.Key, CancellationToken.None));
+        Assert.Null(await storage.HeadAsync(orphan, CancellationToken.None));
+    }
+
     [Theory]
     [InlineData(EnquiryNotificationStatus.Pending)]
     [InlineData(EnquiryNotificationStatus.Sent)]

@@ -209,6 +209,91 @@ public sealed class VideoApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Equal(HttpStatusCode.NotFound, (await ImageIntent(id, new { mimeType = "image/png", sizeBytes = 100, kind = "videoPoster", videoId = Guid.NewGuid() })).StatusCode);
     }
 
+    // --- Public ---------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Public_video_supports_ranges()
+    {
+        var id = await CreateVehicle();
+        var (videoId, poster) = await SavedVideo(id);
+        await Json(await admin.PatchAsync($"/api/admin/vehicles/{id}", JsonContent.Create(new { priceEur = 125000 })));
+        var vehicle = await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/status", new { status = "ComingSoon" }));
+        var slug = vehicle.GetProperty("slug").GetString();
+        var url = $"/api/public/vehicles/{slug}/video/{videoId}";
+        var bytes = Mp4();
+        using var client = api.Anonymous();
+        var detail = await Json(await client.GetAsync($"/api/public/vehicles/{slug}"));
+        Assert.Equal(url, detail.GetProperty("videoUrl").GetString());
+        Assert.EndsWith($"/{poster}/detail", detail.GetProperty("images")[0].GetString());
+        var card = (await Json(await client.GetAsync("/api/public/vehicles"))).EnumerateArray().Single(x => x.GetProperty("slug").GetString() == slug);
+        Assert.Equal(url, card.GetProperty("videoUrl").GetString());
+        Assert.EndsWith($"/{poster}/card", card.GetProperty("images")[0].GetString());
+        using var seo = await client.GetAsync($"/seo/vehiculos/{slug}");
+        Assert.Equal(HttpStatusCode.OK, seo.StatusCode);
+        var html = await seo.Content.ReadAsStringAsync();
+        const string script = "<script type=\"application/json\" id=\"vehicle-data\">";
+        var start = html.IndexOf(script, StringComparison.Ordinal) + script.Length;
+        Assert.True(start >= script.Length);
+        using var seoData = JsonDocument.Parse(html[start..html.IndexOf("</script>", start, StringComparison.Ordinal)]);
+        Assert.Equal(url, seoData.RootElement.GetProperty("videoUrl").GetString());
+        var preview = await Json(await admin.GetAsync($"/api/admin/vehicles/{id}/preview"));
+        Assert.Equal($"/api/admin/vehicles/{id}/video/{videoId}", preview.GetProperty("videoUrl").GetString());
+
+        using var range = new HttpRequestMessage(HttpMethod.Get, url);
+        range.Headers.Range = new(0, 1);
+        using var partial = await client.SendAsync(range);
+        Assert.Equal(HttpStatusCode.PartialContent, partial.StatusCode);
+        Assert.Equal($"bytes 0-1/{bytes.Length}", partial.Content.Headers.ContentRange!.ToString());
+        Assert.Equal(bytes[..2], await partial.Content.ReadAsByteArrayAsync());
+        Assert.Equal("video/mp4", partial.Content.Headers.ContentType!.MediaType);
+        Assert.Equal("public, max-age=86400", partial.Headers.CacheControl!.ToString());
+
+        using var invalid = new HttpRequestMessage(HttpMethod.Get, url);
+        invalid.Headers.Range = new(bytes.Length, null);
+        using var unsatisfiable = await client.SendAsync(invalid);
+        Assert.Equal(HttpStatusCode.RequestedRangeNotSatisfiable, unsatisfiable.StatusCode);
+        Assert.Equal($"bytes */{bytes.Length}", unsatisfiable.Content.Headers.ContentRange!.ToString());
+
+        using var full = await client.GetAsync(url);
+        Assert.Equal(HttpStatusCode.OK, full.StatusCode);
+        Assert.Equal(new[] { "bytes" }, full.Headers.AcceptRanges);
+        Assert.Equal(bytes, await full.Content.ReadAsByteArrayAsync());
+
+        var other = await CreateVehicle();
+        await UploadImage(other);
+        await Json(await admin.PatchAsync($"/api/admin/vehicles/{other}", JsonContent.Create(new { priceEur = 125000 })));
+        var otherSlug = (await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{other}/status", new { status = "ComingSoon" }))).GetProperty("slug").GetString();
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/public/vehicles/{otherSlug}/video/{videoId}")).StatusCode);
+        api.Sql.Clear();
+        await Json(await client.GetAsync("/api/public/vehicles"));
+        Assert.Single(api.Sql.Commands, x => x.Contains("FROM \"Videos\""));
+        await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/status", new { status = "Sold" }));
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync(url)).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/admin/vehicles/{id}/archive", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync(url)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Staged_video_is_not_public()
+    {
+        var id = await CreateVehicle();
+        await UploadImage(id);
+        await Json(await admin.PatchAsync($"/api/admin/vehicles/{id}", JsonContent.Create(new { priceEur = 125000 })));
+        await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/status", new { status = "ComingSoon" }));
+        var videoId = await UploadVideo(id);
+        await UploadPoster(id, videoId);
+        var slug = (await Get(id)).GetProperty("slug").GetString();
+        using var client = api.Anonymous();
+
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/public/vehicles/{slug}/video/{videoId}")).StatusCode);
+        var detail = await Json(await client.GetAsync($"/api/public/vehicles/{slug}"));
+        Assert.Equal(JsonValueKind.Null, detail.GetProperty("videoUrl").ValueKind);
+        var card = (await Json(await client.GetAsync("/api/public/vehicles"))).EnumerateArray().Single(x => x.GetProperty("slug").GetString() == slug);
+        Assert.Equal(JsonValueKind.Null, card.GetProperty("videoUrl").ValueKind);
+        var preview = await Json(await admin.GetAsync($"/api/admin/vehicles/{id}/preview"));
+        Assert.Equal(JsonValueKind.Null, preview.GetProperty("videoUrl").ValueKind);
+    }
+
     // --- Save -----------------------------------------------------------------------------------
 
     [Fact]

@@ -74,9 +74,43 @@ public sealed class BackendMaintenance(GpSelectDbContext db, IObjectStorage stor
                 logger.LogWarning("Image {ImageId} maintenance failed ({Error})", candidate.Id, ex.GetType().Name);
             }
         }
+
+        var videoCandidates = await db.Videos.AsNoTracking().Where(x =>
+            ((x.State == VideoState.Deleted && (x.StorageCleanedAt == null || x.StorageCleanedAt > abandonedBefore)) ||
+                (x.State == VideoState.PendingUpload && x.CreatedAt < abandonedBefore)) &&
+            db.Vehicles.Any(v => v.Id == x.VehicleUnitId && v.Status != VehicleStatus.Archived))
+            .Select(x => new { x.Id, x.VehicleUnitId }).ToListAsync(ct);
+        foreach (var candidate in videoCandidates)
+        {
+            try
+            {
+                await using var tx = await db.Database.BeginTransactionAsync(ct);
+                // Use the same lock order as uploads and saves, then recheck eligibility under the locks.
+                var vehicle = await db.Vehicles.FromSqlInterpolated($"SELECT * FROM \"Vehicles\" WHERE \"Id\" = {candidate.VehicleUnitId} FOR UPDATE")
+                    .AsNoTracking().SingleOrDefaultAsync(ct);
+                if (vehicle is null || vehicle.Status == VehicleStatus.Archived) continue;
+                var video = await db.Videos.FromSqlInterpolated($"SELECT * FROM \"Videos\" WHERE \"Id\" = {candidate.Id} FOR UPDATE")
+                    .AsNoTracking().SingleOrDefaultAsync(ct);
+                if (video is null) continue;
+                var abandoned = video.State == VideoState.PendingUpload && video.CreatedAt < abandonedBefore;
+                if (!abandoned && video.State != VideoState.Deleted) continue;
+                if (video.State == VideoState.Deleted && video.StorageCleanedAt <= abandonedBefore) continue;
+                await storage.DeleteAsync(video.Key, ct);
+                if (abandoned) await db.Videos.Where(x => x.Id == video.Id).ExecuteDeleteAsync(ct);
+                else if (video.StorageCleanedAt is null)
+                    await db.Videos.Where(x => x.Id == video.Id && x.StorageCleanedAt == null)
+                        .ExecuteUpdateAsync(u => u.SetProperty(x => x.StorageCleanedAt, (DateTimeOffset?)now), ct);
+                // Retry deleted tombstones for 24 hours after the first successful clean to catch late writes.
+                await tx.CommitAsync(ct);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogWarning("Video {VideoId} maintenance failed ({Error})", candidate.Id, ex.GetType().Name);
+            }
+        }
     }
 
-    /// <summary>Deletes stored objects no live image row points to. Only the two prefixes the API writes, and only objects
+    /// <summary>Deletes stored objects no live image or video row points to. Only the two prefixes the API writes, and only objects
     /// older than 48 hours, so an upload or a processing run in flight is never touched.</summary>
     public async Task SweepOrphansAsync(DateTimeOffset now, CancellationToken ct)
     {
@@ -91,6 +125,8 @@ public sealed class BackendMaintenance(GpSelectDbContext db, IObjectStorage stor
             if (row.DetailKey is not null) keys.Add(row.DetailKey);
             folders.Add($"vehicles/{row.VehicleUnitId}/{row.Id}/");
         }
+        var videoKeys = await db.Videos.AsNoTracking().Where(x => x.State != VideoState.Deleted).Select(x => x.Key).ToListAsync(ct);
+        keys.UnionWith(videoKeys);
         var olderThan = now.AddHours(-48);
         var orphans = new List<string>();
         foreach (var prefix in new[] { "quarantine/", "vehicles/" })

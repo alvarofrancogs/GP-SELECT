@@ -80,7 +80,8 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
         else
         {
             var images = await db.Images.AsNoTracking().Where(x => x.VehicleUnitId == vehicle.Id).Where(PublicVehiclesController.PublicPhoto).ToListAsync(ct);
-            var dto = PublicMapping.Map(vehicle, images);
+            var video = await db.Videos.AsNoTracking().SingleOrDefaultAsync(x => x.VehicleUnitId == vehicle.Id && !x.IsStaged && x.State == VideoState.Ready, ct);
+            var dto = PublicMapping.Map(vehicle, images, video);
             page = VehicleSeo.Fill(html, VehicleSeo.Head(dto, SiteUrl(), english), VehicleSeo.Body(dto, english), dto);
         }
         if (page is null)
