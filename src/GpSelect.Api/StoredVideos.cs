@@ -16,7 +16,10 @@ internal static class StoredVideos
         if (result == RangeResult.Unsatisfiable)
         {
             response.Headers.ContentRange = $"bytes */{size}";
-            return controller.StatusCode(StatusCodes.Status416RangeNotSatisfiable);
+            // Not StatusCode(...): under [ApiController] that becomes a ProblemDetails body.
+            response.StatusCode = StatusCodes.Status416RangeNotSatisfiable;
+            response.ContentLength = 0;
+            return new EmptyResult();
         }
 
         var stream = result == RangeResult.Partial
