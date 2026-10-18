@@ -66,6 +66,7 @@ export const en: Dictionary = {
     "enlarge": "Enlarge",
     "close": "Close",
     "image": "Image",
+    "video": "Video",
     "noImage": "Photography pending",
     "values": {
       "Gasolina": "Petrol",
