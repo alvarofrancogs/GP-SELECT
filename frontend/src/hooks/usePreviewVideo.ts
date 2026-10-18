@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type FocusEvent, type PointerEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FocusEvent, type PointerEvent, type RefObject } from 'react';
 import { PREVIEW_SECONDS, canAutoplay, createCenteredController } from '../lib/previewPlayback';
 
 /** Keep the cover visible until the current playback request actually starts. */
@@ -140,4 +140,28 @@ export function useGalleryVideo(active: boolean) {
   }, [active]);
 
   return { videoRef };
+}
+
+/** Whether at least half of the element is on screen. `onLeave` runs just before it stops counting as visible.
+ * Without IntersectionObserver the element always counts as visible. */
+export function useHalfVisible(ref: RefObject<HTMLElement | null>, onLeave?: () => void) {
+  const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined');
+  const leave = useRef(onLeave);
+  useEffect(() => { leave.current = onLeave; });
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element || typeof IntersectionObserver === 'undefined') return;
+    let shown = false;
+    const observer = new IntersectionObserver(([entry]) => {
+      const next = entry.isIntersecting && entry.intersectionRatio >= 0.5;
+      if (shown && !next) leave.current?.();
+      shown = next;
+      setVisible(next);
+    }, { threshold: [0, 0.5] });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return visible;
 }

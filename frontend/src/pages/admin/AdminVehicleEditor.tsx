@@ -86,15 +86,19 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     : videos.find((video) => video.id === videoKeep && video.state !== 'Deleted');
   const hasVideo = videoKeep !== null && (videoKeep !== undefined || !!keptVideo);
   const keptPoster = images.find((image) => image.id === keptVideo?.posterImageId);
-  const posterProcessing = hasVideo && (!keptVideo || keptVideo.state !== 'Ready' || !keptPoster
-    || keptPoster.state === 'PendingUpload' || keptPoster.state === 'Processing' || keptPoster.jobPending);
+  // A video or poster still waiting for its transfer only changes while the uploader sends it. Once that stops (done,
+  // or failed and waiting for Retry or Change) only a poster the worker has a job for is still processing.
+  const videoWaiting = hasVideo && (!keptVideo || keptVideo.state !== 'Ready' || !keptPoster
+    || (keptPoster.state === 'PendingUpload' && !keptPoster.jobPending));
+  const posterProcessing = hasVideo && ((videoWaiting && videoUploading)
+    || keptPoster?.state === 'Processing' || keptPoster?.jobPending === true);
   const galleryDirty = removed.length > 0 || visibleImages.some((image) => image.isStaged)
     || JSON.stringify(visibleImages.map((image) => image.id)) !== JSON.stringify(vehicle.images.filter((image) => image.kind !== 'VideoPoster' && !image.isStaged).map((image) => image.id));
   const statusDirty = status !== vehicle.status || (status === 'Sold' && showWhenSold !== vehicle.showWhenSold);
   const dirty = !archived && (formSignature(form) !== savedSignature || galleryDirty || statusDirty || pendingUploads || videoKeep !== undefined);
   const processing = !archived && (uploading || uploadState === 'working'
     || posterProcessing || visibleImages.some((image) => image.state === 'Processing' || (image.state === 'PendingUpload' && image.jobPending)));
-  const incomplete = !archived && (pendingUploads || (hasVideo && keptPoster?.state === 'Failed') || visibleImages.some((image) => image.state === 'PendingUpload'));
+  const incomplete = !archived && (pendingUploads || (hasVideo && keptPoster?.state === 'Failed') || videoWaiting || visibleImages.some((image) => image.state === 'PendingUpload'));
   const working = save.kind === 'saving' || save.kind === 'discarding';
   const archiveLocked = dirty || uploading || processing || working;
 
@@ -188,7 +192,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
         setImages((current) => current.filter((item) => item.id !== image.id));
         setRemoved((current) => current.filter((id) => id !== image.id));
       }
-      // Staged videos and their posters have no remove endpoint; unkept media is cleaned up by the server.
+      // Staged videos and their posters have no remove endpoint: the server deletes those left unsaved for 24 hours.
       resetDraft({ ...vehicle, images: vehicle.images.filter((image) => !image.isStaged), videos: vehicle.videos.filter((video) => !video.isStaged) });
       setSave({ kind: 'idle' });
     } catch (failure) {

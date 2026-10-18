@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import type { VehicleImage } from '../types/vehicle';
 import { useLanguage } from '../i18n/useLanguage';
-import { useGalleryVideo } from '../hooks/usePreviewVideo';
+import { useGalleryVideo, useHalfVisible } from '../hooks/usePreviewVideo';
 
 const STRIP = '(max-width: 767px)';
 
@@ -32,7 +32,12 @@ export function VehicleGallery({ images, name, video = null }: { images: Vehicle
   // The inline video stays quiet while the dialog is open: the dialog owns playback then.
   // `held`: the video was paused in the dialog, so closing it must not restart the inline one.
   const [held, setHeld] = useState(false);
-  const { videoRef } = useGalleryVideo(playing && !dialogOpen && !held);
+  // The slide plays only while at least half of the gallery is on screen. A video the visitor paused stays paused
+  // when it scrolls back into view.
+  const visible = useHalfVisible(strip, () => {
+    if (videoRef.current?.paused && !dialog.current?.open) setHeld(true);
+  });
+  const { videoRef } = useGalleryVideo(playing && !dialogOpen && !held && visible);
   const startOnOpen = useRef(false);
   const wasPlaying = useRef(false);
   const seeked = useRef(false);
@@ -135,7 +140,8 @@ export function VehicleGallery({ images, name, video = null }: { images: Vehicle
         if (!window.matchMedia(STRIP).matches) return;
         const element = event.currentTarget;
         const index = Math.round(element.scrollLeft / element.clientWidth);
-        if (index >= 0 && index < images.length) show(index);
+        // A scroll that stays on the current slide must not undo a pause.
+        if (index >= 0 && index < images.length && index !== active) show(index);
       }}>
       {images.map((image, index) => {
         const ready = reached.has(index);

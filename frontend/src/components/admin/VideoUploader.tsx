@@ -3,7 +3,7 @@ import { adminApi, ApiError, uploadFile } from '../../services/adminApi';
 import type { AdminImage, AdminVideo, ImageIntent, VideoIntent } from '../../types/admin';
 import { adminCopy } from '../../i18n/adminCopy';
 import { describeError } from '../../lib/adminErrors';
-import { BITRATE_WARNING_MBPS, bitrateMbps, extractPoster, isFastStart, MAX_VIDEO_BYTES, VIDEO_TYPE } from '../../lib/videoFile';
+import { BITRATE_WARNING_MBPS, bitrateMbps, extractPoster, isFastStart, MAX_VIDEO_BYTES, UnreadableVideoError, VIDEO_TYPE } from '../../lib/videoFile';
 import { uuid } from '../../lib/uuid';
 
 interface VideoUploaderProps {
@@ -35,6 +35,7 @@ const transfer = <T,>(): Transfer<T> => ({ requestKey: uuid(), intent: null, exp
 export function VideoUploader({ vehicleId, videos, images, disabled, onBusyChange, onChange }: VideoUploaderProps) {
   const text = adminCopy.video;
   const input = useRef<HTMLInputElement>(null);
+  const pickButton = useRef<HTMLButtonElement>(null);
   const upload = useRef<Upload | null>(null);
   const mounted = useRef(true);
   const running = useRef(false);
@@ -50,7 +51,8 @@ export function VideoUploader({ vehicleId, videos, images, disabled, onBusyChang
     : videos.find((item) => item.id === keep && item.state !== 'Deleted');
   const poster = images.find((image) => image.id === video?.posterImageId);
   const posterFailed = poster?.state === 'Failed';
-  const posterProcessing = video && (!poster || poster.state === 'PendingUpload' || poster.state === 'Processing' || poster.jobPending);
+  // After a failed transfer nothing is being processed: the error and its actions say what to do.
+  const posterProcessing = video && !error && (!poster || poster.state === 'PendingUpload' || poster.state === 'Processing' || poster.jobPending);
   const posterSrc = poster?.cardUrl ?? posterPreview;
 
   useEffect(() => {
@@ -144,6 +146,12 @@ export function VideoUploader({ vehicleId, videos, images, disabled, onBusyChang
       select(videoTransfer.intent.videoId);
     } catch (failure) {
       if (!mounted.current) return;
+      if (failure instanceof UnreadableVideoError) {
+        // Sending the same file again cannot help: only another file can.
+        upload.current = null;
+        setError(text.unreadable);
+        return;
+      }
       const mapped = videoStage && failure instanceof ApiError && (failure.status === 413 || failure.status === 415)
         ? new ApiError(failure.status, { code: failure.status === 413 ? 'video_too_large' : 'video_wrong_type' }) : failure;
       setError(describeError(mapped));
@@ -177,7 +185,7 @@ export function VideoUploader({ vehicleId, videos, images, disabled, onBusyChang
     setWarnings([]);
     setRetryable(false);
     select(null);
-    input.current?.focus();
+    pickButton.current?.focus();
   }
 
   return <div className="admin-photos admin-video" data-busy={busy || undefined} data-ready={video?.state === 'Ready' || undefined}>
@@ -186,7 +194,7 @@ export function VideoUploader({ vehicleId, videos, images, disabled, onBusyChang
     <p className="admin-field__hint">{text.previewNote}</p>
     <p id="video-help" className="admin-field__hint">{text.help}</p>
     </div>
-    <input hidden ref={input} type="file" accept={VIDEO_TYPE} aria-label={text.title} aria-describedby="video-help"
+    <input hidden ref={input} type="file" accept={VIDEO_TYPE} aria-label={text.title}
       disabled={disabled || busy} onChange={(event) => {
         const file = event.target.files?.[0];
         event.target.value = '';
@@ -195,7 +203,7 @@ export function VideoUploader({ vehicleId, videos, images, disabled, onBusyChang
     {video?.state === 'Ready' || posterSrc ? <div className="admin-video__media">
       {video?.state === 'Ready' ? <video className="admin-video__player" src={video.url} controls muted playsInline preload="metadata" aria-label={text.title} width={400} /> : null}
       {posterSrc ? <figure className="admin-video__poster">
-        <div className="admin-photo__media"><img src={posterSrc} alt={text.coverNote} width={400} height={300} /></div>
+        <div className="admin-photo__media"><img src={posterSrc} alt={text.posterLabel} width={400} height={300} /></div>
         <figcaption className="admin-field__hint">{text.posterLabel}</figcaption>
       </figure> : null}
     </div> : null}
@@ -207,7 +215,7 @@ export function VideoUploader({ vehicleId, videos, images, disabled, onBusyChang
     {posterFailed ? <p className="admin-field__error" role="alert">{adminCopy.errors.codes.video_poster_failed}</p> : null}
     {error ? <p className="admin-field__error" role="alert">{error}</p> : null}
     <div className="admin-photo__actions admin-video__actions">
-      <button type="button" className="admin-action" disabled={disabled || busy} onClick={() => input.current?.click()}>{video || keep || retryable ? text.change : text.pick}</button>
+      <button type="button" ref={pickButton} className="admin-action" aria-describedby="video-help" disabled={disabled || busy} onClick={() => input.current?.click()}>{video || keep || retryable ? text.change : text.pick}</button>
       {video || keep || retryable ? <button type="button" className="admin-action" disabled={disabled || busy} onClick={remove}>{text.remove}</button> : null}
       {retryable || (posterFailed && posterPreview) ? <button type="button" className="admin-action" disabled={disabled || busy}
         onClick={() => { if (upload.current) void send(upload.current); }}>{adminCopy.errors.retry}</button> : null}

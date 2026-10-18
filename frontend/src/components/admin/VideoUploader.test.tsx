@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { VideoUploader } from './VideoUploader';
 import { adminApi, ApiError, uploadFile } from '../../services/adminApi';
-import { extractPoster, isFastStart, MAX_VIDEO_BYTES } from '../../lib/videoFile';
+import { extractPoster, isFastStart, MAX_VIDEO_BYTES, UnreadableVideoError } from '../../lib/videoFile';
 import { adminCopy } from '../../i18n/adminCopy';
 
 vi.mock('../../services/adminApi', async (importOriginal) => ({
@@ -153,6 +153,31 @@ describe('video upload', () => {
     open();
     choose();
     expect(await screen.findByText(status === 413 ? adminCopy.video.tooLarge : adminCopy.video.wrongType)).toBeTruthy();
+  });
+
+  it('explains a file the browser cannot read and offers only another file, not Retry', async () => {
+    vi.mocked(extractPoster).mockRejectedValueOnce(new UnreadableVideoError());
+    open();
+    choose();
+    expect(await screen.findByText(adminCopy.video.unreadable)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: adminCopy.errors.retry })).toBeNull();
+    expect(screen.getByRole('button', { name: adminCopy.video.pick })).toBeTruthy();
+    expect(videoIntent).not.toHaveBeenCalled();
+  });
+
+  it('describes the pick button with the help text and moves focus to it after Remove', () => {
+    render(<VideoUploader vehicleId="v1"
+      videos={[{ id: 'video1', state: 'Ready', isStaged: false, sizeBytes: 3, url: '/video1', posterImageId: 'poster1' }]}
+      images={[{ id: 'poster1', kind: 'VideoPoster', state: 'Ready', isStaged: false, isCover: true, sortOrder: 0,
+        cardUrl: '/poster1/card', detailUrl: '/poster1/detail', failureReason: null, jobPending: false }]}
+      onChange={onChange} onBusyChange={onBusyChange} />);
+    expect(screen.getByRole('img').getAttribute('alt')).toBe(adminCopy.video.posterLabel);
+    const change = screen.getByRole('button', { name: adminCopy.video.change });
+    expect(change.getAttribute('aria-describedby')).toBe('video-help');
+    expect(screen.getByLabelText(adminCopy.video.title, { selector: 'input' }).hasAttribute('aria-describedby')).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: adminCopy.video.remove }));
+    expect(onChange).toHaveBeenLastCalledWith(null);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: adminCopy.video.pick }));
   });
 
   it('does not start an upload while disabled', () => {

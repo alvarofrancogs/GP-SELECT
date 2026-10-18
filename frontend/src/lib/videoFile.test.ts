@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-  BITRATE_WARNING_MBPS, MAX_VIDEO_BYTES, VIDEO_TYPE, bitrateMbps, isFastStart,
+  BITRATE_WARNING_MBPS, MAX_VIDEO_BYTES, POSTER_TIMEOUT_MS, UnreadableVideoError, VIDEO_TYPE, bitrateMbps, extractPoster, isFastStart,
 } from './videoFile';
 
 function box(type: string, size = 16): Uint8Array<ArrayBuffer> {
@@ -128,5 +128,45 @@ describe('bitrateMbps', () => {
 
   it.each([0, -1, NaN, Infinity, -Infinity])('returns null for duration %s', (duration) => {
     expect(bitrateMbps(1, duration)).toBeNull();
+  });
+});
+
+describe('extractPoster', () => {
+  function start() {
+    vi.stubGlobal('URL', class extends URL {
+      static createObjectURL = vi.fn(() => 'blob:video');
+      static revokeObjectURL = vi.fn();
+    });
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+    const create = vi.spyOn(document, 'createElement');
+    const promise = extractPoster(new File(['mp4'], 'car.mp4', { type: 'video/mp4' }));
+    const video = create.mock.results.find((result) => result.value instanceof HTMLVideoElement)!.value as HTMLVideoElement;
+    return { promise, video };
+  }
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+  it('rejects as unreadable when the browser cannot load the file', async () => {
+    const { promise, video } = start();
+    video.dispatchEvent(new Event('error'));
+    await expect(promise).rejects.toBeInstanceOf(UnreadableVideoError);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:video');
+  });
+
+  it('rejects as unreadable when the first frame has no dimensions', async () => {
+    const { promise, video } = start();
+    video.dispatchEvent(new Event('loadeddata'));
+    video.dispatchEvent(new Event('seeked'));
+    await expect(promise).rejects.toBeInstanceOf(UnreadableVideoError);
+  });
+
+  it('rejects as unreadable when the file never loads', async () => {
+    vi.useFakeTimers();
+    const { promise, video } = start();
+    const rejected = expect(promise).rejects.toBeInstanceOf(UnreadableVideoError);
+    await vi.advanceTimersByTimeAsync(POSTER_TIMEOUT_MS - 1);
+    expect(video.onerror).not.toBeNull();
+    await vi.advanceTimersByTimeAsync(1);
+    await rejected;
+    expect(video.onerror).toBeNull();
   });
 });

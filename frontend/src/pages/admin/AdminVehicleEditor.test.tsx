@@ -104,7 +104,7 @@ describe('editor video saving', () => {
   });
 
   it.each([
-    ['PendingUpload', false], ['Processing', false], ['Ready', true],
+    ['PendingUpload', true], ['Processing', false], ['Ready', true],
   ] as const)('waits for a kept staged poster in state %s with jobPending %s before saving', async (state, jobPending) => {
     const data = withVideo();
     await open(data);
@@ -126,6 +126,29 @@ describe('editor video saving', () => {
     await saveChanges();
     expect(saveVehicle.mock.calls[0][1]).toEqual({ video: { keep: 'replacement' } });
     expect(saveButton().disabled).toBe(true);
+  });
+
+  it.each(['video', 'poster'] as const)('stops asking for the video after its %s upload failed, and keeps the save blocked', async (stage) => {
+    const data = withVideo();
+    await open(data);
+    // The server state after the failure: the video is still uploading, or ready with a poster that never arrived.
+    getVehicle.mockResolvedValue({
+      ...data,
+      images: stage === 'poster' ? [...data.images, { ...poster, id: 'new-poster', isStaged: true, state: 'PendingUpload', jobPending: false }] : data.images,
+      videos: [...data.videos, { ...data.videos[0], id: 'replacement', isStaged: true, state: stage === 'video' ? 'PendingUpload' : 'Ready',
+        posterImageId: stage === 'poster' ? 'new-poster' : null }],
+    });
+    vi.mocked(uploadFile).mockImplementation(async (url) => { if (url === `/upload/${stage}`) throw new ApiError(0); });
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText(adminCopy.video.title, { selector: 'input' }), { target: { files: [new File(['mp4'], 'car.mp4', { type: 'video/mp4' })] } });
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.getByRole('button', { name: adminCopy.errors.retry })).toBeTruthy();
+    const calls = getVehicle.mock.calls.length;
+    await wait(30_000);
+    expect(getVehicle).toHaveBeenCalledTimes(calls);
+    expect(saveButton().disabled).toBe(true);
+    expect(screen.getByText(adminCopy.editor.pendingPhotos)).toBeTruthy();
   });
 
   it('shows a failed poster error and offers change without allowing save', async () => {

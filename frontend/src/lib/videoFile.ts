@@ -43,19 +43,32 @@ export function bitrateMbps(sizeBytes: number, durationSeconds: number): number 
   return sizeBytes * 8 / durationSeconds / 1_000_000;
 }
 
+export const POSTER_TIMEOUT_MS = 15_000;
+
+/** The browser cannot decode the file (an unsupported codec or a damaged file): trying again will not help. */
+export class UnreadableVideoError extends Error {
+  constructor() {
+    super('The browser cannot read this video.');
+    this.name = 'UnreadableVideoError';
+  }
+}
+
 export async function extractPoster(file: File): Promise<{ blob: Blob; durationSeconds: number }> {
   const video = document.createElement('video');
   video.muted = true;
   video.playsInline = true;
   video.preload = 'auto';
   const url = URL.createObjectURL(file);
+  let timer: ReturnType<typeof setTimeout> | undefined;
 
   try {
     return await new Promise((resolve, reject) => {
+      // A file the browser cannot decode may never fire loadeddata or error.
+      timer = setTimeout(() => reject(new UnreadableVideoError()), POSTER_TIMEOUT_MS);
       const drawPoster = () => {
         video.onseeked = null;
         try {
-          if (!video.videoWidth || !video.videoHeight) throw new Error('Video dimensions are unavailable.');
+          if (!video.videoWidth || !video.videoHeight) throw new UnreadableVideoError();
           const scale = Math.min(1, 2400 / Math.max(video.videoWidth, video.videoHeight));
           const canvas = document.createElement('canvas');
           canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
@@ -72,7 +85,7 @@ export async function extractPoster(file: File): Promise<{ blob: Blob; durationS
         }
       };
 
-      video.onerror = () => reject(new Error('Could not load the video.'));
+      video.onerror = () => reject(new UnreadableVideoError());
       video.onloadeddata = () => {
         video.onloadeddata = null;
         video.onseeked = drawPoster;
@@ -87,6 +100,7 @@ export async function extractPoster(file: File): Promise<{ blob: Blob; durationS
       video.src = url;
     });
   } finally {
+    clearTimeout(timer);
     video.onloadeddata = null;
     video.onseeked = null;
     video.onerror = null;

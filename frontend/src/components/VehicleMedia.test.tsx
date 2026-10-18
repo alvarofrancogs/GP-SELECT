@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { LanguageProvider } from '../i18n/LanguageProvider';
 import { es } from '../i18n/es';
@@ -17,6 +17,12 @@ const vehicle = (video: string | null): VehicleSummary => ({
 
 let loaded = true;
 const playingNow = new Set<HTMLMediaElement>();
+// The gallery stage reports itself fully visible as soon as it is observed; `stageInView` changes that later.
+let stageObserver: { callback: IntersectionObserverCallback; target: Element } | null = null;
+function stageInView(ratio: number) {
+  const { callback, target } = stageObserver!;
+  act(() => callback([{ target, isIntersecting: ratio > 0, intersectionRatio: ratio } as IntersectionObserverEntry], {} as IntersectionObserver));
+}
 beforeEach(() => {
   playingNow.clear();
   loaded = true;
@@ -24,7 +30,17 @@ beforeEach(() => {
   HTMLMediaElement.prototype.load = vi.fn();
   window.matchMedia = vi.fn((query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {},
     addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as typeof window.matchMedia;
-  vi.stubGlobal('IntersectionObserver', vi.fn(function () { return { observe() {}, unobserve() {}, disconnect() {} }; }));
+  stageObserver = null;
+  vi.stubGlobal('IntersectionObserver', vi.fn(function (callback: IntersectionObserverCallback) {
+    return {
+      observe(target: Element) {
+        if (!target.classList.contains('vehicle-gallery__stage')) return;
+        stageObserver = { callback, target };
+        callback([{ target, isIntersecting: true, intersectionRatio: 1 } as IntersectionObserverEntry], {} as IntersectionObserver);
+      },
+      unobserve() {}, disconnect() {},
+    };
+  }));
   HTMLMediaElement.prototype.pause = vi.fn(function (this: HTMLMediaElement) { playingNow.delete(this); });
   HTMLMediaElement.prototype.play = vi.fn(async function (this: HTMLMediaElement) { playingNow.add(this); });
   Object.defineProperty(HTMLMediaElement.prototype, 'paused', { configurable: true, get(this: HTMLMediaElement) { return !playingNow.has(this); } });
@@ -129,6 +145,46 @@ describe('VehicleGallery with a video', () => {
     expect(playingNow.has(dialogVideo)).toBe(false);
     expect(inline().currentTime).toBe(4.1);
     expect(playingNow.has(inline())).toBe(true);
+  });
+  it('pauses while less than half of the gallery is visible and resumes when it is back', () => {
+    gallery('/m4.mp4');
+    expect(playingNow.has(inline())).toBe(true);
+    stageInView(0.4);
+    expect(playingNow.has(inline())).toBe(false);
+    stageInView(0.6);
+    expect(playingNow.has(inline())).toBe(true);
+    expect(inline().muted).toBe(true);
+  });
+  it('keeps a video the visitor paused paused when it scrolls back into view', () => {
+    gallery('/m4.mp4');
+    inline().pause();
+    stageInView(0);
+    vi.mocked(HTMLMediaElement.prototype.play).mockClear();
+    stageInView(1);
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+    expect(playingNow.has(inline())).toBe(false);
+  });
+  it('does not resume behind the open dialog when the gallery scrolls back into view', () => {
+    gallery('/m4.mp4');
+    stageInView(0);
+    open();
+    stageInView(1);
+    expect(playingNow.has(inline())).toBe(false);
+  });
+  it('does not restart a paused video when a phone swipe settles on the same slide', () => {
+    window.matchMedia = vi.fn((query: string) => ({ matches: query === '(max-width: 767px)', media: query, addEventListener() {}, removeEventListener() {},
+      addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as typeof window.matchMedia;
+    gallery('/m4.mp4');
+    const stage = document.querySelector('.vehicle-gallery__stage') as HTMLElement;
+    Object.defineProperty(stage, 'clientWidth', { configurable: true, value: 390 });
+    // Paused in the dialog: closing it keeps the inline video paused.
+    inline().pause();
+    open();
+    close();
+    vi.mocked(HTMLMediaElement.prototype.play).mockClear();
+    fireEvent.scroll(stage);
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+    expect(playingNow.has(inline())).toBe(false);
   });
   it('tries a new video again after one failed', () => {
     const view = gallery('/a.mp4');
