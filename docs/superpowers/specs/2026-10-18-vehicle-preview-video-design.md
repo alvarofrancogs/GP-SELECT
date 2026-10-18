@@ -15,7 +15,7 @@ Si no lo tiene, todo sigue como hoy: la portada es la primera foto.
 ## Decisiones tomadas
 
 - Los vídeos llegan ya editados: no se recortan ni se transcodifican en el servidor. No se instala ffmpeg.
-- Solo **MP4 (H.264)**, máximo **30 MiB**, un vídeo por coche. WebM queda fuera porque Safari/iOS no lo reproduce de forma fiable.
+- Solo **MP4 (H.264)**, máximo **500 MiB** (decisión del usuario), un vídeo por coche. WebM queda fuera porque Safari/iOS no lo reproduce de forma fiable.
 - El audio se ignora: el vídeo siempre se reproduce silenciado.
 - La portada es una **imagen** extraída del segundo 0, no un `<video>` en pausa: el catálogo no descarga ningún vídeo hasta que va a reproducirse.
 - El fotograma lo extrae el navegador del Admin al elegir el archivo y lo sube como una imagen más; pasa por el pipeline de imágenes actual (variantes card/detail, EXIF, caché, barrido).
@@ -39,7 +39,7 @@ Si no lo tiene, todo sigue como hoy: la portada es la primera foto.
 
 Admin (`/api/admin/vehicles/{id}/video`), mismo patrón que las imágenes:
 
-- `POST intent` `{ mimeType, sizeBytes, staged }` con `Idempotency-Key` → URL de subida (S3 firmada o `/api/admin/uploads/...` en local). 415 si no es `video/mp4`, 413 si supera 30 MiB.
+- `POST intent` `{ mimeType, sizeBytes, staged }` con `Idempotency-Key` → URL de subida (S3 firmada o `/api/admin/uploads/...` en local). 415 si no es `video/mp4`, 413 si supera 500 MiB.
 - `PUT` de subida: `UploadsController` acepta también intents de vídeo con su propio límite de tamaño.
 - `POST {videoId}/complete`: comprueba tamaño con `HEAD` y la firma del archivo (`ftyp` en el byte 4), mueve el objeto a `vehicles/{id}/video/{videoId}.mp4` y lo deja `Ready`. No hay worker: no se procesa.
 - La portada se sube con el intent de imagen existente, añadiendo `kind: "videoPoster"` y `videoId`.
@@ -52,6 +52,15 @@ Público:
 - Contrato: si `videoUrl` no es null, `images[0]` es su portada (por ser la portada del coche).
 - `GET /api/public/vehicles/{slug}/video/{videoId}`: soporta peticiones `Range` (206 + `Content-Range`), necesario en Safari/iOS. `Cache-Control: public,max-age=86400`. En S3 se pide el rango a S3 (`ByteRange`); en almacenamiento local, `FileStream` con `enableRangeProcessing`. Se añade una lectura por rango a `IObjectStorage`.
 - `BackendMaintenance.SweepOrphansAsync` reconoce las claves de vídeo como conocidas.
+
+### Consecuencias del límite de 500 MiB
+
+- `deploy/Caddyfile`: el sitio de subida a SeaweedFS (`{$S3_SITE}`) pasa de `max_size 25MB` a `max_size 510MB`. En local, `UploadsController` acepta 500 MiB solo para intents de vídeo (las fotos siguen en 20 MiB).
+- Subida en un único `PUT` firmado (S3 admite hasta 5 GB): si se corta, se reintenta entero. Sin subida multiparte (fuera de alcance).
+- `complete` y el traslado a `vehicles/...` nunca cargan el vídeo en memoria: la firma se lee con una petición de rango de unos pocos bytes y el traslado es por stream (o `CopyObject` en S3).
+- El vídeo se sirve por rangos, así que el navegador descarga solo lo que reproduce, no el archivo entero.
+- El tamaño no decide si arranca rápido: decide la tasa de bits. En el Admin, si `tamaño × 8 / duración` supera ~10 Mbps, se muestra un aviso que no bloquea: «Este vídeo pesa mucho para su duración y puede tardar en arrancar en móviles». Se guarda igualmente.
+- La copia externa (`deploy/offsite.sh`) ya sincroniza el bucket entero, así que los vídeos entran en ella y ocupan espacio en el destino.
 
 ## Admin
 
