@@ -180,26 +180,30 @@ export function VideoUploader({ vehicleId, videos, images, disabled, onBusyChang
     input.current?.focus();
   }
 
-  return <div className="admin-photos">
+  return <div className="admin-photos admin-video" data-busy={busy || undefined} data-ready={video?.state === 'Ready' || undefined}>
+    <div className="admin-video__notes">
     <p className="admin-field__hint">{text.coverNote}</p>
     <p className="admin-field__hint">{text.previewNote}</p>
     <p id="video-help" className="admin-field__hint">{text.help}</p>
-    <input ref={input} type="file" accept={VIDEO_TYPE} aria-label={text.title} aria-describedby="video-help"
+    </div>
+    <input className="admin-video__input" ref={input} type="file" accept={VIDEO_TYPE} aria-label={text.title} aria-describedby="video-help"
       disabled={disabled || busy} onChange={(event) => {
         const file = event.target.files?.[0];
         event.target.value = '';
         if (file) choose(file);
       }} />
-    {video?.state === 'Ready' ? <video src={video.url} controls muted playsInline preload="metadata" aria-label={text.title} width={400} style={{ maxWidth: '100%' }} /> : null}
-    {posterSrc ? <div className="admin-photo__media" style={{ maxWidth: 400 }}><img src={posterSrc} alt={text.coverNote} width={400} height={300} /></div> : null}
-    {warnings.map((warning) => <p key={warning} className="admin-field__hint">{warning}</p>)}
-    {busy ? <div role="status">
+    {video?.state === 'Ready' || posterSrc ? <div className="admin-video__media">
+      {video?.state === 'Ready' ? <video className="admin-video__player" src={video.url} controls muted playsInline preload="metadata" aria-label={text.title} width={400} /> : null}
+      {posterSrc ? <div className="admin-photo__media admin-video__poster"><img src={posterSrc} alt={text.coverNote} width={400} height={300} /></div> : null}
+    </div> : null}
+    {warnings.length ? <div className="admin-video__warnings">{warnings.map((warning) => <p key={warning} className="admin-field__hint">{warning}</p>)}</div> : null}
+    {busy ? <div role="status" className="admin-video__status">
       <p>{adminCopy.photos.uploading(Math.round(progress * 100))}</p>
       <progress className="admin-photo__progress" max={1} value={progress} aria-label={text.title} />
-    </div> : posterProcessing ? <p role="status">{adminCopy.photos.processing}</p> : null}
+    </div> : posterProcessing ? <p role="status" className="admin-video__status">{adminCopy.photos.processing}</p> : null}
     {posterFailed ? <p className="admin-field__error" role="alert">{adminCopy.errors.codes.video_poster_failed}</p> : null}
     {error ? <p className="admin-field__error" role="alert">{error}</p> : null}
-    <div className="admin-photo__actions">
+    <div className="admin-photo__actions admin-video__actions">
       <button type="button" className="admin-action" disabled={disabled || busy} onClick={() => input.current?.click()}>{text.change}</button>
       {video || keep || retryable ? <button type="button" className="admin-action" disabled={disabled || busy} onClick={remove}>{text.remove}</button> : null}
       {retryable || (posterFailed && posterPreview) ? <button type="button" className="admin-action" disabled={disabled || busy}
