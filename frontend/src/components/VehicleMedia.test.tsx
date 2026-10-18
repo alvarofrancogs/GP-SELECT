@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { LanguageProvider } from '../i18n/LanguageProvider';
 import { es } from '../i18n/es';
@@ -15,12 +15,17 @@ const vehicle = (video: string | null): VehicleSummary => ({
   availability: 'available', images, video,
 });
 
+const playingNow = new Set<HTMLMediaElement>();
 beforeEach(() => {
+  playingNow.clear();
   window.matchMedia = vi.fn((query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {},
     addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as typeof window.matchMedia;
   vi.stubGlobal('IntersectionObserver', vi.fn(function () { return { observe() {}, unobserve() {}, disconnect() {} }; }));
-  HTMLMediaElement.prototype.pause = vi.fn();
-  HTMLMediaElement.prototype.play = vi.fn(async () => {});
+  HTMLMediaElement.prototype.pause = vi.fn(function (this: HTMLMediaElement) { playingNow.delete(this); });
+  HTMLMediaElement.prototype.play = vi.fn(async function (this: HTMLMediaElement) { playingNow.add(this); });
+  Object.defineProperty(HTMLMediaElement.prototype, 'paused', { configurable: true, get(this: HTMLMediaElement) { return !playingNow.has(this); } });
+  HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+  HTMLDialogElement.prototype.close = function () { this.open = false; this.dispatchEvent(new Event('close')); };
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
@@ -58,5 +63,43 @@ describe('VehicleGallery with a video', () => {
     gallery(null);
     expect(document.querySelector('video')).toBeNull();
     expect(screen.getByRole('button', { name: `${es.vehicles.image} 1` })).toBeTruthy();
+  });
+
+  const inline = () => document.querySelector('.vehicle-gallery__slide video') as HTMLVideoElement;
+  const enlarged = () => document.querySelector('.vehicle-gallery__dialog > video') as HTMLVideoElement;
+  const open = () => fireEvent.click(screen.getByRole('button', { name: new RegExp(es.vehicles.enlarge) }));
+  const close = () => fireEvent.click(screen.getByRole('button', { name: new RegExp(es.vehicles.close) }));
+
+  it('does not force the inline video to play after the dialog when it was paused', () => {
+    gallery('/m4.mp4');
+    inline().currentTime = 4;
+    inline().pause();
+    open();
+    expect(enlarged().currentTime).toBe(4);
+    expect(playingNow.has(enlarged())).toBe(false);
+    vi.mocked(HTMLMediaElement.prototype.play).mockClear();
+    close();
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+    expect(playingNow.has(inline())).toBe(false);
+  });
+  it('hands playback to the dialog and back when the inline video was playing', () => {
+    gallery('/m4.mp4');
+    expect(playingNow.has(inline())).toBe(true);
+    open();
+    expect(playingNow.has(inline())).toBe(false);
+    expect(playingNow.has(enlarged())).toBe(true);
+    close();
+    expect(playingNow.has(inline())).toBe(true);
+    expect(playingNow.has(enlarged())).toBe(false);
+  });
+  it('keeps the inline video quiet while the dialog is open after leaving and returning to the video', () => {
+    gallery('/m4.mp4');
+    open();
+    const next = () => fireEvent.click(screen.getAllByRole('button', { name: es.vehicles.next })[1]);
+    const previous = () => fireEvent.click(screen.getAllByRole('button', { name: es.vehicles.previous })[1]);
+    next();
+    previous();
+    expect(playingNow.has(inline())).toBe(false);
+    expect(playingNow.has(enlarged())).toBe(false);
   });
 });
