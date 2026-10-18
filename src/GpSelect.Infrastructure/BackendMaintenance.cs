@@ -34,6 +34,42 @@ public sealed class BackendMaintenance(GpSelectDbContext db, IObjectStorage stor
         await db.IdempotencyRecords.Where(x => x.CreatedAt < now.AddHours(-48)).ExecuteDeleteAsync(ct);
 
         var abandonedBefore = now.AddHours(-24);
+        // Only a save keeps a staged video: one left unsaved for 24 hours is deleted with its poster, and the tombstone
+        // passes below clean its storage. Another tab's upload in progress is younger, so it stays.
+        var expiredVideos = await db.Videos.AsNoTracking().Where(x => x.IsStaged && x.State != VideoState.Deleted && x.CreatedAt < abandonedBefore &&
+            db.Vehicles.Any(v => v.Id == x.VehicleUnitId && v.Status != VehicleStatus.Archived))
+            .Select(x => new { x.Id, x.VehicleUnitId }).ToListAsync(ct);
+        foreach (var candidate in expiredVideos)
+        {
+            try
+            {
+                await using var tx = await db.Database.BeginTransactionAsync(ct);
+                // The same lock order as uploads and saves, then recheck under the locks.
+                var vehicle = await db.Vehicles.FromSqlInterpolated($"SELECT * FROM \"Vehicles\" WHERE \"Id\" = {candidate.VehicleUnitId} FOR UPDATE")
+                    .AsNoTracking().SingleOrDefaultAsync(ct);
+                if (vehicle is null || vehicle.Status == VehicleStatus.Archived) continue;
+                var video = await db.Videos.FromSqlInterpolated($"SELECT * FROM \"Videos\" WHERE \"Id\" = {candidate.Id} FOR UPDATE").SingleOrDefaultAsync(ct);
+                if (video is null || !video.IsStaged || video.State == VideoState.Deleted || video.CreatedAt >= abandonedBefore) continue;
+                video.Delete();
+                var posters = await db.Images.FromSqlInterpolated($"SELECT * FROM \"Images\" WHERE \"Kind\" = 'VideoPoster' AND \"VideoId\" = {video.Id} AND \"State\" <> 'Deleted' FOR UPDATE")
+                    .ToListAsync(ct);
+                foreach (var poster in posters) { poster.SetCover(false); poster.Delete(); }
+                var posterIds = posters.Select(x => x.Id).ToList();
+                foreach (var job in await db.ImageJobs.Where(j => posterIds.Contains(j.ImageId) && (j.State == ImageJobState.Queued || j.State == ImageJobState.Processing)).ToListAsync(ct))
+                    job.Cancel();
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogWarning("Video {VideoId} expiry failed ({Error})", candidate.Id, ex.GetType().Name);
+            }
+            finally
+            {
+                db.ChangeTracker.Clear();
+            }
+        }
+
         var candidates = await db.Images.AsNoTracking().Where(x =>
             ((x.State == ImageState.Deleted && (x.StorageCleanedAt == null || x.StorageCleanedAt > abandonedBefore)) ||
                 (x.State == ImageState.PendingUpload && x.CreatedAt < abandonedBefore &&
@@ -76,8 +112,7 @@ public sealed class BackendMaintenance(GpSelectDbContext db, IObjectStorage stor
         }
 
         var videoCandidates = await db.Videos.AsNoTracking().Where(x =>
-            ((x.State == VideoState.Deleted && (x.StorageCleanedAt == null || x.StorageCleanedAt > abandonedBefore)) ||
-                (x.State == VideoState.PendingUpload && x.CreatedAt < abandonedBefore)) &&
+            x.State == VideoState.Deleted && (x.StorageCleanedAt == null || x.StorageCleanedAt > abandonedBefore) &&
             db.Vehicles.Any(v => v.Id == x.VehicleUnitId && v.Status != VehicleStatus.Archived))
             .Select(x => new { x.Id, x.VehicleUnitId }).ToListAsync(ct);
         foreach (var candidate in videoCandidates)
@@ -91,13 +126,9 @@ public sealed class BackendMaintenance(GpSelectDbContext db, IObjectStorage stor
                 if (vehicle is null || vehicle.Status == VehicleStatus.Archived) continue;
                 var video = await db.Videos.FromSqlInterpolated($"SELECT * FROM \"Videos\" WHERE \"Id\" = {candidate.Id} FOR UPDATE")
                     .AsNoTracking().SingleOrDefaultAsync(ct);
-                if (video is null) continue;
-                var abandoned = video.State == VideoState.PendingUpload && video.CreatedAt < abandonedBefore;
-                if (!abandoned && video.State != VideoState.Deleted) continue;
-                if (video.State == VideoState.Deleted && video.StorageCleanedAt <= abandonedBefore) continue;
+                if (video is null || video.State != VideoState.Deleted || video.StorageCleanedAt <= abandonedBefore) continue;
                 await storage.DeleteAsync(video.Key, ct);
-                if (abandoned) await db.Videos.Where(x => x.Id == video.Id).ExecuteDeleteAsync(ct);
-                else if (video.StorageCleanedAt is null)
+                if (video.StorageCleanedAt is null)
                     await db.Videos.Where(x => x.Id == video.Id && x.StorageCleanedAt == null)
                         .ExecuteUpdateAsync(u => u.SetProperty(x => x.StorageCleanedAt, (DateTimeOffset?)now), ct);
                 // Retry deleted tombstones for 24 hours after the first successful clean to catch late writes.

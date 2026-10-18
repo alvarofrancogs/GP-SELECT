@@ -104,7 +104,10 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
             if (r.Video is not null)
             {
                 var videos = await db.Videos.Where(x => x.VehicleUnitId == id && x.State != VideoState.Deleted).ToListAsync();
-                publishing = ApplyVideo(v, r.Video.Keep, videos, images, removed, removedVideos);
+                var waiting = images.Where(x => x.Kind == ImageKind.VideoPoster && x.State == ImageState.PendingUpload).Select(x => x.Id).ToList();
+                var queued = (await db.ImageJobs.Where(j => waiting.Contains(j.ImageId) && (j.State == ImageJobState.Queued || j.State == ImageJobState.Processing))
+                    .Select(j => j.ImageId).ToListAsync()).ToHashSet();
+                publishing = ApplyVideo(v, r.Video.Keep, videos, images, queued, removed, removedVideos);
             }
             VehicleGallery.EnsureCover(images);
             if (target is not null && !leaves) v.ChangeStatus(target.Value, images, r.Status!.ShowWhenSold);
@@ -125,8 +128,9 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
 
     /// <summary>Keeps the video the editor chose. A staged, ready video replaces the published one: its poster is published
     /// now and the video itself is returned, to be published once the old one is saved as deleted. Null removes the
-    /// published video. A removed video's poster goes like a photo, so a listed vehicle keeps a ready image.</summary>
-    private static VehicleVideo? ApplyVideo(VehicleUnit v, Guid? keep, List<VehicleVideo> videos, List<VehicleImage> images, List<VehicleImage> removed, List<VehicleVideo> removedVideos)
+    /// published video. A removed video's poster goes like a photo, so a listed vehicle keeps a ready image.
+    /// <paramref name="queued"/> holds the pending posters the worker still has a job for.</summary>
+    private static VehicleVideo? ApplyVideo(VehicleUnit v, Guid? keep, List<VehicleVideo> videos, List<VehicleImage> images, HashSet<Guid> queued, List<VehicleImage> removed, List<VehicleVideo> removedVideos)
     {
         var current = videos.FirstOrDefault(x => !x.IsStaged);
         VehicleVideo? kept = null;
@@ -135,9 +139,12 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
             // Validated even when it is the current video: its poster may have failed after it was published.
             kept = videos.FirstOrDefault(x => x.Id == keep && x.State == VideoState.Ready) ?? throw new DomainException("invalid_video", "The video is not uploaded to this vehicle", "video");
             var poster = PosterOf(kept, images);
-            if (poster is null || poster.State == ImageState.Failed) throw new DomainException("video_poster_failed", "The video's cover image could not be processed; upload the video again", "video");
-            if (kept == current) return null;
+            // A poster still waiting for its upload, with no job, will never be processed.
+            if (poster is null || poster.State == ImageState.Failed || (poster.State == ImageState.PendingUpload && !queued.Contains(poster.Id)))
+                throw new DomainException("video_poster_failed", "The video's cover image could not be processed; upload the video again", "video");
+            // Also for the current video: a poster uploaded again after a failure is staged until this save.
             poster.Publish();
+            if (kept == current) return null;
         }
         if (current is not null)
         {

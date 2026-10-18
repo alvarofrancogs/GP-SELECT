@@ -60,12 +60,14 @@ public sealed class BackendMaintenanceTests(ApiFactory api) : IClassFixture<ApiF
     }
 
     [Theory]
-    [InlineData(25, false, false, false)]
-    [InlineData(24, false, false, true)]
-    [InlineData(23, false, false, true)]
-    [InlineData(25, true, false, true)]
-    [InlineData(25, false, true, true)]
-    public async Task Only_abandoned_video_intents_are_removed(int ageHours, bool completed, bool archived, bool kept)
+    [InlineData(25, false, false, false, false)]
+    [InlineData(24, false, false, false, true)]
+    [InlineData(23, false, false, false, true)]
+    [InlineData(25, true, false, false, false)]
+    [InlineData(23, true, false, false, true)]
+    [InlineData(25, true, true, false, true)]
+    [InlineData(25, false, false, true, true)]
+    public async Task Only_staged_videos_older_than_24_hours_are_removed_with_their_poster(int ageHours, bool completed, bool published, bool archived, bool kept)
     {
         using var scope = api.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
@@ -75,15 +77,33 @@ public sealed class BackendMaintenanceTests(ApiFactory api) : IClassFixture<ApiF
         if (archived) vehicle.Archive();
         var video = VehicleVideo.Create(vehicle.Id, 3);
         if (completed) video.MarkReady();
-        db.Vehicles.Add(vehicle); db.Videos.Add(video);
+        if (published) video.Publish();
+        var poster = VehicleImage.CreatePoster(vehicle.Id, video.Id, $"quarantine/{Guid.NewGuid():N}.jpg", "image/jpeg", 3);
+        if (published) poster.Publish();
+        poster.SetCover(true);
+        var job = ImageProcessingJob.Create(poster.Id);
+        db.Vehicles.Add(vehicle); db.Videos.Add(video); db.Images.Add(poster); db.ImageJobs.Add(job);
         db.Entry(video).Property(x => x.CreatedAt).CurrentValue = now.AddHours(-ageHours);
+        // Keep the worker from claiming this synthetic job during the test.
+        db.Entry(job).Property(x => x.NextAttemptAt).CurrentValue = now.AddDays(1);
         await db.SaveChangesAsync();
-        using var content = new MemoryStream(new byte[] { 1, 2, 3 });
-        await storage.PutAsync(video.Key, content, "video/mp4", CancellationToken.None);
+        foreach (var key in new[] { video.Key, poster.OriginalKey })
+        {
+            using var content = new MemoryStream(new byte[] { 1, 2, 3 });
+            await storage.PutAsync(key, content, "video/mp4", CancellationToken.None);
+        }
 
         await scope.ServiceProvider.GetRequiredService<BackendMaintenance>().RunAsync(now, CancellationToken.None);
-        Assert.Equal(kept, await db.Videos.AnyAsync(x => x.Id == video.Id));
+        db.ChangeTracker.Clear();
+        var savedVideo = await db.Videos.SingleAsync(x => x.Id == video.Id);
+        Assert.Equal(kept, savedVideo.State != VideoState.Deleted);
         Assert.Equal(kept, await storage.HeadAsync(video.Key, CancellationToken.None) is not null);
+        var savedPoster = await db.Images.SingleAsync(x => x.Id == poster.Id);
+        Assert.Equal(kept, savedPoster.State != ImageState.Deleted);
+        Assert.Equal(kept, savedPoster.IsCover);
+        Assert.Equal(kept, await storage.HeadAsync(poster.OriginalKey, CancellationToken.None) is not null);
+        Assert.Equal(kept ? ImageJobState.Queued : ImageJobState.Failed, (await db.ImageJobs.SingleAsync(x => x.Id == job.Id)).State);
+        if (!kept) Assert.Equal(now, savedVideo.StorageCleanedAt);
     }
 
     [Fact]

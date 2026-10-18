@@ -465,6 +465,43 @@ public sealed class VideoApiTests(ApiFactory api) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Keeping_the_published_video_publishes_its_poster_uploaded_again()
+    {
+        var id = await CreateVehicle();
+        var (videoId, poster) = await SavedVideo(id);
+        await Db(db => db.Images.Where(x => x.Id == poster).ExecuteUpdateAsync(u => u.SetProperty(x => x.State, ImageState.Failed).SetProperty(x => x.IsCover, false)));
+        var again = await UploadPoster(id, videoId);
+        Assert.True(Image(await Get(id), again).GetProperty("isStaged").GetBoolean());
+
+        var saved = await Json(await KeepVideo(id, videoId));
+        var image = Image(saved, again);
+        Assert.False(image.GetProperty("isStaged").GetBoolean());
+        Assert.True(image.GetProperty("isCover").GetBoolean());
+        Assert.False(await Db(db => db.Images.Where(x => x.Id == again).Select(x => x.IsStaged).SingleAsync()));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Save_refuses_a_video_whose_poster_never_uploaded(bool published)
+    {
+        var id = await CreateVehicle();
+        Guid videoId;
+        if (published)
+        {
+            Guid poster;
+            (videoId, poster) = await SavedVideo(id);
+            await Db(db => db.Images.Where(x => x.Id == poster).ExecuteUpdateAsync(u => u.SetProperty(x => x.State, ImageState.Failed).SetProperty(x => x.IsCover, false)));
+        }
+        else videoId = await UploadVideo(id);
+        // An intent without the upload: the poster stays PendingUpload and no job will ever process it.
+        await Json(await ImageIntent(id, new { mimeType = "image/png", sizeBytes = Png().Length, kind = "videoPoster", videoId }));
+
+        await AssertCode(await KeepVideo(id, videoId), HttpStatusCode.Conflict, "video_poster_failed");
+        Assert.Equal(!published, await Db(db => db.Videos.Where(x => x.Id == videoId).Select(x => x.IsStaged).SingleAsync()));
+    }
+
+    [Fact]
     public async Task Video_intent_replays_the_same_key_without_a_new_video()
     {
         var id = await CreateVehicle();
