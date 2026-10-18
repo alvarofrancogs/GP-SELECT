@@ -25,8 +25,8 @@ Si no lo tiene, todo sigue como hoy: la portada es la primera foto.
 
 ## Modelo de datos (migración `AddVehicleVideo`)
 
-- `VehicleImage.Kind`: `Photo` (por defecto, filas existentes) o `VideoPoster`.
-- Nueva entidad `VehicleVideo`: `Id`, `VehicleUnitId`, `Key`, `MimeType`, `SizeBytes`, `State` (`PendingUpload`, `Ready`, `Deleted`), `IsStaged`, `PosterImageId`, `CreatedAt`, `StorageCleanedAt`.
+- `VehicleImage.Kind`: `Photo` (por defecto, filas existentes) o `VideoPoster`; `VehicleImage.VideoId` enlaza la portada con su vídeo.
+- Nueva entidad `VehicleVideo`: `Id`, `VehicleUnitId`, `Key`, `MimeType`, `SizeBytes`, `State` (`PendingUpload`, `Ready`, `Deleted`), `IsStaged`, `CreatedAt`, `StorageCleanedAt`.
 - Índice único filtrado: un solo vídeo publicado (no staged, no borrado) por coche. Puede coexistir con uno staged mientras se sustituye.
 
 ## Reglas de dominio
@@ -43,7 +43,8 @@ Admin (`/api/admin/vehicles/{id}/video`), mismo patrón que las imágenes:
 
 - `POST intent` `{ mimeType, sizeBytes, staged }` con `Idempotency-Key` → URL de subida (S3 firmada o `/api/admin/uploads/...` en local). 415 si no es `video/mp4`, 413 si supera 100 MiB.
 - `PUT` de subida: `UploadsController` acepta también intents de vídeo, con límite de 100 MiB solo para ellos (las fotos siguen en 20 MiB).
-- `POST {videoId}/complete`: comprueba el tamaño con `HEAD` y la firma del archivo (`ftyp` en el byte 4) leyendo un rango de pocos bytes, mueve el objeto a `vehicles/{id}/video/{videoId}.mp4` por stream (o `CopyObject` en S3) y lo deja `Ready`. El vídeo nunca se carga entero en memoria. No hay worker: no se procesa.
+- El vídeo se sube directamente a su clave definitiva `vehicles/{id}/videos/{videoId}.mp4`: como no se procesa, no pasa por `quarantine/` ni se mueve.
+- `POST {videoId}/complete`: comprueba el tamaño con `HEAD` y la firma del archivo (`ftyp` en el byte 4) leyendo un rango de pocos bytes, y lo deja `Ready`. El vídeo nunca se carga entero en memoria. No hay worker.
 - La portada se sube con el intent de imagen existente, añadiendo `kind: "videoPoster"` y `videoId`.
 - Guardado del editor: el cuerpo admite `video: { keep: <videoId> | null }`. `keep` con un vídeo staged lo publica junto a su portada y borra el anterior; `null` quita el vídeo actual. Ausente = sin cambios.
 - `GET {videoId}`: el Admin puede previsualizar un vídeo staged.
@@ -51,7 +52,8 @@ Admin (`/api/admin/vehicles/{id}/video`), mismo patrón que las imágenes:
 Público:
 
 - `VehiclePublicCardDto` y `VehiclePublicDto` añaden `videoUrl: string | null`.
-- Contrato: si `videoUrl` no es null, `images[0]` es su portada (por ser la portada del coche).
+- Contrato: si `videoUrl` no es null, `images[0]` es su portada (por ser la portada del coche). Por eso `videoUrl` solo se publica cuando el vídeo está publicado y su portada está `Ready`; mientras la portada se procesa, el coche se muestra con su primera foto, sin vídeo.
+- Guardar con un vídeo cuya portada falló al procesarse → 409 `video_poster_failed`.
 - `GET /api/public/vehicles/{slug}/video/{videoId}`: soporta peticiones `Range` (206 + `Content-Range`), necesario en Safari/iOS y para que el navegador descargue solo lo que reproduce. `Cache-Control: public,max-age=86400`. En S3 se pide el rango a S3 (`ByteRange`); en almacenamiento local, `FileStream` con `enableRangeProcessing`. Se añade una lectura por rango a `IObjectStorage`.
 - `BackendMaintenance.SweepOrphansAsync` reconoce las claves de vídeo como conocidas.
 
