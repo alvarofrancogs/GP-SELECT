@@ -320,6 +320,34 @@ public sealed class VideoApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.True((await Get(id)).GetProperty("videos").EnumerateArray().Single().GetProperty("isStaged").GetBoolean());
     }
 
+    [Theory]
+    [InlineData(ImageState.Failed)]
+    [InlineData(ImageState.Deleted)]
+    public async Task Keeping_the_published_video_refuses_it_when_its_poster_failed_or_is_gone(ImageState posterState)
+    {
+        var id = await CreateVehicle();
+        var (videoId, poster) = await SavedVideo(id);
+        await Db(db => db.Images.Where(x => x.Id == poster).ExecuteUpdateAsync(u => u.SetProperty(x => x.State, posterState).SetProperty(x => x.IsCover, false)));
+
+        await AssertCode(await KeepVideo(id, videoId), HttpStatusCode.Conflict, "video_poster_failed");
+    }
+
+    [Fact]
+    public async Task Video_intent_replays_the_same_key_without_a_new_video()
+    {
+        var id = await CreateVehicle();
+        var request = Keyed(HttpMethod.Post, $"/api/admin/vehicles/{id}/video/intent", new { mimeType = "video/mp4", sizeBytes = 1000 });
+        var key = request.Headers.GetValues("Idempotency-Key").Single();
+        var first = await Json(await admin.SendAsync(request));
+
+        var again = new HttpRequestMessage(HttpMethod.Post, $"/api/admin/vehicles/{id}/video/intent") { Content = JsonContent.Create(new { mimeType = "video/mp4", sizeBytes = 1000 }) };
+        again.Headers.Add("Idempotency-Key", key);
+        var second = await Json(await admin.SendAsync(again));
+
+        Assert.Equal(first.GetProperty("videoId").GetGuid(), second.GetProperty("videoId").GetGuid());
+        Assert.Equal(1, await Db(db => db.Videos.CountAsync(x => x.VehicleUnitId == id)));
+    }
+
     [Fact]
     public async Task Save_refuses_a_video_that_is_not_ready_or_not_this_vehicles()
     {

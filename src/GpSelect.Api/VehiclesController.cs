@@ -129,13 +129,14 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
     private static VehicleVideo? ApplyVideo(VehicleUnit v, Guid? keep, List<VehicleVideo> videos, List<VehicleImage> images, List<VehicleImage> removed, List<VehicleVideo> removedVideos)
     {
         var current = videos.FirstOrDefault(x => !x.IsStaged);
-        if (keep is not null && keep == current?.Id) return null;
         VehicleVideo? kept = null;
         if (keep is not null)
         {
+            // Validated even when it is the current video: its poster may have failed after it was published.
             kept = videos.FirstOrDefault(x => x.Id == keep && x.State == VideoState.Ready) ?? throw new DomainException("invalid_video", "The video is not uploaded to this vehicle", "video");
             var poster = PosterOf(kept, images);
             if (poster is null || poster.State == ImageState.Failed) throw new DomainException("video_poster_failed", "The video's cover image could not be processed; upload the video again", "video");
+            if (kept == current) return null;
             poster.Publish();
         }
         if (current is not null)
