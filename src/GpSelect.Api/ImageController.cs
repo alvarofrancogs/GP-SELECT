@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using GpSelect.Domain;
 using GpSelect.Infrastructure;
@@ -16,40 +14,20 @@ namespace GpSelect.Api;
 public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage) : ControllerBase
 {
     static readonly string[] Allowed = ["image/jpeg", "image/png", "image/webp"];
+    const string PosterKind = "videoPoster";
 
-    static string Hash(object value)
-    {
-        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(value, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }))));
-    }
+    static string Hash(object value) => AdminWrites.Hash(value);
 
-    string? Key()
-    {
-        return Request.Headers["Idempotency-Key"].FirstOrDefault();
-    }
+    string? Key() => AdminWrites.IdempotencyKey(this);
 
-    IActionResult Replay(string hash, GpSelect.Infrastructure.IdempotencyRecord old)
-    {
-        return old.RequestHash == hash
-            ? new ContentResult { StatusCode = old.StatusCode, ContentType = "application/json", Content = old.ResponseJson }
-            : Problem(statusCode: 409, title: "Idempotency key was already used with a different payload", detail: "Use a new Idempotency-Key.");
-    }
+    IActionResult Replay(string hash, IdempotencyRecord old) => AdminWrites.Replay(this, hash, old);
 
     /// <summary>Null when the vehicle's photos can change; otherwise the response to send (404, or 409 archived).</summary>
-    async Task<IActionResult?> RefuseUnlessEditable(Guid vehicleId)
-    {
-        var vehicle = await db.LockVehicleAsync(vehicleId);
-        if (vehicle is null)
-            return NotFound();
-        try
-        {
-            VehicleGallery.EnsureEditable(vehicle);
-        }
-        catch (DomainException e)
-        {
-            return DomainProblems.Create(this, e);
-        }
-        return null;
-    }
+    Task<IActionResult?> RefuseUnlessEditable(Guid vehicleId) => AdminWrites.RefuseUnlessEditable(this, db, vehicleId);
+
+    /// <summary>The video poster is managed through the video: the photo endpoints refuse it.</summary>
+    ObjectResult PosterRefused() =>
+        DomainProblems.Create(this, new DomainException("invalid_gallery", "The video poster changes with its video", "gallery"));
 
     [HttpPost("intent")]
     public async Task<IActionResult> Intent(Guid vehicleId, ImageIntentRequest request)
@@ -58,6 +36,9 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
             return Problem(statusCode: 415, title: "Unsupported image format");
         if (request.SizeBytes is < 1 or > ImagePipeline.MaxUploadBytes)
             return Problem(statusCode: 413, title: "Image exceeds 20 MiB limit");
+        var poster = string.Equals(request.Kind, PosterKind, StringComparison.OrdinalIgnoreCase);
+        if (!poster && request.Kind is not null && !string.Equals(request.Kind, "photo", StringComparison.OrdinalIgnoreCase))
+            return Problem(statusCode: 400, title: "Unknown image kind");
         await using var tx = await db.Database.BeginTransactionAsync();
         var refusal = await RefuseUnlessEditable(vehicleId);
         if (refusal is not null)
@@ -70,11 +51,26 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
         var old = await db.IdempotencyRecords.SingleOrDefaultAsync(x => x.Operation == op && x.Key == key);
         if (old is not null)
             return Replay(hash, old);
-        if (await db.Images.CountAsync(x => x.VehicleUnitId == vehicleId && x.State != ImageState.Deleted) >= 30)
-            return Problem(statusCode: 409, title: "Maximum of 30 images reached");
-        var image = VehicleImage.Create(vehicleId, $"quarantine/{vehicleId}/{Guid.NewGuid():N}.{Ext(request.MimeType)}", request.MimeType, request.SizeBytes, request.Staged);
-        // New images go after the existing ones, so the order the admin sees is the upload order until reordered.
-        image.Order((await db.Images.Where(x => x.VehicleUnitId == vehicleId && x.State != ImageState.Deleted).MaxAsync(x => (int?)x.SortOrder) ?? -1) + 1);
+        var originalKey = $"quarantine/{vehicleId}/{Guid.NewGuid():N}.{Ext(request.MimeType)}";
+        VehicleImage image;
+        if (poster)
+        {
+            // The poster is frame 0 of a video of this vehicle; it stays out of the photos and their limit.
+            if (request.VideoId is not { } videoId || !await db.Videos.AnyAsync(x => x.Id == videoId && x.VehicleUnitId == vehicleId && x.State != VideoState.Deleted))
+                return NotFound();
+            if (await db.Images.AnyAsync(x => x.VideoId == videoId && x.State != ImageState.Deleted))
+                return Problem(statusCode: 409, title: "The video already has a poster");
+            image = VehicleImage.CreatePoster(vehicleId, videoId, originalKey, request.MimeType, request.SizeBytes);
+        }
+        else
+        {
+            var photos = db.Images.Where(x => x.VehicleUnitId == vehicleId && x.State != ImageState.Deleted && x.Kind == ImageKind.Photo);
+            if (await photos.CountAsync() >= 30)
+                return Problem(statusCode: 409, title: "Maximum of 30 images reached");
+            image = VehicleImage.Create(vehicleId, originalKey, request.MimeType, request.SizeBytes, request.Staged);
+            // New photos go after the existing ones, so the order the admin sees is the upload order until reordered.
+            image.Order((await photos.MaxAsync(x => (int?)x.SortOrder) ?? -1) + 1);
+        }
         db.Images.Add(image);
         var result = new
         {
@@ -220,6 +216,8 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
         var x = active.FirstOrDefault(x => x.Id == imageId);
         if (x is null)
             return NotFound();
+        if (x.Kind == ImageKind.VideoPoster)
+            return PosterRefused();
         if (x.State != ImageState.Ready || x.IsStaged)
             return Conflict();
         await db.SaveGalleryAsync(VehicleGallery.MakeCover(active, x));
@@ -243,6 +241,8 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
         var x = active.FirstOrDefault(x => x.Id == imageId);
         if (x is null)
             return NotFound();
+        if (x.Kind == ImageKind.VideoPoster)
+            return PosterRefused();
         VehicleImage? promoted;
         try
         {
@@ -297,6 +297,7 @@ public sealed class ImageController(GpSelectDbContext db, IObjectStorage storage
     }
 }
 
-/// <summary>Staged: an editor upload that stays out of the vehicle (never public, never the cover) until the editor saves.</summary>
-public sealed record ImageIntentRequest(string MimeType, long SizeBytes, bool Staged = false);
+/// <summary>Staged: an editor upload that stays out of the vehicle (never public, never the cover) until the editor saves.
+/// Kind "videoPoster" with a VideoId uploads the first frame of that video instead of a photo; a poster is always staged.</summary>
+public sealed record ImageIntentRequest(string MimeType, long SizeBytes, bool Staged = false, string? Kind = null, Guid? VideoId = null);
 public sealed record ReorderRequest(IReadOnlyList<Guid> ImageIds);
