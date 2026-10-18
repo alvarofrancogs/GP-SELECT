@@ -9,6 +9,7 @@ import { FormField } from '../../components/admin/FormField';
 import { ListEditor } from '../../components/admin/ListEditor';
 import { KeyValueEditor } from '../../components/admin/KeyValueEditor';
 import { ImageUploader } from '../../components/admin/ImageUploader';
+import { VideoUploader } from '../../components/admin/VideoUploader';
 import { StatusControl } from '../../components/admin/StatusControl';
 import { RestoreVehicleButton } from '../../components/admin/RestoreVehicleButton';
 import { ArchiveVehicleDialog } from '../../components/admin/ArchiveVehicleDialog';
@@ -53,11 +54,15 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
   const [form, setForm] = useState<VehicleForm>(() => toForm(initial));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [save, setSave] = useState<SaveState>({ kind: 'idle' });
-  const [uploading, setUploading] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
+  const uploading = photoUploading || videoUploading;
   const [uploadState, setUploadState] = useState<'none' | 'working' | 'failed'>('none');
   const [queued, setQueued] = useState(false);
   const pendingUploads = uploadState !== 'none';
   const [images, setImages] = useState(initial.images);
+  const [videos, setVideos] = useState(initial.videos);
+  const [videoKeep, setVideoKeep] = useState<string | null | undefined>(undefined);
   const [removed, setRemoved] = useState<string[]>([]);
   const [status, setStatus] = useState<SettableStatus>(initial.status === 'Archived' ? 'Draft' : initial.status);
   const [showWhenSold, setShowWhenSold] = useState(initial.showWhenSold);
@@ -70,14 +75,20 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
   const archived = vehicle.status === 'Archived';
 
   const savedSignature = useMemo(() => formSignature(toForm(vehicle)), [vehicle]);
-  const visibleImages = images.filter((image) => !removed.includes(image.id));
-  const galleryDirty = removed.length > 0 || images.some((image) => image.isStaged)
-    || JSON.stringify(visibleImages.map((image) => image.id)) !== JSON.stringify(vehicle.images.filter((image) => !image.isStaged).map((image) => image.id));
+  const visibleImages = images.filter((image) => image.kind !== 'VideoPoster' && !removed.includes(image.id));
+  const keptVideo = videoKeep === undefined ? videos.find((video) => !video.isStaged && video.state !== 'Deleted')
+    : videos.find((video) => video.id === videoKeep && video.state !== 'Deleted');
+  const hasVideo = videoKeep !== null && (videoKeep !== undefined || !!keptVideo);
+  const keptPoster = images.find((image) => image.id === keptVideo?.posterImageId);
+  const posterProcessing = hasVideo && (!keptVideo || keptVideo.state !== 'Ready' || !keptPoster
+    || keptPoster.state === 'PendingUpload' || keptPoster.state === 'Processing' || keptPoster.jobPending);
+  const galleryDirty = removed.length > 0 || visibleImages.some((image) => image.isStaged)
+    || JSON.stringify(visibleImages.map((image) => image.id)) !== JSON.stringify(vehicle.images.filter((image) => image.kind !== 'VideoPoster' && !image.isStaged).map((image) => image.id));
   const statusDirty = status !== vehicle.status || (status === 'Sold' && showWhenSold !== vehicle.showWhenSold);
-  const dirty = !archived && (formSignature(form) !== savedSignature || galleryDirty || statusDirty || pendingUploads);
+  const dirty = !archived && (formSignature(form) !== savedSignature || galleryDirty || statusDirty || pendingUploads || videoKeep !== undefined);
   const processing = !archived && (uploading || uploadState === 'working'
-    || images.some((image) => image.state === 'Processing' || (image.state === 'PendingUpload' && image.jobPending)));
-  const incomplete = !archived && (pendingUploads || visibleImages.some((image) => image.state === 'PendingUpload'));
+    || posterProcessing || visibleImages.some((image) => image.state === 'Processing' || (image.state === 'PendingUpload' && image.jobPending)));
+  const incomplete = !archived && (pendingUploads || (hasVideo && keptPoster?.state === 'Failed') || visibleImages.some((image) => image.state === 'PendingUpload'));
   const working = save.kind === 'saving' || save.kind === 'discarding';
   const archiveLocked = dirty || uploading || processing || working;
 
@@ -89,12 +100,13 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     return () => window.removeEventListener('beforeunload', warn);
   }, [archived, dirty, uploading, processing, working]);
 
-  // Polling only refreshes image metadata. It must not replace the editing baseline or local order.
+  // Polling only refreshes media metadata. It must not replace the editing baseline or local order.
   const reload = useCallback(async () => {
     const version = galleryVersion.current;
     const sequence = ++reloadSequence.current;
     const updated = await adminApi.getVehicle(initial.id);
     if (version !== galleryVersion.current || sequence !== reloadSequence.current || actionRef.current) return;
+    setVideos(updated.videos);
     setImages((current) => {
       const byId = new Map(updated.images.map((image) => [image.id, image]));
       const knownIds = new Set(current.map((image) => image.id));
@@ -103,12 +115,20 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     });
   }, [initial.id]);
 
+  const videoChanged = useCallback((keep: string | null | undefined) => {
+    setVideoKeep(keep);
+    setSave({ kind: 'idle' });
+    if (keep) void reload().catch((failure) => {
+      setSave({ kind: 'error', message: describeError(failure), reference: errorReference(failure) });
+    });
+  }, [reload]);
+
   useEffect(() => {
     // The server says which photos the worker still has a job for (queued, running or waiting for a retry), so a
     // reload keeps following them. A PendingUpload photo without one only changes once this tab sends it; one left
     // behind (a failed upload, another tab) would otherwise keep the editor asking every 1.5 s for nothing.
-    const changing = images.some((image) => image.state === 'Processing' || image.jobPending
-      || (image.state === 'PendingUpload' && (queued || uploading)));
+    const changing = posterProcessing || images.some((image) => image.kind !== 'VideoPoster'
+      && (image.state === 'Processing' || image.jobPending || (image.state === 'PendingUpload' && (queued || photoUploading))));
     if (archived || working || !changing) return;
     const version = galleryVersion.current;
     const timer = window.setTimeout(() => {
@@ -118,7 +138,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
       });
     }, 1500);
     return () => window.clearTimeout(timer);
-  }, [archived, images, working, reload, save, queued, uploading]);
+  }, [archived, images, working, reload, save, queued, photoUploading, posterProcessing]);
 
   const imageAdded = useCallback((image: AdminImage) => {
     setImages((current) => current.some((item) => item.id === image.id) ? current : [...current, image]);
@@ -130,11 +150,14 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     setVehicle(updated);
     setForm(toForm(updated));
     setImages(updated.images);
+    setVideos(updated.videos);
+    setVideoKeep(undefined);
     setRemoved([]);
     setStatus(updated.status === 'Archived' ? 'Draft' : updated.status);
     setShowWhenSold(updated.showWhenSold);
     setUploadState('none'); setQueued(false);
-    setUploading(false);
+    setPhotoUploading(false);
+    setVideoUploading(false);
     setUploaderKey((key) => key + 1);
     setErrors({});
   }
@@ -148,7 +171,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     setUploadState('none'); setQueued(false);
     try {
       // Remove only staged images; saved images have only been removed from the local draft.
-      for (const image of images.filter((item) => item.isStaged)) {
+      for (const image of images.filter((item) => item.kind !== 'VideoPoster' && item.isStaged)) {
         // Already gone (another tab, a cleanup): nothing left to remove.
         await adminApi.removeImage(vehicle.id, image.id).catch((failure: unknown) => {
           if (!(failure instanceof ApiError && failure.status === 404)) throw failure;
@@ -156,7 +179,8 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
         setImages((current) => current.filter((item) => item.id !== image.id));
         setRemoved((current) => current.filter((id) => id !== image.id));
       }
-      resetDraft({ ...vehicle, images: vehicle.images.filter((image) => !image.isStaged) });
+      // Staged videos and their posters have no remove endpoint; unkept media is cleaned up by the server.
+      resetDraft({ ...vehicle, images: vehicle.images.filter((image) => !image.isStaged), videos: vehicle.videos.filter((video) => !video.isStaged) });
       setSave({ kind: 'idle' });
     } catch (failure) {
       setSave({ kind: 'error', message: describeError(failure), reference: errorReference(failure) });
@@ -190,6 +214,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     const body: VehicleSaveRequest = {};
     if (Object.keys(patch).length) body.changes = patch;
     if (galleryDirty) body.gallery = { order: visibleImages.map((image) => image.id), removed };
+    if (videoKeep !== undefined) body.video = { keep: videoKeep };
     if (statusDirty) body.status = { status, ...(status === 'Sold' ? { showWhenSold } : {}) };
     if (!Object.keys(body).length) { setForm(toForm(vehicle)); setSave({ kind: 'idle' }); return; }
     actionRef.current = true;
@@ -324,9 +349,14 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
 
     </form>
 
+    <Section id="video" title={adminCopy.video.title}>
+      <VideoUploader key={uploaderKey} vehicleId={vehicle.id} videos={videos} images={images}
+        disabled={archived || working} onBusyChange={setVideoUploading} onChange={videoChanged} />
+    </Section>
+
     <Section id="photos" title={text.sections.photos}>
       <ImageUploader key={uploaderKey} vehicleId={vehicle.id} images={visibleImages} reload={reload}
-        disabled={archived || working} onBusyChange={setUploading} onPendingChange={setUploadState} onQueuedChange={setQueued} onImageAdded={imageAdded}
+        disabled={archived || working} hasVideo={hasVideo} onBusyChange={setPhotoUploading} onPendingChange={setUploadState} onQueuedChange={setQueued} onImageAdded={imageAdded}
         onOrderChange={(ids) => {
           setImages((current) => [...ids.map((id) => current.find((image) => image.id === id)!), ...current.filter((image) => !ids.includes(image.id))]);
           setSave({ kind: 'idle' });

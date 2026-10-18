@@ -1,23 +1,153 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { AdminVehicleEditor } from './AdminVehicleEditor';
-import { adminApi, ApiError } from '../../services/adminApi';
+import { adminApi, ApiError, uploadFile } from '../../services/adminApi';
+import { extractPoster, isFastStart } from '../../lib/videoFile';
 import { adminCopy } from '../../i18n/adminCopy';
 import type { AdminImage, AdminVehicle } from '../../types/admin';
 
 vi.mock('../../services/adminApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/adminApi')>();
-  return { ...actual, adminApi: { getVehicle: vi.fn(), removeImage: vi.fn() } };
+  return { ...actual, uploadFile: vi.fn(), adminApi: {
+    getVehicle: vi.fn(), removeImage: vi.fn(), saveVehicle: vi.fn(),
+    videoIntent: vi.fn(), completeVideo: vi.fn(), imageIntent: vi.fn(), completeImage: vi.fn(),
+  } };
 });
+
+vi.mock('../../lib/videoFile', async (importOriginal) => ({
+  ...await importOriginal<typeof import('../../lib/videoFile')>(), extractPoster: vi.fn(), isFastStart: vi.fn(),
+}));
 
 const getVehicle = vi.mocked(adminApi.getVehicle);
 const removeImage = vi.mocked(adminApi.removeImage);
+const saveVehicle = vi.mocked(adminApi.saveVehicle);
 
 const photo = (state: AdminImage['state'], jobPending: boolean): AdminImage => ({
   id: 'p1', kind: 'Photo', state, jobPending, isStaged: true, isCover: false, sortOrder: 0, failureReason: state === 'Failed' ? 'transient' : null,
   cardUrl: state === 'Ready' ? '/api/admin/vehicles/v1/images/p1/card' : null,
   detailUrl: state === 'Ready' ? '/api/admin/vehicles/v1/images/p1/detail' : null,
+});
+
+describe('editor video saving', () => {
+  const poster: AdminImage = { ...photo('Ready', false), id: 'poster', kind: 'VideoPoster', isStaged: false };
+  const withVideo = (): AdminVehicle => ({
+    ...vehicle({ ...photo('Ready', false), isStaged: false }),
+    images: [{ ...photo('Ready', false), isStaged: false }, poster],
+    videos: [{ id: 'video1', state: 'Ready', isStaged: false, sizeBytes: 1024, url: '/admin/video1', posterImageId: poster.id }],
+  });
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    getVehicle.mockReset();
+    saveVehicle.mockReset();
+    vi.mocked(adminApi.videoIntent).mockReset().mockResolvedValue({ videoId: 'replacement', uploadUrl: '/upload/video', expiresInSeconds: 3600 });
+    vi.mocked(adminApi.completeVideo).mockReset().mockResolvedValue({ videoId: 'replacement', state: 'Ready' });
+    vi.mocked(adminApi.imageIntent).mockReset().mockResolvedValue({ imageId: 'new-poster', uploadUrl: '/upload/poster', expiresInSeconds: 3600 });
+    vi.mocked(adminApi.completeImage).mockReset().mockResolvedValue({ imageId: 'new-poster', state: 'Processing' });
+    vi.mocked(uploadFile).mockReset().mockResolvedValue(undefined);
+    vi.mocked(extractPoster).mockReset().mockResolvedValue({ blob: new Blob(['jpeg'], { type: 'image/jpeg' }), durationSeconds: 10 });
+    vi.mocked(isFastStart).mockReset().mockResolvedValue(true);
+    vi.stubGlobal('URL', class extends URL {
+      static createObjectURL = vi.fn(() => 'blob:poster');
+      static revokeObjectURL = vi.fn();
+    });
+  });
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+
+  async function open(data: AdminVehicle) {
+    getVehicle.mockResolvedValue(data);
+    saveVehicle.mockResolvedValue(data);
+    const router = createMemoryRouter([{ path: '/admin/vehiculos/:id', element: <AdminVehicleEditor /> }], { initialEntries: ['/admin/vehiculos/v1'] });
+    render(<RouterProvider router={router} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+  }
+
+  async function saveChanges() {
+    expect(saveButton().disabled).toBe(false);
+    await act(async () => { saveButton().click(); await vi.advanceTimersByTimeAsync(0); });
+  }
+
+  it('poster images are not listed among the photos', async () => {
+    await open(withVideo());
+    const photos = within(screen.getByRole('region', { name: adminCopy.editor.sections.photos }));
+    expect(photos.getAllByRole('listitem')).toHaveLength(1);
+    fireEvent.click(photos.getByRole('button', { name: /Quitar/ }));
+    await saveChanges();
+    expect(saveVehicle.mock.calls[0][1].gallery).toEqual({ order: [], removed: ['p1'] });
+  });
+
+  it('removing the video sends keep null', async () => {
+    await open(withVideo());
+    const video = within(screen.getByRole('region', { name: 'Vídeo' }));
+    fireEvent.click(video.getByRole('button', { name: 'Quitar' }));
+    await saveChanges();
+    expect(saveVehicle).toHaveBeenCalledWith('v1', expect.objectContaining({ video: { keep: null } }));
+  });
+
+  it('an untouched video is not sent', async () => {
+    await open(withVideo());
+    fireEvent.change(screen.getByLabelText(adminCopy.fields.model), { target: { value: 'M3' } });
+    await saveChanges();
+    expect(saveVehicle).toHaveBeenCalledTimes(1);
+    expect(saveVehicle.mock.calls[0][1]).not.toHaveProperty('video');
+  });
+
+  it('hides photo cover actions until the video is removed', async () => {
+    const data = withVideo();
+    data.images.push({ ...photo('Ready', false), id: 'p2', isStaged: false });
+    await open(data);
+    expect(screen.queryByRole('button', { name: /Hacer portada/ })).toBeNull();
+    fireEvent.click(within(screen.getByRole('region', { name: 'Vídeo' })).getByRole('button', { name: 'Quitar' }));
+    expect(screen.getByRole('button', { name: /Hacer portada/ })).toBeTruthy();
+  });
+
+  it.each([
+    ['PendingUpload', false], ['Processing', false], ['Ready', true],
+  ] as const)('waits for a kept staged poster in state %s with jobPending %s before saving', async (state, jobPending) => {
+    const data = withVideo();
+    await open(data);
+    const replacement: AdminVehicle = {
+      ...data,
+      images: [...data.images, { ...poster, id: 'new-poster', isStaged: true, state, jobPending }],
+      videos: [...data.videos, { ...data.videos[0], id: 'replacement', isStaged: true, posterImageId: 'new-poster' }],
+    };
+    getVehicle.mockResolvedValue(replacement);
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText(adminCopy.video.title, { selector: 'input' }), { target: { files: [new File(['mp4'], 'car.mp4', { type: 'video/mp4' })] } });
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(saveButton().disabled).toBe(true);
+    const ready = { ...replacement, images: replacement.images.map((image) => ({ ...image, state: 'Ready' as const, jobPending: false })) };
+    getVehicle.mockResolvedValue(ready);
+    saveVehicle.mockResolvedValue({ ...ready, videos: [{ ...ready.videos[1], isStaged: false }], images: ready.images.map((image) => ({ ...image, isStaged: false })) });
+    await wait(1500);
+    await saveChanges();
+    expect(saveVehicle.mock.calls[0][1]).toEqual({ video: { keep: 'replacement' } });
+    expect(saveButton().disabled).toBe(true);
+  });
+
+  it('shows a failed poster error and offers change without allowing save', async () => {
+    const data = withVideo();
+    data.images[1] = { ...poster, state: 'Failed' };
+    await open(data);
+    fireEvent.change(screen.getByLabelText(adminCopy.fields.model), { target: { value: 'M3' } });
+    expect(saveButton().disabled).toBe(true);
+    expect(screen.getByText(adminCopy.errors.codes.video_poster_failed)).toBeTruthy();
+    expect(within(screen.getByRole('region', { name: 'Vídeo' })).getByRole('button', { name: 'Cambiar' })).toBeTruthy();
+  });
+
+  it('discards staged media without calling the photo remove endpoint for a poster', async () => {
+    const data = withVideo();
+    data.images.push({ ...poster, id: 'staged-poster', isStaged: true });
+    data.videos.push({ ...data.videos[0], id: 'staged-video', isStaged: true, posterImageId: 'staged-poster' });
+    await open(data);
+    removeImage.mockReset();
+    fireEvent.change(screen.getByLabelText(adminCopy.fields.model), { target: { value: 'M3' } });
+    await act(async () => { screen.getByRole('button', { name: adminCopy.editor.discard }).click(); await vi.advanceTimersByTimeAsync(0); });
+    expect(removeImage).not.toHaveBeenCalled();
+    expect(saveButton().disabled).toBe(true);
+  });
 });
 
 const vehicle = (image: AdminImage): AdminVehicle => ({
