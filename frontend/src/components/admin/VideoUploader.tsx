@@ -186,7 +186,7 @@ export function VideoUploader({ vehicleId, videos, images, disabled, onBusyChang
     <p className="admin-field__hint">{text.previewNote}</p>
     <p id="video-help" className="admin-field__hint">{text.help}</p>
     </div>
-    <input className="admin-video__input" ref={input} type="file" accept={VIDEO_TYPE} aria-label={text.title} aria-describedby="video-help"
+    <input hidden ref={input} type="file" accept={VIDEO_TYPE} aria-label={text.title} aria-describedby="video-help"
       disabled={disabled || busy} onChange={(event) => {
         const file = event.target.files?.[0];
         event.target.value = '';
@@ -194,7 +194,10 @@ export function VideoUploader({ vehicleId, videos, images, disabled, onBusyChang
       }} />
     {video?.state === 'Ready' || posterSrc ? <div className="admin-video__media">
       {video?.state === 'Ready' ? <video className="admin-video__player" src={video.url} controls muted playsInline preload="metadata" aria-label={text.title} width={400} /> : null}
-      {posterSrc ? <div className="admin-photo__media admin-video__poster"><img src={posterSrc} alt={text.coverNote} width={400} height={300} /></div> : null}
+      {posterSrc ? <figure className="admin-video__poster">
+        <div className="admin-photo__media"><img src={posterSrc} alt={text.coverNote} width={400} height={300} /></div>
+        <figcaption className="admin-field__hint">{text.posterLabel}</figcaption>
+      </figure> : null}
     </div> : null}
     {warnings.length ? <div className="admin-video__warnings">{warnings.map((warning) => <p key={warning} className="admin-field__hint">{warning}</p>)}</div> : null}
     {busy ? <div role="status" className="admin-video__status">
@@ -204,7 +207,7 @@ export function VideoUploader({ vehicleId, videos, images, disabled, onBusyChang
     {posterFailed ? <p className="admin-field__error" role="alert">{adminCopy.errors.codes.video_poster_failed}</p> : null}
     {error ? <p className="admin-field__error" role="alert">{error}</p> : null}
     <div className="admin-photo__actions admin-video__actions">
-      <button type="button" className="admin-action" disabled={disabled || busy} onClick={() => input.current?.click()}>{text.change}</button>
+      <button type="button" className="admin-action" disabled={disabled || busy} onClick={() => input.current?.click()}>{video || keep || retryable ? text.change : text.pick}</button>
       {video || keep || retryable ? <button type="button" className="admin-action" disabled={disabled || busy} onClick={remove}>{text.remove}</button> : null}
       {retryable || (posterFailed && posterPreview) ? <button type="button" className="admin-action" disabled={disabled || busy}
         onClick={() => { if (upload.current) void send(upload.current); }}>{adminCopy.errors.retry}</button> : null}

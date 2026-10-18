@@ -224,12 +224,16 @@
 .admin-video { gap: 1rem; padding: 1.5rem 1.75rem; border: 1px dashed var(--color-muted); transition: border-color var(--duration-ui), background var(--duration-ui); }
 .admin-video[data-ready] { border-style: solid; border-color: var(--color-line); }
 .admin-video[data-busy] { border-color: var(--color-ink); background: var(--color-white); }
+.admin-video { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.admin-video > * { min-width: 0; }
+.admin-video__media { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: start; gap: 1.5rem; }
+.admin-video__media > * { min-width: 0; }
+.admin-video__player { display: block; width: 100%; max-width: 100%; height: auto; aspect-ratio: 16 / 9; background: var(--color-ink); }
+.admin-video__poster { margin: 0; }
+.admin-video__poster .admin-field__hint { margin-top: .4rem; }
+.admin-video__warnings .admin-field__hint { overflow-wrap: anywhere; }
 .admin-video__notes { display: grid; gap: .25rem; }
 .admin-video__notes .admin-field__hint, .admin-video__warnings .admin-field__hint { margin: 0; }
-.admin-video__input { max-width: 100%; font-size: .875rem; }
-.admin-video__media { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: start; gap: 1.5rem; }
-.admin-video__player { display: block; width: 100%; height: auto; max-width: 25rem; background: var(--color-ink); }
-.admin-video__poster { width: 100%; max-width: 12.5rem; }
 .admin-video__warnings { display: grid; gap: .35rem; padding: .75rem 1rem; border-left: 3px solid var(--color-ink); background: var(--color-placeholder); }
 .admin-video__warnings .admin-field__hint { color: var(--color-ink); }
 .admin-video__status p { margin: 0; font-size: .875rem; }
@@ -299,9 +303,7 @@
   .admin-photo__actions { gap: 0 .75rem; }
   .admin-dropzone { padding: 1.25rem; }
   .admin-video { padding: 1.25rem; }
-  .admin-video__media { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
-  .admin-video__poster { max-width: 10rem; }
-  .admin-create__actions { justify-content: flex-start; flex-direction: row-reverse; }
+      .admin-create__actions { justify-content: flex-start; flex-direction: row-reverse; }
   .admin-dialog { padding: 1.5rem; }
 }
 @media (prefers-reduced-motion: reduce) {
