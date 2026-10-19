@@ -7,7 +7,7 @@ import { useFeaturedRotation } from './useFeaturedRotation';
 const car = (slug: string): VehicleSummary => ({
   slug, make: 'BMW', model: slug, variant: null, firstRegistrationYear: 2024, firstRegistrationMonth: null, mileageKm: null,
   priceEur: null, powerHp: null, fuelType: null, transmission: null, bodyType: null, availability: 'available',
-  images: [{ src: `/${slug}.webp`, fit: 'cover', alt: null, temporary: false, width: null, height: null }],
+  images: [{ src: `/${slug}.webp`, fit: 'cover', alt: null, temporary: false, width: null, height: null }], video: null,
 });
 const cars = [car('a'), car('b'), car('c')];
 

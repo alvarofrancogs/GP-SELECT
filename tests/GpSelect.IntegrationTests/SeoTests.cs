@@ -111,7 +111,8 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Contains(english ? "service fees and costs" : "honorarios del servicio y gastos", ld.GetProperty("offers").GetProperty("description").GetString()!);
         Assert.DoesNotContain("AutoDealer", html);
         Assert.Contains(english ? "Price: €86,900" : "Precio: 86.900 €", html);
-        Assert.Contains(english ? "We confirm which before the purchase." : "Te confirmamos cuál antes de la compra.", html);
+        // Published cars are GP SELECT's stock: no note on whose name the car is bought in.
+        Assert.DoesNotContain(english ? "We confirm which before the purchase." : "Te confirmamos cuál antes de la compra.", html);
         Assert.Equal(12500, ld.GetProperty("mileageFromOdometer").GetProperty("value").GetInt32());
 
         // Readable without JavaScript, and vehicle text can never break out of the page.
