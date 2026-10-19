@@ -39,6 +39,24 @@ public sealed class SmtpEnquiryNotifierTests
     }
 
     [Fact]
+    public void Notification_includes_only_populated_import_details_after_budget()
+    {
+        Enquiry Create(string? delivery = null, string? year = null, string? mileage = null, string? timeframe = null) =>
+            Enquiry.Create(EnquiryIntent.Search, "Ana", "ana@example.test", null, "BMW M4 CS", null,
+                DateTimeOffset.UtcNow, budget: "60.000 €", delivery: delivery, year: year, mileage: mileage, timeframe: timeframe);
+        var full = EnquiryNotification.For(Create("Madrid", "2023", "20.000 km", "Este mes")).Body;
+        Assert.Contains("Presupuesto: 60.000 €\nEntrega en: Madrid\nAño: 2023\nKilometraje aproximado: 20.000 km\nPara cuándo: Este mes\nRecibida:", full);
+        var partial = EnquiryNotification.For(Create(year: "2023")).Body;
+        Assert.Contains("Presupuesto: 60.000 €\nAño: 2023\nRecibida:", partial);
+        var empty = EnquiryNotification.For(Create(" ", " ", " ", " ")).Body;
+        foreach (var label in new[] { "Entrega en:", "Año:", "Kilometraje aproximado:", "Para cuándo:" })
+        {
+            Assert.DoesNotContain(label, empty);
+            if (label != "Año:") Assert.DoesNotContain(label, partial);
+        }
+    }
+
+    [Fact]
     public void Notification_handles_missing_budget_and_message()
     {
         var notification = EnquiryNotification.For(Enquiry.Create(EnquiryIntent.Search, "Ana López", "ana@example.test",

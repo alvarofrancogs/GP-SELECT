@@ -1,14 +1,54 @@
 import { Link } from 'react-router-dom';
 import { ContactForm } from '../components/ContactForm';
 import { useLanguage } from '../i18n/useLanguage';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type MouseEvent, type ReactNode } from 'react';
 import '../styles/interiors.css';
 
 function Disclosure({ title, level = 2, children }: { title: string; level?: 2 | 3; children: ReactNode }) {
   const Heading = level === 3 ? 'h3' : 'h2';
+  const panel = useRef<HTMLDivElement>(null);
+  const animation = useRef<Animation | null>(null);
+  const expanding = useRef(false);
+  useEffect(() => {
+    const media = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const finish = () => { if (media?.matches) animation.current?.finish(); };
+    media?.addEventListener('change', finish);
+    return () => { animation.current?.cancel(); media?.removeEventListener('change', finish); };
+  }, []);
+
+  function toggle(event: MouseEvent<HTMLElement>) {
+    const details = event.currentTarget.parentElement as HTMLDetailsElement;
+    const body = panel.current;
+    if (!body) return;
+    event.preventDefault();
+    const next = animation.current ? !expanding.current : !details.open;
+    const height = details.open ? body.getBoundingClientRect().height : 0;
+    const opacity = details.open ? getComputedStyle(body).opacity : '0';
+    animation.current?.cancel();
+    animation.current = null;
+    expanding.current = next;
+    event.currentTarget.setAttribute('aria-expanded', String(next));
+    body.inert = !next;
+    details.dataset.closing = String(!next);
+    if (!body.animate || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      details.open = next;
+      return;
+    }
+    // Keep native details open until the exit finishes; all copy remains in the DOM.
+    details.open = true;
+    const motion = body.animate([{ height: `${height}px`, opacity }, { height: next ? `${body.scrollHeight}px` : '0px', opacity: next ? 1 : 0 }],
+      { duration: 220, easing: getComputedStyle(details).getPropertyValue('--ease-out').trim(), fill: 'both' });
+    animation.current = motion;
+    motion.onfinish = () => {
+      if (animation.current !== motion) return;
+      details.open = next;
+      motion.cancel();
+      animation.current = null;
+    };
+  }
   return <details className="editorial-disclosure">
-    <summary><Heading className="type-heading"><span>{title}</span><span className="editorial-disclosure__indicator" aria-hidden="true" /></Heading></summary>
-    <div className="editorial-disclosure__body type-body">{children}</div>
+    <summary onClick={toggle}><Heading className="type-heading"><span>{title}</span><span className="editorial-disclosure__indicator" aria-hidden="true" /></Heading></summary>
+    <div ref={panel} className="editorial-disclosure__panel"><div className="editorial-disclosure__body type-body">{children}</div></div>
   </details>;
 }
 

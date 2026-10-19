@@ -5,6 +5,25 @@ public class EnquiryTests {
  static Enquiry Valid(EnquiryIntent intent=EnquiryIntent.Search,string? name="Ana López",string? email="ana@example.test",string? phone=null,string? vehicle=null,string? message="Busco un coche familiar.",string? budget=null)=>Enquiry.Create(intent,name,email,phone,vehicle,message,Now,budget:budget);
  static string Field(Action create)=>Assert.Throws<DomainException>(create).Field!;
 
+ [Theory]
+ [InlineData("delivery", Enquiry.DeliveryMax)]
+ [InlineData("year", Enquiry.VehicleYearMax)]
+ [InlineData("mileage", Enquiry.MileageMax)]
+ [InlineData("timeframe", Enquiry.TimeframeMax)]
+ public void Import_details_are_optional_normalized_and_limited(string field, int max)
+ {
+     Enquiry Create(string? value) => Enquiry.Create(EnquiryIntent.Search, "Ana", "ana@example.test", null, "BMW M4 CS", null, Now,
+         delivery: field == "delivery" ? value : null, year: field == "year" ? value : null,
+         mileage: field == "mileage" ? value : null, timeframe: field == "timeframe" ? value : null);
+     string? Value(Enquiry e) => field switch { "delivery" => e.Delivery, "year" => e.VehicleYear, "mileage" => e.Mileage, _ => e.Timeframe };
+     Assert.Null(Value(Create(null)));
+     Assert.Null(Value(Create(" \n ")));
+     Assert.Equal("one line", Value(Create("  one\n line  ")));
+     Assert.Equal(new string('x', max), Value(Create(new string('x', max))));
+     Assert.Equal(field, Field(() => Create(new string('x', max + 1))));
+     Assert.Equal(field, Field(() => Create("bad\0value")));
+ }
+
  [Fact] public void Valid_enquiry_is_pending_with_created_at(){var e=Valid(phone:"+34 600 000 000");Assert.Equal((EnquiryNotificationStatus.Pending,Now,Now,0),(e.NotificationStatus,e.CreatedAt,e.NotificationNextAttemptAt,e.NotificationAttempts));Assert.Equal("+34 600 000 000",e.Phone);}
  [Fact] public void One_line_fields_collapse_whitespace_and_message_keeps_line_breaks(){var e=Valid(name:"  Ana \n López ",message:"Primera línea\nsegunda línea  ");Assert.Equal("Ana López",e.Name);Assert.Equal("Primera línea\nsegunda línea",e.Message);}
  [Fact] public void Optional_fields_become_null_when_blank(){var e=Valid(phone:"  ",vehicle:"");Assert.Null(e.Phone);Assert.Null(e.Vehicle);}

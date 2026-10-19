@@ -46,6 +46,10 @@ public sealed class EnquiryApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         var stored = await Db(db => db.Enquiries.AsNoTracking().SingleAsync(x => x.Message == marker));
         Assert.Equal((EnquiryIntent.Vehicle, "Ana López", "ana@example.test", "+34 600 000 000", "porsche-911-x"), (stored.Intent, stored.Name, stored.Email, stored.Phone, stored.Vehicle));
         Assert.Equal((EnquiryNotificationStatus.Pending, 0), (stored.NotificationStatus, stored.NotificationAttempts));
+        Assert.Null(stored.Delivery);
+        Assert.Null(stored.VehicleYear);
+        Assert.Null(stored.Mileage);
+        Assert.Null(stored.Timeframe);
         Assert.InRange(stored.CreatedAt, DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddSeconds(5));
     }
 
@@ -83,6 +87,34 @@ public sealed class EnquiryApiTests(ApiFactory api) : IClassFixture<ApiFactory>
     }
 
     private static int invalidPeer;
+
+    [Fact]
+    public async Task Import_details_are_normalized_and_persisted_without_a_message()
+    {
+        var marker = "BMW M4 CS " + Guid.NewGuid().ToString("N");
+        var body = new { intent = "Search", name = "Ana", email = "ana@example.test", vehicle = marker,
+            budget = "60.000 €", delivery = " Madrid\n centro ", year = " 2023 ", mileage = " 20.000\n km ", timeframe = " Este mes " };
+        await Read(await api.Anonymous().SendAsync(Post(body, "198.51.100.72")), HttpStatusCode.Accepted);
+        var stored = await Db(db => db.Enquiries.AsNoTracking().SingleAsync(x => x.Vehicle == marker));
+        Assert.Equal(("Madrid centro", "2023", "20.000 km", "Este mes"), (stored.Delivery, stored.VehicleYear, stored.Mileage, stored.Timeframe));
+        Assert.Equal("60.000 €", stored.Budget);
+        Assert.Null(stored.Message);
+    }
+
+    [Theory]
+    [InlineData("delivery", Enquiry.DeliveryMax)]
+    [InlineData("year", Enquiry.VehicleYearMax)]
+    [InlineData("mileage", Enquiry.MileageMax)]
+    [InlineData("timeframe", Enquiry.TimeframeMax)]
+    public async Task Oversized_import_details_return_the_json_field(string field, int max)
+    {
+        var body = new Dictionary<string, object> { ["intent"] = "Search", ["name"] = "Ana", ["email"] = "ana@example.test",
+            ["vehicle"] = "BMW M4 CS", [field] = new string('x', max + 1) };
+        var problem = await Read(await api.Anonymous().SendAsync(Post(body, $"198.51.102.{Interlocked.Increment(ref invalidPeer)}")), HttpStatusCode.BadRequest);
+        Assert.Equal(field, problem.GetProperty("field").GetString());
+        Assert.False(await Db(db => db.Enquiries.AnyAsync(x => x.Delivery == new string('x', max + 1) || x.VehicleYear == new string('x', max + 1)
+            || x.Mileage == new string('x', max + 1) || x.Timeframe == new string('x', max + 1))));
+    }
 
     [Theory]
     [InlineData("""{"intent":"Search","name":"A","email":"ana@example.test","message":"Busco un coche familiar."}""", "name")]

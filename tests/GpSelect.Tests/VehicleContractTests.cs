@@ -295,13 +295,13 @@ public class VehicleContractTests
     }
 
     [Fact]
-    public void Sold_and_draft_need_no_images()
+    public void Draft_needs_no_images()
     {
         var v = NewVehicle();
-        v.ChangeStatus(VehicleStatus.Sold, []);
-        Assert.Equal(VehicleStatus.Sold, v.Status);
+        v.ChangeStatus(VehicleStatus.Draft, []);
+        Assert.Equal(VehicleStatus.Draft, v.Status);
         Assert.Null(v.PublishedAt);
-        Assert.False(VehicleVisibility.HasPublicDetail(v.Status, v.PublishedAt));
+        Assert.False(VehicleVisibility.IsInCatalogue(v.Status));
     }
 
     [Fact]
@@ -330,31 +330,35 @@ public class VehicleContractTests
     }
 
     [Fact]
-    public void Sold_vehicle_can_stay_in_the_catalogue_when_the_admin_chooses_it()
+    public void Sold_vehicle_is_always_in_the_catalogue_and_keeps_its_last_photo()
     {
         var (v, images) = ListedVehicle();
         v.ChangeStatus(VehicleStatus.Sold, images);
-        Assert.False(VehicleVisibility.IsInCatalogue(v.Status, v.ShowWhenSold));
-        v.ChangeStatus(VehicleStatus.Sold, images, showWhenSold: true);
-        Assert.True(VehicleVisibility.IsInCatalogue(v.Status, v.ShowWhenSold));
-        // The choice is kept when the status changes without it, and only counts while Sold.
+        Assert.True(VehicleVisibility.IsInCatalogue(v.Status));
+        // Withdrawing the vehicle hides both its card and detail.
         v.ChangeStatus(VehicleStatus.Draft, images);
-        Assert.True(v.ShowWhenSold);
-        Assert.False(VehicleVisibility.IsInCatalogue(v.Status, v.ShowWhenSold));
-        // Kept on show, it cannot lose its last photograph.
+        Assert.False(VehicleVisibility.IsInCatalogue(v.Status));
+        // A sold vehicle cannot lose its last photograph.
         v.ChangeStatus(VehicleStatus.Sold, images);
         VehicleGallery.Remove(v, images[0], images);
         Assert.Equal("last_public_image", Fails(() => VehicleGallery.Remove(v, images[1], images)).Code);
     }
 
     [Fact]
-    public void Sold_vehicle_on_show_needs_a_photograph_but_not_a_price()
+    public void Sold_vehicle_needs_a_ready_saved_cover_but_not_a_price()
     {
         var v = NewVehicle();
-        Assert.Equal("images_required", Fails(() => v.ChangeStatus(VehicleStatus.Sold, [], showWhenSold: true)).Code);
-        v.ChangeStatus(VehicleStatus.Sold, [ReadyImage(v, 0, cover: true)], showWhenSold: true);
+        Assert.Equal("images_required", Fails(() => v.ChangeStatus(VehicleStatus.Sold, [])).Code);
+        var cover = ReadyImage(v, 0, cover: true);
+        cover.SetCover(false);
+        Assert.Equal("images_required", Fails(() => v.ChangeStatus(VehicleStatus.Sold, [cover])).Code);
+        var staged = VehicleImage.Create(v.Id, "staged.jpg", "image/jpeg", 10, staged: true);
+        staged.Ready("card", "detail"); staged.SetCover(true);
+        Assert.Equal("images_required", Fails(() => v.ChangeStatus(VehicleStatus.Sold, [staged])).Code);
+        cover.SetCover(true);
+        v.ChangeStatus(VehicleStatus.Sold, [cover]);
         Assert.Null(v.PriceEur);
-        Assert.True(VehicleVisibility.HasPublicDetail(v.Status, v.PublishedAt, v.ShowWhenSold));
+        Assert.True(VehicleVisibility.IsInCatalogue(v.Status));
     }
 
     [Theory]
@@ -364,10 +368,10 @@ public class VehicleContractTests
     [InlineData(VehicleStatus.Reserved, true, true)]
     [InlineData(VehicleStatus.Sold, false, true)]
     [InlineData(VehicleStatus.Archived, false, false)]
-    public void Visibility_separates_listing_from_detail(VehicleStatus status, bool listed, bool detailWhenPublished)
+    public void Catalogue_includes_sold_as_well_as_vehicles_still_for_sale(VehicleStatus status, bool listed, bool inCatalogue)
     {
         Assert.Equal(listed, VehicleVisibility.IsListed(status));
-        Assert.Equal(detailWhenPublished, VehicleVisibility.HasPublicDetail(status, DateTimeOffset.UtcNow));
+        Assert.Equal(inCatalogue, VehicleVisibility.IsInCatalogue(status));
     }
 
     // --- Cover --------------------------------------------------------------------------------

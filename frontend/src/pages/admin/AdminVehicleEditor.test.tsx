@@ -69,6 +69,19 @@ describe('editor video saving', () => {
     await act(async () => { saveButton().click(); await vi.advanceTimersByTimeAsync(0); });
   }
 
+  it('saves Sold without a visibility flag and explains that it appears without a price', async () => {
+    const data = withVideo();
+    await open(data);
+    fireEvent.click(screen.getByRole('button', { name: /Cambiar estado/ }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Vendido' }));
+    expect(screen.getAllByText(adminCopy.status.visibility.Sold).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('checkbox', { name: /Mostrar en la web/ })).toBeNull();
+    saveVehicle.mockResolvedValue({ ...data, status: 'Sold' });
+    await saveChanges();
+    expect(saveVehicle.mock.calls[0][1].status).toEqual({ status: 'Sold' });
+    expect(saveButton().disabled).toBe(true);
+  }, 10000);
+
   it('poster images are not listed among the photos', async () => {
     await open(withVideo());
     const photos = within(screen.getByRole('region', { name: adminCopy.editor.sections.photos }));
@@ -202,7 +215,7 @@ describe('editor video saving', () => {
 });
 
 const vehicle = (image: AdminImage): AdminVehicle => ({
-  id: 'v1', slug: 'bmw-m4', status: 'Draft', showWhenSold: false, make: 'BMW', model: 'M4', year: 2023, month: 6,
+  id: 'v1', slug: 'bmw-m4', status: 'Draft', make: 'BMW', model: 'M4', year: 2023, month: 6,
   priceEur: null, internalReference: null, description: null, mileageKm: null, powerHp: null, variant: null, fuelType: null,
   transmission: null, bodyType: null, drivetrain: null, exteriorColour: null, interior: null, history: null,
   provenance: null, equipment: [], customSpecifications: [], images: [image], videos: [], updatedAt: '2026-10-01T00:00:00Z', publishedAt: null,

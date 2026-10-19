@@ -104,7 +104,7 @@ function VehicleRow({ vehicle: v, onArchive, onRestored }: { vehicle: AdminVehic
     <p className="admin-row__fact type-numeric" data-empty={v.mileageKm === null || undefined}><span className="admin-row__label">{text.columns.mileage}</span>{v.mileageKm === null ? '—' : `${formatNumber(v.mileageKm)} km`}</p>
     <p className="admin-row__fact type-numeric" data-empty={v.powerHp === null || undefined}><span className="admin-row__label">{text.columns.power}</span>{v.powerHp === null ? '—' : `${formatNumber(v.powerHp)} CV`}</p>
     <p className="admin-row__fact admin-row__price type-numeric"><span className="admin-row__label">{text.columns.price}</span>{formatPrice(v.priceEur, 'es', text.onRequest)}</p>
-    <p className="admin-row__fact admin-row__state"><span className="admin-row__label">{text.columns.status}</span><StatusMark status={v.status} showWhenSold={v.showWhenSold} /></p>
+    <p className="admin-row__fact admin-row__state"><span className="admin-row__label">{text.columns.status}</span><StatusMark status={v.status} /></p>
     </div>
     <div className="admin-row__actions">
       {archived ? <RestoreVehicleButton vehicleId={v.id} label={`${v.make} ${v.model}`} onRestored={onRestored} /> : <>

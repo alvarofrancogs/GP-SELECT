@@ -15,6 +15,9 @@ export interface InteriorCopy {
     images: { opening: string; detail: string };
   };
   import: InteriorHeaderCopy & {
+    formFields: { delivery: string; make: string; model: string; year: string; mileage: string; timeframe: string; budget: string; message: string };
+    placeholders: { delivery: string; make: string; model: string; year: string; mileage: string; timeframe: string };
+    formErrors: { delivery: string; make: string; model: string; year: string; mileage: string; timeframe: string; message: string };
     overviewTitle: string;
     overviewItems: string[];
     formTitle: string;

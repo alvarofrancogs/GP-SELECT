@@ -48,6 +48,11 @@ export const videoErrorCopy = {
   },
 } as const;
 
+export const soldStatusCopy = {
+  es: 'Aparecerá en la web en Vehículos vendidos, sin precio.',
+  en: 'It will appear on the website under Sold vehicles, without a price.',
+} as const;
+
 /** The Admin is Spanish-only for now; its strings live here instead of the public dictionaries. */
 export const adminCopy = {
   brand: 'GP SELECT',
@@ -173,9 +178,6 @@ export const adminCopy = {
     cancel: 'Cancelar',
     save: 'Guardar cambios',
     choose: 'Selecciona el estado',
-    showWhenSold: 'Mostrar en la web como vendido',
-    soldVisibleName: 'Vendido · visible en la web',
-    soldVisible: 'En el catálogo, marcado como vendido y sin precio.',
     saveFirst: 'Guarda los cambios antes de cambiar el estado.',
     changing: 'Cambiando estado…',
     changed: (label: string) => `Estado cambiado a ${label}.`,
@@ -199,7 +201,7 @@ export const adminCopy = {
       ComingSoon: 'En el catálogo, anunciado como próximamente.',
       Available: 'En el catálogo, disponible.',
       Reserved: 'En el catálogo, marcado como reservado.',
-      Sold: 'Fuera del catálogo. La ficha sigue accesible por su enlace.',
+      Sold: soldStatusCopy.es,
       Archived: 'Fuera del Admin operativo y de la web.',
     } satisfies Record<VehicleStatus, string>,
   },

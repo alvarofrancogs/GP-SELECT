@@ -78,8 +78,8 @@ export const adminApi = {
     request<AdminVehicle>(`/vehicles/${id}`, { method: 'PATCH', body: json(patch) }),
   saveVehicle: (id: string, body: VehicleSaveRequest) =>
     request<AdminVehicle>(`/vehicles/${id}/save`, { method: 'POST', body: json(body) }),
-  changeStatus: (id: string, status: SettableStatus, showWhenSold?: boolean) =>
-    request<AdminVehicle>(`/vehicles/${id}/status`, { method: 'POST', body: json({ status, showWhenSold }) }),
+  changeStatus: (id: string, status: SettableStatus) =>
+    request<AdminVehicle>(`/vehicles/${id}/status`, { method: 'POST', body: json({ status }) }),
   archiveVehicle: (id: string) => request<void>(`/vehicles/${id}/archive`, { method: 'POST' }),
   restoreVehicle: (id: string) => request<AdminVehicle>(`/vehicles/${id}/restore`, { method: 'POST' }),
   previewVehicle: (id: string) => request<VehiclePreview>(`/vehicles/${id}/preview`),

@@ -26,19 +26,50 @@ it.each([['/importacion', es], ['/en/import', en]])('keeps all editorial content
   expect(document.activeElement).toBe(container.querySelector('#import-form'));
 });
 
-it('keeps import vehicle optional and message required, with honest preview and editable draft', async () => {
+it('requires delivery, make and model, with optional details and an editable preview draft', async () => {
   vi.stubGlobal('fetch', vi.fn());
   render(<MemoryRouter initialEntries={['/importacion']}><LanguageProvider><Import /></LanguageProvider></MemoryRouter>);
   const text = es.interiors.contact;
-  const fill = (label: string, value: string) => fireEvent.change(screen.getByLabelText(new RegExp(`^${label}`)), { target: { value } });
-  fill(text.fields.name, 'Alex Smith'); fill(text.fields.email, 'alex@example.test'); fill(text.fields.message, 'short');
+  const fields = es.interiors.import.formFields;
+  const input = (label: string) => screen.getByLabelText((name) => name.startsWith(label));
+  const fill = (label: string, value: string) => fireEvent.change(input(label), { target: { value } });
+  fill(text.fields.name, 'Alex Smith'); fill(text.fields.email, 'alex@example.test');
   fireEvent.click(screen.getByRole('button', { name: text.submit }));
-  expect(document.activeElement).toBe(screen.getByLabelText(new RegExp(`^${text.fields.message}`)));
-  fill(text.fields.message, 'A family car for long trips.');
+  expect(document.activeElement).toBe(input(fields.delivery));
+  fill(fields.delivery, 'Murcia, Spain');
+  fireEvent.click(screen.getByRole('button', { name: text.submit }));
+  expect(document.activeElement).toBe(input(fields.make));
+  fill(fields.make, 'BMW'); fill(fields.model, 'M4 CS');
   fireEvent.click(screen.getByRole('button', { name: text.submit }));
   await screen.findByText(text.successTitle);
   expect(screen.queryByText(text.sentTitle)).toBeNull();
   expect(fetch).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('button', { name: text.edit }));
-  expect((screen.getByLabelText(new RegExp(`^${text.fields.message}`)) as HTMLTextAreaElement).value).toBe('A family car for long trips.');
+  expect((input(fields.model) as HTMLInputElement).value).toBe('M4 CS');
+  expect((input(fields.message) as HTMLTextAreaElement).value).toBe('');
+});
+
+it.each([['/importacion', es], ['/en/import', en]])('labels and orders every import field on %s', (path, copy) => {
+  const { container } = render(<MemoryRouter initialEntries={[path]}><LanguageProvider><Import /></LanguageProvider></MemoryRouter>);
+  const inputs = Array.from(container.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('form input, form textarea'));
+  expect(inputs.map((input) => input.name)).toEqual(['name', 'email', 'phone', 'delivery', 'make', 'model', 'year', 'mileage', 'budget', 'timeframe', 'message']);
+  expect(inputs.filter((input) => input.required).map((input) => input.name)).toEqual(['name', 'email', 'delivery', 'make', 'model']);
+  for (const input of inputs) {
+    expect(container.querySelector(`label[for="${input.id}"]`)?.textContent).toBeTruthy();
+    for (const id of input.getAttribute('aria-describedby')?.split(' ') ?? []) expect(document.getElementById(id)).toBeTruthy();
+  }
+  expect(screen.getByPlaceholderText(copy.interiors.import.placeholders.delivery)).toBe(inputs[3]);
+});
+
+it('opens and closes native disclosures instantly without animation support, retaining their copy', () => {
+  const { container } = render(<MemoryRouter><LanguageProvider><Import /></LanguageProvider></MemoryRouter>);
+  const details = container.querySelector('details')!;
+  const summary = details.querySelector('summary')!;
+  const body = details.querySelector('.editorial-disclosure__panel')!;
+  fireEvent.click(summary);
+  expect(details.open).toBe(true);
+  fireEvent.click(summary);
+  expect(details.open).toBe(false);
+  expect(details.querySelector('.editorial-disclosure__panel')).toBe(body);
+  expect(body.textContent).toContain(es.interiors.import.define.body);
 });

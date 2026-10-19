@@ -14,6 +14,7 @@ public sealed class Enquiry
 {
     public const int NameMin = 2, NameMax = 200, EmailMax = 200, PhoneMax = 30, VehicleMin = 2, VehicleMax = 200, MessageMin = 10, MessageMax = 5000, BudgetMax = 100;
     public const int MaxNotificationAttempts = 6;
+    public const int DeliveryMax = 120, VehicleYearMax = 40, MileageMax = 60, TimeframeMax = 60;
     private static readonly TimeSpan[] RetryDelays = [TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(30), TimeSpan.FromHours(2), TimeSpan.FromHours(12)];
     private static readonly Regex PhoneChars = new(@"^\+?[\d\s().-]+$", RegexOptions.Compiled);
 
@@ -28,6 +29,10 @@ public sealed class Enquiry
     public string? Vehicle { get; private set; }
     public string? Message { get; private set; }
     public string? Budget { get; private set; }
+    public string? Delivery { get; private set; }
+    public string? VehicleYear { get; private set; }
+    public string? Mileage { get; private set; }
+    public string? Timeframe { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public EnquiryNotificationStatus NotificationStatus { get; private set; } = EnquiryNotificationStatus.Pending;
     public int NotificationAttempts { get; private set; }
@@ -35,7 +40,8 @@ public sealed class Enquiry
     public DateTimeOffset? NotifiedAt { get; private set; }
 
     public static Enquiry Create(EnquiryIntent intent, string? name, string? email, string? phone, string? vehicle, string? message, DateTimeOffset now,
-        EnquiryLanguage language = EnquiryLanguage.Es, string? budget = null)
+        EnquiryLanguage language = EnquiryLanguage.Es, string? budget = null,
+        string? delivery = null, string? year = null, string? mileage = null, string? timeframe = null)
     {
         if (!Enum.IsDefined(intent)) throw new DomainException("invalid_intent", "intent is invalid", "intent");
         if (!Enum.IsDefined(language)) throw new DomainException("invalid_language", "language is invalid", "language");
@@ -68,6 +74,8 @@ public sealed class Enquiry
         return new Enquiry
         {
             Intent = intent, Language = language, Name = cleanName, Email = cleanEmail, Phone = cleanPhone, Vehicle = cleanVehicle, Message = cleanMessage, Budget = cleanBudget,
+            Delivery = Line(delivery, DeliveryMax, "delivery"), VehicleYear = Line(year, VehicleYearMax, "year"),
+            Mileage = Line(mileage, MileageMax, "mileage"), Timeframe = Line(timeframe, TimeframeMax, "timeframe"),
             CreatedAt = now, NotificationNextAttemptAt = now,
         };
     }

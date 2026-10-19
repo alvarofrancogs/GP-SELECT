@@ -4,7 +4,7 @@ import { adminCopy } from '../i18n/adminCopy';
 import type { AdminVehicle } from '../types/admin';
 
 const vehicle = (priceEur: number | null): AdminVehicle => ({
-  id: 'v1', slug: 'bmw-m4', status: 'Draft', showWhenSold: false, make: 'BMW', model: 'M4', year: 2023, month: 6,
+  id: 'v1', slug: 'bmw-m4', status: 'Draft', make: 'BMW', model: 'M4', year: 2023, month: 6,
   priceEur, internalReference: null, description: null, mileageKm: 12000, powerHp: 510, variant: null, fuelType: null,
   transmission: null, bodyType: null, drivetrain: null, exteriorColour: null, interior: null, history: null,
   provenance: null, equipment: [], customSpecifications: [], images: [], videos: [], updatedAt: '2026-10-01T00:00:00Z', publishedAt: null,
@@ -54,6 +54,12 @@ describe('parsePrice', () => {
 });
 
 describe('buildPatch price', () => {
+  it('allows a sold vehicle to have no price', () => {
+    const saved: AdminVehicle = { ...vehicle(85000), status: 'Sold' };
+    expect(buildPatch(saved, { ...toForm(saved), priceEur: '' })).toMatchObject({ errors: {}, patch: { priceEur: null } });
+    const withoutPrice: AdminVehicle = { ...saved, priceEur: null };
+    expect(buildPatch(withoutPrice, toForm(withoutPrice))).toMatchObject({ errors: {}, patch: {} });
+  });
   it('lets other fields change when the saved price has cents', () => {
     const saved = vehicle(100.5);
     const result = buildPatch(saved, { ...toForm(saved), model: 'M4 Competition' });

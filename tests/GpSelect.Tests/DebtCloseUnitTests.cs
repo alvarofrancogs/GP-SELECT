@@ -82,7 +82,9 @@ public class DebtCloseUnitTests
         var vehicle = VehicleUnit.Create("BMW", "M3", 2022, 3, "price-test");
         vehicle.Apply(new UpdateVehicleRequest { PriceEur = 89900m });
         Assert.Equal(89900m, PublicMapping.MapCard(vehicle, [], null).PriceEur);
-        vehicle.ChangeStatus(VehicleStatus.Sold, [], showWhenSold: false);
+        var cover = VehicleImage.Create(vehicle.Id, "cover.jpg", "image/jpeg", 10);
+        cover.Ready("card", "detail"); cover.SetCover(true);
+        vehicle.ChangeStatus(VehicleStatus.Sold, [cover]);
         Assert.Null(PublicMapping.MapCard(vehicle, [], null).PriceEur);
         Assert.Null(PublicMapping.Map(vehicle, [], null).PriceEur);
     }
