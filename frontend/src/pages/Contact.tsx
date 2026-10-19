@@ -32,6 +32,9 @@ export function Contact() {
 
   return <article className="interior-page contact-page">
     <InteriorPageHeader {...text} />
+    {/* Below 1024 px the quickest channel comes first, so the chosen option sits right above its form; from
+        1024 px the same block is the form's sidebar. Only one of the two is ever displayed (interiors.css). */}
+    {hasChannels ? <div className="contact-direct-first"><DirectContact /></div> : null}
     <fieldset className="contact-paths" disabled={busy}>
       <legend className="type-label">{text.pathsLabel}</legend>
       {(['search', 'vehicle', 'information'] as const).map((value) => <label key={value} className="contact-path">
@@ -43,7 +46,8 @@ export function Contact() {
     <div className={`contact-content${hasChannels ? ' contact-content--channels' : ''}`}>
       {hasChannels ? <div className="contact-content__direct"><DirectContact /></div> : null}
       <div id="contact-panel" className="contact-content__form">
-        <p className="contact-introduction type-lede">{intros[path]}</p>
+        {/* Announces what the chosen option changed below it. */}
+        <p className="contact-introduction type-lede" aria-live="polite">{intros[path]}</p>
         <ContactForm configuration="contact" intent={path} vehicle={vehicle} onBusyChange={setBusy}
           onNewEnquiry={() => selectPath(path)} onSearch={() => { selectPath('search'); searchRadio.current?.focus(); }} />
         <section className="contact-next-section">

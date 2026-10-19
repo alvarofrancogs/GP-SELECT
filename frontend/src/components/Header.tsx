@@ -225,7 +225,7 @@ export function Header() {
           <div className="header-actions">
             <LanguageSwitcher />
             <button className="menu-toggle" ref={menuButton} type="button" aria-expanded={menuOpen}
-              aria-controls="mobile-navigation" aria-label={menuOpen ? copy.common.close : copy.common.menu}
+              aria-controls="mobile-navigation" aria-label={copy.common.menu}
               onClick={() => setMenuOpen((open) => !open)}>
               <span className="menu-toggle__icon" aria-hidden="true"><span /><span /></span>
             </button>

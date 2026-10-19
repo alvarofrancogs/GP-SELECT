@@ -2,7 +2,8 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- cover: Safari 26 and Chrome on Android draw the page behind their translucent bottom bars (safe-area insets in the CSS). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href="/assets/seo/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/seo/favicon-32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/seo/apple-touch-icon.png" />
@@ -10,8 +11,9 @@
     <!-- The preloader's logo must be ready for its first frame. -->
     <link rel="preload" as="image" href="/assets/brand/logo-gp.webp" type="image/webp" fetchpriority="high" />
     <link rel="preload" as="image" href="/assets/brand/logo-select.webp" type="image/webp" fetchpriority="high" />
-    <!-- The header's logo is a CSS mask: fetched early so the brand never paints empty. -->
-    <link rel="preload" as="image" href="/assets/seo/logo.svg" type="image/svg+xml" />
+    <!-- The header's logo is a CSS mask: fetched early so the brand never paints empty. Masks are fetched in CORS
+         mode, so the preload must be too, or the browser ignores it and downloads the logo twice. -->
+    <link rel="preload" as="image" href="/assets/seo/logo.svg" type="image/svg+xml" crossorigin />
     <title>GP SELECT</title>
   </head>
   <body>

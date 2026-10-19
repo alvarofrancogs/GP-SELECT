@@ -15,6 +15,9 @@ import '../styles/preloader.css';
 const MIN_MS = 700;
 const MAX_MS = 1200;
 const SEEN_KEY = 'gp-select.preloader.seen';
+// GSAP's power2.in and power4.inOut, for the compositor-run exit.
+const POWER2_IN = 'cubic-bezier(.32, 0, .67, 0)';
+const POWER4_IN_OUT = 'cubic-bezier(.83, 0, .17, 1)';
 let shown = false;
 
 function seenBefore() {
@@ -72,13 +75,22 @@ export function Preloader() {
     behind.forEach((element) => { element.inert = true; });
 
     let leaving = false;
-    let exit: gsap.core.Timeline | undefined;
+    let exit: Animation[] = [];
+    // The exit runs on the compositor (transform and opacity only): the Home is still finishing its start-up work
+    // underneath, and a script-driven tween stuttered with every long task.
     const leave = () => {
-      if (leaving || !root.current) return;
+      const screen = root.current;
+      const logo = screen?.querySelector('.preloader__logo');
+      if (leaving || !screen || !logo) return;
       leaving = true;
-      exit = gsap.timeline({ onComplete: () => setActive(false) })
-        .to(root.current.querySelector('.preloader__logo'), { opacity: 0, y: -10, duration: 0.25 * speed, ease: 'power2.in' })
-        .to(root.current, { yPercent: -100, duration: 0.6 * speed, ease: 'power4.inOut' }, `<${0.05 * speed}`);
+      if (!screen.animate) { setActive(false); return; }
+      exit = [
+        logo.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-10px)' }],
+          { duration: 250 * speed, easing: POWER2_IN, fill: 'forwards' }),
+        screen.animate([{ transform: 'none' }, { transform: 'translateY(-100%)' }],
+          { duration: 600 * speed, delay: 50 * speed, easing: POWER4_IN_OUT, fill: 'forwards' }),
+      ];
+      exit[1].finished.then(() => setActive(false), () => { /* Cancelled on unmount. */ });
     };
     const tick = () => {
       if (leaving) return;
@@ -90,7 +102,7 @@ export function Preloader() {
 
     return () => {
       gsap.ticker.remove(tick);
-      exit?.kill();
+      exit.forEach((animation) => animation.cancel());
       window.removeEventListener('wheel', stop);
       window.removeEventListener('touchmove', stop);
       window.removeEventListener('keydown', stopKeys);
@@ -102,10 +114,17 @@ export function Preloader() {
 
   return (
     <div ref={root} className={`preloader${speed < 1 ? ' preloader--quick' : ''}`} role="status" aria-live="polite" aria-label={copy.common.loading}>
-      {/* The real logo in two pieces, placed as in the original artwork so they meet exactly. */}
+      {/* The real logo in two pieces, placed as in the original artwork so they meet exactly. Each piece comes
+          into focus by crossfading from a blurred copy (preloader.css). */}
       <div className="preloader__logo" role="img" aria-label={copy.brand}>
-        <img className="preloader__gp" src="/assets/brand/logo-gp.webp" alt="" decoding="sync" />
-        <img className="preloader__select" src="/assets/brand/logo-select.webp" alt="" decoding="sync" />
+        <span className="preloader__piece preloader__gp">
+          <img src="/assets/brand/logo-gp.webp" alt="" decoding="sync" />
+          <img className="preloader__soft" src="/assets/brand/logo-gp.webp" alt="" decoding="sync" />
+        </span>
+        <span className="preloader__piece preloader__select">
+          <img src="/assets/brand/logo-select.webp" alt="" decoding="sync" />
+          <img className="preloader__soft" src="/assets/brand/logo-select.webp" alt="" decoding="sync" />
+        </span>
       </div>
     </div>
   );

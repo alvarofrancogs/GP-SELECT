@@ -19,6 +19,10 @@ interface ContactFormProps {
 }
 const emptyDraft = { vehicle: '', budget: '', message: '', delivery: '', make: '', model: '', year: '', mileage: '', timeframe: '' };
 
+function focusVisible(element: Element) {
+  try { return element.matches(':focus-visible'); } catch { return true; }
+}
+
 /** One form engine; common details and each path's draft stay in memory. */
 export function ContactForm({ configuration, intent, vehicle = '', onNewEnquiry, onBusyChange, onSearch }: ContactFormProps) {
   const { copy, locale, href } = useLanguage();
@@ -130,7 +134,8 @@ export function ContactForm({ configuration, intent, vehicle = '', onNewEnquiry,
       <button className="editorial-link type-ui" type="button" onClick={edit}>{feedback.sent ? text.another : text.edit}<span aria-hidden="true">→</span></button>
     </div>
     <form ref={formRef} noValidate onSubmit={handleSubmit} hidden={status === 'success'} aria-busy={submitting}
-      onFocusCapture={(event) => event.target.closest('.contact-field')?.scrollIntoView?.({ block: 'nearest', behavior: 'instant' })}>
+      // Keyboard focus only: scrolling under a pointer that is pressing a button moves the button away and the click is lost.
+      onFocusCapture={(event) => { if (focusVisible(event.target)) event.target.closest('.contact-field')?.scrollIntoView?.({ block: 'nearest', behavior: 'instant' }); }}>
       <p className="contact-form__hint type-body">{text.requiredHint}</p>
       <div className="contact-fields">
         {fields.map((field) => {
@@ -148,7 +153,7 @@ export function ContactForm({ configuration, intent, vehicle = '', onNewEnquiry,
           const value = field === 'name' || field === 'email' || field === 'phone' ? common[field] : draft[field];
           const shared = { id: inputId, name: field, required: !optional, disabled: submitting, value, 'aria-invalid': invalid,
             'aria-describedby': describedBy, onChange: (event: { target: { value: string } }) => change(field, event.target.value) };
-          const wide = importing ? !['name', 'email', 'make', 'model'].includes(field) : field !== 'name' && field !== 'email';
+          const wide = importing ? !['name', 'email', 'make', 'model', 'year', 'mileage'].includes(field) : field !== 'name' && field !== 'email';
           const importField = field in importLimits ? field as keyof typeof importLimits : null;
           return <div key={field} className={`contact-field${wide ? ' contact-field--wide' : ''}`}>
             <label id={`${inputId}-label`} className="type-ui" htmlFor={inputId}>{label}{optional ? <span> ({text.optional})</span> : <> *<span className="sr-only"> {text.required}</span></>}</label>

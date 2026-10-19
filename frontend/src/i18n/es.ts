@@ -30,7 +30,7 @@ export const es: Dictionary = {
     "reserved": "Reservado",
     "sold": "Vendido",
     soldTitle: "Vehículos vendidos",
-    soldIntro: "Estas unidades ya no están disponibles. Puedes consultar sus fichas.",
+    soldIntro: "Una selección de nuestro catálogo anterior. Consulta la ficha de cada vehículo.",
     emptyCurrent: "Ahora mismo no hay vehículos disponibles para consultar.",
     "showMore": "Ver más",
     "empty": "Ningún vehículo coincide con tu búsqueda.",
@@ -273,7 +273,7 @@ export const es: Dictionary = {
   common: {
     scroll: 'Desliza para descubrir', temporaryAsset: 'Recurso provisional',
     backHome: 'Volver al inicio', prototype: 'Vista previa · Fase 3',
-    menu: 'Abrir menú', close: 'Cerrar menú', skipContent: 'Saltar al contenido',
+    menu: 'Menú', close: 'Cerrar menú', skipContent: 'Saltar al contenido',
     missingAsset: 'Imagen definitiva pendiente', heroAsset: 'Porsche · vista lateral',
     backgroundAsset: 'Fondo fotográfico pendiente', catalogue: 'Ver catálogo', loading: 'Cargando',
   },

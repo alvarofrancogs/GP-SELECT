@@ -73,7 +73,9 @@
   --type-label-tracking: .11em;
   --type-label-leading: 1.4;
   --leading-body: 1.16;
-  --page-gutter: 5.3vw;
+  /* Phones in landscape: the gutter never lets text run under the notch (viewport-fit=cover, index.html). */
+  --safe-inline: max(env(safe-area-inset-left), env(safe-area-inset-right));
+  --page-gutter: max(5.3vw, var(--safe-inline));
   --header-height: clamp(5rem, 10.65vh, 7rem);
   --space-1: .25rem;
   --space-2: .5rem;
@@ -116,7 +118,7 @@
 }
 
 @media (max-width: 1199px) {
-  :root { --page-gutter: 4.5vw; --text-nav: .875rem; }
+  :root { --page-gutter: max(4.5vw, var(--safe-inline)); --text-nav: .875rem; }
 }
 
 @media (max-width: 767px) {
@@ -124,7 +126,7 @@
     --hero-size: clamp(2.5rem, 11.8vw, 5.5rem);
     --hero-gutter-start: var(--page-gutter);
     --hero-gutter-end: var(--page-gutter);
-    --page-gutter: 6vw;
+    --page-gutter: max(6vw, var(--safe-inline));
     --header-height: 5rem;
     --text-hero: clamp(3rem, 15.2vw, 7rem);
     --text-display: clamp(2rem, 8.8vw, 4rem);

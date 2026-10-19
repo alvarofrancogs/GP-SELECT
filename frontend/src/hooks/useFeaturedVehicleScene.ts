@@ -23,8 +23,9 @@ export function useFeaturedVehicleScene(sectionRef: RefObject<HTMLElement | null
           start: 'top 85%', end: 'top 25%', scrub: 0.4,
         },
       });
+      // Keep the large heading above 3:1 contrast throughout its scroll entrance.
       entrance.fromTo(select('h2 > span'),
-        { opacity: 0.2, x: -18 }, { opacity: 1, x: 0, duration: 0.65, stagger: 0.12 }, 0);
+        { opacity: 0.55, x: -18 }, { opacity: 1, x: 0, duration: 0.65, stagger: 0.12 }, 0);
     }, section);
 
     const observer = observeResize(section);

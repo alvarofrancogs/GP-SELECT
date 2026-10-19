@@ -1,54 +1,43 @@
 import { Link } from 'react-router-dom';
 import { ContactForm } from '../components/ContactForm';
 import { useLanguage } from '../i18n/useLanguage';
-import { useEffect, useRef, type MouseEvent, type ReactNode } from 'react';
+import { useRef, useState, type MouseEvent, type ReactNode, type TransitionEvent } from 'react';
 import '../styles/interiors.css';
 
+/** Native <details> with the Home's services accordion motion (interiors.css): CSS unfolds the panel, and the
+    details element stays open until it has folded again. All copy stays in the DOM. */
 function Disclosure({ title, level = 2, children }: { title: string; level?: 2 | 3; children: ReactNode }) {
   const Heading = level === 3 ? 'h3' : 'h2';
+  const details = useRef<HTMLDetailsElement>(null);
   const panel = useRef<HTMLDivElement>(null);
-  const animation = useRef<Animation | null>(null);
-  const expanding = useRef(false);
-  useEffect(() => {
-    const media = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    const finish = () => { if (media?.matches) animation.current?.finish(); };
-    media?.addEventListener('change', finish);
-    return () => { animation.current?.cancel(); media?.removeEventListener('change', finish); };
-  }, []);
+  const [expanded, setExpanded] = useState(false);
 
   function toggle(event: MouseEvent<HTMLElement>) {
-    const details = event.currentTarget.parentElement as HTMLDetailsElement;
+    const element = details.current;
     const body = panel.current;
-    if (!body) return;
+    if (!element || !body) return;
     event.preventDefault();
-    const next = animation.current ? !expanding.current : !details.open;
-    const height = details.open ? body.getBoundingClientRect().height : 0;
-    const opacity = details.open ? getComputedStyle(body).opacity : '0';
-    animation.current?.cancel();
-    animation.current = null;
-    expanding.current = next;
-    event.currentTarget.setAttribute('aria-expanded', String(next));
-    body.inert = !next;
-    details.dataset.closing = String(!next);
-    if (!body.animate || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
-      details.open = next;
+    if (!expanded) {
+      element.open = true;
+      // The closed panel has to be laid out once, folded, so the unfold has somewhere to start from.
+      void body.offsetHeight;
+      setExpanded(true);
       return;
     }
-    // Keep native details open until the exit finishes; all copy remains in the DOM.
-    details.open = true;
-    const motion = body.animate([{ height: `${height}px`, opacity }, { height: next ? `${body.scrollHeight}px` : '0px', opacity: next ? 1 : 0 }],
-      { duration: 220, easing: getComputedStyle(details).getPropertyValue('--ease-out').trim(), fill: 'both' });
-    animation.current = motion;
-    motion.onfinish = () => {
-      if (animation.current !== motion) return;
-      details.open = next;
-      motion.cancel();
-      animation.current = null;
-    };
+    setExpanded(false);
+    // Without a transition (reduced motion, no CSS) no transitionend will come: close now.
+    if (!(parseFloat(getComputedStyle(body).transitionDuration) > 0)) element.open = false;
   }
-  return <details className="editorial-disclosure">
+  function folded(event: TransitionEvent<HTMLDivElement>) {
+    if (event.target === event.currentTarget && event.propertyName === 'grid-template-rows' && !expanded && details.current) details.current.open = false;
+  }
+  return <details ref={details} className="editorial-disclosure" data-expanded={expanded || undefined}
+    // The browser can open it too (find in page): follow it.
+    onToggle={(event) => { if (event.currentTarget.open && !expanded) setExpanded(true); }}>
     <summary onClick={toggle}><Heading className="type-heading"><span>{title}</span><span className="editorial-disclosure__indicator" aria-hidden="true" /></Heading></summary>
-    <div ref={panel} className="editorial-disclosure__panel"><div className="editorial-disclosure__body type-body">{children}</div></div>
+    <div ref={panel} className="editorial-disclosure__panel" inert={!expanded} onTransitionEnd={folded}>
+      <div className="editorial-disclosure__inner"><div className="editorial-disclosure__body type-body">{children}</div></div>
+    </div>
   </details>;
 }
 
