@@ -7,11 +7,23 @@
       "skillPath": "skills/animate/SKILL.md",
       "computedHash": "fb0a18403891238d4ce4fc80f891689678766c29092de1e3aadc0c917133ee5d"
     },
+    "mobile-native": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/mobile-native/SKILL.md",
+      "computedHash": "8d77850a34ec20f745aed3215aa0d587e90438599bb09dc72d9d09ce896a5765"
+    },
     "review-animations": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
       "skillPath": "skills/review-animations/SKILL.md",
       "computedHash": "8c2befeb28bb484bf2de7b2fc228774857e266d32a65d76895e78651a536d8cf"
+    },
+    "safari26-liquid-glass": {
+      "source": "stealth-factory/skills",
+      "sourceType": "github",
+      "skillPath": "skills/safari26-liquid-glass/SKILL.md",
+      "computedHash": "5358acc9ad9ff724a137213b031b7755ada419e56edc60ce636acbf47ec8c85a"
     }
   }
 }

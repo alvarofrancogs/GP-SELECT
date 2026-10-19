@@ -31,7 +31,7 @@ describe('static structured data', () => {
   it('connects the business, website and service provider with absolute IDs', () => {
     const siteUrl = 'https://gp-select.example';
     const graph = getStaticPageMeta('/', siteUrl).jsonLd!['@graph'] as Record<string, unknown>[];
-    expect(graph[0]).toMatchObject({ '@type': 'AutomotiveBusiness', '@id': `${siteUrl}/#organization`, telephone: '+34661631555' });
+    expect(graph[0]).toMatchObject({ '@type': 'AutomotiveBusiness', '@id': `${siteUrl}/#organization`, telephone: '+34675746041' });
     expect(graph[1]).toMatchObject({ '@id': `${siteUrl}/#website`, publisher: { '@id': `${siteUrl}/#organization` } });
     expect(getStaticPageMeta('/importacion', siteUrl).jsonLd!.provider).toMatchObject({ '@type': 'AutomotiveBusiness', '@id': `${siteUrl}/#organization` });
   });
@@ -56,7 +56,7 @@ describe('static structured data', () => {
 
   it('omits IDs and publisher without siteUrl, but keeps the telephone', () => {
     const graph = getStaticPageMeta('/').jsonLd!['@graph'] as Record<string, unknown>[];
-    expect(graph[0]).toHaveProperty('telephone', '+34661631555');
+    expect(graph[0]).toHaveProperty('telephone', '+34675746041');
     for (const entry of graph) {
       expect(entry).not.toHaveProperty('@id');
       expect(entry).not.toHaveProperty('url');

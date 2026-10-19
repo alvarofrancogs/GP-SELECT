@@ -25,10 +25,10 @@ export const legalConfig: LegalConfig = {
   taxId: '49442146N',
   address: 'Avenida Alicante, 251, 30007 Murcia (Murcia)',
   email: 'info@gpselect.com',
-  phone: '+34 661 631 555',
+  phone: '+34 675 746 041',
   registry: null,
   retention: '12 meses',
-  updated: '9 de octubre de 2026',
+  updated: '19 de octubre de 2026',
 };
 
 export type LegalField = Exclude<keyof LegalConfig, 'updated'>;

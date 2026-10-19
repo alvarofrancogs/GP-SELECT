@@ -1,10 +1,18 @@
 *, *::before, *::after { box-sizing: border-box; }
-html { background: var(--color-paper); color: var(--color-ink); /* focused fields and links stay clear of the fixed catalogue pill */ scroll-padding-bottom: 6.5rem;
-  /* No rubber band past the top or the end of the page: the fixed header stays on the screen's edge instead of
-     coming away from it over a blank strip (iOS Safari, macOS trackpads). Also turns off pull-to-refresh. */
-  overscroll-behavior-y: none; }
+html { color: var(--color-ink); /* focused fields and links stay clear of the fixed catalogue pill */ scroll-padding-bottom: 6.5rem; }
 #main-content:focus { outline: none; }
 body { margin: 0; font-family: var(--font-family); font-stretch: var(--width-body); font-size: var(--text-base); font-weight: var(--weight-body); -webkit-font-smoothing: antialiased; }
+/* #root paints the page. The document's background is what shows past its ends when it is pulled (rubber band,
+   pull-to-refresh) and what Safari puts behind its bars where nothing is drawn: the colour at the top of the page,
+   then the footer's once the end is reached, so neither pull uncovers a strip that does not belong. */
+#root { background: var(--color-paper); }
+:root { --page-top: var(--color-paper); }
+:root:has(.hero-scene) { --page-top: #99bce0; } /* the hero's sky */
+body { background-color: var(--page-top); }
+@supports (animation-timeline: scroll()) {
+  body { animation: page-ends linear both; animation-timeline: scroll(root); }
+}
+@keyframes page-ends { 0%, 99% { background-color: var(--page-top); } to { background-color: var(--color-dark); } }
 body, #root { min-width: 320px; }
 button, input, select, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
@@ -31,7 +39,12 @@ dialog { overscroll-behavior: contain; }
 .type-numeric { font-variant-numeric: tabular-nums; }
 .skip-link { position: fixed; top: var(--space-4); left: var(--page-gutter); z-index: var(--z-skip); background: var(--color-white); color: var(--color-ink); padding: var(--space-4); transform: translateY(-200%); }
 .skip-link:focus { transform: translateY(0); }
-.site-header { position: fixed; inset: 0 0 auto; z-index: var(--z-header); color: var(--color-ink); }
+/* Safari 26 paints its status bar solid in the colour of a fixed layer at the top edge that is at least 90% as
+   wide as the screen (WebKit, LocalFrameView::fixedContainerEdges). Slightly narrower, the header leaves the bar
+   see-through; .header-inner spans the full width again, so nothing in it moves. The open menu keeps the solid
+   paper above and below it. */
+.site-header { --header-inset: 6.5vw; position: fixed; top: 0; left: var(--header-inset); right: var(--header-inset); z-index: var(--z-header); color: var(--color-ink); }
+.site-header--menu { --header-inset: 0px; }
 .site-header[data-surface='dark'] { color: var(--color-white); }
 .site-header[data-tone='light'] { color: var(--color-ink); mix-blend-mode: normal; }
 .site-header[data-tone='dark'] { color: var(--color-white); mix-blend-mode: normal; }
@@ -55,7 +68,7 @@ dialog { overscroll-behavior: contain; }
 .header-backdrop[data-glass='dark'] { background: rgb(9 10 12 / .55); box-shadow: inset 0 -1px 0 rgb(255 252 247 / .1); }
 .site-header[data-glass='light'] { mix-blend-mode: normal; color: var(--color-ink); }
 .site-header[data-glass='dark'] { mix-blend-mode: normal; color: var(--color-white); }
-.header-inner { height: var(--header-height); margin-inline: var(--page-gutter); display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
+.header-inner { position: relative; height: var(--header-height); margin-inline: calc(-1 * var(--header-inset)); padding-inline: var(--page-gutter); display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
 .header-nav, .header-actions { display: flex; align-items: center; gap: clamp(1rem, 2.9vw, 3.5rem); }
 .header-nav { font-family: var(--font-family); font-size: var(--header-nav-size); }
 .nav-link { position: relative; padding-block: var(--space-2); white-space: nowrap; }
@@ -193,6 +206,8 @@ html:is(.lang-out, .lang-in) :is(a:not(.header-brand, .footer-brand, .catalogue-
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0s !important; animation-duration: 0s !important; }
+  /* Not motion: the page's end colours follow the scroll position, and a zero duration would jump to the footer's. */
+  body { animation-duration: auto !important; }
   /* The menu's staggered delays would still hold it (and its links) on screen with zero-length transitions. */
   .site-header, .site-header *, .site-header *::before, .site-header *::after { transition-delay: 0s !important; }
 }
