@@ -26,6 +26,7 @@ export interface VehicleSummary {
   bodyType: string | null;
   availability: 'available' | 'coming-soon' | 'reserved' | 'sold' | null;
   images: VehicleImage[] | null;
+  video: string | null;
 }
 
 export interface VehicleDetail extends VehicleSummary {

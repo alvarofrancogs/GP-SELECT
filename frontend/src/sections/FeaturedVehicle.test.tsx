@@ -41,7 +41,7 @@ const first: VehicleSummary = {
   slug: 'first', make: 'BMW', model: 'M4', variant: null,
   firstRegistrationYear: 2024, firstRegistrationMonth: 1, mileageKm: 1000,
   priceEur: 60000, powerHp: null, fuelType: null, transmission: null,
-  bodyType: null, availability: 'available',
+  bodyType: null, availability: 'available', video: null,
   images: [{ src: '/first.webp', fit: 'cover', alt: null, temporary: false, width: 1600, height: 1000 }],
 };
 const second: VehicleSummary = {

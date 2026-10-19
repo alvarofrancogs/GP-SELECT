@@ -3,24 +3,29 @@ import { Link } from 'react-router-dom';
 import type { VehicleSummary } from '../types/vehicle';
 import { useLanguage } from '../i18n/useLanguage';
 import { formatKm, formatPower, formatPrice, translateValue } from '../lib/vehicleFormat';
+import { usePreviewVideo } from '../hooks/usePreviewVideo';
 
 /** `state` travels with the link (the catalogue marks its own cards so the vehicle page can lead back to it). */
 export function VehicleCard({ vehicle, state }: { vehicle: VehicleSummary; state?: unknown }) {
   const { copy, locale, href } = useLanguage();
   const text = copy.vehicles;
   const [failed, setFailed] = useState(false);
+  const { videoRef, active, bind } = usePreviewVideo(vehicle.video);
   const image = failed ? undefined : vehicle.images?.[0];
   const name = `${vehicle.make} ${vehicle.model}`;
   const translate = (value: string | null) => translateValue(text.values, value);
   const facts = [vehicle.firstRegistrationYear, formatKm(vehicle.mileageKm, locale)].filter((v) => v !== null).join(' · ');
   const mechanical = [formatPower(vehicle.powerHp, locale), translate(vehicle.fuelType), translate(vehicle.transmission)].filter(Boolean).join(' · ');
   return (
-    <Link className="vehicle-card" to={href(`/vehiculos/${encodeURIComponent(vehicle.slug)}`)} state={state}>
+    <Link className="vehicle-card" to={href(`/vehiculos/${encodeURIComponent(vehicle.slug)}`)} state={state} {...bind}>
       <figure className="vehicle-card__media editorial-media">
         {image ? <img src={image.src} alt={image.temporary ? '' : image.alt ?? name}
           style={{ objectFit: image.fit }} data-fit={image.fit}
           width={image.width ?? 1200} height={image.height ?? 900} loading="lazy"
           decoding="async" onError={() => setFailed(true)} /> : <div className="vehicle-media-empty type-ui">{text.noImage}</div>}
+        {vehicle.video ? <video ref={videoRef} className={`vehicle-card__video${active ? ' is-active' : ''}`}
+          style={{ objectFit: vehicle.images?.[0]?.fit }} data-fit={vehicle.images?.[0]?.fit}
+          aria-hidden="true" muted playsInline preload="none" tabIndex={-1} disablePictureInPicture /> : null}
         {image?.temporary ? <figcaption className="type-ui">{name}<span>{copy.common.temporaryAsset}</span></figcaption> : null}
       </figure>
       <div className="vehicle-card__identity">

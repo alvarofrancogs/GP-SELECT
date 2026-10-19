@@ -1,6 +1,6 @@
 import type {
   AdminSession, AdminVehicle, AdminVehicleRow, CreateVehicleRequest, ImageIntent, ImageStatus, ProblemDetails,
-  SettableStatus, VehiclePatch, VehiclePreview, VehicleSaveRequest,
+  SettableStatus, VehiclePatch, VehiclePreview, VehicleSaveRequest, VideoIntent, VideoState,
 } from '../types/admin';
 
 /** Same origin as the site: Vite proxies /api in development, production serves both together. */
@@ -86,8 +86,9 @@ export const adminApi = {
 
   /** The caller keeps `idempotencyKey` for the whole upload: a retry after a lost answer must reuse it, or the server
       would create a second photo (intent) or refuse the one already completed (complete). */
-  imageIntent: (vehicleId: string, file: File, idempotencyKey: string, staged = true) => request<ImageIntent>(`/vehicles/${vehicleId}/images/intent`, {
-    method: 'POST', body: json({ mimeType: file.type, sizeBytes: file.size, staged }), headersExtra: { 'Idempotency-Key': idempotencyKey },
+  imageIntent: (vehicleId: string, file: File, idempotencyKey: string, staged = true, poster?: { videoId: string }) => request<ImageIntent>(`/vehicles/${vehicleId}/images/intent`, {
+    method: 'POST', body: json({ mimeType: file.type, sizeBytes: file.size, staged, ...(poster ? { kind: 'videoPoster', videoId: poster.videoId } : {}) }),
+    headersExtra: { 'Idempotency-Key': idempotencyKey },
   }),
   completeImage: (vehicleId: string, imageId: string, idempotencyKey: string) => request<{ imageId: string; state: string }>(
     `/vehicles/${vehicleId}/images/${imageId}/complete`, { method: 'POST', headersExtra: { 'Idempotency-Key': idempotencyKey } }),
@@ -96,13 +97,20 @@ export const adminApi = {
   removeImage: (vehicleId: string, imageId: string) => request<void>(`/vehicles/${vehicleId}/images/${imageId}/remove`, { method: 'POST' }),
   reorderImages: (vehicleId: string, imageIds: string[]) =>
     request<void>(`/vehicles/${vehicleId}/images/reorder`, { method: 'POST', body: json({ imageIds }) }),
+
+  /** Video retries reuse the same key for the intent and its completion, as image uploads do. */
+  videoIntent: (vehicleId: string, file: File, idempotencyKey: string) => request<VideoIntent>(`/vehicles/${vehicleId}/video/intent`, {
+    method: 'POST', body: json({ mimeType: file.type, sizeBytes: file.size }), headersExtra: { 'Idempotency-Key': idempotencyKey },
+  }),
+  completeVideo: (vehicleId: string, videoId: string, idempotencyKey: string) => request<{ videoId: string; state: VideoState }>(
+    `/vehicles/${vehicleId}/video/${videoId}/complete`, { method: 'POST', headersExtra: { 'Idempotency-Key': idempotencyKey } }),
 };
 
 /**
  * PUT of the original file. XHR instead of fetch because fetch cannot report upload progress.
  * Local storage returns a same-origin /api path (cookie + Origin); S3 returns a presigned absolute URL (no cookie).
  */
-export function uploadImage(uploadUrl: string, file: File, onProgress: (ratio: number) => void): Promise<void> {
+export function uploadFile(uploadUrl: string, file: File, onProgress: (ratio: number) => void): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', uploadUrl);

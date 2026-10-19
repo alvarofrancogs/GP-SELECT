@@ -237,7 +237,7 @@
 {$S3_SITE} {
 	import security
 	request_body {
-		max_size 25MB
+		max_size 110MB
 	}
 	@preflight method OPTIONS
 	handle @preflight {

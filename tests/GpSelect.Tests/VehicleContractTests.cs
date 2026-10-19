@@ -459,10 +459,10 @@ public class VehicleContractTests
         var images = new List<VehicleImage> { saved, staged };
         Assert.Null(VehicleGallery.EnsureCover(images));
         Assert.Equal("image_not_ready", Fails(() => VehicleGallery.MakeCover(images, staged)).Code);
-        Assert.Single(PublicMapping.Map(v, images).Images);
+        Assert.Single(PublicMapping.Map(v, images, null).Images);
         staged.Publish();
         Assert.Same(staged, VehicleGallery.EnsureCover(images));
-        Assert.Equal(2, PublicMapping.Map(v, images).Images.Count);
+        Assert.Equal(2, PublicMapping.Map(v, images, null).Images.Count);
     }
 
     [Fact]
@@ -571,7 +571,7 @@ public class VehicleContractTests
         });
         var cover = ReadyImage(v, 9, cover: true);
         var first = ReadyImage(v, 0);
-        var dto = PublicMapping.Map(v, new[] { first, cover });
+        var dto = PublicMapping.Map(v, new[] { first, cover }, null);
         Assert.EndsWith($"{cover.Id}/detail", dto.Images[0]);
         Assert.Equal(new[] { cover.Id, first.Id }, dto.CardImages.Select(x => Guid.Parse(x.Split('/')[^2])));
         Assert.All(dto.CardImages, x => Assert.EndsWith("/card", x));

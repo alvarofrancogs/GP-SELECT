@@ -17,6 +17,7 @@ function toDetail(dto: VehiclePreview): VehicleDetail {
     powerHp: dto.powerHp, fuelType: dto.fuelType, transmission: dto.transmission, bodyType: dto.bodyType,
     availability: dto.status === 'Available' ? 'available' : dto.status === 'Reserved' ? 'reserved' : dto.status === 'ComingSoon' ? 'coming-soon' : dto.status === 'Sold' ? 'sold' : null,
     images: dto.images.map((src) => ({ src, fit: 'cover', alt: null, temporary: false, width: null, height: null })),
+    video: dto.videoUrl ?? null,
     drivetrain: dto.drivetrain, exteriorColour: dto.exteriorColour, interiorColour: dto.interior,
     provenance: dto.provenance, history: dto.history, description: dto.description,
     equipment: dto.equipment, customSpecifications: dto.customSpecifications,

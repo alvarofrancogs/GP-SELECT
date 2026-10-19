@@ -95,7 +95,7 @@ export function VehicleDetailView({ vehicle, back, className = '' }: { vehicle: 
       <h1 className="vehicle-detail__title"><span className="type-display">{name}</span>{vehicle.variant ? ' ' : null}{vehicle.variant ? <span className="type-fine">{vehicle.variant}</span> : null}</h1>
     </header>
     <div className="vehicle-detail__opening">
-      <VehicleGallery images={vehicle.images ?? []} name={name} />
+      <VehicleGallery images={vehicle.images ?? []} name={name} video={vehicle.video} />
       <aside className="vehicle-detail__data" aria-label={text.specifications}>
         {sold ? <p className="vehicle-detail__price type-ui" role="status">{text.soldNotice}</p> : <p className="vehicle-detail__price type-ui type-numeric">{formatPrice(vehicle.priceEur, locale, text.onRequest)}</p>}
         {vehicle.availability === 'reserved' || vehicle.availability === 'coming-soon' ? <p className="vehicle-detail__availability type-ui">{vehicle.availability === 'reserved' ? text.reserved : text.comingSoon}</p> : null}

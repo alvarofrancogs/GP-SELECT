@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react';
-import { adminApi, uploadImage } from '../../services/adminApi';
+import { adminApi, uploadFile } from '../../services/adminApi';
 import type { AdminImage } from '../../types/admin';
 import { adminCopy } from '../../i18n/adminCopy';
 import { describeError } from '../../lib/adminErrors';
@@ -31,6 +31,7 @@ interface ImageUploaderProps {
   images: AdminImage[];
   reload: () => Promise<void>;
   disabled?: boolean;
+  hasVideo?: boolean;
   onBusyChange: (busy: boolean) => void;
   /** Local uploads not yet settled on the server: still in flight, or failed and waiting for retry or removal. */
   onPendingChange: (state: 'none' | 'working' | 'failed') => void;
@@ -41,7 +42,7 @@ interface ImageUploaderProps {
   onRemove: (id: string) => void;
 }
 
-export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChange, onPendingChange, onQueuedChange, onImageAdded, onOrderChange, onRemove }: ImageUploaderProps) {
+export function ImageUploader({ vehicleId, images, reload, disabled, hasVideo = false, onBusyChange, onPendingChange, onQueuedChange, onImageAdded, onOrderChange, onRemove }: ImageUploaderProps) {
   const text = adminCopy.photos;
   const [uploads, setUploads] = useState<Upload[]>([]);
   const uploadsRef = useRef<Upload[]>([]);
@@ -105,10 +106,10 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
             ({ imageId, uploadUrl } = intent);
             // A minute of margin: the PUT of a large photo on a slow line can outlast the signature.
             patch(upload.key, { imageId, uploadUrl, expiresAt: Date.now() + (intent.expiresInSeconds - 60) * 1000 });
-            onImageAdded({ id: imageId, state: 'PendingUpload', cardUrl: null, detailUrl: null,
+            onImageAdded({ id: imageId, kind: 'Photo', state: 'PendingUpload', cardUrl: null, detailUrl: null,
               isCover: false, isStaged: true, sortOrder: 0, failureReason: null, jobPending: false });
           }
-          await uploadImage(uploadUrl, upload.file, (progress) => patch(upload.key, { progress }));
+          await uploadFile(uploadUrl, upload.file, (progress) => patch(upload.key, { progress }));
           await adminApi.completeImage(vehicleId, imageId, upload.requestKey);
           patch(upload.key, { phase: 'queued' });
           setLive(text.announceUploaded(upload.file.name));
@@ -161,7 +162,7 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
   }
 
   const ordered = images;
-  const coverId = ordered.find((image) => image.state === 'Ready')?.id;
+  const coverId = hasVideo ? undefined : ordered.find((image) => image.state === 'Ready')?.id;
   const canReorder = !disabled && !transferring && ordered.length > 1;
 
   function move(from: number, to: number, keepFocus = false) {
@@ -195,7 +196,7 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
   return <div className="admin-photos">
     <div className="admin-photos__bar">
       <p className="admin-counter type-numeric" aria-label={`${total} de ${MAX_IMAGES} fotografías`}>{text.count(total)}</p>
-      <p className="admin-field__hint">{text.orderHint}</p>
+      <p className="admin-field__hint">{hasVideo ? adminCopy.video.coverNote : text.orderHint}</p>
     </div>
 
     {disabled ? null : <div className="admin-dropzone" data-active={dropActive || undefined}
@@ -249,7 +250,7 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
           </div>
           {image.state === 'Failed' ? <p className="admin-field__hint">{text.failedHint}</p> : null}
           {disabled ? null : <div className="admin-photo__actions">
-            {image.state === 'Ready' && image.id !== coverId ? <button type="button" className="admin-action" disabled={!canReorder}
+            {!hasVideo && image.state === 'Ready' && image.id !== coverId ? <button type="button" className="admin-action" disabled={!canReorder}
               onClick={() => move(index, 0, true)}>{text.makeCover}<span className="sr-only">, {label}</span></button> : null}
             {local?.phase === 'failed' ? <button type="button" className="admin-action"
               onClick={() => retry(local)}>{text.retry}</button> : null}
@@ -275,6 +276,6 @@ export function ImageUploader({ vehicleId, images, reload, disabled, onBusyChang
           </div>
         </> : null}
       </li>)}
-    </ol> : <p className="admin-empty-line">{text.empty}</p>}
+    </ol> : <p className="admin-empty-line">{hasVideo ? text.emptyWithVideo : text.empty}</p>}
   </div>;
 }

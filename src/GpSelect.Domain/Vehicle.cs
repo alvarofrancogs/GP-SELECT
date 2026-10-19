@@ -2,6 +2,7 @@ namespace GpSelect.Domain;
 
 public enum VehicleStatus { Draft, ComingSoon, Available, Reserved, Sold, Archived }
 public enum ImageState { PendingUpload, Processing, Ready, Failed, Deleted }
+public enum ImageKind { Photo, VideoPoster }
 public enum ImageJobState { Queued, Processing, Failed, Complete }
 
 public sealed class DomainException(string code, string message, string? field = null) : Exception(message)
@@ -166,7 +167,13 @@ public sealed class VehicleImage
     public bool IsCover { get; private set; } public ImageState State { get; private set; } = ImageState.PendingUpload; public string? FailureReason { get; private set; }
     /// <summary>Uploaded from the editor but not saved yet: processed in the background, never public and never the cover.</summary>
     public bool IsStaged { get; private set; }
+    public ImageKind Kind { get; private set; } = ImageKind.Photo;
+    /// <summary>The video this poster is the first frame of; null for photos.</summary>
+    public Guid? VideoId { get; private set; }
     public static VehicleImage Create(Guid vehicle, string key, string mime, long size, bool staged = false) => new() { VehicleUnitId = vehicle, OriginalKey = key, MimeType = mime, SizeBytes = size, IsStaged = staged };
+    /// <summary>Frame 0 of a vehicle video. Always staged until the video is saved with the vehicle.</summary>
+    public static VehicleImage CreatePoster(Guid vehicle, Guid videoId, string key, string mime, long size) =>
+        new() { VehicleUnitId = vehicle, OriginalKey = key, MimeType = mime, SizeBytes = size, IsStaged = true, Kind = ImageKind.VideoPoster, VideoId = videoId };
     /// <summary>The editor saved: the photograph becomes part of the vehicle.</summary>
     public void Publish() => IsStaged = false;
     public void StartProcessing() { if (State != ImageState.PendingUpload && State != ImageState.Failed) throw new DomainException("invalid_image_state", "Image is not uploadable"); State = ImageState.Processing; FailureReason = null; }
@@ -192,12 +199,15 @@ public static class VehicleGallery
     public static IEnumerable<VehicleImage> InPublicOrder(IEnumerable<VehicleImage> images) =>
         images.OrderByDescending(x => x.IsCover).ThenBy(x => x.SortOrder).ThenBy(x => x.Id);
 
-    /// <summary>Gives the cover to the first ready image. Returns the new cover when it changed, so the caller can
+    public static IEnumerable<VehicleImage> Photos(IEnumerable<VehicleImage> images) => images.Where(x => x.Kind == ImageKind.Photo);
+
+    /// <summary>Gives the cover to a ready, saved video poster if there is one, else to the first ready photo. Returns the new cover when it changed, so the caller can
     /// persist the old cover's removal first (one active cover per vehicle is a unique index).</summary>
     public static VehicleImage? EnsureCover(IEnumerable<VehicleImage> images)
     {
         var active = images.Where(x => x.State != ImageState.Deleted).ToList();
-        var first = active.Where(x => x.State == ImageState.Ready && !x.IsStaged).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).FirstOrDefault();
+        var first = active.Where(x => x.State == ImageState.Ready && !x.IsStaged)
+            .OrderByDescending(x => x.Kind == ImageKind.VideoPoster).ThenBy(x => x.SortOrder).ThenBy(x => x.Id).FirstOrDefault();
         if (first is not null && first.IsCover && active.Count(x => x.IsCover) == 1) return null;
         foreach (var stale in active.Where(x => x.IsCover && x != first)) stale.SetCover(false);
         first?.SetCover(true);
@@ -205,24 +215,25 @@ public static class VehicleGallery
     }
 
     /// <summary>Applies a new order and gives the cover to the first ready image. The order lists every saved active
-    /// image once and may include staged ones; staged images left out (another tab's uploads) keep their relative
-    /// order after it.</summary>
+    /// photo once and may include staged ones; staged photos left out (another tab's uploads) keep their relative
+    /// order after it. Video posters are not part of the order, but can still hold the cover.</summary>
     public static VehicleImage? Reorder(IReadOnlyList<VehicleImage> images, IReadOnlyList<Guid> order)
     {
-        var active = images.Where(x => x.State != ImageState.Deleted).ToList();
+        var all = images.Where(x => x.State != ImageState.Deleted).ToList();
+        var active = Photos(all).ToList();
         if (order.Distinct().Count() != order.Count || order.Any(id => active.All(x => x.Id != id)) || active.Any(x => !x.IsStaged && !order.Contains(x.Id)))
             throw new DomainException("invalid_order", "The order must list every saved image once");
         var rest = active.Where(x => !order.Contains(x.Id)).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToList();
         for (var i = 0; i < order.Count; i++) active.Single(x => x.Id == order[i]).Order(i);
         for (var i = 0; i < rest.Count; i++) rest[i].Order(order.Count + i);
-        return EnsureCover(active);
+        return EnsureCover(all);
     }
 
     /// <summary>Makes a ready image the cover by moving it to the front; the rest keep their relative order.</summary>
     public static VehicleImage? MakeCover(IReadOnlyList<VehicleImage> images, VehicleImage cover)
     {
         if (cover.State != ImageState.Ready || cover.IsStaged) throw new DomainException("image_not_ready", "Only a ready, saved image can be the cover");
-        var rest = images.Where(x => x.State != ImageState.Deleted && x != cover).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).Select(x => x.Id);
+        var rest = Photos(images).Where(x => x.State != ImageState.Deleted && x != cover).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).Select(x => x.Id);
         return Reorder(images, [cover.Id, .. rest]);
     }
 

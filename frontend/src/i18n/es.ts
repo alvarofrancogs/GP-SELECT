@@ -65,6 +65,7 @@ export const es: Dictionary = {
     "enlarge": "Ampliar",
     "close": "Cerrar",
     "image": "Imagen",
+    "video": "Vídeo",
     "noImage": "Fotografías pendientes",
     "values": {
       "Gasolina": "Gasolina",

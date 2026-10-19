@@ -8,7 +8,7 @@ import type { VehicleDetail } from '../types/vehicle';
 const vehicle: VehicleDetail = {
   slug: 'bmw-m4', make: 'BMW', model: 'M4', variant: null, firstRegistrationYear: 2023, firstRegistrationMonth: null,
   mileageKm: 12500, priceEur: 86900, powerHp: 510, fuelType: 'Gasolina', transmission: 'Automático', bodyType: 'Coupé',
-  availability: 'available', images: null, drivetrain: null, exteriorColour: null, interiorColour: null, provenance: null,
+  availability: 'available', images: null, video: null, drivetrain: null, exteriorColour: null, interiorColour: null, provenance: null,
   description: 'Unidad revisada en origen.', history: 'Libro de mantenimiento completo.', equipment: ['Asientos M Carbon'],
   customSpecifications: [{ label: 'Garantía', value: '12 meses' }],
 };

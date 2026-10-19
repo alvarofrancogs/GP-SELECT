@@ -19,6 +19,15 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
 
 **FINAL CLOSURE PASS (desde 30-09-2026):** 3A production readiness (**PASS técnico**, aceptado por el usuario) → Final Technical / UX QA (**TECHNICALLY READY**) → 3B copy truth (**PASS**) → 3C final visual / asset polish → 3D final release QA. Una fase cada vez; cada una con su tag `<fase>-pass`.
 
+## VÍDEO POR VEHÍCULO (18-10-2026, rama `feat/vehicle-preview-video`, pendiente de revisión)
+
+Diseño: `docs/superpowers/specs/2026-10-18-vehicle-preview-video-design.md` · plan: `docs/superpowers/plans/2026-10-18-vehicle-preview-video.md`.
+
+- **Qué hay:** un MP4 opcional por coche (máx. 100 MiB, sin transcodificar). Su fotograma 0 (lo extrae el navegador del Admin) es una imagen `VideoPoster` que pasa a ser la portada en todas partes (catálogo, destacado, og:image, listado del Admin). Tarjeta: 10 primeros segundos en bucle al pasar el ratón o con la tarjeta centrada en móvil (una a la vez), nunca con reduced-motion ni ahorro de datos. Página del coche: el vídeo completo es la primera diapositiva de la galería (silenciado, con controles; la vista ampliada sigue en el mismo segundo). Admin: recuadro propio con avisos de tasa de bits (> 10 Mbps) y de MP4 sin «fast start»; vídeo y portada se publican al guardar.
+- **Backend:** migración `AddVehicleVideo` (`Images.Kind`/`VideoId`, tabla `Videos`), subida directa a `vehicles/{id}/videos/{videoId}.mp4`, entrega por rangos (`StoredVideos`, 206/416), `videoUrl` público solo con la portada del vídeo lista, limpieza de vídeos borrados/abandonados. Caddy `{$S3_SITE}`: `max_size 110MB`.
+- **Verificación (18-10-2026):** .NET 181/181 unitarios y 195/195 de integración, en contenedor Linux (`mcr.microsoft.com/dotnet/sdk:10.0`), porque Smart App Control bloquea en Windows las DLL de pruebas recién compiladas. Frontend: typecheck, lint, 324/324 Vitest, build. Navegador (Edge, API simulada con rangos) a 1440 y 390: tarjetas, galería, vista ampliada, reduced-motion y Admin, sin errores de consola ni desborde horizontal.
+- **Deuda:** la portada de vídeo pierde la prioridad LCP en la ficha; prueba de extremo a extremo con el stack real (Caddy + SeaweedFS) pendiente antes de desplegar.
+
 ## PREPROD-AUDIT · auditoría preproducción (16-10-2026)
 
 Informe completo: [GP SELECT · Auditoría preproducción](https://claude.ai/code/artifact/83b242cd-7aac-4b47-9845-5c7b04e7903c). Cuatro auditores Claude READ-ONLY (frontend, backend, infraestructura + SEO, diseño) en lugar de Astra, que agotó la cuota de Codex en ~5 min; Opus contrastó cada hallazgo con el código y con un stack de producción local (Caddy, API, Postgres, SeaweedFS; proyecto `gpselect-audit`, 3 coches subidos por la API del Admin).

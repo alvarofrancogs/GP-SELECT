@@ -2,11 +2,13 @@
 
 export type VehicleStatus = 'Draft' | 'ComingSoon' | 'Available' | 'Reserved' | 'Sold' | 'Archived';
 export type ImageState = 'PendingUpload' | 'Processing' | 'Ready' | 'Failed' | 'Deleted';
+export type VideoState = 'PendingUpload' | 'Ready' | 'Deleted';
 
 export interface VehicleSpecification { label: string; value: string }
 
 export interface AdminImage {
   id: string;
+  kind: 'Photo' | 'VideoPoster';
   state: ImageState;
   cardUrl: string | null;
   detailUrl: string | null;
@@ -16,6 +18,15 @@ export interface AdminImage {
   failureReason: string | null;
   /** The worker still has a queued, running or retryable job for it: its state will change. */
   jobPending: boolean;
+}
+
+export interface AdminVideo {
+  id: string;
+  state: VideoState;
+  isStaged: boolean;
+  sizeBytes: number;
+  url: string;
+  posterImageId: string | null;
 }
 
 export interface AdminVehicleRow {
@@ -65,6 +76,7 @@ export interface AdminVehicle {
   equipment: string[];
   customSpecifications: VehicleSpecification[];
   images: AdminImage[];
+  videos: AdminVideo[];
   updatedAt: string;
   publishedAt: string | null;
 }
@@ -93,6 +105,7 @@ export interface VehiclePreview {
   customSpecifications: VehicleSpecification[];
   status: VehicleStatus;
   images: string[];
+  videoUrl: string | null;
 }
 
 export interface CreateVehicleRequest {
@@ -132,10 +145,12 @@ export type SettableStatus = Exclude<VehicleStatus, 'Archived'>;
 export interface VehicleSaveRequest {
   changes?: VehiclePatch;
   gallery?: { order: string[]; removed: string[] };
+  video?: { keep: string | null };
   status?: { status: SettableStatus; showWhenSold?: boolean };
 }
 
 export interface ImageIntent { imageId: string; uploadUrl: string; expiresInSeconds: number }
+export interface VideoIntent { videoId: string; uploadUrl: string; expiresInSeconds: number }
 export interface ImageStatus { imageId: string; state: ImageState; error: string | null }
 export interface AdminSession { email: string; role: 'Admin' }
 

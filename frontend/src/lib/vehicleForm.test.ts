@@ -7,7 +7,7 @@ const vehicle = (priceEur: number | null): AdminVehicle => ({
   id: 'v1', slug: 'bmw-m4', status: 'Draft', showWhenSold: false, make: 'BMW', model: 'M4', year: 2023, month: 6,
   priceEur, internalReference: null, description: null, mileageKm: 12000, powerHp: 510, variant: null, fuelType: null,
   transmission: null, bodyType: null, drivetrain: null, exteriorColour: null, interior: null, history: null,
-  provenance: null, equipment: [], customSpecifications: [], images: [], updatedAt: '2026-10-01T00:00:00Z', publishedAt: null,
+  provenance: null, equipment: [], customSpecifications: [], images: [], videos: [], updatedAt: '2026-10-01T00:00:00Z', publishedAt: null,
 });
 
 function patchWithPrice(saved: number | null, typed: string) {

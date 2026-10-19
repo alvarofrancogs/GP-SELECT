@@ -2,10 +2,20 @@ import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import type { VehicleImage } from '../types/vehicle';
 import { useLanguage } from '../i18n/useLanguage';
+import { useGalleryVideo, useHalfVisible } from '../hooks/usePreviewVideo';
 
 const STRIP = '(max-width: 767px)';
 
-export function VehicleGallery({ images, name }: { images: VehicleImage[]; name: string }) {
+/** A seek before the metadata is loaded is dropped: wait for it (and ask for it) when it is missing. */
+function whenReady(video: HTMLVideoElement, run: () => void) {
+  if (video.readyState >= 1) { run(); return () => {}; }
+  video.addEventListener('loadedmetadata', run, { once: true });
+  video.preload = 'auto';
+  video.load();
+  return () => video.removeEventListener('loadedmetadata', run);
+}
+
+export function VehicleGallery({ images, name, video = null }: { images: VehicleImage[]; name: string; video?: string | null }) {
   const { copy } = useLanguage();
   const text = copy.vehicles;
   const [active, setActive] = useState(0);
@@ -13,6 +23,29 @@ export function VehicleGallery({ images, name }: { images: VehicleImage[]; name:
   const fail = (src: string) => setFailed((previous) => new Set(previous).add(src));
   const strip = useRef<HTMLDivElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
+  const dialogVideo = useRef<HTMLVideoElement>(null);
+  // With a video, images[0] is its poster: slide 0 plays the video and the photos follow.
+  const [failedVideo, setFailedVideo] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const hasVideo = Boolean(video) && failedVideo !== video;
+  const playing = hasVideo && active === 0;
+  // The inline video stays quiet while the dialog is open: the dialog owns playback then.
+  // `held`: the video was paused in the dialog, so closing it must not restart the inline one.
+  const [held, setHeld] = useState(false);
+  // The slide plays only while at least half of the gallery is on screen. A video the visitor paused stays paused
+  // when it scrolls back into view.
+  const visible = useHalfVisible(strip, () => {
+    if (videoRef.current?.paused && !dialog.current?.open) setHeld(true);
+  });
+  const { videoRef } = useGalleryVideo(playing && !dialogOpen && !held && visible);
+  const startOnOpen = useRef(false);
+  const wasPlaying = useRef(false);
+  const seeked = useRef(false);
+  // The pending wait for metadata: it must not fire after the dialog closed or the slide changed.
+  const pending = useRef<() => void>(() => {});
+  const cancelPending = () => { pending.current(); pending.current = () => {}; };
+  useEffect(() => () => pending.current(), []);
+  const handBack = useRef<{ time: number; muted: boolean; playing: boolean } | null>(null);
   const current = images[active];
   // Hidden slides are stacked in view, so native lazy loading would fetch every photo at full size.
   // A slide gets its photo once it is next to the visible one, and keeps it.
@@ -20,7 +53,9 @@ export function VehicleGallery({ images, name }: { images: VehicleImage[]; name:
   const [reached, setReached] = useState(() => new Set(around(0)));
 
   function show(index: number) {
+    cancelPending();
     setActive(index);
+    setHeld(false);
     setReached((previous) => around(index).every((i) => previous.has(i)) ? previous : new Set([...previous, ...around(index)]));
   }
   function select(index: number) {
@@ -40,8 +75,61 @@ export function VehicleGallery({ images, name }: { images: VehicleImage[]; name:
     phone.addEventListener('change', sync);
     return () => phone.removeEventListener('change', sync);
   }, [active]);
+  // The enlarged video continues where the inline one is, and starts only if the inline one was playing.
+  function openDialog() {
+    const inline = videoRef.current;
+    cancelPending();
+    wasPlaying.current = playing && Boolean(inline) && !inline!.paused;
+    startOnOpen.current = wasPlaying.current;
+    inline?.pause();
+    setDialogOpen(true);
+    dialog.current?.showModal();
+  }
+  function onDialogClose() {
+    const enlarged = dialogVideo.current;
+    const inline = videoRef.current;
+    cancelPending();
+    if (enlarged && inline) {
+      // Without metadata the dialog never took over: the inline video keeps its own time and state.
+      handBack.current = seeked.current
+        ? { time: enlarged.currentTime, muted: enlarged.muted, playing: !enlarged.paused }
+        : { time: inline.currentTime, muted: inline.muted, playing: wasPlaying.current };
+      setHeld(!handBack.current.playing);
+      enlarged.pause();
+    }
+    setDialogOpen(false);
+  }
+  // Runs after useGalleryVideo's own effect, so the dialog's state wins over its autoplay.
+  useEffect(() => {
+    const inline = videoRef.current;
+    const enlarged = dialogVideo.current;
+    if (dialogOpen && enlarged && inline) {
+      const { muted, currentTime } = inline;
+      const start = startOnOpen.current;
+      startOnOpen.current = false;
+      enlarged.muted = muted;
+      cancelPending();
+      seeked.current = false;
+      pending.current = whenReady(enlarged, () => {
+        seeked.current = true;
+        enlarged.currentTime = currentTime;
+        if (start) void enlarged.play().catch(() => {});
+      });
+    } else if (!dialogOpen && handBack.current && inline) {
+      const { time, muted, playing: resume } = handBack.current;
+      handBack.current = null;
+      inline.muted = muted;
+      cancelPending();
+      pending.current = whenReady(inline, () => {
+        inline.currentTime = time;
+        if (resume) void inline.play().catch(() => {});
+        else inline.pause();
+      });
+    }
+  }, [dialogOpen, playing, videoRef]);
   function onKeyDown(event: KeyboardEvent) {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    if (event.target instanceof HTMLVideoElement) return; // native keyboard seeking
     event.preventDefault();
     select(active + (event.key === 'ArrowRight' ? 1 : -1));
   }
@@ -52,12 +140,15 @@ export function VehicleGallery({ images, name }: { images: VehicleImage[]; name:
         if (!window.matchMedia(STRIP).matches) return;
         const element = event.currentTarget;
         const index = Math.round(element.scrollLeft / element.clientWidth);
-        if (index >= 0 && index < images.length) show(index);
+        // A scroll that stays on the current slide must not undo a pause.
+        if (index >= 0 && index < images.length && index !== active) show(index);
       }}>
       {images.map((image, index) => {
         const ready = reached.has(index);
         return <figure key={`${image.src}-${index}`} className={`vehicle-gallery__slide${index === active ? ' is-active' : ''}`}>
-          {failed.has(image.src) ? <div className="vehicle-media-empty type-ui">{text.noImage}</div> : <img src={ready ? image.src : undefined}
+          {index === 0 && hasVideo ? <video ref={videoRef} src={video!} poster={image.src} controls muted playsInline loop preload="metadata" onError={() => setFailedVideo(video)}
+            aria-label={`${text.video} · ${name}`} width={image.width ?? 1500} height={image.height ?? 1000} />
+          : failed.has(image.src) ? <div className="vehicle-media-empty type-ui">{text.noImage}</div> : <img src={ready ? image.src : undefined}
             srcSet={ready && image.smallSrc ? `${image.smallSrc} 800w, ${image.src} 2400w` : undefined}
             sizes={image.smallSrc ? '(max-width: 767px) 100vw, 66vw' : undefined} onError={() => fail(image.src)}
             alt={!ready || image.temporary ? '' : image.alt ?? `${name} · ${index + 1}`}
@@ -69,7 +160,7 @@ export function VehicleGallery({ images, name }: { images: VehicleImage[]; name:
     </div>
     <div className="vehicle-gallery__caption type-ui">
       <p>{current.temporary ? copy.common.temporaryAsset : name}</p>
-      <button type="button" className="editorial-link" disabled={failed.has(current.src)} onClick={() => dialog.current?.showModal()}>{text.enlarge}<span aria-hidden="true">→</span></button>
+      <button type="button" className="editorial-link" disabled={failed.has(current.src)} onClick={openDialog}>{text.enlarge}<span aria-hidden="true">→</span></button>
     </div>
     <div className="vehicle-gallery__controls type-ui">
       <button type="button" disabled={images.length < 2} aria-label={text.previous} onClick={() => select(active - 1)}>←</button>
@@ -77,14 +168,16 @@ export function VehicleGallery({ images, name }: { images: VehicleImage[]; name:
       <button type="button" disabled={images.length < 2} aria-label={text.next} onClick={() => select(active + 1)}>→</button>
     </div>
     {images.length > 1 ? <div className="vehicle-gallery__thumbnails">{images.map((image, index) =>
-      <button type="button" key={`${image.src}-${index}`} aria-current={active === index ? 'true' : undefined}
-        aria-label={`${text.image} ${index + 1}`} onClick={() => select(index)}>
+      <button type="button" key={`${image.src}-${index}`} data-video={hasVideo && index === 0 ? '' : undefined} aria-current={active === index ? 'true' : undefined}
+        aria-label={hasVideo && index === 0 ? text.video : `${text.image} ${index + 1}`} onClick={() => select(index)}>
         <img src={image.smallSrc ?? image.src} alt="" style={{ objectFit: image.fit }} width={image.width ?? 150} height={image.height ?? 100} loading="lazy"
           onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }} />
+        {hasVideo && index === 0 ? <span className="vehicle-gallery__play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg></span> : null}
       </button>)}</div> : null}
-    <dialog className="vehicle-gallery__dialog" ref={dialog} aria-label={`${text.gallery} · ${name}`}>
+    <dialog className="vehicle-gallery__dialog" ref={dialog} aria-label={`${text.gallery} · ${name}`} onClose={onDialogClose}>
       <div className="vehicle-gallery__dialog-top type-ui"><p>{name}</p><button type="button" className="editorial-link" autoFocus onClick={() => dialog.current?.close()}>{text.close} ×</button></div>
-      {failed.has(current.src) ? <div className="vehicle-media-empty type-ui">{text.noImage}</div> : <img src={current.src}
+      {playing && video ? <video ref={dialogVideo} src={video} poster={current.src} controls muted playsInline loop preload="none" aria-label={`${text.video} · ${name}`} />
+      : failed.has(current.src) ? <div className="vehicle-media-empty type-ui">{text.noImage}</div> : <img src={current.src}
         alt={current.temporary ? copy.common.temporaryAsset : current.alt ?? name} style={{ objectFit: current.fit }}
         width={current.width ?? 1500} height={current.height ?? 1000} loading="lazy" onError={() => fail(current.src)} />}
       {current.temporary ? <p className="type-ui">{copy.common.temporaryAsset}</p> : null}
