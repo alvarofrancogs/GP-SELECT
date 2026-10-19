@@ -1,6 +1,7 @@
 import { useLayoutEffect, type MouseEvent } from 'react';
 import { Link, useLocation, useNavigate, type NavigateFunction } from 'react-router-dom';
 import { useLanguage } from '../i18n/useLanguage';
+import { Flag } from './Flag';
 import { alternatePath, localeOf, locales } from '../i18n/routes';
 import type { Locale } from '../i18n/types';
 
@@ -99,7 +100,8 @@ export function LanguageSwitcher() {
         return (
           <Link key={language} to={to} lang={language} hrefLang={language} aria-label={copy.languages[language]}
             aria-current={locale === language ? 'true' : undefined} onClick={(event) => change(event, language, to)}>
-            {language.toUpperCase()}
+            <Flag language={language} />
+            <span className="language-switcher__active" aria-hidden="true" />
           </Link>
         );
       })}

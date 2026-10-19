@@ -13,8 +13,8 @@ namespace GpSelect.IntegrationTests;
 
 public sealed class EnquiryApiTests(ApiFactory api) : IClassFixture<ApiFactory>
 {
-    private static object Body(string message = "Busco un coche familiar, gracias.", string intent = "Search", string? vehicle = null, string name = "Ana López", string? language = null) =>
-        new { intent, name, email = "ana@example.test", phone = "+34 600 000 000", vehicle, message, language };
+    private static object Body(string? message = "Busco un coche familiar, gracias.", string intent = "Search", string? vehicle = null, string name = "Ana López", string? language = null, string? budget = null) =>
+        new { intent, name, email = "ana@example.test", phone = "+34 600 000 000", vehicle, message, language, budget };
 
     private static HttpRequestMessage Post(object body, string peer)
     {
@@ -61,6 +61,27 @@ public sealed class EnquiryApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Equal(HttpStatusCode.BadRequest, (await api.Anonymous().SendAsync(Post(Body(language: "fr"), "198.51.100.69"))).StatusCode);
     }
 
+    [Fact]
+    public async Task Information_enquiry_is_stored()
+    {
+        var marker = "Información " + Guid.NewGuid().ToString("N");
+        await Read(await api.Anonymous().SendAsync(Post(Body(marker, "Information"), "198.51.100.70")), HttpStatusCode.Accepted);
+        var stored = await Db(db => db.Enquiries.AsNoTracking().SingleAsync(x => x.Message == marker));
+        Assert.Equal(EnquiryIntent.Information, stored.Intent);
+        Assert.Null(stored.Vehicle);
+    }
+
+    [Fact]
+    public async Task Search_enquiry_stores_budget_without_a_message()
+    {
+        var marker = "BMW " + Guid.NewGuid().ToString("N");
+        await Read(await api.Anonymous().SendAsync(Post(Body(message: null, vehicle: marker, budget: "  30.000 €  "), "198.51.100.71")), HttpStatusCode.Accepted);
+        var stored = await Db(db => db.Enquiries.AsNoTracking().SingleAsync(x => x.Vehicle == marker));
+        Assert.Equal(EnquiryIntent.Search, stored.Intent);
+        Assert.Equal("30.000 €", stored.Budget);
+        Assert.Null(stored.Message);
+    }
+
     private static int invalidPeer;
 
     [Theory]
@@ -68,7 +89,9 @@ public sealed class EnquiryApiTests(ApiFactory api) : IClassFixture<ApiFactory>
     [InlineData("""{"intent":"Search","name":"Ana","email":"ana@example","message":"Busco un coche familiar."}""", "email")]
     [InlineData("""{"intent":"Search","name":"Ana","email":"ana@example.test","phone":"123","message":"Busco un coche familiar."}""", "phone")]
     [InlineData("""{"intent":"Vehicle","name":"Ana","email":"ana@example.test","message":"Busco un coche familiar."}""", "vehicle")]
-    [InlineData("""{"intent":"Search","name":"Ana","email":"ana@example.test","message":"Corto"}""", "message")]
+    [InlineData("""{"intent":"Information","name":"Ana","email":"ana@example.test","message":"Corto"}""", "message")]
+    [InlineData("""{"intent":"Information","name":"Ana","email":"ana@example.test"}""", "message")]
+    [InlineData("""{"intent":"Search","name":"Ana","email":"ana@example.test"}""", "vehicle")]
     [InlineData("""{"intent":"Search","name":"Ana\u0000","email":"ana@example.test","message":"Busco un coche familiar."}""", "name")]
     [InlineData("""{"name":"Ana","email":"ana@example.test","message":"Busco un coche familiar."}""", "intent")]
     public async Task Invalid_fields_answer_400_with_code_and_field(string json, string field)

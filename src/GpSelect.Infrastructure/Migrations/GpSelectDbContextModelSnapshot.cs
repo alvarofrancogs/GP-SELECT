@@ -28,6 +28,10 @@ namespace GpSelect.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Budget")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -47,7 +51,6 @@ namespace GpSelect.Infrastructure.Migrations
                         .HasColumnType("character varying(2)");
 
                     b.Property<string>("Message")
-                        .IsRequired()
                         .HasMaxLength(5000)
                         .HasColumnType("character varying(5000)");
 

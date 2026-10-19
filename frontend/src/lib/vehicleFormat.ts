@@ -1,5 +1,10 @@
 import type { Locale } from '../i18n/types';
 import { normalise } from './vehicleFacets';
+import type { VehicleSummary } from '../types/vehicle';
+
+export function vehicleLabel(vehicle: VehicleSummary): string {
+  return `${vehicle.make} ${vehicle.model}${vehicle.variant ? ` ${vehicle.variant}` : ''}${vehicle.firstRegistrationYear !== null ? ` (${vehicle.firstRegistrationYear})` : ''}`;
+}
 
 const locales = { es: 'es-ES', en: 'en-GB' };
 export function formatPrice(value: number | null, locale: Locale, fallback: string): string {

@@ -19,7 +19,7 @@ public sealed class EnquiriesController(GpSelectDbContext db, IConfiguration con
         try
         {
             var intent = r.Intent ?? throw new DomainException("required", "intent is required", "intent");
-            db.Enquiries.Add(Enquiry.Create(intent, r.Name, r.Email, r.Phone, r.Vehicle, r.Message, DateTimeOffset.UtcNow, r.Language ?? EnquiryLanguage.Es));
+            db.Enquiries.Add(Enquiry.Create(intent, r.Name, r.Email, r.Phone, r.Vehicle, r.Message, DateTimeOffset.UtcNow, r.Language ?? EnquiryLanguage.Es, r.Budget));
         }
         catch (DomainException e) { return DomainProblems.Create(this, e); }
         await db.SaveChangesAsync(ct);

@@ -1,3 +1,4 @@
+import { useLayoutEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import type { VehicleSummary } from '../types/vehicle';
 import { VehicleCard } from './VehicleCard';
@@ -23,10 +24,11 @@ export function VehicleGridPlaceholder({ label }: { label: string }) {
   </div>;
 }
 
-export function VehicleGrid({ vehicles, initialCount }: { vehicles: VehicleSummary[]; initialCount?: number }) {
+export function VehicleGrid({ vehicles, initialCount, onCountChange }: { vehicles: VehicleSummary[]; initialCount?: number; onCountChange?: (count: number) => void }) {
   const { copy } = useLanguage();
   const { search } = useLocation();
   const { containerRef, count, revealMore } = useProgressiveList<HTMLDivElement>(9, '', '.vehicle-card', undefined, initialCount);
+  useLayoutEffect(() => { onCountChange?.(count); }, [count, onCountChange]);
   // Opening a car remembers where the list was left, so coming back lands on the same card.
   const leave = () => rememberCatalogue({ search, scrollY: window.scrollY, count });
   return <>

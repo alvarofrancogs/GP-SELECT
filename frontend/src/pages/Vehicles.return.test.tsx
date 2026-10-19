@@ -6,6 +6,8 @@ import { Vehicles } from './Vehicles';
 import { rememberCatalogue } from '../lib/catalogueReturn';
 import { es } from '../i18n/es';
 import type { VehicleSummary } from '../types/vehicle';
+import { listVehicles } from '../services/vehicles';
+import { catalogueReturn } from '../lib/catalogueReturn';
 
 const cars: VehicleSummary[] = Array.from({ length: 20 }, (_, i) => ({
   slug: `car-${i}`, make: 'BMW', model: `M${i}`, variant: null, firstRegistrationYear: 2020, firstRegistrationMonth: null,
@@ -48,7 +50,10 @@ describe('back from a vehicle page to the catalogue', () => {
       scrolled.push(typeof x === 'number' ? y! : x.top ?? 0);
     }) as typeof window.scrollTo;
   });
-  afterEach(() => { Object.defineProperty(window, 'scrollY', { value: 0, configurable: true }); });
+  afterEach(() => {
+    Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+    vi.mocked(listVehicles).mockImplementation(async () => cars);
+  });
 
   it.each([false, true])('keeps the filters, the revealed batch and the scroll position (catalogue opened first: %s)', async (first) => {
     const router = renderCatalogue('?fuelType=Gasolina', first);
@@ -78,5 +83,49 @@ describe('back from a vehicle page to the catalogue', () => {
     await screen.findAllByRole('link', { name: /BMW/ });
     expect(cards()).toBe(9);
     expect(scrolled).not.toContain(800);
+  });
+
+  it('keeps sold cars outside filters, price markup and video preview, and restores the main batch from a sold detail', async () => {
+    const sold: VehicleSummary = { ...cars[0], slug: 'sold-car', make: 'Sold Make', model: 'Sold Model', priceEur: 99999, availability: 'sold', video: '/sold.mp4' };
+    vi.mocked(listVehicles).mockResolvedValue([...cars, sold]);
+    const router = renderCatalogue();
+    await screen.findByRole('heading', { name: es.vehicles.soldTitle });
+    const section = document.querySelector('.vehicle-sold')!;
+    expect(section.querySelector('.vehicle-card__pricing')?.childNodes).toHaveLength(0);
+    expect(section.querySelector('video')).toBeNull();
+    expect(section.querySelector('h3')?.textContent).toBe('Sold Make Sold Model');
+    expect(section.querySelector('.vehicle-card__badge')?.textContent).toBe(es.vehicles.sold);
+    expect(section.querySelector('.vehicle-card')?.children).toHaveLength(5);
+    expect(document.querySelector('#vehicle-results')?.textContent).not.toContain('Sold Make');
+    // Only one make remains in stock, so sold makes must not create a filter.
+    expect(screen.queryByRole('combobox', { name: es.vehicles.make })).toBeNull();
+    expect(document.querySelector('.vehicle-filters')?.textContent).not.toContain('Sold Make');
+    fireEvent.click(screen.getByRole('button', { name: es.vehicles.showMore }));
+    Object.defineProperty(window, 'scrollY', { value: 3200, configurable: true });
+    fireEvent.click(section.querySelector('a')!);
+    expect(router.state.location.pathname).toBe('/vehiculos/sold-car');
+    expect(catalogueReturn()?.count).toBe(18);
+    fireEvent.click(screen.getByRole('button', { name: 'atrás' }));
+    await screen.findByRole('heading', { name: es.vehicles.soldTitle });
+    expect(document.querySelectorAll('#vehicle-results .vehicle-card')).toHaveLength(18);
+    expect(scrolled.at(-1)).toBe(3200);
+  });
+
+  it('keeps sold cars visible when the available list is filtered and sorted', async () => {
+    vi.mocked(listVehicles).mockResolvedValue([...cars, { ...cars[0], slug: 'sold-car', availability: 'sold' }]);
+    renderCatalogue('?fuelType=Gasolina&sort=priceDesc');
+    await screen.findByRole('heading', { name: es.vehicles.soldTitle });
+    expect(screen.getByRole('heading', { name: es.vehicles.soldTitle })).toBeTruthy();
+    expect(document.querySelectorAll('.vehicle-grid--sold .vehicle-card')).toHaveLength(1);
+    expect(document.querySelector('#vehicle-results')?.textContent).not.toContain('Diésel');
+    expect(document.querySelector('#vehicle-results h2')?.textContent).toBe('BMW M19');
+  });
+
+  it('shows the available-list empty state and no filters when only sold cars exist', async () => {
+    vi.mocked(listVehicles).mockResolvedValue([{ ...cars[0], availability: 'sold' }]);
+    renderCatalogue();
+    await screen.findByRole('heading', { name: es.vehicles.emptyCurrent });
+    expect(document.querySelector('.vehicle-filters')).toBeNull();
+    expect(screen.getByRole('heading', { name: es.vehicles.soldTitle })).toBeTruthy();
   });
 });

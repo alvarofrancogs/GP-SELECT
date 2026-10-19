@@ -10,21 +10,32 @@ namespace GpSelect.Infrastructure;
 /// The email is for GP SELECT, so it stays in Spanish; it says which language to reply in.</summary>
 public sealed record EnquiryNotification(Guid EnquiryId, string Subject, string Body, string ReplyTo)
 {
-    public static EnquiryNotification For(Enquiry e) => new(e.Id,
-        // Name is one line (validated), so it is safe in a subject.
-        $"GP SELECT · {(e.Intent == EnquiryIntent.Vehicle ? "Consulta sobre un vehículo" : "Búsqueda de vehículo")}{(e.Language == EnquiryLanguage.En ? " · en inglés" : "")} · {e.Name}",
-        string.Join('\n',
-            $"Tipo: {(e.Intent == EnquiryIntent.Vehicle ? "vehículo concreto" : "ayúdame a encontrarlo")}",
-            $"Idioma: {(e.Language == EnquiryLanguage.En ? "inglés (responde en inglés)" : "español")}",
-            $"Nombre: {e.Name}",
-            $"Email: {e.Email}",
-            $"Teléfono: {e.Phone ?? "—"}",
-            $"Vehículo: {e.Vehicle ?? "—"}",
-            $"Recibida: {e.CreatedAt:yyyy-MM-dd HH:mm} UTC",
-            $"Referencia: {e.Id}",
-            "",
-            e.Message),
-        e.Email);
+    public static EnquiryNotification For(Enquiry e)
+    {
+        var (subject, type) = e.Intent switch
+        {
+            EnquiryIntent.Vehicle => ("Consulta sobre un vehículo", "comprar un vehículo en stock"),
+            EnquiryIntent.Search => ("Búsqueda de vehículo", "buscar un vehículo"),
+            EnquiryIntent.Information => ("Petición de información", "información general"),
+            _ => throw new InvalidOperationException("Unknown enquiry intent.")
+        };
+        return new(e.Id,
+            // Name is one line (validated), so it is safe in a subject.
+            $"GP SELECT · {subject}{(e.Language == EnquiryLanguage.En ? " · en inglés" : "")} · {e.Name}",
+            string.Join('\n',
+                $"Tipo: {type}",
+                $"Idioma: {(e.Language == EnquiryLanguage.En ? "inglés (responde en inglés)" : "español")}",
+                $"Nombre: {e.Name}",
+                $"Email: {e.Email}",
+                $"Teléfono: {e.Phone ?? "—"}",
+                $"Vehículo: {e.Vehicle ?? "—"}",
+                $"Presupuesto: {e.Budget ?? "—"}",
+                $"Recibida: {e.CreatedAt:yyyy-MM-dd HH:mm} UTC",
+                $"Referencia: {e.Id}",
+                "",
+                e.Message ?? "(sin mensaje)"),
+            e.Email);
+    }
 }
 
 /// <summary>Delivery port, implemented by the optional SMTP adapter.</summary>

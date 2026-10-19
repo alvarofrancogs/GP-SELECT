@@ -12,7 +12,7 @@ function renderAt(path: string) {
   render(<MemoryRouter initialEntries={[path]}><LanguageProvider><LanguageSwitcher /><Where /></LanguageProvider></MemoryRouter>);
 }
 
-const tap = (language: 'ES' | 'EN') => fireEvent.click(screen.getByText(language), { button: 0 });
+const tap = (language: 'ES' | 'EN') => fireEvent.click(screen.getByRole('link', { name: language === 'ES' ? 'Español' : 'English' }), { button: 0 });
 const wait = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });
 const path = () => screen.getByTestId('path').textContent;
 const classes = () => document.documentElement.className;
@@ -37,6 +37,23 @@ describe('LanguageSwitcher', () => {
     expect(classes()).toBe('lang-in');
     wait(300);
     expect(classes()).toBe('');
+  });
+
+  it('keeps accessible language links and unique flag clip paths across header and footer', () => {
+    const { container } = render(<MemoryRouter initialEntries={['/contacto?intent=information']}><LanguageProvider><LanguageSwitcher /><LanguageSwitcher /></LanguageProvider></MemoryRouter>);
+    const spanish = screen.getAllByRole('link', { name: 'Español' });
+    const english = screen.getAllByRole('link', { name: 'English' });
+    expect(spanish).toHaveLength(2);
+    expect(english).toHaveLength(2);
+    expect(spanish[0].getAttribute('aria-current')).toBe('true');
+    expect(english[0].getAttribute('href')).toBe('/en/contact?intent=information');
+    expect(english[0].getAttribute('lang')).toBe('en');
+    expect(english[0].getAttribute('hreflang')).toBe('en');
+    expect(container.querySelectorAll('svg[aria-hidden="true"][focusable="false"]')).toHaveLength(4);
+    const ids = Array.from(container.querySelectorAll('clipPath'), (clip) => clip.id);
+    expect(new Set(ids).size).toBe(2);
+    for (const link of english) expect(link.querySelector('[clip-path]')?.getAttribute('clip-path')).toBe(`url(#${link.querySelector('clipPath')?.id})`);
+    expect(container.textContent).not.toMatch(/ES|EN/);
   });
 
   it('during the fade-out the latest tap decides, even back to the current language', () => {
