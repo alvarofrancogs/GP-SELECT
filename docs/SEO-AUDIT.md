@@ -121,7 +121,7 @@ HSTS, `nosniff`, `X-Frame-Options`, `Referrer-Policy` y `Permissions-Policy` est
 
 - Home: `@graph` con `AutoDealer` + `WebSite`. Importación: `Service`. Ficha: `Car` (+ `Offer` si hay precio y no está vendido). JSON válido y `<` escapado.
 - **S1: sin `@id`.** Las entidades no se enlazan entre sí: `Service.provider` y `Car` no apuntan al mismo `AutoDealer`.
-- **S2: `AutoDealer` sin `telephone`, `email`, `sameAs`, `image` ni `founder`.** `contactConfig.phone` es `null`, aunque el WhatsApp verificado `+34 661 631 555` es un teléfono. Sin dirección física: `PostalAddress` solo con localidad, región y país. Es coherente con un negocio sin local abierto al público; la dirección completa es «required» en el rich result de LocalBusiness (INFERIDO de la documentación de Google; verificarlo con Rich Results Test tras publicar).
+- **S2: `AutoDealer` sin `telephone`, `email`, `sameAs`, `image` ni `founder`.** `contactConfig.phone` es `null`, aunque el WhatsApp de empresa `+34 675 746 041` es un teléfono. Sin dirección física: `PostalAddress` solo con localidad, región y país. Es coherente con un negocio sin local abierto al público; la dirección completa es «required» en el rich result de LocalBusiness (INFERIDO de la documentación de Google; verificarlo con Rich Results Test tras publicar).
 - **S3: `Offer` sin `availability`, `itemCondition` ni `seller`.** `Car` sin `bodyType`, `vehicleEngine`/potencia ni `itemCondition`. No hay `BreadcrumbList` en las fichas.
 - **S4: dos copias del mismo JSON-LD** (`pageMeta.ts` y `VehicleSeo.cs`). Hoy coinciden; cada cambio tiene que hacerse en los dos sitios (ya documentado).
 - Nota: los rich results de listados de vehículos de Google tienen disponibilidad geográfica limitada (INFERIDO; verificar). El valor de `Car` está sobre todo en la comprensión de la entidad y en la IA, no en un rich result garantizado. Tampoco conviene esperar rich results de FAQ: Google los limita a sitios de autoridad y Administración.
@@ -238,7 +238,7 @@ Sin herramienta de volumen: **ningún volumen es real**. La validación es cuali
 
 1. Crear el perfil como **negocio de servicio a domicilio / en zona** (dirección oculta), con área España y la Región de Murcia como base. La verificación probablemente sea por vídeo (INFERIDO).
 2. Categoría principal: la más cercana a «agente o corredor de compra de vehículos»; secundaria: «importador»/«concesionario de vehículos de ocasión». **Verificar los nombres exactos en el selector de GBP**, que cambian.
-3. NAP idéntico en web, schema, GBP y directorios: «GP SELECT», el mismo teléfono (+34 661 631 555 si es el número comercial definitivo), email `info@gpselect.com` y web `https://gpselect.com/`.
+3. NAP idéntico en web, schema, GBP y directorios: «GP SELECT», el mismo teléfono (+34 675 746 041, el número de empresa desde el 20-10-2026), email `info@gpselect.com` y web `https://gpselect.com/`.
 4. Reseñas: pedirlas a cada cliente tras la compra; responderlas todas. Son la señal local más fuerte, y hoy hay cero.
 5. Citas de calidad, pocas: perfiles de vendedor en AutoScout24/coches.net si se publica stock allí, LinkedIn o Instagram de la marca, y directorios generalistas (Páginas Amarillas, Cylex…). Añadir cada perfil verificado a `contactConfig.sameAs`.
 6. Publicaciones en GBP con cada coche nuevo o cada búsqueda cerrada (con consentimiento).
