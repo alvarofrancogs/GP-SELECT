@@ -34,7 +34,7 @@ it('renders the English pages from the English dictionaries, with English links'
   expect(home).toContain('href="/en/vehicles"');
   expect(home).not.toMatch(/href="\/(vehiculos|importacion|nosotros|contacto)/);
   expect(renderReadableContent('/en/vehicles').split('<!--vehicle-list--><!--/vehicle-list-->')).toHaveLength(2);
-  expect(renderReadableContent('/en/import')).toContain('href="/en/contact?intent=search&amp;source=importacion"');
+  expect(renderReadableContent('/en/import')).toContain('href="/en/import#import-form"');
   expect(renderReadableContent('/en/404.html')).toContain('href="/en"');
 });
 
@@ -57,6 +57,23 @@ it.each([
   expect(html).not.toContain('FAQPage');
 });
 
+it.each([['/importacion', es.interiors.import], ['/en/import', en.interiors.import]])('retains every import block, stage and FAQ answer in %s', (path, text) => {
+  const html = renderReadableContent(path);
+  for (const block of [text.define, text.search, text.analysis, text.support, text.taxes]) {
+    expect(html).toContain(`<h2>${escapeHtml(block.title)}</h2>`);
+    expect(html).toContain(escapeHtml(block.body));
+  }
+  for (const item of [...text.define.items, text.define.detail, text.support.detail, text.stages.intro, ...text.overviewItems]) expect(html).toContain(escapeHtml(item));
+  expect(text.stages.rows).toHaveLength(7);
+  expect(text.faq.rows).toHaveLength(6);
+  for (const row of [...text.stages.rows, ...text.faq.rows]) {
+    expect(html).toContain(`<h3>${escapeHtml(row.title)}</h3>`);
+    expect(html).toContain(escapeHtml(row.body));
+  }
+  expect(html).toContain(`<h2>${escapeHtml(text.overviewTitle)}</h2>`);
+  expect(html).toContain(`<section id="import-form"><h2>${escapeHtml(text.formTitle)}</h2>`);
+});
+
 it.each([
   ['/nosotros', 'Qué hacemos nosotros y qué coordinamos con terceros.', 'Lo que hace GP SELECT', '/aviso-legal'],
   ['/en/about', 'What we do ourselves, and what we coordinate.', 'What GP SELECT does', '/en/legal-notice'],
@@ -74,8 +91,8 @@ it('uses the approved entity summary in both languages of llms.txt', () => {
 });
 
 it.each([
-  ['/contacto', 'Quiero que GP SELECT lo busque por mí', 'Leemos tu solicitud y te contactamos.'],
-  ['/en/contact', 'I want GP SELECT to find it for me', 'We read your request and get back to you.'],
+  ['/contacto', 'Buscar un vehículo', 'Leemos tu solicitud y te contactamos.'],
+  ['/en/contact', 'Find a vehicle', 'We read your request and get back to you.'],
 ])('renders the updated contact path and next steps in %s', (path, option, firstStep) => {
   const html = renderReadableContent(path);
   expect(html).toContain(option);

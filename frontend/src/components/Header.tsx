@@ -15,9 +15,7 @@ const BEHIND_MENU = '#main-content, .site-footer, .catalogue-cta, .skip-link';
 const SCENES = '#hero, #criterio, #coches';
 // Scroll needed in one direction before the header hides or comes back (ignores jitter).
 const QUICK_RETURN_PX = 8;
-// Where the header has no blend (global.css): a blended fixed header flickers over scrolling scenes on touch screens.
-const PLAIN_HEADER = '(max-width: 1199px), (pointer: coarse)';
-// Without the blend, these dark layers turn the header white when no scene sets its tone: Process, its veil lifting
+// These dark layers turn the header white when no scene sets its tone: Process, its veil lifting
 // off the car scene (no pointer events, so measured by position), dark bands and the footer.
 const DARK_LAYERS = '.process-scene, [data-handoff-veil], .interior-band, .site-footer';
 
@@ -70,7 +68,6 @@ export function Header() {
       .map((id) => document.getElementById(id))
       .filter((scene): scene is HTMLElement => scene !== null);
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const plain = window.matchMedia(PLAIN_HEADER);
     let frame = 0;
     function updateContrast() {
       if (!header) return;
@@ -83,7 +80,7 @@ export function Header() {
         delete header.dataset.toneScene;
       }
       // Without the blend, the header takes the colour of whatever is under it when no scene sets its tone.
-      if (!source && plain.matches && darkUnder(header.offsetHeight / 2)) header.dataset.surface = 'dark';
+      if (!source && darkUnder(header.offsetHeight / 2)) header.dataset.surface = 'dark';
       else delete header.dataset.surface;
     }
     // Never cancel a pending frame: while a scrubbed scene keeps publishing its tone, that would

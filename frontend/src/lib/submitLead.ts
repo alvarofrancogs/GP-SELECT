@@ -1,25 +1,29 @@
 import type { Locale } from '../i18n/types';
 
-export type LeadIntent = 'vehicle' | 'search';
+export type LeadIntent = 'search' | 'vehicle' | 'information';
+export type LeadConfiguration = 'contact' | 'import';
 export interface LeadDraft {
   name: string;
   phone: string;
   email: string;
   vehicle: string;
+  budget: string;
   message: string;
   intent: LeadIntent;
 }
 export type LeadField = Exclude<keyof LeadDraft, 'intent'>;
 
-export function validateLead(lead: LeadDraft): LeadField[] {
+export function validateLead(lead: LeadDraft, configuration: LeadConfiguration = 'contact'): LeadField[] {
   const invalid: LeadField[] = [];
   if (lead.name.trim().length < 2) invalid.push('name');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email.trim())) invalid.push('email');
   const phone = lead.phone.trim();
   const digits = phone.replace(/\D/g, '');
   if (phone && (!/^\+?[\d\s().-]+$/.test(phone) || digits.length < 7 || digits.length > 15)) invalid.push('phone');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email.trim())) invalid.push('email');
-  if (lead.intent === 'vehicle' && lead.vehicle.trim().length < 2) invalid.push('vehicle');
-  if (lead.message.trim().length < 10) invalid.push('message');
+  if (configuration === 'contact' && lead.intent !== 'information' && !lead.vehicle.trim()) invalid.push('vehicle');
+  if (configuration === 'contact' && lead.intent === 'search' && lead.budget.trim().length > 100) invalid.push('budget');
+  if (((configuration === 'import' || lead.intent === 'information') && lead.message.trim().length < 10)
+    || lead.message.trim().length > 5000) invalid.push('message');
   return invalid;
 }
 
@@ -27,7 +31,7 @@ export type LeadResult =
   | { ok: true; mode: 'preview' | 'sent' }
   | { ok: false; reason: 'invalid' | 'rate_limited' | 'failed'; fields: LeadField[] };
 
-const leadFields: readonly LeadField[] = ['name', 'phone', 'email', 'vehicle', 'message'];
+const leadFields: readonly LeadField[] = ['name', 'email', 'phone', 'vehicle', 'budget', 'message'];
 
 /** The field a 400 problem refers to, when it is one of the form's. */
 async function problemField(response: Response): Promise<LeadField | null> {
@@ -41,8 +45,8 @@ async function problemField(response: Response): Promise<LeadField | null> {
 
 /** Sends to POST /api/public/enquiries when enabled; otherwise a local preview with no network or storage.
     The page language goes with it, so the reply is in the visitor's language. */
-export async function submitLead(lead: LeadDraft, enabled: boolean, language: Locale): Promise<LeadResult> {
-  const invalid = validateLead(lead);
+export async function submitLead(lead: LeadDraft, enabled: boolean, language: Locale, configuration: LeadConfiguration = 'contact'): Promise<LeadResult> {
+  const invalid = validateLead(lead, configuration);
   if (invalid.length) return { ok: false, reason: 'invalid', fields: invalid };
   if (!enabled) return { ok: true, mode: 'preview' };
 
@@ -52,8 +56,11 @@ export async function submitLead(lead: LeadDraft, enabled: boolean, language: Lo
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        intent: lead.intent === 'vehicle' ? 'Vehicle' : 'Search',
-        name: lead.name, email: lead.email, phone: lead.phone || null, vehicle: lead.vehicle || null, message: lead.message, language,
+        intent: configuration === 'import' ? 'Search' : { search: 'Search', vehicle: 'Vehicle', information: 'Information' }[lead.intent],
+        name: lead.name.trim(), email: lead.email.trim(), phone: lead.phone.trim() || null,
+        vehicle: lead.intent === 'information' && configuration === 'contact' ? null : lead.vehicle.trim() || null,
+        budget: configuration === 'contact' && lead.intent === 'search' ? lead.budget.trim() || null : null,
+        message: lead.message.trim() || null, language,
       }),
     });
   } catch {

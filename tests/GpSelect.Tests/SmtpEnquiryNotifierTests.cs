@@ -25,4 +25,25 @@ public sealed class SmtpEnquiryNotifierTests
         Assert.Empty(message.Bcc);
     }
 
+    [Theory]
+    [InlineData(EnquiryIntent.Vehicle, "Consulta sobre un vehículo", "comprar un vehículo en stock")]
+    [InlineData(EnquiryIntent.Search, "Búsqueda de vehículo", "buscar un vehículo")]
+    [InlineData(EnquiryIntent.Information, "Petición de información", "información general")]
+    public void Notification_includes_intent_and_budget(EnquiryIntent intent, string subject, string type)
+    {
+        var notification = EnquiryNotification.For(Enquiry.Create(intent, "Ana López", "ana@example.test",
+            null, "BMW", "Quisiera más información.", DateTimeOffset.UtcNow, budget: "30.000 €"));
+        Assert.Equal($"GP SELECT · {subject} · Ana López", notification.Subject);
+        Assert.Contains($"Tipo: {type}\n", notification.Body);
+        Assert.Contains("Vehículo: BMW\nPresupuesto: 30.000 €\n", notification.Body);
+    }
+
+    [Fact]
+    public void Notification_handles_missing_budget_and_message()
+    {
+        var notification = EnquiryNotification.For(Enquiry.Create(EnquiryIntent.Search, "Ana López", "ana@example.test",
+            null, "BMW", null, DateTimeOffset.UtcNow));
+        Assert.Contains("Presupuesto: —\n", notification.Body);
+        Assert.EndsWith("\n(sin mensaje)", notification.Body);
+    }
 }

@@ -70,6 +70,8 @@ function aboutContent(t: Dictionary, locale: Locale): string {
 function importContent(t: Dictionary, locale: Locale): string {
   const text = t.interiors.import;
   return interiorIntroduction(text.title, text.lede)
+    + `<section id="import-form">${heading(2, text.formTitle)}${link(localizeHref(qualificationUrl({ intent: 'search', source: 'importacion' }), locale), text.cta)}</section>`
+    + section(text.overviewTitle, list(text.overviewItems))
     + section(text.define.title, paragraph(text.define.body) + list(text.define.items) + paragraph(text.define.detail))
     + section(text.search.title, paragraph(text.search.body))
     + section(text.analysis.title, paragraph(text.analysis.body))
@@ -78,7 +80,7 @@ function importContent(t: Dictionary, locale: Locale): string {
     + section(text.taxes.title, paragraph(text.taxes.body) + link(pagePath('guide', locale), text.taxes.guide))
     + section(text.faq.title, rows(text.faq.rows))
     + section(text.closing, paragraph(text.closingBody)
-      + link(localizeHref(qualificationUrl({ intent: 'search', source: 'importacion' }), locale), text.cta)
+      + link(`${pagePath('import', locale)}#import-form`, text.backToForm)
       + ' ' + link(localizeHref('/contacto?intent=vehicle', locale), text.secondary));
 }
 
@@ -102,9 +104,11 @@ function contactContent(t: Dictionary, locale: Locale): string {
   const text = t.interiors.contact;
   return interiorIntroduction(text.title, text.lede)
     + paragraph(text.pathsLabel)
-    + `<ul><li>${link(localizeHref('/contacto?intent=vehicle', locale), text.vehiclePath)}${paragraph(text.vehicleIntro)}</li>`
-    + `<li>${link(localizeHref('/contacto?intent=search', locale), text.searchPath)}${paragraph(text.searchIntro)}</li></ul>`
-    + `<ol>${text.nextSteps.map((step) => `<li>${escapeHtml(step.replace(/^\d+\. /, ''))}</li>`).join('')}</ol>`;
+    + `<ul><li>${link(localizeHref('/contacto?intent=search', locale), text.searchPath)}${paragraph(text.searchIntro)}</li>`
+    + `<li>${link(localizeHref('/contacto?intent=vehicle', locale), text.vehiclePath)}${paragraph(text.vehicleIntro)}</li>`
+    + `<li>${link(localizeHref('/contacto?intent=information', locale), text.informationPath)}${paragraph(text.informationIntro)}</li></ul>`
+    + section(text.nextTitle, `<ol>${text.nextSteps.map((step) => `<li>${escapeHtml(step.replace(/^\d+\. /, ''))}</li>`).join('')}</ol>`
+      + `<ol>${text.enquirySteps.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}</ol>`);
 }
 
 // Same text as the React legal page (src/pages/Legal.tsx): always the Spanish, binding version; a missing detail

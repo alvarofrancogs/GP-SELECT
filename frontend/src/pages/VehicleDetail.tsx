@@ -11,7 +11,7 @@ import { useLanguage } from '../i18n/useLanguage';
 import { contactConfig, showContactPreview, whatsappUrl } from '../config/contact';
 import { consumeInitialVehicle, getInitialVehicle, getVehicle } from '../services/vehicles';
 import type { VehicleDetail as Vehicle } from '../types/vehicle';
-import { formatKm, formatPower, formatPrice, formatRegistration, translateValue } from '../lib/vehicleFormat';
+import { formatKm, formatPower, formatPrice, formatRegistration, translateValue, vehicleLabel } from '../lib/vehicleFormat';
 import { qualificationUrl } from '../lib/qualification';
 import { catalogueReturn } from '../lib/catalogueReturn';
 import '../styles/interiors.css';
@@ -67,7 +67,7 @@ export function VehicleDetailView({ vehicle, back, className = '' }: { vehicle: 
   const sold = vehicle.availability === 'sold';
   // A sold vehicle cannot be requested: the call to action looks for an alternative.
   // The form shows this text in its vehicle field (and the enquiry email carries it): a readable name, not the slug.
-  const label = `${name}${vehicle.variant ? ` ${vehicle.variant}` : ''} (${vehicle.firstRegistrationYear})`;
+  const label = vehicleLabel(vehicle);
   // The public address, also from the admin preview, so the chat says exactly which car.
   const whatsappMessage = text.whatsappMessage.replace('{vehicle}', label)
     .replace('{url}', `${window.location.origin}${href(`/vehiculos/${encodeURIComponent(vehicle.slug)}`)}`);

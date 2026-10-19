@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace GpSelect.Domain;
 
-public enum EnquiryIntent { Vehicle, Search }
+public enum EnquiryIntent { Vehicle, Search, Information }
 /// <summary>The language the visitor wrote in, which is the language the reply goes out in.</summary>
 public enum EnquiryLanguage { Es, En }
 public enum EnquiryNotificationStatus { Pending, Sent, Failed }
@@ -12,7 +12,7 @@ public enum EnquiryNotificationStatus { Pending, Sent, Failed }
 /// Rows are deleted after Enquiries:RetentionDays (30 days by default), regardless of notification status.</summary>
 public sealed class Enquiry
 {
-    public const int NameMin = 2, NameMax = 200, EmailMax = 200, PhoneMax = 30, VehicleMin = 2, VehicleMax = 200, MessageMin = 10, MessageMax = 5000;
+    public const int NameMin = 2, NameMax = 200, EmailMax = 200, PhoneMax = 30, VehicleMin = 2, VehicleMax = 200, MessageMin = 10, MessageMax = 5000, BudgetMax = 100;
     public const int MaxNotificationAttempts = 6;
     private static readonly TimeSpan[] RetryDelays = [TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(30), TimeSpan.FromHours(2), TimeSpan.FromHours(12)];
     private static readonly Regex PhoneChars = new(@"^\+?[\d\s().-]+$", RegexOptions.Compiled);
@@ -26,7 +26,8 @@ public sealed class Enquiry
     public string Email { get; private set; } = "";
     public string? Phone { get; private set; }
     public string? Vehicle { get; private set; }
-    public string Message { get; private set; } = "";
+    public string? Message { get; private set; }
+    public string? Budget { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public EnquiryNotificationStatus NotificationStatus { get; private set; } = EnquiryNotificationStatus.Pending;
     public int NotificationAttempts { get; private set; }
@@ -34,7 +35,7 @@ public sealed class Enquiry
     public DateTimeOffset? NotifiedAt { get; private set; }
 
     public static Enquiry Create(EnquiryIntent intent, string? name, string? email, string? phone, string? vehicle, string? message, DateTimeOffset now,
-        EnquiryLanguage language = EnquiryLanguage.Es)
+        EnquiryLanguage language = EnquiryLanguage.Es, string? budget = null)
     {
         if (!Enum.IsDefined(intent)) throw new DomainException("invalid_intent", "intent is invalid", "intent");
         if (!Enum.IsDefined(language)) throw new DomainException("invalid_language", "language is invalid", "language");
@@ -54,12 +55,19 @@ public sealed class Enquiry
         if (intent == EnquiryIntent.Vehicle && (cleanVehicle is null || cleanVehicle.Length < VehicleMin))
             throw new DomainException("required", "vehicle is required for a vehicle enquiry", "vehicle");
 
-        var cleanMessage = Text(message, MessageMax, "message") ?? throw new DomainException("required", "message is required", "message");
-        if (cleanMessage.Length < MessageMin) throw new DomainException("too_short", $"message needs at least {MessageMin} characters", "message");
+        var cleanMessage = Text(message, MessageMax, "message");
+        if (intent == EnquiryIntent.Search && (cleanVehicle is null || cleanVehicle.Length < VehicleMin) && cleanMessage is null)
+            throw new DomainException("required", "vehicle or message is required for a search enquiry", "vehicle");
+        if (intent == EnquiryIntent.Information)
+        {
+            if (cleanMessage is null) throw new DomainException("required", "message is required", "message");
+            if (cleanMessage.Length < MessageMin) throw new DomainException("too_short", $"message needs at least {MessageMin} characters", "message");
+        }
+        var cleanBudget = Line(budget, BudgetMax, "budget");
 
         return new Enquiry
         {
-            Intent = intent, Language = language, Name = cleanName, Email = cleanEmail, Phone = cleanPhone, Vehicle = cleanVehicle, Message = cleanMessage,
+            Intent = intent, Language = language, Name = cleanName, Email = cleanEmail, Phone = cleanPhone, Vehicle = cleanVehicle, Message = cleanMessage, Budget = cleanBudget,
             CreatedAt = now, NotificationNextAttemptAt = now,
         };
     }

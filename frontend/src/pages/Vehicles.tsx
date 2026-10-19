@@ -4,13 +4,14 @@ import { gsap } from 'gsap';
 import { InteriorPageHeader } from '../components/InteriorPageHeader';
 import { VehicleGrid, VehicleGridPlaceholder } from '../components/VehicleGrid';
 import { VehicleFilters } from '../components/VehicleFilters';
+import { VehicleCard } from '../components/VehicleCard';
 import { useLanguage } from '../i18n/useLanguage';
 import { consumeInitialVehicles, getInitialVehicles, lastVehicles, listVehicles } from '../services/vehicles';
 import { filterVehicles, sanitizeParams, sortVehicles, vehicleFilterKeys } from '../lib/vehicleFacets';
 import type { FacetKey } from '../lib/vehicleFacets';
 import type { VehicleSummary } from '../types/vehicle';
 import { qualificationUrl } from '../lib/qualification';
-import { catalogueReturn } from '../lib/catalogueReturn';
+import { catalogueReturn, rememberCatalogue } from '../lib/catalogueReturn';
 import '../styles/interiors.css';
 import '../styles/vehicles.css';
 
@@ -34,6 +35,9 @@ export function Vehicles() {
   const [vehicles, setVehicles] = useState<VehicleSummary[]>(initialList ?? known ?? []);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(initialList || known ? 'ready' : 'loading');
   const [attempt, setAttempt] = useState(0);
+  const mainCount = useRef(restore?.count ?? 9);
+  const mainVehicles = useMemo(() => vehicles.filter((vehicle) => vehicle.availability !== 'sold'), [vehicles]);
+  const soldVehicles = useMemo(() => vehicles.filter((vehicle) => vehicle.availability === 'sold'), [vehicles]);
   useEffect(() => {
     consumeInitialVehicles();
     if (initialList && attempt === 0) return;
@@ -45,11 +49,11 @@ export function Vehicles() {
     return () => request.abort();
   }, [attempt, initialList, known]);
   // The URL is the source of truth; selections that no longer exist are dropped before rendering.
-  const clean = useMemo(() => status === 'ready' ? sanitizeParams(vehicles, params) : params, [status, vehicles, params]);
+  const clean = useMemo(() => status === 'ready' ? sanitizeParams(mainVehicles, params) : params, [status, mainVehicles, params]);
   useEffect(() => {
     if (clean.toString() !== params.toString()) setParams(clean, { replace: true, preventScrollReset: true });
   }, [clean, params, setParams]);
-  const shown = useMemo(() => sortVehicles(filterVehicles(vehicles, clean), clean.get('sort')), [vehicles, clean]);
+  const shown = useMemo(() => sortVehicles(filterVehicles(mainVehicles, clean), clean.get('sort')), [mainVehicles, clean]);
   // Runs after SiteLayout's scroll reset (tree order), once the list is on the page.
   const ready = status === 'ready';
   useLayoutEffect(() => {
@@ -67,7 +71,7 @@ export function Vehicles() {
     const media = gsap.matchMedia();
     media.add('(prefers-reduced-motion: no-preference)', () => {
       gsap.fromTo(page.querySelectorAll('.vehicle-filters, .vehicle-state'), { opacity: 0 }, { opacity: 1, duration: 0.4, ease: 'power2.out', clearProps: 'opacity' });
-      page.querySelectorAll('.vehicle-card').forEach((card, index) => {
+      page.querySelectorAll('#vehicle-results .vehicle-card').forEach((card, index) => {
         gsap.fromTo(card.querySelectorAll(':scope > :not(.vehicle-card__media)'), { opacity: 0, y: 10 }, {
           opacity: 1, y: 0, duration: 0.5, delay: 0.08 + index * 0.06, ease: 'power2.out', clearProps: 'opacity,transform',
         });
@@ -77,26 +81,34 @@ export function Vehicles() {
   }, [status]);
   const searchUrl = href(qualificationUrl({ intent: 'import', source: 'vehicles' }));
   function clear() {
+    mainCount.current = 9;
     const next = new URLSearchParams(clean);
     vehicleFilterKeys.forEach((key) => next.delete(key));
     setParams(next, { preventScrollReset: true });
   }
   function change(key: string, value: string) {
+    mainCount.current = 9;
     const next = new URLSearchParams(clean);
     if (value) next.set(key, value); else next.delete(key);
-    setParams(key === 'sort' ? next : sanitizeParams(vehicles, next, key as FacetKey), { preventScrollReset: true });
+    setParams(key === 'sort' ? next : sanitizeParams(mainVehicles, next, key as FacetKey), { preventScrollReset: true });
   }
   return <article ref={pageRef} className="interior-page vehicles-page">
     <InteriorPageHeader {...text} />
     {status === 'loading' ? <VehicleGridPlaceholder label={text.loading} /> : null}
     {status === 'error' ? <div className="vehicle-state" role="alert"><p className="type-lede">{text.error}</p><button className="editorial-link type-ui" onClick={() => { setStatus('loading'); setAttempt(attempt + 1); }}>{text.retry}</button></div> : null}
-    {status === 'ready' && !vehicles.length ? <div className="vehicle-state"><h2 className="type-section">{text.emptyCatalogue}</h2><div className="vehicle-state__links"><Link className="editorial-link type-ui" to={searchUrl}>{text.search}<span aria-hidden="true">→</span></Link></div></div> : null}
-    {status === 'ready' && vehicles.length ? <>
-      <VehicleFilters vehicles={vehicles} params={clean} count={shown.length} onClear={clear} onChange={change} />
-      {shown.length ? <VehicleGrid key={clean.toString()} vehicles={shown} initialCount={search === restore?.search ? restore.count : undefined} /> : <div className="vehicle-state">
+    {status === 'ready' && !mainVehicles.length ? <div className="vehicle-state"><h2 className="type-section">{text.emptyCurrent}</h2><div className="vehicle-state__links"><Link className="editorial-link type-ui" to={searchUrl}>{text.search}<span aria-hidden="true">→</span></Link></div></div> : null}
+    {status === 'ready' && mainVehicles.length ? <>
+      <VehicleFilters vehicles={mainVehicles} params={clean} count={shown.length} onClear={clear} onChange={change} />
+      {shown.length ? <VehicleGrid key={clean.toString()} vehicles={shown} initialCount={search === restore?.search ? restore.count : undefined} onCountChange={(count) => { mainCount.current = count; }} /> : <div className="vehicle-state">
         <h2 className="type-section">{text.empty}</h2><div className="vehicle-state__links"><button className="editorial-link type-ui" onClick={clear}>{text.clear}</button><Link className="editorial-link type-ui" to={searchUrl}>{text.search}<span aria-hidden="true">→</span></Link></div>
       </div>}
     </> : null}
+    {status === 'ready' && soldVehicles.length ? <section className="vehicle-sold" aria-labelledby="vehicle-sold-title">
+      <header className="vehicle-sold__header"><h2 id="vehicle-sold-title" className="type-section">{text.soldTitle}</h2><p className="type-body">{text.soldIntro}</p></header>
+      <div className="vehicle-grid vehicle-grid--sold" onClickCapture={() => rememberCatalogue({ search, scrollY: window.scrollY, count: mainCount.current })}>
+        {soldVehicles.map((vehicle) => <VehicleCard key={vehicle.slug} vehicle={vehicle} headingLevel={3} state={{ fromCatalogue: true }} />)}
+      </div>
+    </section> : null}
     <section className="interior-closing vehicle-closing"><h2 className="type-section">{text.closing}</h2><div className="interior-closing__links"><Link className="editorial-link type-ui" to={searchUrl}>{text.find}<span aria-hidden="true">→</span></Link></div></section>
   </article>;
 }
