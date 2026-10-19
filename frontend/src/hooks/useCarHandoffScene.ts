@@ -8,12 +8,9 @@ gsap.registerPlugin(ScrollTrigger);
 
 // Process has handed over the frame by this scroll (viewports into the scene): fixed by the CSS overlap.
 const HANDOVER = 0.75;
-// Everything after the handover runs on 15 % less scroll since 17-10-2026 (it took too much scrolling).
-const PACE = 0.85;
-/** A position of the original choreography (in viewports) on the shorter scroll. */
-const at = (t: number) => (t <= HANDOVER ? t : HANDOVER + (t - HANDOVER) * PACE);
-// Pin length in viewport heights; afterwards the scene leaves with the page.
-const DISTANCE = at(4.9);
+// Everything after the handover runs on 15 % less scroll since 17-10-2026 (it took too much scrolling), and on
+// phones on less again after the user tried it on an iPhone the same day.
+const PACE = { desktop: 0.85, mobile: 0.55 };
 // Gap between the headlines, as a multiple of the car width, plus a margin per side.
 const GAP_FACTOR = 1.3;
 const GAP_MARGIN = 24;
@@ -28,16 +25,24 @@ const NOSE_INSET = 0.055;
 const CAR_FROM = { sideBySide: GAP_FACTOR, stacked: 1.25 };
 // Photograph mask height (% of the box): whole at the start, gone at the end.
 const CURTAIN_FROM = 240;
-// The scene in viewport heights of scroll, after Jesko Jets' jet: it rises with the scroll,
-// shrinks with an accelerating ease, parks, and a soft curtain turns the photograph into the plan.
-const AT = {
-  shown: 0.68, // Process has handed over the frame
-  rise: 0.7,
-  shrink: [0.7, at(3.1)],
-  curtain: [at(3.1), at(4.15)],
-  weather: [at(1.5), at(4.15)],
-  ink: at(3.5),
-};
+/** The scene in viewport heights of scroll, after Jesko Jets' jet: it rises with the scroll, shrinks with an
+    accelerating ease, parks, and a soft curtain turns the photograph into the plan. `at` places a position of
+    the original choreography on the shorter scroll. */
+function timing(pace: number) {
+  const at = (t: number) => (t <= HANDOVER ? t : HANDOVER + (t - HANDOVER) * pace);
+  return {
+    at,
+    pace,
+    // Pin length; afterwards the scene leaves with the page.
+    distance: at(4.9),
+    shown: 0.68, // Process has handed over the frame
+    rise: 0.7,
+    shrink: [0.7, at(3.1)],
+    curtain: [at(3.1), at(4.15)],
+    weather: [at(1.5), at(4.15)],
+    ink: at(3.5),
+  };
+}
 
 const STACKED = '(max-width: 1023px)';
 // A finger's own momentum already smooths the scroll: with the full lag, the car kept drifting after it.
@@ -101,9 +106,9 @@ export function useCarHandoffScene(locale: string) {
     ScrollTrigger.addEventListener('refreshInit', fit);
     fit();
 
-    // The scene is several screens below the first view, so its timelines are built right after the first
-    // paint: that takes their cost out of the page's start-up (the preloader still covers the page then).
-    // Its markup is already there, so Process finds this frame for its handoff.
+    // The scene is several screens below the first view, so on the first visit its timelines are built right
+    // after the first paint: that takes their cost out of the page's start-up (the preloader still covers the
+    // page then). Its markup is already there, so Process finds this frame for its handoff.
     const media = gsap.matchMedia();
     const build = () => media.add({
       // Re-run when the layout switches between stacked and side by side. One of the two always matches,
@@ -154,6 +159,8 @@ export function useCarHandoffScene(locale: string) {
       ScrollTrigger.addEventListener('refreshInit', measureHeader);
       measureHeader();
       const carFrom = desktop ? CAR_FROM.sideBySide : CAR_FROM.stacked;
+      const AT = timing(desktop ? PACE.desktop : PACE.mobile);
+      const { at, pace } = AT;
       // The nose starts just below the frame, with the car at its start scale around its centre.
       const startY = () => vh() - car.offsetTop
         - (car.offsetHeight * (1 - carFrom)) / 2 - car.offsetHeight * carFrom * NOSE_INSET;
@@ -161,7 +168,7 @@ export function useCarHandoffScene(locale: string) {
       const trigger = {
         trigger: section,
         start: 'top top',
-        end: () => `+=${vh() * DISTANCE}`,
+        end: () => `+=${vh() * AT.distance}`,
         invalidateOnRefresh: true,
       };
 
@@ -173,18 +180,22 @@ export function useCarHandoffScene(locale: string) {
           id: 'scene-car-handoff',
           pin,
           pinSpacing: true,
-          anticipatePin: 1,
+          // On touch, anticipation snaps the visible final frame back to the top when scrolling up.
+          // Going down, Process keeps this pin invisible until after its start.
+          anticipatePin: touch ? 0 : 1,
+          // While fixed, the scene's layers may reach below the pin (car-handoff.css, phone toolbars).
+          toggleClass: { targets: pin, className: 'is-pinned' },
           scrub: 0.5 * (touch ? TOUCH_LAG : 1),
           onUpdate: ({ progress }) => { section.dataset.progress = progress.toFixed(4); },
         },
       });
-      scene.to({}, { duration: DISTANCE }, 0);
+      scene.to({}, { duration: AT.distance }, 0);
 
       const enter = (targets: gsap.TweenTarget, position: number) => scene.fromTo(targets,
         { opacity: 0, yPercent: 30, ...blur(touch, 10) },
-        { opacity: 1, yPercent: 0, ...blur(touch, 0), duration: 0.27 * PACE, stagger: 0.054 * PACE, ease: 'power3.out' }, position);
+        { opacity: 1, yPercent: 0, ...blur(touch, 0), duration: 0.27 * pace, stagger: 0.054 * pace, ease: 'power3.out' }, position);
       const leave = (targets: gsap.TweenTarget, position: number) => scene.to(targets,
-        { opacity: 0, yPercent: -20, ...blur(touch, 8), duration: 0.18 * PACE, stagger: 0.036 * PACE }, position);
+        { opacity: 0, yPercent: -20, ...blur(touch, 8), duration: 0.18 * pace, stagger: 0.036 * pace }, position);
 
       enter(lines('a'), 0.55);
       // Once the car has parked, the first headline drops out of the frame behind it, a little
@@ -195,7 +206,7 @@ export function useCarHandoffScene(locale: string) {
       scene.fromTo(select('[data-text="a"]'), { y: 0, opacity: 1 }, {
         y: () => (stacked() ? -0.1 : 1) * vh(),
         opacity: () => (stacked() ? 0 : 1),
-        duration: 0.85 * PACE,
+        duration: 0.85 * pace,
       }, at(1.85));
       enter(lines('b'), at(2.6));
       leave(lines('b'), at(3.25));
@@ -207,8 +218,8 @@ export function useCarHandoffScene(locale: string) {
       scene.fromTo(select('[data-handoff-grade]'), { backgroundColor: '#ffffff' },
         { backgroundColor: '#b9bfc9', duration: weatherTo - weatherFrom }, weatherFrom);
       // Ink over the bright sky, white over the overcast one: switched while no lettering is shown.
-      scene.fromTo(section, { '--handoff-ink': '#101112' }, { '--handoff-ink': '#fffcf7', duration: 0.05 * PACE }, AT.ink);
-      scene.fromTo(select('[data-handoff-contrast]'), { opacity: 0 }, { opacity: 1, duration: 0.05 * PACE }, AT.ink);
+      scene.fromTo(section, { '--handoff-ink': '#101112' }, { '--handoff-ink': '#fffcf7', duration: 0.05 * pace }, AT.ink);
+      scene.fromTo(select('[data-handoff-contrast]'), { opacity: 0 }, { opacity: 1, duration: 0.05 * pace }, AT.ink);
       enter(lines('c'), at(4.25));
 
       // Car timeline: same range, heavier scrub for some inertia. The world never moves, only the car.
@@ -216,7 +227,7 @@ export function useCarHandoffScene(locale: string) {
         defaults: { ease: 'none' },
         scrollTrigger: { ...trigger, id: 'scene-car-handoff-cars', scrub: touch ? TOUCH_LAG : 1 },
       });
-      cars.to({}, { duration: DISTANCE }, 0);
+      cars.to({}, { duration: AT.distance }, 0);
       // It rises at the speed of the scroll until it reaches its box, as if the page carried it…
       cars.fromTo(car, { y: startY }, { y: 0, duration: () => startY() / vh() }, AT.rise);
       // …while it shrinks slowly, then faster, as it flies away from the camera.
@@ -259,16 +270,23 @@ export function useCarHandoffScene(locale: string) {
       ScrollTrigger.sort();
       scheduleScrollRefresh();
     };
-    // When the browser is idle, so the hero photograph paints first; within half a second in any case.
+    // Under the preloader, when the browser is idle, so the hero photograph paints first; within half a
+    // second in any case. Without it (back to the Home from another page) at once: a pin makes GSAP queue
+    // a forced refresh for the next frame, and built late that refresh stopped the visitor's first scroll.
     let idle = 0;
     let timer = 0;
-    const frame = requestAnimationFrame(() => {
-      if (typeof requestIdleCallback === 'function') idle = requestIdleCallback(start, { timeout: 500 });
-      else timer = window.setTimeout(start, 50);
-    });
+    let frame = 0;
+    if (document.querySelector('.preloader')) {
+      frame = requestAnimationFrame(() => {
+        if (typeof requestIdleCallback === 'function') idle = requestIdleCallback(start, { timeout: 500 });
+        else timer = window.setTimeout(start, 50);
+      });
+    } else {
+      start();
+    }
 
+    // Images never change the layout (boxes sized by CSS): only fonts and translations ask for a refresh.
     refreshAfterFonts();
-    section.addEventListener('load', scheduleScrollRefresh, true);
     const observer = new MutationObserver(scheduleScrollRefresh);
     observer.observe(section, { characterData: true, subtree: true });
     scheduleScrollRefresh();
@@ -278,7 +296,6 @@ export function useCarHandoffScene(locale: string) {
       if (idle) cancelIdleCallback(idle);
       window.clearTimeout(timer);
       observer.disconnect();
-      section.removeEventListener('load', scheduleScrollRefresh, true);
       ScrollTrigger.removeEventListener('refreshInit', fit);
       media.revert();
       delete section.dataset.motion;

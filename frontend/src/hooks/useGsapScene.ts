@@ -8,10 +8,11 @@ gsap.registerPlugin(ScrollTrigger);
 
 export type SceneKind = 'hero' | 'process';
 
-// Scroll per scene, in viewports: 15 % shorter since 17-10-2026 (it took too much scrolling).
+// Scroll per scene, in viewports: 15 % shorter since 17-10-2026 (it took too much scrolling), and on phones
+// shorter again after the user tried it on an iPhone the same day.
 const scrollDistance: Record<SceneKind, { desktop: number; mobile: number }> = {
-  hero: { desktop: 2.125, mobile: 1.7 },
-  process: { desktop: 2.55, mobile: 2.125 },
+  hero: { desktop: 2.125, mobile: 1.25 },
+  process: { desktop: 2.55, mobile: 1.6 },
 };
 
 // Scrub smoothing in seconds: the car scene carries more inertia than lettering.
@@ -29,8 +30,8 @@ const HERO_DEPTH = 1.06;
 // `dark` is the handoff layer's opacity at which the sky has turned mid-grey (it used to be reached at 0.72 of the pin).
 const HERO_TONE = { light: 0.45, dark: 0.44 };
 // The hero is fully darkened by the time Process starts to rise over it (scroll distance, in viewports).
-// Process rises over the hero's last viewport, so this moved with the shorter scene (1.45 → 1.075).
-const HERO_DARKEN_BY = 1.075;
+// Process rises over the hero's last viewport, so this moves with the scene's length (the same share of it on phones).
+const HERO_DARKEN_BY = { desktop: 1.075, mobile: 0.8 };
 // Process lands instead of stopping dead: its lettering rises this much lower (in viewports) and, once
 // pinned, keeps rising and slows to rest over twice that scroll. power1.out starts at twice its average
 // speed, so the lettering leaves the scroll at the scroll's own speed, with no hard stop.
@@ -99,6 +100,8 @@ export function useGsapScene(kind: SceneKind, id: string) {
             pinSpacing: true,
             // Process starts with its words already placed: pre-pinning would make them jump.
             anticipatePin: kind === 'process' ? 0 : 1,
+            // While fixed, the scene's layers may reach below the pin (scenes.css, phone toolbars).
+            toggleClass: { targets: pin, className: 'is-pinned' },
             invalidateOnRefresh: true,
             onUpdate: (trigger) => {
               section.dataset.progress = trigger.progress.toFixed(4);
@@ -143,9 +146,10 @@ export function useGsapScene(kind: SceneKind, id: string) {
             },
           }) : null;
           if (darken) {
-            const fullyDarkFrom = Math.max(distance * 0.6, HERO_DARKEN_BY);
+            const darkenBy = HERO_DARKEN_BY[desktop ? 'desktop' : 'mobile'];
+            const fullyDarkFrom = Math.max(distance * 0.6, darkenBy);
             darken.to({}, { duration: distance }, 0);
-            darken.fromTo(handoff, { opacity: 0 }, { opacity: 0.88, duration: HERO_DARKEN_BY * 2 / 3 }, HERO_DARKEN_BY / 3);
+            darken.fromTo(handoff, { opacity: 0 }, { opacity: 0.88, duration: darkenBy * 2 / 3 }, darkenBy / 3);
             darken.to(handoff, { opacity: 1, duration: distance - fullyDarkFrom }, fullyDarkFrom);
           }
 
@@ -226,9 +230,9 @@ export function useGsapScene(kind: SceneKind, id: string) {
       section,
     );
 
-    // Fonts, replacement assets and translations may change the layout.
+    // Fonts and translations may change the layout. Images do not: their boxes are sized by CSS, and a
+    // refresh for each late image interrupted the scroll on phones.
     refreshAfterFonts();
-    section.addEventListener('load', scheduleScrollRefresh, true);
     const observer = new MutationObserver(scheduleScrollRefresh);
     // Ignore child-list changes: ScrollTrigger temporarily reparents the pin on refresh.
     observer.observe(section, { characterData: true, subtree: true });
@@ -236,7 +240,6 @@ export function useGsapScene(kind: SceneKind, id: string) {
 
     return () => {
       observer.disconnect();
-      section.removeEventListener('load', scheduleScrollRefresh, true);
       matchMedia.revert();
       delete section.dataset.motion;
       delete section.dataset.progress;

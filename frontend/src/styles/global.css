@@ -34,7 +34,7 @@ dialog { overscroll-behavior: contain; }
 /* The hero's sky reaches mid-grey around the tone switch: pure black ink before it and a
    tight halo after it keep AA contrast. */
 .site-header[data-tone-scene='hero'][data-tone='light'] { color: #000; }
-.site-header[data-tone-scene='hero'][data-tone='dark'] { text-shadow: 0 0 1px rgb(9 10 12 / .8), 0 0 3px rgb(9 10 12 / .5), 0 0 .5em rgb(9 10 12 / .3); }
+.site-header[data-tone-scene='hero'][data-tone='dark'] { text-shadow: 0 0 1px rgb(9 10 12 / calc(.8 * var(--language-alpha, 1))), 0 0 3px rgb(9 10 12 / calc(.5 * var(--language-alpha, 1))), 0 0 .5em rgb(9 10 12 / calc(.3 * var(--language-alpha, 1))); }
 .site-header[data-tone-scene='hero'][data-tone='dark'] button { text-shadow: inherit; }
 /* Quick return (Header.tsx): the header slides away while reading down and comes back on the way up.
    Over page content it uses frosted glass, the same glass as the catalogue pill; at the top and over
@@ -165,25 +165,28 @@ dialog { overscroll-behavior: contain; }
   #main-content { animation: page-in 260ms var(--ease-out) backwards; }
 }
 @keyframes page-in { from { opacity: 0; } }
-/* Language change (LanguageSwitcher.tsx): only the lettering fades out and back in; photographs, cars, rules and
-   backgrounds stay put. Text blocks, and links or buttons holding a photograph, fade the colour of their text, so the
-   rules, radios and photographs in them stay. A link or button sized by its own words fades whole, so its new width
-   never shows as a jump. !important wins over the scenes' inline (GSAP) styles only for these 440 ms. */
-html.lang-out :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption),
-html.lang-out :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption) * { color: transparent !important; }
-html.lang-out :is(a:not(.header-brand, .footer-brand, .catalogue-cta, .language-switcher a, :has(img)), .catalogue-cta__label, button:not(.menu-toggle, .select__trigger, :has(img))) { opacity: 0 !important; }
-html.lang-out :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption),
-html.lang-out :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption) *,
-html.lang-out :is(a:not(.header-brand, .footer-brand, .catalogue-cta, .language-switcher a, :has(img)), .catalogue-cta__label, button:not(.menu-toggle, .select__trigger, :has(img))) { transition: color 160ms var(--ease-in-out), opacity 160ms var(--ease-in-out) !important; }
-html.lang-in :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption),
-html.lang-in :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption) *,
-html.lang-in :is(a:not(.header-brand, .footer-brand, .catalogue-cta, .language-switcher a, :has(img)), .catalogue-cta__label, button:not(.menu-toggle, .select__trigger, :has(img))) { transition: color 280ms var(--ease-out), opacity 280ms var(--ease-out) !important; }
-/* Text React creates for the new language (lists keyed by their copy, a note only one language has) starts hidden too
-   and fades in with the rest instead of appearing at once. */
-@starting-style {
-  html.lang-in :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption),
-  html.lang-in :is(h1, h2, h3, h4, p, li, dt, dd, label, legend, figcaption, a:has(img), button:has(img), .select__value, .asset-slot__caption) * { color: transparent !important; }
-  html.lang-in :is(a:not(.header-brand, .footer-brand, .catalogue-cta, .language-switcher a, :has(img)), .catalogue-cta__label, button:not(.menu-toggle, .select__trigger, :has(img))) { opacity: 0 !important; }
+/* One inherited progress for the whole language fade (timings match LanguageSwitcher.tsx).
+   Transitioning color on both parents and children made inherited text lag and snap in WebKit. */
+@property --language-alpha { syntax: '<number>'; inherits: true; initial-value: 1; }
+@keyframes language-out { from { --language-alpha: 1; } to { --language-alpha: 0; } }
+@keyframes language-in { from { --language-alpha: 0; } to { --language-alpha: 1; } }
+html.lang-out { animation: language-out 160ms var(--ease-in-out) forwards; }
+html.lang-in { animation: language-in 280ms var(--ease-out) forwards; }
+/* Fill only the glyphs: currentColor, GSAP's inline styles, photographs, rules, radios and backgrounds
+   remain intact. Each element uses its own color, at any nesting depth. Newly mounted text inherits
+   the same progress immediately, with no separate transition or starting-style to restart. */
+html:is(.lang-out, .lang-in) :is(body, body *),
+html:is(.lang-out, .lang-in) body *::before,
+html:is(.lang-out, .lang-in) body *::after,
+html:is(.lang-out, .lang-in) body *::placeholder {
+  -webkit-text-fill-color: color-mix(in srgb, currentColor calc(var(--language-text-alpha, var(--language-alpha)) * 100%), transparent) !important;
+}
+/* Word-sized controls fade whole to hide width changes. Full ink inside prevents a double fade.
+   An opacity filter uses the same progress without replacing disabled or GSAP-owned opacity. */
+html:is(.lang-out, .lang-in) :is(a:not(.header-brand, .footer-brand, .catalogue-cta, .language-switcher a, :has(img)), .catalogue-cta__label, button:not(.menu-toggle, .select__trigger, :has(img))) {
+  --language-text-alpha: 1;
+  filter: opacity(var(--language-alpha)) !important;
+  transition: none !important;
 }
 /* Touch: small links and buttons answer to a taller area (44 px, --tap) around them, invisible and without moving
    anything. Where neighbours are closer, the group sets a smaller --tap so no two areas overlap. */

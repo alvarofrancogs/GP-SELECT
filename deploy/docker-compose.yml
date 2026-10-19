@@ -23,6 +23,8 @@ services:
       # Upload site for self-hosted storage; without one, an address that never matches.
       S3_SITE: ${S3_DOMAIN:-http://storage.disabled.invalid}
       REDIRECT_DOMAINS: ${REDIRECT_DOMAINS:-http://redirect.disabled.invalid}
+      # Where the Admin's browser uploads photos: the address the API signs upload URLs for (CSP connect-src).
+      CSP_UPLOAD_ORIGIN: ${S3_PUBLIC_ENDPOINT:-${S3_ENDPOINT:?}}
       ACME_EMAIL: ${ACME_EMAIL:?}
       CADDY_EXTRA_GLOBAL: ${CADDY_EXTRA_GLOBAL:-}
     ports:

@@ -28,7 +28,6 @@ export const es: Dictionary = {
     "onRequest": "Precio bajo consulta",
     "comingSoon": "Próximamente",
     "reserved": "Reservado",
-    "ownership": "Según la operación, el coche se compra directamente a tu nombre o te lo vende GP SELECT con su factura. Te confirmamos cuál antes de la compra.",
     "sold": "Vendido",
     "showMore": "Ver más",
     "empty": "Ningún vehículo coincide con tu búsqueda.",

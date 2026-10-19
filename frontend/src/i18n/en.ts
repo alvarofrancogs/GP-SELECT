@@ -28,7 +28,6 @@ export const en: Dictionary = {
     "onRequest": "Price on request",
     "comingSoon": "Coming soon",
     "reserved": "Reserved",
-    "ownership": "Depending on the transaction, the car is bought directly in your name or sold to you by GP SELECT with its own invoice. We confirm which before the purchase.",
     "sold": "Sold",
     "showMore": "Show more",
     "empty": "No vehicles match your search.",
