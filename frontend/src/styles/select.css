@@ -2,7 +2,7 @@
    filters and the Admin (Select.tsx, SuggestInput.tsx). Contexts only adjust the trigger's size. */
 .select { position: relative; min-width: 0; }
 .select__trigger {
-  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+  display: flex; align-items: center; justify-content: flex-start; gap: .875rem;
   width: 100%; min-width: 0; min-height: 2.75rem; padding: .65rem 0;
   border: 0; border-bottom: 1px solid var(--interior-rule, var(--color-line)); border-radius: 0;
   background: transparent; color: var(--color-ink); font: inherit; text-align: left; cursor: pointer;
@@ -15,7 +15,7 @@
 .select__chevron {
   flex: 0 0 auto; width: .4rem; height: .4rem; margin: 0 .2rem .2rem 0;
   border-right: 1px solid currentColor; border-bottom: 1px solid currentColor;
-  transform: rotate(45deg); transition: transform 280ms var(--ease-cinematic);
+  transform: rotate(45deg); transition: transform 200ms var(--ease-out);
 }
 .select[data-open] .select__chevron { transform: translateY(.225rem) rotate(-135deg); }
 
@@ -33,7 +33,7 @@
 .select__list:focus { outline: none; }
 .select__option {
   position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  min-height: 2.5rem; padding: .55rem 1rem; color: var(--color-muted); cursor: pointer;
+  min-height: 2.75rem; padding: .55rem 1rem; color: var(--color-muted); cursor: pointer;
   transition: color 160ms var(--ease-out), background-color 160ms var(--ease-out);
 }
 .select__option[data-active] { color: var(--color-ink); background: rgb(16 17 18 / .055); }
@@ -45,7 +45,23 @@
 @keyframes select-unfold { from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(-.35rem); } to { opacity: 1; clip-path: inset(0 0 0 0); transform: none; } }
 @keyframes select-unfold-up { from { opacity: 0; clip-path: inset(100% 0 0 0); transform: translateY(.35rem); } to { opacity: 1; clip-path: inset(0 0 0 0); transform: none; } }
 
+/* A persistent panel lets both directions transition, including rapid reversals. */
+.select--custom .select__list {
+  animation: none; opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-.25rem) scaleY(.97);
+  transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out), visibility 0s 200ms;
+}
+.select--custom[data-above] .select__list { transform: translateY(.25rem) scaleY(.97); }
+.select--custom[data-open] .select__list {
+  opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition-delay: 0s;
+}
+.select__native { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font: inherit; font-size: 1rem; }
+.select--native .select__value { white-space: normal; overflow-wrap: anywhere; }
+.select--native:has(:focus-visible) .select__trigger { outline: 2px solid var(--color-ink); outline-offset: 4px; }
+.select--native:has([aria-invalid='true']) .select__trigger { border-bottom: 2px solid var(--admin-alert, #9b1c1c); }
+.select--native [data-disabled] { color: var(--color-muted); border-bottom-style: dotted; }
+
 @media (prefers-reduced-motion: reduce) {
   .select__list { animation: none; }
   .select__chevron { transition: none; }
+  .select--custom .select__list { transition: none; }
 }

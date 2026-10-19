@@ -22,7 +22,7 @@ public sealed record EnquiryNotification(Guid EnquiryId, string Subject, string 
         return new(e.Id,
             // Name is one line (validated), so it is safe in a subject.
             $"GP SELECT · {subject}{(e.Language == EnquiryLanguage.En ? " · en inglés" : "")} · {e.Name}",
-            string.Join('\n',
+            string.Join('\n', new string?[] {
                 $"Tipo: {type}",
                 $"Idioma: {(e.Language == EnquiryLanguage.En ? "inglés (responde en inglés)" : "español")}",
                 $"Nombre: {e.Name}",
@@ -30,10 +30,14 @@ public sealed record EnquiryNotification(Guid EnquiryId, string Subject, string 
                 $"Teléfono: {e.Phone ?? "—"}",
                 $"Vehículo: {e.Vehicle ?? "—"}",
                 $"Presupuesto: {e.Budget ?? "—"}",
+                e.Delivery is null ? null : $"Entrega en: {e.Delivery}",
+                e.VehicleYear is null ? null : $"Año: {e.VehicleYear}",
+                e.Mileage is null ? null : $"Kilometraje aproximado: {e.Mileage}",
+                e.Timeframe is null ? null : $"Para cuándo: {e.Timeframe}",
                 $"Recibida: {e.CreatedAt:yyyy-MM-dd HH:mm} UTC",
                 $"Referencia: {e.Id}",
                 "",
-                e.Message ?? "(sin mensaje)"),
+                e.Message ?? "(sin mensaje)" }.Where(line => line is not null)),
             e.Email);
     }
 }

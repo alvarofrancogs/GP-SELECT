@@ -51,7 +51,7 @@ public sealed class Infra2BackendTests(ApiFactory api) : IClassFixture<ApiFactor
     {
         var (vehicle, _) = await SeedVehicle(available: true);
         var response = await api.Admin.PostAsJsonAsync($"/api/admin/vehicles/{vehicle.Id}/save",
-            new { changes = new { priceEur = 0 }, status = new { status = target, showWhenSold = true } });
+            new { changes = new { priceEur = 0 }, status = new { status = target } });
         Assert.Equal(expected, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
         if (expected != HttpStatusCode.OK) Assert.Equal("price_zero", body.GetProperty("code").GetString());
@@ -59,7 +59,7 @@ public sealed class Infra2BackendTests(ApiFactory api) : IClassFixture<ApiFactor
         var saved = await scope.ServiceProvider.GetRequiredService<GpSelectDbContext>().Vehicles.FindAsync(vehicle.Id);
         Assert.Equal(expected == HttpStatusCode.OK ? VehicleStatus.Sold : VehicleStatus.Available, saved!.Status);
         Assert.Equal(expected == HttpStatusCode.OK ? 0m : 100m, saved.PriceEur);
-        if (expected == HttpStatusCode.OK) Assert.True(saved.ShowWhenSold);
+        if (expected == HttpStatusCode.OK) Assert.True(VehicleVisibility.IsInCatalogue(saved.Status));
     }
 
     [Theory]

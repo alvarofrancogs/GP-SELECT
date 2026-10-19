@@ -69,7 +69,7 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
         // 503 lets the proxy fall back to the plain SPA, which still works (it loads the vehicle itself).
         if (html is null) return StatusCode(StatusCodes.Status503ServiceUnavailable);
 
-        var vehicle = await db.Vehicles.AsNoTracking().Where(PublicVehiclesController.WithPublicDetail)
+        var vehicle = await db.Vehicles.AsNoTracking().Where(PublicVehiclesController.Listed)
             .FirstOrDefaultAsync(x => x.PublicSlug == slug, ct);
         string? page;
         if (vehicle is null)
@@ -99,7 +99,7 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
     {
         var site = SiteUrl();
         if (site is null) return NotFound();
-        // The listed vehicles only: a sold one kept off the list is reachable by its link but not promoted.
+        // The sitemap follows the catalogue, including every sold vehicle.
         var vehicles = await db.Vehicles.AsNoTracking().Where(PublicVehiclesController.Listed)
             .OrderByDescending(x => x.UpdatedAt).Select(x => new { x.PublicSlug, x.UpdatedAt }).ToListAsync(ct);
         // The catalogue changes whenever a vehicle that was ever public changes, including when it leaves the list.

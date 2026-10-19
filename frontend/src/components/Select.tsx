@@ -1,8 +1,15 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
 import { opensAbove, scrollOptionIntoView } from '../lib/listbox';
 import '../styles/select.css';
 
 const fold = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const nativeQuery = '(pointer: coarse), (max-width: 767px)';
+const usesNativeSelect = () => window.matchMedia?.(nativeQuery).matches ?? false;
+function subscribePointer(onChange: () => void) {
+  const media = window.matchMedia?.(nativeQuery);
+  media?.addEventListener('change', onChange);
+  return () => media?.removeEventListener('change', onChange);
+}
 
 export interface SelectOption { value: string; label: string }
 
@@ -17,6 +24,7 @@ interface SelectProps {
   disabled?: boolean;
   'aria-describedby'?: string;
   'aria-invalid'?: true;
+  'aria-required'?: boolean;
 }
 
 /**
@@ -26,6 +34,7 @@ interface SelectProps {
  */
 export function Select({ value, options, onChange, labelledBy, id, className = '', disabled, ...aria }: SelectProps) {
   const ownId = useId();
+  const native = useSyncExternalStore(subscribePointer, usesNativeSelect, () => false);
   const baseId = id ?? ownId;
   const listId = `${baseId}-listbox`;
   const root = useRef<HTMLDivElement>(null);
@@ -57,10 +66,28 @@ export function Select({ value, options, onChange, labelledBy, id, className = '
   // Opens upwards when the list would not fit below the trigger, and lines up with the trigger's right
   // edge when it would cross the page's (on a narrow screen the list is wider than its trigger).
   useLayoutEffect(() => {
-    if (!open || !trigger.current || !list.current) return;
-    setAbove(opensAbove(trigger.current, list.current));
-    setAlignEnd(trigger.current.getBoundingClientRect().left + list.current.offsetWidth > document.documentElement.clientWidth);
-  }, [open]);
+    if (!open || native) return;
+    function position() {
+      if (!trigger.current || !list.current) return;
+      const box = trigger.current.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      const top = Math.max(viewport?.offsetTop ?? 0, document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0);
+      const bottom = (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight);
+      const above = opensAbove(trigger.current, list.current) && box.top - top > bottom - box.bottom;
+      setAbove(above);
+      list.current.style.maxHeight = `${Math.max(0, Math.min(288, (above ? box.top - top : bottom - box.bottom) - 16))}px`;
+      setAlignEnd(box.left + list.current.offsetWidth > document.documentElement.clientWidth);
+    }
+    position();
+    window.addEventListener('scroll', position, { passive: true });
+    window.addEventListener('resize', position);
+    window.visualViewport?.addEventListener('resize', position);
+    return () => {
+      window.removeEventListener('scroll', position);
+      window.removeEventListener('resize', position);
+      window.visualViewport?.removeEventListener('resize', position);
+    };
+  }, [open, native]);
 
   useEffect(() => {
     if (open && list.current) scrollOptionIntoView(list.current, active);
@@ -118,7 +145,19 @@ export function Select({ value, options, onChange, labelledBy, id, className = '
     }
   }
 
-  return <div ref={root} className={`select ${className}`.trim()} data-open={open || undefined} data-above={above || undefined} data-align-end={alignEnd || undefined}>
+  // The OS picker owns viewport fitting, scrolling and touch accessibility on small/coarse screens.
+  if (native) return <div className={`select select--native ${className}`.trim()}>
+    <div className="select__trigger" data-disabled={disabled || undefined}>
+      <span className="select__value" aria-hidden="true">{selected?.label}</span>
+      <span className="select__chevron" aria-hidden="true" />
+      <select id={baseId} className="select__native" value={value} disabled={disabled} aria-labelledby={labelledBy}
+        {...aria} onChange={(event) => onChange(event.target.value)}>
+        {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+      </select>
+    </div>
+  </div>;
+
+  return <div ref={root} className={`select select--custom ${className}`.trim()} data-open={open || undefined} data-above={above || undefined} data-align-end={alignEnd || undefined}>
     <button ref={trigger} id={baseId} type="button" className="select__trigger" role="combobox" disabled={disabled}
       aria-haspopup="listbox" aria-expanded={open} aria-controls={listId} aria-labelledby={labelledBy}
       aria-activedescendant={open ? optionId(active) : undefined} {...aria}
@@ -128,11 +167,11 @@ export function Select({ value, options, onChange, labelledBy, id, className = '
       <span className="select__value">{selected?.label}</span>
       <span className="select__chevron" aria-hidden="true" />
     </button>
-    <ul ref={list} id={listId} className="select__list" role="listbox" aria-labelledby={labelledBy} tabIndex={-1} hidden={!open}>
+    <ul ref={list} id={listId} className="select__list" role="listbox" aria-labelledby={labelledBy} tabIndex={-1} aria-hidden={!open} inert={!open}>
       {options.map((option, index) => <li key={option.value} id={optionId(index)} role="option" className="select__option"
         aria-selected={option.value === value} data-active={index === active || undefined}
         onPointerDown={(event) => event.preventDefault()} onPointerMove={() => { pointed.current = true; setActive(index); }}
-        onClick={() => { choose(index); trigger.current?.focus(); }}>
+        onClick={() => { choose(index); trigger.current?.focus({ preventScroll: true }); }}>
         <span>{option.label}</span>
       </li>)}
     </ul>

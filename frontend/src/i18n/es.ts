@@ -135,6 +135,9 @@ export const es: Dictionary = {
       images: { opening: 'Vehículo en contexto · fotografía pendiente', detail: 'Detalle · fotografía pendiente' },
     },
     import: {
+      formFields: { delivery: '¿Entrega en?', make: 'Marca', model: 'Modelo', year: 'Año', mileage: 'Kilometraje aproximado', timeframe: 'Para cuándo lo necesitas', budget: 'Presupuesto estimado', message: 'Detalles adicionales' },
+      placeholders: { delivery: 'Ej: Murcia, España', make: 'Ej: BMW', model: 'Ej: M4 CS', year: 'Ej: 2021 o posterior', mileage: 'Ej: menos de 50.000 km', timeframe: 'Ej: en los próximos 3 meses' },
+      formErrors: { delivery: 'Indica el país o la ciudad de entrega o matriculación (máximo 120 caracteres).', make: 'Indica la marca (máximo 100 caracteres; marca y modelo juntos, 200).', model: 'Indica el modelo (máximo 100 caracteres).', year: 'El año no puede superar los 40 caracteres.', mileage: 'El kilometraje no puede superar los 60 caracteres.', timeframe: 'El plazo no puede superar los 60 caracteres.', message: 'Los detalles no pueden superar los 5.000 caracteres.' },
       overviewTitle: "De la búsqueda a la entrega.",
       overviewItems: ["Búsqueda según tus preferencias y presupuesto.", "Revisión de la información disponible de cada unidad.", "Gestión de compra, trámites, transporte y matriculación."],
       formTitle: "Cuéntanos qué buscas",

@@ -53,14 +53,14 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
         catch (DomainException e) { return DomainProblem(e); }
     }
 
-    /// <summary>Draft (withdrawn), ComingSoon, Available, Reserved or Sold (optionally kept on show in the catalogue).
+    /// <summary>Draft (withdrawn), ComingSoon, Available, Reserved or Sold (always in the catalogue, without a price).
     /// Archived uses the archive endpoint.</summary>
     [HttpPost("{id:guid}/status")]
     public async Task<IActionResult> ChangeStatus(Guid id, StatusChangeRequest r)
     {
         await using var tx = await db.Database.BeginTransactionAsync();
         var v = await db.LockVehicleAsync(id); if (v is null) return NotFound();
-        try { v.ChangeStatus(r.Status!.Value, await db.Images.Where(x => x.VehicleUnitId == id).ToListAsync(), r.ShowWhenSold); await db.SaveChangesAsync(); await tx.CommitAsync(); return Ok(await Map(v)); }
+        try { v.ChangeStatus(r.Status!.Value, await db.Images.Where(x => x.VehicleUnitId == id).ToListAsync()); await db.SaveChangesAsync(); await tx.CommitAsync(); return Ok(await Map(v)); }
         catch (DomainException e) { return DomainProblem(e); }
     }
 
@@ -82,8 +82,8 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
             // Leaving the catalogue goes first, so a vehicle being withdrawn can lose its last photo or its price in
             // the same save; entering it goes last, once the photos it needs are in place.
             var target = r.Status?.Status;
-            var leaves = target is not null && !VehicleVisibility.IsInCatalogue(target.Value, r.Status!.ShowWhenSold ?? v.ShowWhenSold);
-            if (leaves) v.ChangeStatus(target!.Value, images, r.Status!.ShowWhenSold);
+            var leaves = target is not null && !VehicleVisibility.IsInCatalogue(target.Value);
+            if (leaves) v.ChangeStatus(target!.Value, images);
             // Sold has no price requirement; validate its final cover after applying the gallery.
             else if (target == VehicleStatus.Sold) v.ChangeStatus(VehicleStatus.Draft, images);
             if (r.Changes is not null) v.Apply(r.Changes);
@@ -110,7 +110,7 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
                 publishing = ApplyVideo(v, r.Video.Keep, videos, images, queued, removed, removedVideos);
             }
             VehicleGallery.EnsureCover(images);
-            if (target is not null && !leaves) v.ChangeStatus(target.Value, images, r.Status!.ShowWhenSold);
+            if (target is not null && !leaves) v.ChangeStatus(target.Value, images);
         }
         catch (DomainException e) { return DomainProblem(e); }
 

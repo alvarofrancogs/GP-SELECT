@@ -148,6 +148,8 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Contains(english ? "This vehicle is no longer available." : "Este vehículo ya no está disponible.", html);
         Assert.DoesNotContain(english ? "Enquire about this car" : "Solicitar información", html);
         Assert.DoesNotContain(english ? "We confirm which before the purchase." : "Te confirmamos cuál antes de la compra.", html);
+        var sitemap = await api.Anonymous().GetStringAsync("/seo/sitemap.xml");
+        Assert.Contains($"{prefix}/{slug}</loc>", sitemap);
     }
 
     [Theory]
@@ -237,9 +239,9 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         var (archivedId, archived, _) = await PublishedVehicle();
         Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/admin/vehicles/{archivedId}/archive", null)).StatusCode);
         var (hiddenId, hidden, _) = await PublishedVehicle();
-        await Json(await SetStatus(hiddenId, "Sold"));
+        await Json(await SetStatus(hiddenId, "Draft"));
         var (soldId, sold, _) = await PublishedVehicle();
-        await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{soldId}/status", new { status = "Sold", showWhenSold = true }));
+        await Json(await SetStatus(soldId, "Sold"));
 
         var response = await api.Anonymous().GetAsync($"/seo{prefix}?marca=BMW");
         var html = await response.Content.ReadAsStringAsync();

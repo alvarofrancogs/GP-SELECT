@@ -5,9 +5,8 @@ namespace GpSelect.Application;
 public sealed record CreateVehicleRequest(string Make, string Model, int FirstRegistrationYear, int? FirstRegistrationMonth, string? InternalReference);
 /// <summary>PATCH body with merge-patch semantics: send only the properties that change.</summary>
 public sealed record UpdateVehicleRequest : VehicleChanges;
-/// <summary>Status is required (a missing enum would otherwise read as Draft). ShowWhenSold null keeps the
-/// current choice; it only has an effect while the vehicle is Sold.</summary>
-public sealed record StatusChangeRequest([Required] VehicleStatus? Status, bool? ShowWhenSold = null);
+/// <summary>Status is required (a missing enum would otherwise read as Draft).</summary>
+public sealed record StatusChangeRequest([Required] VehicleStatus? Status);
 /// <summary>Final order of every saved photo the vehicle keeps plus the staged ones to publish, and the photos to
 /// remove. Staged photos not in the order stay staged; without an order no staged photo is published.</summary>
 public sealed record GalleryChanges(IReadOnlyList<Guid>? Order, IReadOnlyList<Guid>? Removed);
@@ -19,16 +18,16 @@ public sealed record SaveVehicleRequest(UpdateVehicleRequest? Changes, GalleryCh
 public interface ISlugGenerator { string Generate(string make, string model); }
 /// <summary>Public contact form. Exactly the form's fields; all nullable so the domain answers with a per-field problem.</summary>
 // Language is optional so a page cached before it existed still sends; Spanish is the default.
-public sealed record CreateEnquiryRequest(EnquiryIntent? Intent, string? Name, string? Email, string? Phone, string? Vehicle, string? Message, EnquiryLanguage? Language = null, string? Budget = null);
+public sealed record CreateEnquiryRequest(EnquiryIntent? Intent, string? Name, string? Email, string? Phone, string? Vehicle, string? Message, EnquiryLanguage? Language = null, string? Budget = null, string? Delivery = null, string? Year = null, string? Mileage = null, string? Timeframe = null);
 
 public sealed record VehicleAdminListDto(Guid Id, string Slug, VehicleStatus Status, string Make, string Model, string? Variant, int Year, int? Month,
     int? MileageKm, int? PowerHp, decimal? PriceEur, string? InternalReference, string? CoverCardUrl, int ImageCount, int ReadyImageCount,
-    DateTimeOffset UpdatedAt, DateTimeOffset? PublishedAt, bool ShowWhenSold);
+    DateTimeOffset UpdatedAt, DateTimeOffset? PublishedAt);
 public sealed record VehicleAdminDto(Guid Id, string Slug, VehicleStatus Status, string Make, string Model, int Year, int? Month, decimal? PriceEur,
     string? InternalReference, string? Description, int? MileageKm, int? PowerHp, string? Variant, string? FuelType, string? Transmission,
     string? BodyType, string? Drivetrain, string? ExteriorColour, string? Interior, string? History, string? Provenance,
     IReadOnlyList<string> Equipment, IReadOnlyList<VehicleSpecification> CustomSpecifications, IReadOnlyList<ImageAdminDto> Images,
-    IReadOnlyList<VideoAdminDto> Videos, DateTimeOffset UpdatedAt, DateTimeOffset? PublishedAt, bool ShowWhenSold);
+    IReadOnlyList<VideoAdminDto> Videos, DateTimeOffset UpdatedAt, DateTimeOffset? PublishedAt);
 /// <summary><c>JobPending</c>: the worker still has a queued, running or retryable job for the photo, so its state will change.</summary>
 public sealed record ImageAdminDto(Guid Id, ImageState State, string? CardUrl, string? DetailUrl, bool IsCover, int SortOrder, string? FailureReason, bool IsStaged, bool JobPending, ImageKind Kind);
 /// <summary>A video not deleted: the saved one and any staged uploads. <c>PosterImageId</c> is its frame-0 image, once uploaded.</summary>
@@ -104,7 +103,7 @@ public static class AdminMapping
         var photos = VehicleGallery.Photos(active).ToList();
         return new(v.Id, v.PublicSlug, v.Status, v.Make, v.Model, v.Variant, v.FirstRegistrationYear, v.FirstRegistrationMonth,
             v.MileageKm, v.PowerHp, v.PriceEur, v.InternalReference, cover is null ? null : $"{Base(v)}/{cover.Id}/card",
-            photos.Count, photos.Count(x => x.State == ImageState.Ready), v.UpdatedAt, v.PublishedAt, v.ShowWhenSold);
+            photos.Count, photos.Count(x => x.State == ImageState.Ready), v.UpdatedAt, v.PublishedAt);
     }
 
     /// <param name="pendingJobs">Images the worker still has a queued or running job for.</param>
@@ -119,6 +118,6 @@ public static class AdminMapping
             VehicleGallery.InPublicOrder(active).Select(x => MapImage(v, x, pendingJobs?.Contains(x.Id) == true)).ToList(),
             videos.Where(x => x.State != VideoState.Deleted).OrderBy(x => x.CreatedAt).Select(x => new VideoAdminDto(x.Id, x.State, x.IsStaged, x.SizeBytes,
                 $"/api/admin/vehicles/{v.Id}/video/{x.Id}", active.FirstOrDefault(i => i.Kind == ImageKind.VideoPoster && i.VideoId == x.Id)?.Id)).ToList(),
-            v.UpdatedAt, v.PublishedAt, v.ShowWhenSold);
+            v.UpdatedAt, v.PublishedAt);
     }
 }

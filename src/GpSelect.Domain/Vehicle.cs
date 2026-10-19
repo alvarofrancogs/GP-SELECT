@@ -12,21 +12,15 @@ public sealed class DomainException(string code, string message, string? field =
     public string? Field { get; } = field;
 }
 
-/// <summary>Which statuses the public site may show. Listing and detail are deliberately separate.</summary>
+/// <summary>The catalogue and public detail pages share the same visibility rule.</summary>
 public static class VehicleVisibility
 {
-    /// <summary>Shown in the public catalogue and require the publication minimum.</summary>
+    /// <summary>Vehicles still for sale; these statuses require a valid public price.</summary>
     public static bool IsListed(VehicleStatus status) =>
         status is VehicleStatus.ComingSoon or VehicleStatus.Available or VehicleStatus.Reserved;
 
-    /// <summary>In the public catalogue: the listed statuses, and a sold vehicle the admin chose to keep on show.</summary>
-    public static bool IsInCatalogue(VehicleStatus status, bool showWhenSold) =>
-        IsListed(status) || (status == VehicleStatus.Sold && showWhenSold);
-
-    /// <summary>A sold vehicle keeps its public URL (the site shows it as no longer available),
-    /// but only if it was published at some point or is kept on show.</summary>
-    public static bool HasPublicDetail(VehicleStatus status, DateTimeOffset? publishedAt, bool showWhenSold = false) =>
-        IsInCatalogue(status, showWhenSold) || (status == VehicleStatus.Sold && publishedAt is not null);
+    /// <summary>Sold vehicles always remain in the catalogue, without a price.</summary>
+    public static bool IsInCatalogue(VehicleStatus status) => IsListed(status) || status == VehicleStatus.Sold;
 }
 
 public sealed class VehicleUnit
@@ -51,8 +45,6 @@ public sealed class VehicleUnit
     public DateTimeOffset CreatedAt { get; private set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; private set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? PublishedAt { get; private set; }
-    /// <summary>Only matters while Sold: keeps the vehicle in the public catalogue, marked as sold.</summary>
-    public bool ShowWhenSold { get; private set; }
 
     public static VehicleUnit Create(string make, string model, int year, int? month, string slug, string? internalReference = null)
     {
@@ -111,15 +103,14 @@ public sealed class VehicleUnit
     }
 
     /// <summary>Operational status. Archived is only reachable through <see cref="Archive"/> and left through
-    /// <see cref="Restore"/>. Entering a listed status requires the publication minimum; a sold vehicle kept on
-    /// show needs its photograph (its price is never shown). <paramref name="showWhenSold"/> null keeps the choice.</summary>
-    public void ChangeStatus(VehicleStatus next, IReadOnlyCollection<VehicleImage> images, bool? showWhenSold = null)
+    /// <see cref="Restore"/>. Every catalogue vehicle needs the publication minimum and a ready cover;
+    /// sold vehicles do not require a price and never publish it.</summary>
+    public void ChangeStatus(VehicleStatus next, IReadOnlyCollection<VehicleImage> images)
     {
         if (Status == VehicleStatus.Archived) throw new DomainException("archived", "Restore the vehicle before changing its status");
         if (!Enum.IsDefined(next)) throw new DomainException("invalid_transition", "Unknown status", "status");
         if (next == VehicleStatus.Archived) throw new DomainException("invalid_transition", "Use archive to archive a vehicle", "status");
-        var show = showWhenSold ?? ShowWhenSold;
-        if (VehicleVisibility.IsListed(next) || (next == VehicleStatus.Sold && show))
+        if (VehicleVisibility.IsInCatalogue(next))
         {
             if (string.IsNullOrWhiteSpace(Make) || string.IsNullOrWhiteSpace(Model) || FirstRegistrationYear < VehicleRules.FirstYear)
                 throw new DomainException("incomplete", "Minimum vehicle fields are missing");
@@ -133,7 +124,6 @@ public sealed class VehicleUnit
             PublishedAt ??= DateTimeOffset.UtcNow;
         }
         Status = next;
-        ShowWhenSold = show;
         Touch();
     }
 
@@ -242,7 +232,7 @@ public static class VehicleGallery
     public static VehicleImage? Remove(VehicleUnit vehicle, VehicleImage image, IReadOnlyCollection<VehicleImage> images)
     {
         var otherReady = images.Count(x => x.Id != image.Id && x.State == ImageState.Ready && !x.IsStaged);
-        if (VehicleVisibility.IsInCatalogue(vehicle.Status, vehicle.ShowWhenSold) && image.State == ImageState.Ready && !image.IsStaged && otherReady == 0)
+        if (VehicleVisibility.IsInCatalogue(vehicle.Status) && image.State == ImageState.Ready && !image.IsStaged && otherReady == 0)
             throw new DomainException("last_public_image", "A listed vehicle needs at least one ready image; withdraw it first");
         image.SetCover(false);
         image.Delete();

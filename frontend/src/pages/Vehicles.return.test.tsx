@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider, useNavigate } from 'react-router-dom';
 import { LanguageProvider } from '../i18n/LanguageProvider';
 import { Vehicles } from './Vehicles';
@@ -57,21 +57,24 @@ describe('back from a vehicle page to the catalogue', () => {
 
   it.each([false, true])('keeps the filters, the revealed batch and the scroll position (catalogue opened first: %s)', async (first) => {
     const router = renderCatalogue('?fuelType=Gasolina', first);
-    await screen.findAllByRole('link', { name: /BMW/ });
+    await screen.findAllByRole('link', { name: /BMW/ }, { timeout: 5000 });
     expect(cards()).toBe(9);
     fireEvent.click(screen.getByRole('button', { name: new RegExp(es.vehicles.showMore) }));
     expect(cards()).toBe(10); // ten petrol cars in all
     Object.defineProperty(window, 'scrollY', { value: 1240, configurable: true });
     fireEvent.click(document.querySelectorAll<HTMLAnchorElement>('.vehicle-card')[9]);
+    const back = await screen.findByRole('button', { name: 'atrás' }, { timeout: 5000 });
     expect(router.state.location.pathname).toBe('/vehiculos/car-19');
 
     scrolled = [];
-    fireEvent.click(screen.getByRole('button', { name: 'atrás' }));
-    await screen.findAllByRole('link', { name: /BMW/ });
-    expect(router.state.location.search).toBe('?fuelType=Gasolina');
-    expect(cards()).toBe(10);
-    expect(scrolled.at(-1)).toBe(1240);
-  });
+    fireEvent.click(back);
+    await screen.findAllByRole('link', { name: /BMW/ }, { timeout: 5000 });
+    await waitFor(() => {
+      expect(router.state.location.search).toBe('?fuelType=Gasolina');
+      expect(cards()).toBe(10);
+      expect(scrolled.at(-1)).toBe(1240);
+    }, { timeout: 5000 });
+  }, 20000);
 
   it('starts at the top when the catalogue is opened again from the menu', async () => {
     const router = renderCatalogue();

@@ -205,6 +205,14 @@ html:is(.lang-out, .lang-in) :is(a:not(.header-brand, .footer-brand, .catalogue-
 .language-switcher__active { position: absolute; bottom: .25rem; left: .625rem; right: .625rem; height: 2px; background: currentColor; opacity: 0; }
 .language-switcher a[aria-current='true'] .language-switcher__active { opacity: 1; }
 .language-switcher a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+/* A solid paper surface keeps returning navigation legible over these forms and lists. */
+body:has(:is(.contact-page, .import-page, .vehicles-page)) .header-backdrop[data-glass='light'] {
+  background: var(--color-paper); backdrop-filter: none;
+}
+@media (max-width: 374px) {
+  body:has(:is(.contact-page, .import-page, .vehicles-page)) .header-brand { font-size: 1.1rem; }
+  body:has(:is(.contact-page, .import-page, .vehicles-page)) .header-actions { gap: .5rem; }
+}
 @media (hover: hover) and (pointer: fine) {
   .language-switcher a:hover { outline: 1px solid currentColor; outline-offset: -4px; }
 }

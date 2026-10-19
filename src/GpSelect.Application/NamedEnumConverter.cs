@@ -42,6 +42,7 @@ public static class ApiJsonOptions
 {
     public static void Configure(JsonSerializerOptions options)
     {
+        // Keep the default unknown-property handling: cached Admin clients may still send showWhenSold.
         options.Converters.Add(new NamedEnumConverterFactory());
         options.Converters.Add(new OptionalJsonConverterFactory());
     }

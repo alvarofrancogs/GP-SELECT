@@ -65,7 +65,6 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
   const [videoKeep, setVideoKeep] = useState<string | null | undefined>(undefined);
   const [removed, setRemoved] = useState<string[]>([]);
   const [status, setStatus] = useState<SettableStatus>(initial.status === 'Archived' ? 'Draft' : initial.status);
-  const [showWhenSold, setShowWhenSold] = useState(initial.showWhenSold);
   const [uploaderKey, setUploaderKey] = useState(0);
   const actionRef = useRef(false);
   const galleryVersion = useRef(0);
@@ -94,7 +93,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     || keptPoster?.state === 'Processing' || keptPoster?.jobPending === true);
   const galleryDirty = removed.length > 0 || visibleImages.some((image) => image.isStaged)
     || JSON.stringify(visibleImages.map((image) => image.id)) !== JSON.stringify(vehicle.images.filter((image) => image.kind !== 'VideoPoster' && !image.isStaged).map((image) => image.id));
-  const statusDirty = status !== vehicle.status || (status === 'Sold' && showWhenSold !== vehicle.showWhenSold);
+  const statusDirty = status !== vehicle.status;
   const dirty = !archived && (formSignature(form) !== savedSignature || galleryDirty || statusDirty || pendingUploads || videoKeep !== undefined);
   const processing = !archived && (uploading || uploadState === 'working'
     || posterProcessing || visibleImages.some((image) => image.state === 'Processing' || (image.state === 'PendingUpload' && image.jobPending)));
@@ -167,7 +166,6 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     setVideoKeep(undefined);
     setRemoved([]);
     setStatus(updated.status === 'Archived' ? 'Draft' : updated.status);
-    setShowWhenSold(updated.showWhenSold);
     setUploadState('none'); setQueued(false);
     setPhotoUploading(false);
     setVideoUploading(false);
@@ -228,7 +226,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     if (Object.keys(patch).length) body.changes = patch;
     if (galleryDirty) body.gallery = { order: visibleImages.map((image) => image.id), removed };
     if (videoKeep !== undefined) body.video = { keep: videoKeep };
-    if (statusDirty) body.status = { status, ...(status === 'Sold' ? { showWhenSold } : {}) };
+    if (statusDirty) body.status = { status };
     if (!Object.keys(body).length) { setForm(toForm(vehicle)); setSave({ kind: 'idle' }); return; }
     actionRef.current = true;
     galleryVersion.current += 1;
@@ -276,8 +274,8 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
         </h1>
         {archived ? null : <Link to={`/admin/vehiculos/${vehicle.id}/vista-previa`} className="admin-link">{text.preview}<span aria-hidden="true">→</span></Link>}
       </div>
-      <StatusControl vehicle={archived ? vehicle : { ...vehicle, status, showWhenSold }} disabled={working}
-        onChanged={(next, visible) => { setStatus(next); setShowWhenSold(visible); setSave({ kind: 'idle' }); }} />
+      <StatusControl vehicle={archived ? vehicle : { ...vehicle, status }} disabled={working}
+        onChanged={(next) => { setStatus(next); setSave({ kind: 'idle' }); }} />
       {archived ? <div className="admin-notice admin-notice--archived" role="status"><p>{text.archivedNotice}</p>
         <RestoreVehicleButton vehicleId={vehicle.id} className="admin-link" onRestored={(restored) => { resetDraft(restored); setSave({ kind: 'idle' }); }} />
       </div> : null}

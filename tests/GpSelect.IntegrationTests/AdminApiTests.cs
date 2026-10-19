@@ -401,6 +401,30 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Equal(TimeSpan.FromDays(1), image.Headers.CacheControl!.MaxAge);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Sold_from_draft_without_a_visibility_flag_or_price_is_public(bool save)
+    {
+        var (id, slug) = await CreateVehicle();
+        await UploadImage(id);
+        var result = await Json(await (save
+            ? admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/save", new { status = new { status = "Sold" } })
+            : SetStatus(id, "Sold")));
+        Assert.Equal("Sold", result.GetProperty("status").GetString());
+        Assert.Equal(JsonValueKind.Null, result.GetProperty("publishedAt").ValueKind);
+        Assert.True(await IsListed(slug));
+        using var visitor = api.Anonymous();
+        var detail = await Json(await visitor.GetAsync($"/api/public/vehicles/{slug}"));
+        Assert.Equal(JsonValueKind.Null, detail.GetProperty("priceEur").ValueKind);
+        var photo = detail.GetProperty("images")[0].GetString();
+        Assert.Equal(HttpStatusCode.OK, (await visitor.GetAsync(photo)).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/admin/vehicles/{id}/archive", null)).StatusCode);
+        Assert.False(await IsListed(slug));
+        Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync($"/api/public/vehicles/{slug}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync(photo)).StatusCode);
+    }
+
     [Fact]
     public async Task Status_cover_and_public_visibility_follow_the_rules()
     {
@@ -410,6 +434,8 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         // No ready cover: cannot be listed.
         var blocked = await Problem(await SetStatus(id, "Available"), HttpStatusCode.UnprocessableEntity);
         Assert.Equal("images_required", blocked.GetProperty("code").GetString());
+        var soldBlocked = await Problem(await SetStatus(id, "Sold"), HttpStatusCode.UnprocessableEntity);
+        Assert.Equal("images_required", soldBlocked.GetProperty("code").GetString());
 
         // The first ready image becomes the cover automatically.
         var first = await UploadImage(id);
@@ -434,22 +460,24 @@ public sealed class AdminApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         var cardBody = await (await visitor.GetAsync("/api/public/vehicles")).Content.ReadAsStringAsync();
         Assert.DoesNotContain("REF-INTERNAL", cardBody);
 
-        // Reserved stays public; Sold leaves the list but keeps its detail URL; Draft withdraws it.
+        // Reserved and Sold stay public; Draft withdraws the vehicle.
         await Json(await SetStatus(id, "Reserved"));
         Assert.True(await IsListed(slug));
-        await Json(await SetStatus(id, "Sold"));
-        Assert.False(await IsListed(slug));
-        // A body without status is refused instead of reading as Draft.
-        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/status", new { showWhenSold = true })).StatusCode);
-        Assert.False(await IsListed(slug));
-        // Kept on show: back in the catalogue, marked as sold, after anything still for sale.
-        var kept = await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/status", new { status = "Sold", showWhenSold = true }));
-        Assert.True(kept.GetProperty("showWhenSold").GetBoolean());
+        var sold = await Json(await SetStatus(id, "Sold"));
         Assert.True(await IsListed(slug));
-        Assert.Equal("Sold", (await Json(await visitor.GetAsync("/api/public/vehicles"))).EnumerateArray().Single(x => x.GetProperty("slug").GetString() == slug).GetProperty("status").GetString());
+        Assert.False(sold.TryGetProperty("showWhenSold", out _));
+        // A cached Admin's legacy flag is ignored, even when false.
         await Json(await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/status", new { status = "Sold", showWhenSold = false }));
-        Assert.False(await IsListed(slug));
-        Assert.Equal("Sold", (await Json(await visitor.GetAsync($"/api/public/vehicles/{slug}"))).GetProperty("status").GetString());
+        Assert.True(await IsListed(slug));
+        // A body without status is still refused instead of reading as Draft.
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync($"/api/admin/vehicles/{id}/status", new { showWhenSold = true })).StatusCode);
+        Assert.True(await IsListed(slug));
+        var soldCard = (await Json(await visitor.GetAsync("/api/public/vehicles"))).EnumerateArray().Single(x => x.GetProperty("slug").GetString() == slug);
+        Assert.Equal("Sold", soldCard.GetProperty("status").GetString());
+        Assert.Equal(JsonValueKind.Null, soldCard.GetProperty("priceEur").ValueKind);
+        var soldDetail = await Json(await visitor.GetAsync($"/api/public/vehicles/{slug}"));
+        Assert.Equal("Sold", soldDetail.GetProperty("status").GetString());
+        Assert.Equal(JsonValueKind.Null, soldDetail.GetProperty("priceEur").ValueKind);
         await Json(await SetStatus(id, "Draft"));
         Assert.False(await IsListed(slug));
         Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync($"/api/public/vehicles/{slug}")).StatusCode);

@@ -135,6 +135,9 @@ export const en: Dictionary = {
       images: { opening: 'Vehicle in context · photography pending', detail: 'Detail · photography pending' },
     },
     import: {
+      formFields: {"delivery": "Delivery to?", "make": "Make", "model": "Model", "year": "Year", "mileage": "Approximate mileage", "timeframe": "When do you need it?", "budget": "Estimated budget", "message": "Additional details"},
+      placeholders: {"delivery": "E.g. Murcia, Spain", "make": "E.g. BMW", "model": "E.g. M4 CS", "year": "E.g. 2021 or newer", "mileage": "E.g. fewer than 50,000 km", "timeframe": "E.g. within the next 3 months"},
+      formErrors: {"delivery": "Enter the country or city of delivery or registration (up to 120 characters).", "make": "Enter the make (up to 100 characters; make and model together, 200).", "model": "Enter the model (up to 100 characters).", "year": "The year cannot exceed 40 characters.", "mileage": "The mileage cannot exceed 60 characters.", "timeframe": "The timeframe cannot exceed 60 characters.", "message": "Additional details cannot exceed 5,000 characters."},
       overviewTitle: "From search to delivery.",
       overviewItems: ["A search based on your preferences and budget.", "A review of the available information for each vehicle.", "Purchase, paperwork, transport and registration arranged."],
       formTitle: "Tell us what you are looking for",

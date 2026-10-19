@@ -33,7 +33,6 @@ export interface AdminVehicleRow {
   id: string;
   slug: string;
   status: VehicleStatus;
-  showWhenSold: boolean;
   make: string;
   model: string;
   variant: string | null;
@@ -54,7 +53,6 @@ export interface AdminVehicle {
   id: string;
   slug: string;
   status: VehicleStatus;
-  showWhenSold: boolean;
   make: string;
   model: string;
   year: number;
@@ -146,7 +144,7 @@ export interface VehicleSaveRequest {
   changes?: VehiclePatch;
   gallery?: { order: string[]; removed: string[] };
   video?: { keep: string | null };
-  status?: { status: SettableStatus; showWhenSold?: boolean };
+  status?: { status: SettableStatus };
 }
 
 export interface ImageIntent { imageId: string; uploadUrl: string; expiresInSeconds: number }

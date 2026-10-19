@@ -9,14 +9,10 @@ namespace GpSelect.Api;
 [ApiController][Route("api/public/vehicles")]
 public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage storage) : ControllerBase
 {
-    // SQL twins of VehicleVisibility: the catalogue lists ComingSoon, Available, Reserved and the Sold vehicles kept
-    // on show; detail pages also serve Sold vehicles that were published at some point.
+    // SQL twin of VehicleVisibility.IsInCatalogue: catalogue, detail and media serve the same statuses.
     internal static readonly Expression<Func<VehicleUnit, bool>> Listed = x =>
         x.Status == VehicleStatus.ComingSoon || x.Status == VehicleStatus.Available || x.Status == VehicleStatus.Reserved
-        || (x.Status == VehicleStatus.Sold && x.ShowWhenSold);
-    internal static readonly Expression<Func<VehicleUnit, bool>> WithPublicDetail = x =>
-        x.Status == VehicleStatus.ComingSoon || x.Status == VehicleStatus.Available || x.Status == VehicleStatus.Reserved
-        || (x.Status == VehicleStatus.Sold && (x.ShowWhenSold || x.PublishedAt != null));
+        || x.Status == VehicleStatus.Sold;
     // SQL twin of the photo filter in PublicMapping. Removed photos keep their rows, so they are left out in the query.
     internal static readonly Expression<Func<VehicleImage, bool>> PublicPhoto = x => x.State == ImageState.Ready && !x.IsStaged;
 
@@ -26,7 +22,7 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
     /// <summary>The public list, also embedded by the catalogue page so it renders without waiting for this endpoint.</summary>
     internal static async Task<List<VehiclePublicCardDto>> Cards(GpSelectDbContext db, CancellationToken ct)
     {
-        // Newest first, sold vehicles kept on show after everything still for sale.
+        // Newest first, sold vehicles after everything still for sale.
         var vehicles = await db.Vehicles.AsNoTracking().Where(Listed).OrderBy(x => x.Status == VehicleStatus.Sold)
             .ThenByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id).Take(VehicleQueryLimits.MaxVehicles).ToListAsync(ct);
         var ids = vehicles.Select(x => x.Id).ToList();
@@ -39,7 +35,7 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
     [HttpGet("{slug}")]
     public async Task<IActionResult> Get(string slug)
     {
-        var v = await db.Vehicles.AsNoTracking().Where(WithPublicDetail).FirstOrDefaultAsync(x => x.PublicSlug == slug);
+        var v = await db.Vehicles.AsNoTracking().Where(Listed).FirstOrDefaultAsync(x => x.PublicSlug == slug);
         if (v is null) return NotFound();
         var images = await db.Images.AsNoTracking().Where(x => x.VehicleUnitId == v.Id).Where(PublicPhoto).ToListAsync();
         var video = await db.Videos.AsNoTracking().SingleOrDefaultAsync(x => x.VehicleUnitId == v.Id && !x.IsStaged && x.State == VideoState.Ready);
@@ -49,7 +45,7 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
     [HttpGet("{slug}/video/{videoId:guid}")]
     public async Task<IActionResult> Video(string slug, Guid videoId)
     {
-        var vehicle = await db.Vehicles.AsNoTracking().Where(WithPublicDetail).Where(x => x.PublicSlug == slug)
+        var vehicle = await db.Vehicles.AsNoTracking().Where(Listed).Where(x => x.PublicSlug == slug)
             .Select(x => (Guid?)x.Id).FirstOrDefaultAsync();
         if (vehicle is null) return NotFound();
         var video = await db.Videos.AsNoTracking().SingleOrDefaultAsync(x => x.Id == videoId && x.VehicleUnitId == vehicle
@@ -66,7 +62,7 @@ public class PublicVehiclesController(GpSelectDbContext db, IObjectStorage stora
 
     private async Task<IActionResult> Serve(string slug, Guid imageId, bool detail)
     {
-        var vehicle = await db.Vehicles.AsNoTracking().Where(WithPublicDetail).Where(x => x.PublicSlug == slug).Select(x => (Guid?)x.Id).FirstOrDefaultAsync();
+        var vehicle = await db.Vehicles.AsNoTracking().Where(Listed).Where(x => x.PublicSlug == slug).Select(x => (Guid?)x.Id).FirstOrDefaultAsync();
         if (vehicle is null) return NotFound();
         var image = await db.Images.AsNoTracking().SingleOrDefaultAsync(x => x.Id == imageId && x.VehicleUnitId == vehicle && x.State == ImageState.Ready && !x.IsStaged);
         var key = detail ? image?.DetailKey : image?.CardKey;
