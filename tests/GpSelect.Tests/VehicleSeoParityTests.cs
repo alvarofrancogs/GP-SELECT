@@ -30,10 +30,12 @@ public class VehicleSeoParityTests
         var expected = root.GetProperty("expected");
         var title = Regex.Match(head, "<title data-page-meta>(.*?)</title>", RegexOptions.Singleline);
         var description = Regex.Match(head, "<meta data-page-meta name=\"description\" content=\"(.*?)\">", RegexOptions.Singleline);
+        var robots = Regex.Match(head, "<meta data-page-meta name=\"robots\" content=\"(.*?)\">");
         var script = Regex.Match(head, "<script data-page-meta type=\"application/ld\\+json\">(.*?)</script>", RegexOptions.Singleline);
-        Assert.True(title.Success && description.Success && script.Success, name);
+        Assert.True(title.Success && description.Success && robots.Success && script.Success, name);
         Assert.Equal(expected.GetProperty("title").GetString(), WebUtility.HtmlDecode(title.Groups[1].Value));
         Assert.Equal(expected.GetProperty("description").GetString(), WebUtility.HtmlDecode(description.Groups[1].Value));
+        Assert.Equal(expected.GetProperty("robots").GetString(), robots.Groups[1].Value);
         Assert.DoesNotContain("<", script.Groups[1].Value);
         Assert.True(JsonNode.DeepEquals(JsonNode.Parse(expected.GetProperty("jsonLd").GetRawText()), JsonNode.Parse(script.Groups[1].Value)), name);
     }

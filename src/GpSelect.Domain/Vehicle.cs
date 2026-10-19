@@ -21,6 +21,13 @@ public static class VehicleVisibility
 
     /// <summary>Sold vehicles always remain in the catalogue, without a price.</summary>
     public static bool IsInCatalogue(VehicleStatus status) => IsListed(status) || status == VehicleStatus.Sold;
+
+    /// <summary>How long a sold vehicle's page stays in search results: after that it is still in the catalogue,
+    /// but marked noindex and left out of the sitemap.</summary>
+    public const int SoldIndexedDays = 180;
+
+    public static bool IsIndexed(VehicleStatus status, DateTimeOffset? soldAt, DateTimeOffset now) =>
+        status != VehicleStatus.Sold || soldAt is null || now - soldAt < TimeSpan.FromDays(SoldIndexedDays);
 }
 
 public sealed class VehicleUnit
@@ -45,6 +52,8 @@ public sealed class VehicleUnit
     public DateTimeOffset CreatedAt { get; private set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; private set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? PublishedAt { get; private set; }
+    /// <summary>When the vehicle was marked sold; null while it is not sold.</summary>
+    public DateTimeOffset? SoldAt { get; private set; }
 
     public static VehicleUnit Create(string make, string model, int year, int? month, string slug, string? internalReference = null)
     {
@@ -123,6 +132,7 @@ public sealed class VehicleUnit
             VehicleRules.EnsurePublicPrice(PriceEur);
             PublishedAt ??= DateTimeOffset.UtcNow;
         }
+        SoldAt = next == VehicleStatus.Sold ? SoldAt ?? DateTimeOffset.UtcNow : null;
         Status = next;
         Touch();
     }
@@ -140,7 +150,7 @@ public sealed class VehicleUnit
     public void Archive() { if (Status == VehicleStatus.Archived) return; Status = VehicleStatus.Archived; Touch(); }
 
     /// <summary>A restored vehicle comes back as a draft: nothing becomes public until it is published again.</summary>
-    public void Restore() { if (Status != VehicleStatus.Archived) return; Status = VehicleStatus.Draft; Touch(); }
+    public void Restore() { if (Status != VehicleStatus.Archived) return; Status = VehicleStatus.Draft; SoldAt = null; Touch(); }
 
     private static T Pick<T>(Optional<T> change, T current, Func<T, T> validate) => change.HasValue ? validate(change.Value) : current;
     private void Touch() => UpdatedAt = DateTimeOffset.UtcNow;

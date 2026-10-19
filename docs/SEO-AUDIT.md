@@ -203,7 +203,7 @@ Esfuerzo: **S** < 2 h · **M** ½–1 día · **L** 2–5 días. El impacto es E
 |---|---|---|
 | P3-1 | 301 a la URL canónica para `/ruta/`, mayúsculas e `index.html` (T3) | S |
 | P3-2 | Icono «+/−» fuera del H3 (con CSS) y H2 repetido en la ficha (O3, O4) | S |
-| P3-3 | Vendidos no listados: `noindex` o 410 pasado un tiempo (T6) | S |
+| P3-3 | ~~Vendidos no listados: `noindex` o 410 pasado un tiempo (T6)~~ Hecho 19-10-2026: `noindex,follow` y fuera del sitemap a los 180 días de la venta | S |
 | P3-4 | Fallback `spa.html` con un title genérico mejor (T5) | S |
 | P3-5 | `size-adjust` en la fuente de respaldo para quitar el micro-shift del menú | S |
 | P3-6 | `Content-Signal`, Markdown y sitemap de imágenes (opcional) | S |

@@ -345,6 +345,36 @@ public class VehicleContractTests
     }
 
     [Fact]
+    public void Sold_date_is_kept_while_sold_and_cleared_when_the_vehicle_returns()
+    {
+        var (v, images) = ListedVehicle();
+        Assert.Null(v.SoldAt);
+        v.ChangeStatus(VehicleStatus.Sold, images);
+        var sold = v.SoldAt;
+        Assert.NotNull(sold);
+        v.ChangeStatus(VehicleStatus.Sold, images);
+        Assert.Equal(sold, v.SoldAt);
+        // A sale that falls through starts a new date on the next sale.
+        v.ChangeStatus(VehicleStatus.Available, images);
+        Assert.Null(v.SoldAt);
+        v.ChangeStatus(VehicleStatus.Sold, images);
+        v.Archive();
+        v.Restore();
+        Assert.Null(v.SoldAt);
+    }
+
+    [Fact]
+    public void Sold_vehicle_leaves_search_results_after_the_retention_period()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var limit = TimeSpan.FromDays(VehicleVisibility.SoldIndexedDays);
+        Assert.True(VehicleVisibility.IsIndexed(VehicleStatus.Sold, now - limit + TimeSpan.FromHours(1), now));
+        Assert.False(VehicleVisibility.IsIndexed(VehicleStatus.Sold, now - limit, now));
+        Assert.True(VehicleVisibility.IsIndexed(VehicleStatus.Available, now - limit * 2, now));
+        Assert.True(VehicleVisibility.IsIndexed(VehicleStatus.Sold, null, now));
+    }
+
+    [Fact]
     public void Sold_vehicle_needs_a_ready_saved_cover_but_not_a_price()
     {
         var v = NewVehicle();
