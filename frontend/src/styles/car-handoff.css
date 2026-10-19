@@ -106,30 +106,32 @@
 
 
 @media (max-width: 1023px) {
-  .car-handoff { --car-top: 46%; --car-height: 38%; }
+  /* Stacked: the car parks under the lettering (headline, description and its fact) and above the catalogue pill,
+     as large as that room allows, so a short phone keeps every line the desktop shows. */
+  .car-handoff {
+    --car-top: calc(16% + var(--hero-size) * 2.2 + var(--space-5) + 10.5rem);
+    /* Keep space below the car while it is still at its larger arrival scale. */
+    --car-height: min(38%, calc(100% - var(--car-top) - 7.25rem));
+  }
   .car-handoff .hero-title { top: 16%; flex-direction: column; gap: var(--space-2); }
   .car-handoff .hero-title > span:last-child { align-self: flex-end; }
   .car-handoff [data-layout='left'] .hero-title, .car-handoff [data-layout='right'] .hero-title { top: 16%; left: var(--page-gutter); right: var(--page-gutter); }
   .car-handoff [data-layout='left'] .hero-title > span:last-child { align-self: flex-start; }
   /* Right under the two-line headline (fitted words never grow past --hero-size), so the fact clears the car. */
   .car-handoff .hero-description, .car-handoff [data-layout] .hero-description { top: calc(16% + var(--hero-size) * 2.2 + var(--space-5)); bottom: auto; }
-  .car-handoff [data-layout='right'] .hero-description { left: auto; right: var(--page-gutter); text-align: right; }
-  .car-handoff [data-layout='right'] .car-handoff__fact { margin-left: auto; }
+  /* Long supporting copy keeps the same reading edge in all three phone states. */
+  .car-handoff [data-layout='right'] .hero-description { left: var(--page-gutter); right: var(--page-gutter); text-align: left; }
+  .car-handoff [data-layout='right'] .car-handoff__fact { margin-left: 0; }
   .car-handoff__fact { max-width: 40ch; margin-top: var(--space-3); font-size: .75rem; }
   .car-handoff__interlude { top: 16%; bottom: auto; left: var(--page-gutter); right: var(--page-gutter); max-width: none; text-align: left; font-size: 1.375rem; }
   .car-handoff__contrast { background: linear-gradient(to bottom, rgb(16 17 18 / .32) 70%, transparent); }
-}
-/* Stacked on a short screen there is no room between headline and car: the description stands alone. */
-@media (max-width: 1023px) and (max-height: 759px) {
-  /* Keep the visually omitted facts available to screen readers. Static frames have room for them. */
-  .car-handoff:not([data-motion='static']) .car-handoff__fact {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
+  /* See the pin note in scenes.css: while fixed, the world and its light reach a quarter below the pin, so a hiding
+     toolbar uncovers more sky instead of the page. */
+  .car-handoff__pin.is-pinned { clip-path: inset(0 0 -25% 0); }
+  .car-handoff[data-motion='scroll'] :is(.car-handoff__world, .car-handoff__grade) { bottom: -25%; }
+  /* The sky's white middle is the car's clear lane. A portrait crop showed only that lane, a blank screen: phones see
+     the middle 70 % of the sky, its blue sides included, drawn a little taller (soft cloud streaks bear it). */
+  .car-handoff__world .asset-slot img { width: 143%; max-width: none; margin-left: -21.5%; object-fit: fill; }
 }
 
 /* Still frames keep every line in normal flow. The car has its own column (row on phones),

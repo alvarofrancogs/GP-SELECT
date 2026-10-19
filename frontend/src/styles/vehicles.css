@@ -48,7 +48,14 @@
 
 .vehicle-detail { padding-top: calc(var(--header-height) + clamp(2rem, 4vw, 5rem)); }
 .vehicle-detail--state { min-height: 100svh; }
-.vehicle-detail__header > .editorial-link { font-size: .8rem; }
+/* The same «← Vehicles» while loading and loaded: it used to grow and shift when the data arrived. */
+.vehicle-detail__header > .editorial-link, .vehicle-detail--state > .editorial-link { font-size: .8rem; }
+/* Data that had to be waited for (VehicleDetail): the title focuses in like the interior headers, the rest follows. */
+@media (prefers-reduced-motion: no-preference) {
+  .vehicle-detail--arrive .vehicle-detail__title { animation: interior-title-focus 650ms var(--ease-cinematic) both; }
+  .vehicle-detail--arrive :is(.vehicle-detail__opening, .vehicle-detail__body) { animation: vehicle-detail-arrive 560ms var(--ease-out) 120ms backwards; }
+}
+@keyframes vehicle-detail-arrive { from { opacity: 0; transform: translateY(12px); } }
 .vehicle-detail__title { display: flex; align-items: baseline; justify-content: space-between; gap: 3vw; margin-block: clamp(2.5rem, 5vw, 6rem) 2rem; }
 .vehicle-detail__title > .type-display { max-width: 68%; font-size: clamp(2.5rem, 5.8vw, 7.5rem); overflow-wrap: anywhere; }
 .vehicle-detail__title > .type-fine { max-width: 40%; text-align: right; font-size: clamp(2rem, 4.6vw, 6rem); overflow-wrap: anywhere; }

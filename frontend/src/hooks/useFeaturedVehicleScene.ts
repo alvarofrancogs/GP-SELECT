@@ -14,12 +14,13 @@ export function useFeaturedVehicleScene(sectionRef: RefObject<HTMLElement | null
     const media = gsap.matchMedia();
     media.add('(prefers-reduced-motion: no-preference) and (min-height: 600px)', () => {
       const select = gsap.utils.selector(section);
+      // Both timelines here use fixed values only, so no invalidateOnRefresh: invalidating dropped the start state of
+      // every staggered line after the first, which showed, vanished and faded in again.
       const entrance = gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: {
           id: 'featured-enter', trigger: section,
           start: 'top 85%', end: 'top 25%', scrub: 0.4,
-          invalidateOnRefresh: true,
         },
       });
       entrance.fromTo(select('h2 > span'),
@@ -56,7 +57,6 @@ export function useFeaturedVehicleScene(sectionRef: RefObject<HTMLElement | null
         scrollTrigger: {
           id: 'featured-piece', trigger: piece,
           start: 'top 78%', toggleActions: 'play none none reverse',
-          invalidateOnRefresh: true,
         },
       });
       reveal.fromTo(frame, { clipPath: 'inset(100% 0% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.1, ease: 'power3.inOut' }, 0);

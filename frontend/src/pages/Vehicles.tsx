@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigationType, useSearchParams } from 'react-router-dom';
+import { gsap } from 'gsap';
 import { InteriorPageHeader } from '../components/InteriorPageHeader';
 import { VehicleGrid, VehicleGridPlaceholder } from '../components/VehicleGrid';
 import { VehicleFilters } from '../components/VehicleFilters';
@@ -54,6 +55,26 @@ export function Vehicles() {
   useLayoutEffect(() => {
     if (ready && restore) window.scrollTo({ top: restore.scrollY, behavior: 'instant' });
   }, [ready, restore]);
+  // A list that had to be waited for (the placeholder showed) settles in instead of popping up: the filters, then
+  // each card's text. The photo boxes stay: they are the placeholder's own grey boxes.
+  const pageRef = useRef<HTMLElement>(null);
+  const waited = useRef(status === 'loading');
+  useLayoutEffect(() => {
+    const page = pageRef.current;
+    if (status === 'loading') waited.current = true;
+    if (status !== 'ready' || !waited.current || !page) return;
+    waited.current = false;
+    const media = gsap.matchMedia();
+    media.add('(prefers-reduced-motion: no-preference)', () => {
+      gsap.fromTo(page.querySelectorAll('.vehicle-filters, .vehicle-state'), { opacity: 0 }, { opacity: 1, duration: 0.4, ease: 'power2.out', clearProps: 'opacity' });
+      page.querySelectorAll('.vehicle-card').forEach((card, index) => {
+        gsap.fromTo(card.querySelectorAll(':scope > :not(.vehicle-card__media)'), { opacity: 0, y: 10 }, {
+          opacity: 1, y: 0, duration: 0.5, delay: 0.08 + index * 0.06, ease: 'power2.out', clearProps: 'opacity,transform',
+        });
+      });
+    });
+    return () => media.revert();
+  }, [status]);
   const searchUrl = href(qualificationUrl({ intent: 'import', source: 'vehicles' }));
   function clear() {
     const next = new URLSearchParams(clean);
@@ -65,7 +86,7 @@ export function Vehicles() {
     if (value) next.set(key, value); else next.delete(key);
     setParams(key === 'sort' ? next : sanitizeParams(vehicles, next, key as FacetKey), { preventScrollReset: true });
   }
-  return <article className="interior-page vehicles-page">
+  return <article ref={pageRef} className="interior-page vehicles-page">
     <InteriorPageHeader {...text} />
     {status === 'loading' ? <VehicleGridPlaceholder label={text.loading} /> : null}
     {status === 'error' ? <div className="vehicle-state" role="alert"><p className="type-lede">{text.error}</p><button className="editorial-link type-ui" onClick={() => { setStatus('loading'); setAttempt(attempt + 1); }}>{text.retry}</button></div> : null}

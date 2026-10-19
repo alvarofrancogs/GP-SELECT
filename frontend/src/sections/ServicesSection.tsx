@@ -32,6 +32,8 @@ export function ServicesSection() {
       if (!motion) return;
       const select = gsap.utils.selector(section);
       // Natural flow is the curtain: no extra pin or fixed accordion height.
+      // Every value is fixed, so no invalidateOnRefresh: invalidating dropped the start state of the staggered lines
+      // after the first, which showed, vanished and faded in again.
       const entrance = gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: {
@@ -40,7 +42,6 @@ export function ServicesSection() {
           start: 'top bottom',
           end: 'top top',
           scrub: 0.4,
-          invalidateOnRefresh: true,
         },
       });
       entrance.to({}, { duration: 1 }, 0);
