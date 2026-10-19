@@ -14,7 +14,7 @@ describe('shared vehicle SEO fixtures', () => {
     it(fixture.name, () => {
       const siteUrl = fixture.siteUrl ?? undefined;
       const meta = getVehiclePageMeta(fromPublicDetail(fixture.vehicle as VehiclePublicDto), siteUrl, fixture.locale as Locale);
-      expect({ title: meta.title, description: meta.description, jsonLd: meta.jsonLd }).toEqual(fixture.expected);
+      expect({ title: meta.title, description: meta.description, robots: meta.robots, jsonLd: meta.jsonLd }).toEqual(fixture.expected);
       expect(meta.imageAlt).toBe(`${fixture.vehicle.make} ${fixture.vehicle.model} (${fixture.vehicle.year})`);
       const head = renderPageHead(meta, siteUrl);
       const json = head.match(/<script data-page-meta type="application\/ld\+json">(.*?)<\/script>/s)![1];

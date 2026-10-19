@@ -4,7 +4,7 @@ import { gsap } from 'gsap';
 import { InteriorPageHeader } from '../components/InteriorPageHeader';
 import { VehicleGrid, VehicleGridPlaceholder } from '../components/VehicleGrid';
 import { VehicleFilters } from '../components/VehicleFilters';
-import { VehicleCard } from '../components/VehicleCard';
+import { SoldVehicle } from '../components/SoldVehicle';
 import { useLanguage } from '../i18n/useLanguage';
 import { consumeInitialVehicles, getInitialVehicles, lastVehicles, listVehicles } from '../services/vehicles';
 import { filterVehicles, sanitizeParams, sortVehicles, vehicleFilterKeys } from '../lib/vehicleFacets';
@@ -105,8 +105,8 @@ export function Vehicles() {
     </> : null}
     {status === 'ready' && soldVehicles.length ? <section className="vehicle-sold" aria-labelledby="vehicle-sold-title">
       <header className="vehicle-sold__header"><h2 id="vehicle-sold-title" className="type-section">{text.soldTitle}</h2><p className="type-body">{text.soldIntro}</p></header>
-      <div className="vehicle-grid vehicle-grid--sold" onClickCapture={() => rememberCatalogue({ search, scrollY: window.scrollY, count: mainCount.current })}>
-        {soldVehicles.map((vehicle) => <VehicleCard key={vehicle.slug} vehicle={vehicle} headingLevel={3} state={{ fromCatalogue: true }} />)}
+      <div className="vehicle-grid--sold" onClickCapture={() => rememberCatalogue({ search, scrollY: window.scrollY, count: mainCount.current })}>
+        {soldVehicles.map((vehicle) => <SoldVehicle key={vehicle.slug} vehicle={vehicle} />)}
       </div>
     </section> : null}
     <section className="interior-closing vehicle-closing"><h2 className="type-section">{text.closing}</h2><div className="interior-closing__links"><Link className="editorial-link type-ui" to={searchUrl}>{text.find}<span aria-hidden="true">→</span></Link></div></section>

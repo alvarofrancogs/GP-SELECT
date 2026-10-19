@@ -1,5 +1,8 @@
 *, *::before, *::after { box-sizing: border-box; }
-html { background: var(--color-paper); color: var(--color-ink); /* focused fields and links stay clear of the fixed catalogue pill */ scroll-padding-bottom: 6.5rem; }
+html { background: var(--color-paper); color: var(--color-ink); /* focused fields and links stay clear of the fixed catalogue pill */ scroll-padding-bottom: 6.5rem;
+  /* No rubber band past the top or the end of the page: the fixed header stays on the screen's edge instead of
+     coming away from it over a blank strip (iOS Safari, macOS trackpads). Also turns off pull-to-refresh. */
+  overscroll-behavior-y: none; }
 #main-content:focus { outline: none; }
 body { margin: 0; font-family: var(--font-family); font-stretch: var(--width-body); font-size: var(--text-base); font-weight: var(--weight-body); -webkit-font-smoothing: antialiased; }
 body, #root { min-width: 320px; }
@@ -113,12 +116,14 @@ dialog { overscroll-behavior: contain; }
     display: flex; flex-direction: column;
     padding: calc(var(--header-height) + var(--space-4)) var(--page-gutter) max(var(--space-7), calc(env(safe-area-inset-bottom) + var(--space-5)));
     overflow-y: auto; overscroll-behavior: contain;
-    background: var(--color-paper); color: var(--color-ink);
+    /* Closed, it has no colour: Safari 26 tints its toolbars with full-width fixed layers at the screen's edges,
+       hidden ones included, and the bottom bar must stay see-through. */
+    background: transparent; color: var(--color-ink);
     visibility: hidden;
     clip-path: inset(0 0 100% 0);
-    transition: clip-path 420ms var(--ease-in-out), visibility 0s 420ms;
+    transition: clip-path 420ms var(--ease-in-out), visibility 0s 420ms, background-color 0s 420ms;
   }
-  .site-header--open .mobile-nav { visibility: visible; clip-path: inset(0); transition: clip-path 640ms var(--ease-cinematic), visibility 0s; }
+  .site-header--open .mobile-nav { visibility: visible; clip-path: inset(0); background: var(--color-paper); transition: clip-path 640ms var(--ease-cinematic), visibility 0s, background-color 0s; }
   .mobile-nav__list { margin: 0; padding: 0; list-style: none; }
   .mobile-nav__item { position: relative; }
   /* Rules draw from the left, one per row, a beat ahead of the row's label. */

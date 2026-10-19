@@ -5,11 +5,12 @@
   z-index: 2;
   background: var(--color-dark);
   color: var(--color-paper);
-  padding: var(--space-8) var(--page-gutter) var(--space-6);
+  /* The last line clears the home indicator and the floating browser bar (viewport-fit=cover). */
+  padding: var(--space-8) var(--page-gutter) calc(var(--space-6) + env(safe-area-inset-bottom));
 }
 
 /* Reserve room only when CatalogueCta actually renders its fixed link. */
-.site-footer:has(+ .catalogue-cta) { padding-bottom: calc(var(--space-6) + 4.5rem); }
+.site-footer:has(+ .catalogue-cta) { padding-bottom: calc(var(--space-6) + 4.5rem + env(safe-area-inset-bottom)); }
 
 .footer-main {
   display: grid;

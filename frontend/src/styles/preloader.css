@@ -13,19 +13,29 @@
 }
 /* Same proportions as the artwork (1827 × 317 of ink); each piece sits where it does in the original. */
 .preloader__logo { position: relative; width: clamp(15rem, 44vw, 34rem); aspect-ratio: 1827 / 317; }
-.preloader__logo img { position: absolute; display: block; height: auto; }
+.preloader__piece { position: absolute; display: block; }
+.preloader__piece img { display: block; width: 100%; height: auto; }
 .preloader__gp { left: 0; top: 0; width: 28.736%;
   animation: preloader-gp 600ms var(--ease-out) both; }
 .preloader__select { left: 33.771%; top: 11.672%; width: 66.229%;
   animation: preloader-select 600ms var(--ease-out) 30ms both; }
+/* Coming into focus: a blurred copy over each piece fades out as the piece fades in. Only opacity and transform
+   move (an animated blur() cannot run on the compositor), so the entrance stays smooth while the page builds. */
+.preloader__piece img:first-child { animation: preloader-sharp 600ms var(--ease-out) both; }
+.preloader__soft { position: absolute; inset: 0; filter: blur(10px); animation: preloader-soft 600ms var(--ease-out) both; }
+.preloader__select img:first-child, .preloader__select .preloader__soft { animation-delay: 30ms; }
 
 /* A reload in the same tab: the same entrance in half the time (see Preloader.tsx). */
-.preloader--quick .preloader__gp, .preloader--quick .preloader__select { animation-duration: 300ms; animation-delay: 0s; }
+.preloader--quick :is(.preloader__piece, .preloader__piece img) { animation-duration: 300ms; animation-delay: 0s; }
 
 /* Each piece covers about a fifth of the logo's width on its way in (translate is relative to the piece). */
-@keyframes preloader-gp { from { opacity: 0; filter: blur(10px); transform: translateX(-76%); } to { opacity: 1; filter: blur(0); transform: none; } }
-@keyframes preloader-select { from { opacity: 0; filter: blur(10px); transform: translateX(33%); } to { opacity: 1; filter: blur(0); transform: none; } }
+@keyframes preloader-gp { from { opacity: 0; transform: translateX(-76%); } to { opacity: 1; transform: none; } }
+@keyframes preloader-select { from { opacity: 0; transform: translateX(33%); } to { opacity: 1; transform: none; } }
+/* The blurred copy alone for the first third, then the focus pull (the old blur reached ~2 px at half time). */
+@keyframes preloader-sharp { 0%, 30% { opacity: 0; } to { opacity: 1; } }
+@keyframes preloader-soft { 0%, 30% { opacity: 1; } to { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .preloader__gp, .preloader__select { animation: none; }
+  .preloader__piece, .preloader__piece img { animation: none; }
+  .preloader__soft { display: none; }
 }

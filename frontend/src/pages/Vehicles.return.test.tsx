@@ -94,11 +94,11 @@ describe('back from a vehicle page to the catalogue', () => {
     const router = renderCatalogue();
     await screen.findByRole('heading', { name: es.vehicles.soldTitle });
     const section = document.querySelector('.vehicle-sold')!;
-    expect(section.querySelector('.vehicle-card__pricing')?.childNodes).toHaveLength(0);
+    expect(section.textContent).not.toContain('99.999');
     expect(section.querySelector('video')).toBeNull();
     expect(section.querySelector('h3')?.textContent).toBe('Sold Make Sold Model');
-    expect(section.querySelector('.vehicle-card__badge')?.textContent).toBe(es.vehicles.sold);
-    expect(section.querySelector('.vehicle-card')?.children).toHaveLength(5);
+    expect(section.querySelector('.sold-vehicle__status')?.textContent).toBe(es.vehicles.sold);
+    expect(screen.getByRole('link', { name: /Sold Make Sold Model.*Vendido Ver vehículo/ })).toBeTruthy();
     expect(document.querySelector('#vehicle-results')?.textContent).not.toContain('Sold Make');
     // Only one make remains in stock, so sold makes must not create a filter.
     expect(screen.queryByRole('combobox', { name: es.vehicles.make })).toBeNull();
@@ -119,7 +119,7 @@ describe('back from a vehicle page to the catalogue', () => {
     renderCatalogue('?fuelType=Gasolina&sort=priceDesc');
     await screen.findByRole('heading', { name: es.vehicles.soldTitle });
     expect(screen.getByRole('heading', { name: es.vehicles.soldTitle })).toBeTruthy();
-    expect(document.querySelectorAll('.vehicle-grid--sold .vehicle-card')).toHaveLength(1);
+    expect(document.querySelectorAll('.vehicle-grid--sold .sold-vehicle')).toHaveLength(1);
     expect(document.querySelector('#vehicle-results')?.textContent).not.toContain('Diésel');
     expect(document.querySelector('#vehicle-results h2')?.textContent).toBe('BMW M19');
   });

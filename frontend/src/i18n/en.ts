@@ -30,7 +30,7 @@ export const en: Dictionary = {
     "reserved": "Reserved",
     "sold": "Sold",
     soldTitle: "Sold vehicles",
-    soldIntro: "These vehicles are no longer available. You can still view their details.",
+    soldIntro: "A selection from our past stock. Explore the details of each vehicle.",
     emptyCurrent: "There are currently no available vehicles to view.",
     "showMore": "Show more",
     "empty": "No vehicles match your search.",
@@ -272,7 +272,7 @@ export const en: Dictionary = {
   common: {
     scroll: 'Scroll to discover', temporaryAsset: 'Temporary asset',
     backHome: 'Back to home', prototype: 'Preview · Phase 3',
-    menu: 'Open menu', close: 'Close menu', skipContent: 'Skip to content',
+    menu: 'Menu', close: 'Close menu', skipContent: 'Skip to content',
     missingAsset: 'Final image pending', heroAsset: 'Porsche · side view',
     backgroundAsset: 'Photographic background pending', catalogue: 'View catalogue', loading: 'Loading',
   },

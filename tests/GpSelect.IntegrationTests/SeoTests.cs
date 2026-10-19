@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using GpSelect.Domain;
 using GpSelect.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -148,8 +149,31 @@ public sealed class SeoTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Contains(english ? "This vehicle is no longer available." : "Este vehículo ya no está disponible.", html);
         Assert.DoesNotContain(english ? "Enquire about this car" : "Solicitar información", html);
         Assert.DoesNotContain(english ? "We confirm which before the purchase." : "Te confirmamos cuál antes de la compra.", html);
+        Assert.Contains("name=\"robots\" content=\"index,follow\"", html);
+        Assert.Contains(english ? "(2023) · Sold · GP SELECT</title>" : "(2023) · Vendido · GP SELECT</title>", html);
         var sitemap = await api.Anonymous().GetStringAsync("/seo/sitemap.xml");
         Assert.Contains($"{prefix}/{slug}</loc>", sitemap);
+    }
+
+    [Fact]
+    public async Task Sold_vehicle_leaves_the_index_and_the_sitemap_after_six_months()
+    {
+        var (id, slug, _) = await PublishedVehicle();
+        await Json(await SetStatus(id, "Sold"));
+        using (var scope = api.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<GpSelectDbContext>();
+            var soldAt = DateTimeOffset.UtcNow.AddDays(-VehicleVisibility.SoldIndexedDays - 1);
+            await db.Vehicles.Where(x => x.Id == id).ExecuteUpdateAsync(x => x.SetProperty(v => v.SoldAt, soldAt));
+        }
+
+        var response = await api.Anonymous().GetAsync($"/seo/vehiculos/{slug}");
+        var html = await response.Content.ReadAsStringAsync();
+        // Still a page in the catalogue, just not in search results.
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("name=\"robots\" content=\"noindex,follow\"", html);
+        Assert.Contains("\"indexed\":false", html);
+        Assert.DoesNotContain($"/{slug}</loc>", await api.Anonymous().GetStringAsync("/seo/sitemap.xml"));
     }
 
     [Theory]

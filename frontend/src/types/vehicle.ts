@@ -38,6 +38,8 @@ export interface VehicleDetail extends VehicleSummary {
   description: string | null;
   equipment: string[] | null;
   customSpecifications: { label: string; value: string }[] | null;
+  /** False once a sold vehicle has left search results; absent in the admin preview. */
+  indexed?: boolean;
 }
 
 /** Mirrors VehiclePublicDto in GpSelect.Application/Contracts.cs. Free text stays free text. */
@@ -52,4 +54,6 @@ export interface VehiclePublicDto extends VehiclePublicCardDto {
   customSpecifications: { label: string; value: string }[];
   /** Same order as images. Optional so a response from an older API still renders. */
   cardImages?: string[];
+  /** False once a sold vehicle has left search results (VehicleVisibility.IsIndexed). */
+  indexed?: boolean;
 }

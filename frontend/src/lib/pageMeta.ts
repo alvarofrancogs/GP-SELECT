@@ -258,7 +258,9 @@ export function getVehiclePageMeta(vehicle: VehicleDetail, siteUrl?: string, loc
     transmission ? (english ? `${transmission.toLocaleLowerCase('en-GB')} gearbox` : `cambio ${transmission.toLocaleLowerCase('es-ES')}`) : undefined].filter(Boolean);
   const factList = facts.length > 1 ? `${facts.slice(0, -1).join(', ')}${english ? ' and ' : ' y '}${facts.at(-1)}` : facts.join('');
   const fullTitle = `${titleIdentity} · ${km} · GP SELECT`;
-  const title = km && fullTitle.length <= 65 ? fullTitle : `${titleIdentity} · GP SELECT`;
+  // A sold vehicle says so in the search result itself, in place of its mileage.
+  const title = vehicle.availability === 'sold' ? `${titleIdentity} · ${english ? 'Sold' : 'Vendido'} · GP SELECT`
+    : km && fullTitle.length <= 65 ? fullTitle : `${titleIdentity} · GP SELECT`;
   const description = english
     ? `${vehicle.availability === 'sold' ? 'Sold: ' : ''}${name}${year ? ` from ${year}` : ''}${factList ? ` with ${factList}` : ''}. Photos, specifications and direct enquiries with GP SELECT.`
     : `${vehicle.availability === 'sold' ? 'Vendido: ' : ''}${name}${year ? ` de ${year}` : ''}${factList ? ` con ${factList}` : ''}.${vehicle.provenance ? ` Procedencia: ${vehicle.provenance}.` : ''} Fotos, especificaciones y consulta directa con GP SELECT desde Murcia.`;
@@ -272,7 +274,7 @@ export function getVehiclePageMeta(vehicle: VehicleDetail, siteUrl?: string, loc
     ['Delantera', 'https://schema.org/FrontWheelDriveConfiguration'],
   ]).get(vehicle.drivetrain ?? '');
   return {
-    title, description,
+    title, description, robots: vehicle.indexed === false ? 'noindex,follow' : 'index,follow',
     path, locale, alternates, image, imageAlt: identity,
     jsonLd: {
       '@context': 'https://schema.org', '@graph': [{ '@type': 'Car', name: identity,

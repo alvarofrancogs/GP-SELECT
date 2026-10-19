@@ -61,6 +61,7 @@ export function fromPublicDetail(dto: VehiclePublicDto): VehicleDetail {
     interiorColour: dto.interior ?? null, provenance: dto.provenance ?? null, history: dto.history ?? null,
     description: dto.description ?? null, equipment: dto.equipment?.length ? dto.equipment : null,
     customSpecifications: dto.customSpecifications?.length ? dto.customSpecifications : null,
+    indexed: dto.indexed !== false,
   };
 }
 

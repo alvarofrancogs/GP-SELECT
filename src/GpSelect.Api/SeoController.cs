@@ -99,8 +99,10 @@ public class SeoController(GpSelectDbContext db, ISpaTemplate template, IConfigu
     {
         var site = SiteUrl();
         if (site is null) return NotFound();
-        // The sitemap follows the catalogue, including every sold vehicle.
+        // The sitemap follows the catalogue, except sold vehicles that have left search results (VehicleVisibility.IsIndexed).
+        var soldCutoff = DateTimeOffset.UtcNow.AddDays(-VehicleVisibility.SoldIndexedDays);
         var vehicles = await db.Vehicles.AsNoTracking().Where(PublicVehiclesController.Listed)
+            .Where(x => x.Status != VehicleStatus.Sold || x.SoldAt == null || x.SoldAt > soldCutoff)
             .OrderByDescending(x => x.UpdatedAt).Select(x => new { x.PublicSlug, x.UpdatedAt }).ToListAsync(ct);
         // The catalogue changes whenever a vehicle that was ever public changes, including when it leaves the list.
         // Both catalogues share the same inventory date; the other static pages have no real content date.

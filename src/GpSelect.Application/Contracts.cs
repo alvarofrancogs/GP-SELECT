@@ -40,7 +40,7 @@ public sealed record VehiclePublicDto(string Slug, string Make, string Model, st
     int? MileageKm, int? PowerHp, string? FuelType, string? Transmission, string? BodyType, string? Drivetrain, string? ExteriorColour,
     string? Interior, string? Description, string? History, string? Provenance, IReadOnlyList<string> Equipment,
     IReadOnlyList<VehicleSpecification> CustomSpecifications, VehicleStatus Status, IReadOnlyList<string> Images,
-    IReadOnlyList<string> CardImages, string? VideoUrl);
+    IReadOnlyList<string> CardImages, string? VideoUrl, bool Indexed = true);
 
 public static class PublicMapping
 {
@@ -73,7 +73,8 @@ public static class PublicMapping
             v.Interior, v.Description, v.History, v.Provenance, VehicleContent.ReadEquipment(v.EquipmentJson),
             VehicleContent.ReadSpecifications(v.CustomSpecificationsJson), v.Status,
             gallery.Select(x => $"{Base(v)}/{x.Id}/detail").ToList(),
-            gallery.Select(x => $"{Base(v)}/{x.Id}/card").ToList(), VideoUrl(v, gallery, video));
+            gallery.Select(x => $"{Base(v)}/{x.Id}/card").ToList(), VideoUrl(v, gallery, video),
+            VehicleVisibility.IsIndexed(v.Status, v.SoldAt, DateTimeOffset.UtcNow));
     }
 
     public static VehiclePublicCardDto MapCard(VehicleUnit v, IEnumerable<VehicleImage> images, VehicleVideo? video)

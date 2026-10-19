@@ -62,7 +62,9 @@ public static class VehicleSeo
         var factList = facts.Count > 1 ? string.Join(", ", facts.Take(facts.Count - 1)) + (english ? " and " : " y ") + facts[^1] : string.Join("", facts);
         var titleIdentity = name + (v.Year != 0 ? $" ({v.Year})" : "");
         var fullTitle = $"{titleIdentity} · {kmText} · GP SELECT";
-        var title = kmText is not null && fullTitle.Length <= 65 ? fullTitle : $"{titleIdentity} · GP SELECT";
+        // A sold vehicle says so in the search result itself, in place of its mileage.
+        var title = v.Status == VehicleStatus.Sold ? $"{titleIdentity} · {(english ? "Sold" : "Vendido")} · GP SELECT"
+            : kmText is not null && fullTitle.Length <= 65 ? fullTitle : $"{titleIdentity} · GP SELECT";
         var description = english
             ? $"{(v.Status == VehicleStatus.Sold ? "Sold: " : "")}{name}{(v.Year != 0 ? $" from {v.Year}" : "")}{(facts.Count > 0 ? " with " + factList : "")}. Photos, specifications and direct enquiries with GP SELECT."
             : $"{(v.Status == VehicleStatus.Sold ? "Vendido: " : "")}{name}{(v.Year != 0 ? $" de {v.Year}" : "")}{(facts.Count > 0 ? " con " + factList : "")}."
@@ -124,7 +126,7 @@ public static class VehicleSeo
         };
         return Render(
             title: title, description: description,
-            robots: "index,follow", canonical: url, image: image, imageAlt: identity, siteUrl, jsonLd, english, v.Slug);
+            robots: v.Indexed ? "index,follow" : "noindex,follow", canonical: url, image: image, imageAlt: identity, siteUrl, jsonLd, english, v.Slug);
     }
 
     public static string NotFoundHead(bool english = false) => Render(
