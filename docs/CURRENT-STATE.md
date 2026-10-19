@@ -19,14 +19,15 @@ Secuencia de la HOME (desde 3C): Hero (claro) → Process (oscuro) → **CarHand
 
 **FINAL CLOSURE PASS (desde 30-09-2026):** 3A production readiness (**PASS técnico**, aceptado por el usuario) → Final Technical / UX QA (**TECHNICALLY READY**) → 3B copy truth (**PASS**) → 3C final visual / asset polish → 3D final release QA. Una fase cada vez; cada una con su tag `<fase>-pass`.
 
-## VÍDEO POR VEHÍCULO (18-10-2026, rama `feat/vehicle-preview-video`, pendiente de revisión)
+## VÍDEO POR VEHÍCULO (18-10-2026, integrado en `main` con el PR #26)
 
 Diseño: `docs/superpowers/specs/2026-10-18-vehicle-preview-video-design.md` · plan: `docs/superpowers/plans/2026-10-18-vehicle-preview-video.md`.
 
 - **Qué hay:** un MP4 opcional por coche (máx. 100 MiB, sin transcodificar). Su fotograma 0 (lo extrae el navegador del Admin) es una imagen `VideoPoster` que pasa a ser la portada en todas partes (catálogo, destacado, og:image, listado del Admin). Tarjeta: 10 primeros segundos en bucle al pasar el ratón o con la tarjeta centrada en móvil (una a la vez), nunca con reduced-motion ni ahorro de datos. Página del coche: el vídeo completo es la primera diapositiva de la galería (silenciado, con controles; la vista ampliada sigue en el mismo segundo). Admin: recuadro propio con avisos de tasa de bits (> 10 Mbps) y de MP4 sin «fast start»; vídeo y portada se publican al guardar.
 - **Backend:** migración `AddVehicleVideo` (`Images.Kind`/`VideoId`, tabla `Videos`), subida directa a `vehicles/{id}/videos/{videoId}.mp4`, entrega por rangos (`StoredVideos`, 206/416), `videoUrl` público solo con la portada del vídeo lista, limpieza de vídeos borrados/abandonados. Caddy `{$S3_SITE}`: `max_size 110MB`.
 - **Verificación (18-10-2026):** .NET 181/181 unitarios y 195/195 de integración, en contenedor Linux (`mcr.microsoft.com/dotnet/sdk:10.0`), porque Smart App Control bloquea en Windows las DLL de pruebas recién compiladas. Frontend: typecheck, lint, 324/324 Vitest, build. Navegador (Edge, API simulada con rangos) a 1440 y 390: tarjetas, galería, vista ampliada, reduced-motion y Admin, sin errores de consola ni desborde horizontal.
-- **Deuda:** la portada de vídeo pierde la prioridad LCP en la ficha; prueba de extremo a extremo con el stack real (Caddy + SeaweedFS) pendiente antes de desplegar.
+- **Prueba con el stack real (19-10-2026): PASS.** `deploy/docker-compose.yml` en local (nip.io + `local_certs`, guía en `deploy/README.md`), ejecutada por Gemini 3.8 Flash High (22/22 comprobaciones) y confirmada por Opus con curl y la base de datos. Cubre: subida directa a SeaweedFS por `{$S3_SITE}` (CORS, 29 MB), los dos avisos del Admin, la portada del vídeo en el Admin, el catálogo, la API y og:image, y los rangos a través de Caddy (206 y 416 exactos, sin `Content-Encoding`, `max-age=86400`). También el bucle de 10 s de la tarjeta a 1440 y 390, la galería y la vista ampliada (desfase 0,17 s) y quitar el vídeo (la foto vuelve a ser la portada y la URL antigua da 404). Sin errores de consola ni desborde.
+- **Deuda:** la portada de vídeo pierde la prioridad LCP en la ficha.
 
 ## PREPROD-AUDIT · auditoría preproducción (16-10-2026)
 
@@ -784,7 +785,7 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
   - **Opus** orquesta, decide y es el gate final (PASS/FAIL).
   - **Astra** implementa lo visual complejo.
   - **Gemini** es un worker subordinado para lo mecánico y verificable. Su `PASS` significa «mis comprobaciones pasaron», nunca «unidad aprobada».
-- **Herramienta:** CLI `agy` 1.2.14 en headless (`agy -p … --output-format json --json-schema <schema>`).
+- **Herramienta:** CLI `agy` (1.4.2 desde el 19-10-2026) en headless (`agy -p … --output-format json --json-schema <schema>`).
   - Modelo obligatorio: `--model gemini-3.8-flash-high`.
   - Nunca `--dangerously-skip-permissions`.
 - **Regla del worker:** `.agents/rules/gemini-worker.md`, siempre activa. Aclara que la autoridad de Astra en `AGENTS.md` no le aplica.
@@ -797,6 +798,7 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
   - Solo las herramientas de inspección de Playwright, una a una con `mcp(playwright/<tool>)`: navigate, resize, evaluate, console_messages, take_screenshot, snapshot, wait_for, close y tabs.
   - Una sola orden de shell: `command(git status --short)`, para su comprobación del workspace (probado en headless el 30-09-2026). Copia previa en `settings.json.bak-before-git-status`.
   - El CLI no trae navegador; usa el MCP de Playwright aislado, con salida en el scratchpad.
+  - Desde el 19-10-2026: MCP `playwright` (`@playwright/mcp@0.0.83`, Edge headless por el H.264, `--output-dir` en el scratchpad). Para pruebas del Admin también se permiten click, type, fill_form, file_upload, press_key, hover, select_option, handle_dialog y network_requests. `file_upload` solo lee de `--output-dir` y del repositorio: los archivos de prueba van dentro de `--output-dir`.
   - Una herramienta denegada anula toda la ejecución sin salida. El prompt debe limitar las herramientas que puede usar.
 - **Salida:** JSON con esquema (`status`, `checks`/`findings` con severidad P0–P2 y evidencia, `commands_run`, `files_modified`, `summary`). Opus solo incorpora a su contexto el resultado resumido, nunca logs, DOMs ni trazas completas.
 - **Playwright exhaustivo** (matrices responsive, consola, rutas, regresión) se delega preferentemente a Gemini. Opus usa Playwright solo para confirmar un P0/P1 o una conclusión dudosa.
@@ -823,6 +825,7 @@ Rama creada desde `fix/pre-deploy` (`5ad7945`). Plan B0–B10 aprobado por el us
 10. **SEO Fase B:** B0 aceptado con salvedad y B1 aprobado; B2/B3 integrados en main. B4 y B5 integrados en main (PR #7 y #8). B6 en `feat/seo-b6-headings`, pendiente de revisión; después B8. Plan en `docs/SEO-PHASE-B.md`.
 11. **Auditoría preproducción (16-10-2026):** fases 1 y 3 integradas (PR #22 y #23); fase 2 en `fix/preprod-phase2`: completa (PR #24), pendiente de merge. Ver «PREPROD-AUDIT».
 12. **Auditoría móvil (17-10-2026):** web desplegada en `gpselect.31-70-158-233.sslip.io` (IONOS). MOB-01 a MOB-05 arreglados por Opus en `fix/mobile-audit` (Astra y Gemini no disponibles desde la nube); pendiente la prueba en móvil real y la revisión de Astra y Gemini. Ver `docs/MOBILE-AUDIT.md`.
+13. **Vídeo por vehículo (18-10-2026):** plan completo e integrado en `main` (PR #26); prueba con el stack real (Caddy + SeaweedFS) en PASS el 19-10-2026. Ver «VÍDEO POR VEHÍCULO».
 
 **2F-C — ADMIN PANEL** (brief original, ya entregado en 2F-C.2 PASS; se conserva como referencia):
 
