@@ -1,4 +1,4 @@
-﻿import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { enquiriesEnabled } from '../config/contact';
 import { legalConfig } from '../config/legal';

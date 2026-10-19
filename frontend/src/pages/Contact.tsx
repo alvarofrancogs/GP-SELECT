@@ -1,4 +1,4 @@
-﻿import { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { InteriorPageHeader } from '../components/InteriorPageHeader';
 import { ContactForm } from '../components/ContactForm';

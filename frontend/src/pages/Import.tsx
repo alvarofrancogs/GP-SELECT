@@ -1,4 +1,4 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ContactForm } from '../components/ContactForm';
 import { useLanguage } from '../i18n/useLanguage';
 import type { ReactNode } from 'react';
