@@ -100,8 +100,8 @@ describe('back from a vehicle page to the catalogue', () => {
     expect(section.querySelector('.sold-vehicle__status')?.textContent).toBe(es.vehicles.sold);
     expect(screen.getByRole('link', { name: /Sold Make Sold Model.*Vendido Ver vehículo/ })).toBeTruthy();
     expect(document.querySelector('#vehicle-results')?.textContent).not.toContain('Sold Make');
-    // Only one make remains in stock, so sold makes must not create a filter.
-    expect(screen.queryByRole('combobox', { name: es.vehicles.make })).toBeNull();
+    // The make filter lists the cars in stock only (its closed list is in the DOM): a sold make is never offered.
+    expect(screen.getByRole('combobox', { name: es.vehicles.make })).toBeTruthy();
     expect(document.querySelector('.vehicle-filters')?.textContent).not.toContain('Sold Make');
     fireEvent.click(screen.getByRole('button', { name: es.vehicles.showMore }));
     Object.defineProperty(window, 'scrollY', { value: 3200, configurable: true });

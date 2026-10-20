@@ -105,7 +105,7 @@ export interface VehicleCopy extends InteriorHeaderCopy {
   priceDesc: string;
   yearSort: string;
   kmSort: string;
-  under: string;
+  to: string;
   from: string;
   view: string;
   onRequest: string;

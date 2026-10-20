@@ -239,6 +239,8 @@ public static class VehicleSeo
         ["Eléctrico"] = "Electric",
         ["Diésel"] = "Diesel",
         ["Híbrido"] = "Hybrid",
+        ["Híbrido enchufable"] = "Plug-in hybrid",
+        ["Cabrio"] = "Convertible",
         ["Automático"] = "Automatic",
         ["Manual"] = "Manual",
         ["Coupé"] = "Coupé",

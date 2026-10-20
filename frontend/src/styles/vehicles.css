@@ -1,7 +1,23 @@
 .vehicle-filters { display: flex; align-items: flex-end; gap: 2rem; border-block: 1px solid var(--interior-rule); margin-bottom: clamp(3rem, 5vw, 6rem); font-size: .75rem; }
 .vehicle-filters__fields { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem 2.5vw; padding-block: 1.5rem; }
 .vehicle-filter { position: relative; min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: .8rem; }
-.vehicle-filter > label { color: var(--color-muted); cursor: pointer; }
+.vehicle-filter > label, .vehicle-filter__label { color: var(--color-muted); }
+.vehicle-filter > label { cursor: pointer; }
+/* Free ranges: two ruled fields like the select trigger, 16 px so phones do not zoom into them. */
+.vehicle-range { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: .5rem; min-width: 0; }
+.vehicle-range__input {
+  width: 100%; min-width: 0; min-height: 2.75rem; padding: .65rem 0;
+  border: 0; border-bottom: 1px solid var(--interior-rule, var(--color-line)); border-radius: 0;
+  background: transparent; color: var(--color-ink); font: inherit; font-size: 1rem; font-variant-numeric: tabular-nums;
+  transition: border-color var(--duration-ui) var(--ease-out);
+}
+.vehicle-range__input::placeholder { color: var(--color-muted); opacity: 1; }
+.vehicle-range__input:focus { border-bottom-color: var(--color-ink); }
+@media (hover: hover) and (pointer: fine) { .vehicle-range__input:hover { border-bottom-color: var(--color-ink); } }
+.vehicle-range__dash { color: var(--color-muted); }
+/* The focus ring sits 2 px off the control, clear of a label above it. */
+.vehicle-filter :is(.select__trigger, .vehicle-range__input):focus-visible,
+.vehicle-filter .select--native:has(:focus-visible) .select__trigger { outline: 2px solid var(--color-ink); outline-offset: 2px; }
 .vehicle-filter .select__list { font-size: .8125rem; }
 .vehicle-filter .select__trigger { font-size: 1rem; }
 .vehicles-page :is(a, button, select, input) { scroll-margin-top: calc(var(--header-height) + 1.5rem); }
@@ -128,14 +144,14 @@
   .vehicle-placeholder__filters { min-height: 111px; }
   .vehicle-filters { display: flex; align-items: center; gap: 2rem; }
   .vehicle-filters__fields { flex: 1; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1.25rem; }
-  .vehicle-filter { grid-template-columns: minmax(0, 1fr); gap: .1rem; }
+  .vehicle-filter { grid-template-columns: minmax(0, 1fr); gap: .5rem; }
   .vehicle-filters__result { border: 0; flex-direction: column; align-items: flex-end; gap: .5rem; }
 }
 @media (min-width: 768px) and (max-width: 1199px) {
   .vehicle-placeholder__filters { min-height: 195px; }
   .vehicle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .vehicle-filters__fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .vehicle-filter { grid-template-columns: minmax(0, 1fr); gap: .1rem; }
+  .vehicle-filter { grid-template-columns: minmax(0, 1fr); gap: .5rem; }
   .vehicle-detail__opening { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 2rem; }
   .vehicle-detail__data { position: static; }
   .vehicle-detail__section { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 3vw; }
