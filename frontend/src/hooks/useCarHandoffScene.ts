@@ -41,6 +41,8 @@ function timing(pace: number) {
     curtain: [at(3.1), at(4.15)],
     weather: [at(1.5), at(4.15)],
     ink: at(3.5),
+    // The text lanes darken from the moment «Potencia» leaves until the interlude has fully entered.
+    contrast: [at(3.25), at(3.85)],
   };
 }
 
@@ -219,7 +221,8 @@ export function useCarHandoffScene(locale: string) {
         { backgroundColor: '#b9bfc9', duration: weatherTo - weatherFrom }, weatherFrom);
       // Ink over the bright sky, white over the overcast one: switched while no lettering is shown.
       scene.fromTo(section, { '--handoff-ink': '#101112' }, { '--handoff-ink': '#fffcf7', duration: 0.05 * pace }, AT.ink);
-      scene.fromTo(select('[data-handoff-contrast]'), { opacity: 0 }, { opacity: 1, duration: 0.05 * pace }, AT.ink);
+      const [contrastFrom, contrastTo] = AT.contrast;
+      scene.fromTo(select('[data-handoff-contrast]'), { opacity: 0 }, { opacity: 1, duration: contrastTo - contrastFrom }, contrastFrom);
       enter(lines('c'), at(4.25));
 
       // Car timeline: same range, heavier scrub for some inertia. The world never moves, only the car.
