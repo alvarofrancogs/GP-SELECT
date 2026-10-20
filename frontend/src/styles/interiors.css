@@ -64,13 +64,15 @@
 .contact-field__alternative { margin-top: .875rem; }
 :is(.contact-page, .import-page, .vehicles-page) .editorial-link { min-height: 2.75rem; align-items: center; }
 .contact-field--wide { grid-column: 1 / -1; }
-.contact-field label { display: block; font-size: .875rem; }
+/* The label keeps 8 px clear above its control: the 2 px focus ring sits 2 px off the control and never reaches it. */
+.contact-field label { display: block; margin-bottom: .5rem; font-size: .875rem; }
 .contact-field label > span { font-size: .75rem; color: var(--color-muted); }
 .contact-field input, .contact-field textarea { display: block; width: 100%; max-width: none; padding: .9rem 0; border: 0; border-bottom: 1px solid var(--color-muted); border-radius: 0; background: transparent; color: var(--color-ink); font-size: 1rem; }
 .contact-field input { min-height: 3.25rem; }
 .contact-field input::placeholder { color: var(--color-muted); opacity: 1; }
 .contact-field textarea { resize: vertical; min-height: 8rem; }
-.contact-field :is(input, textarea):focus-visible { outline: 2px solid var(--color-ink); outline-offset: 4px; }
+.contact-field :is(input, textarea):focus-visible, .contact-field .select__trigger:focus-visible,
+.contact-field .select--native:has(:focus-visible) .select__trigger { outline: 2px solid var(--color-ink); outline-offset: 2px; }
 .contact-field [aria-invalid='true'] { border-bottom: 2px solid var(--color-ink); }
 .interior-page .contact-form-section .contact-field__hint { margin-top: .75rem; color: var(--color-muted); font-size: .875rem; }
 .interior-page .contact-form-section .contact-field__hint:empty { margin: 0; }
@@ -230,7 +232,7 @@
   overflow-wrap: normal;
 }
 .import-opening__form {
-  padding: 1.25rem; border-top: 1px solid var(--color-ink);
+  padding: 1.25rem;
   background: var(--color-white);
   scroll-margin-top: calc(var(--header-height) + 1rem);
 }
