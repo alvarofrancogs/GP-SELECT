@@ -25,7 +25,7 @@
   font: inherit; font-stretch: var(--type-ui-width); font-weight: var(--type-ui-weight); letter-spacing: var(--type-ui-tracking);
   cursor: pointer; transition: background-color var(--duration-ui) var(--ease-out), color var(--duration-ui) var(--ease-out);
 }
-.featured__pause:hover { background: rgb(16 17 18 / .06); }
+@media (hover: hover) and (pointer: fine) { .featured__pause:hover { background: rgb(16 17 18 / .06); } }
 .featured__pause:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 3px; }
 .featured__pause-box { position: relative; flex: 0 0 auto; width: 1.05rem; height: 1.05rem; border: 1.5px solid currentColor; transition: background-color var(--duration-ui) var(--ease-out); }
 .featured__pause-box::after {

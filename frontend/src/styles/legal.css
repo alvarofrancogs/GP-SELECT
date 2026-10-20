@@ -18,7 +18,7 @@
 .legal-body li { position: relative; padding-left: 1.25em; }
 .legal-body li::before { content: ''; position: absolute; left: 0; top: .8em; width: .6em; height: var(--border-width); background: currentColor; }
 .legal-body a { text-decoration: underline; text-decoration-thickness: var(--border-width); text-underline-offset: .2em; }
-.legal-body a:hover { color: var(--color-muted); }
+@media (hover: hover) and (pointer: fine) { .legal-body a:hover { color: var(--color-muted); } }
 .legal-updated { margin-top: clamp(3rem, 5vw, 5rem); padding-top: var(--space-4); border-top: var(--border-width) solid var(--interior-rule); color: var(--color-muted); }
 
 /* A detail the holder has not supplied yet: impossible to miss, never mistaken for real data. */

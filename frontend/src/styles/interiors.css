@@ -95,7 +95,7 @@
 .direct-contact__channels > div { padding-block: 1.25rem; border-top: 1px solid var(--color-muted); font-size: .875rem; }
 .direct-contact dt { margin-bottom: .65rem; opacity: .7; }
 .direct-contact dd { margin: 0; overflow-wrap: anywhere; }
-.direct-contact dd a:hover { text-decoration: underline; text-underline-offset: .3em; }
+@media (hover: hover) and (pointer: fine) { .direct-contact dd a:hover { text-decoration: underline; text-underline-offset: .3em; } }
 
 /* Sizes stay local to the two editorial pages, including their closing sections. */
 :is(.about-page, .import-page) .type-section {
