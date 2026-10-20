@@ -8,7 +8,8 @@
   background: transparent; color: var(--color-ink); font: inherit; text-align: left; cursor: pointer;
   transition: border-color var(--duration-ui) var(--ease-out);
 }
-.select__trigger:hover:not(:disabled), .select[data-open] .select__trigger { border-bottom-color: var(--color-ink); }
+.select[data-open] .select__trigger { border-bottom-color: var(--color-ink); }
+@media (hover: hover) and (pointer: fine) { .select__trigger:hover:not(:disabled) { border-bottom-color: var(--color-ink); } }
 .select__trigger:disabled { color: var(--color-muted); border-bottom-style: dotted; cursor: not-allowed; }
 .select__trigger[aria-invalid='true'] { border-bottom: 2px solid var(--admin-alert, #9b1c1c); }
 .select__value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

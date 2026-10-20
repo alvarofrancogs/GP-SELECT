@@ -5,6 +5,8 @@
 
 **Safari 26 · bordes de la Home (20-10-2026, `fix/safari-home-edges`):** guardas de borde en `SiteLayout` para evitar que los pins sean candidatos viewport-sized del hit-test de WebKit, sin cambiar escenas ni pinning. Lint, typecheck y tests 408/408 PASS (Opus). QA de Opus PASS en la réplica: bordes translúcidos en 31 posiciones (antes sólidos en 19), tono de cabecera idéntico con y sin guardas en 9 posiciones y menú abierto con papel sólido en ambos bordes. Sigue pendiente confirmarlo en un iPhone real; detalle en `docs/SAFARI-26.md`.
 
+**Accesibilidad móvil (20-10-2026, `fix/mobile-a11y`, skills `better-accessibility` y `mobile-native`):** las previews de vídeo que arrancan solas duran 4 s y no se repiten (WCAG 2.2.2); foco del menú en la página actual, foco y errores del formulario, regiones de estado persistentes y margen bajo la cabecera en Home y pie; hover solo con ratón, `:active` al 80 % en táctil, `touch-action: manipulation` y sin selección en botones. 421/421 tests; QA de Opus en Chromium PASS. Pendiente: VoiceOver y tacto en un iPhone real.
+
 **Cabecera a 320 px:** ajuste de marca (`1.1rem`) y separación de acciones (`.5rem`) extendido a todas las páginas públicas hasta 374 px, sin cambios por encima ni reducción de las áreas táctiles (`--tap`).
 
 **Estado vivo (16-10-2026): auditoría preproducción sobre `main` @ `1734f12` → NO-GO. Fases 1, 2 y 3 integradas en `main` (PR #22, #24 y #23). Fase 4 (servidor real) en curso: servidor preparado, dominio en traspaso; CSP en `fix/preprod-phase4`.** Detalle abajo, en «PREPROD-AUDIT».

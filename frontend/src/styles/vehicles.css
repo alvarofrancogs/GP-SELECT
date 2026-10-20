@@ -184,6 +184,8 @@
 @media (prefers-reduced-motion: reduce) {
   .vehicle-card__video { transition: none; }
   .vehicle-gallery__slide { transition: none; }
+}
+@media (prefers-reduced-motion: reduce) and (hover: hover) and (pointer: fine) {
   .vehicle-card:hover .vehicle-card__link > span { transform: none; }
 }
 

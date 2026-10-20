@@ -20,8 +20,11 @@ it.each(['delivery', 'vehicle', 'year', 'mileage', 'budget', 'timeframe', 'messa
   await waitFor(() => {
     expect(invalid.getAttribute('aria-invalid')).toBe('true');
     expect(document.activeElement).toBe(invalid);
-    const error = screen.getByRole('alert');
+    const error = document.getElementById(`${invalid.id}-error`)!;
+    expect(error).not.toBeNull();
+    expect(error.hasAttribute('role')).toBe(false);
     expect(invalid.getAttribute('aria-describedby')?.split(' ')).toContain(error.id);
+    expect(screen.queryByRole('alert')).toBeNull();
   }, { timeout: 5000 });
   expect(input('model').value).toBe('M4 CS');
 }, 10000);

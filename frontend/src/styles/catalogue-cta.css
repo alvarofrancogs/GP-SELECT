@@ -124,7 +124,14 @@
   .catalogue-cta[data-tone='light'] .catalogue-cta__body { background: rgb(245 242 236 / .92); }
 }
 
+@media (hover: none), (pointer: coarse) {
+  .catalogue-cta__body { transition: background-color 350ms var(--ease-out), box-shadow 350ms var(--ease-out), opacity calc(var(--duration-ui) * .6) var(--ease-out); }
+  .catalogue-cta:not([aria-disabled='true']):active .catalogue-cta__body { opacity: .8; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .catalogue-cta { animation: none; }
+}
+@media (prefers-reduced-motion: reduce) and (hover: hover) and (pointer: fine) {
   .catalogue-cta:hover .catalogue-cta__glass::after { animation: none; }
 }

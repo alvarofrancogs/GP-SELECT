@@ -1,4 +1,6 @@
 export const PREVIEW_SECONDS = 10;
+// Leave one second for timeupdate delivery and the existing fade back to the cover.
+export const AUTOPLAY_PREVIEW_SECONDS = 4;
 
 export function canAutoplay(): boolean {
   const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;

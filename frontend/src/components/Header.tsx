@@ -236,7 +236,11 @@ export function Header() {
           <ul className="mobile-nav__list">
             {links.map((link, index) => (
               <li key={link.to} className="mobile-nav__item" style={{ '--i': index } as CSSProperties}>
-                <NavLink className="mobile-nav__link" to={link.to} onClick={() => setMenuOpen(false)}>
+                <NavLink className="mobile-nav__link" to={link.to} onClick={() => {
+                  setMenuOpen(false);
+                  // No new page means ScrollReset will not move focus off the closing link.
+                  if (pageKey(link.to) === page) menuButton.current?.focus({ preventScroll: true });
+                }}>
                   <span className="mobile-nav__mask"><span className="mobile-nav__label">{link.label}</span></span>
                   <span className="mobile-nav__mask" aria-hidden="true">
                     <svg className="mobile-nav__arrow" viewBox="0 0 16 19" xmlns="http://www.w3.org/2000/svg">
