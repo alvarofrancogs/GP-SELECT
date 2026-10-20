@@ -39,6 +39,12 @@ dialog { overscroll-behavior: contain; }
 .type-numeric { font-variant-numeric: tabular-nums; }
 .skip-link { position: fixed; top: var(--space-4); left: var(--page-gutter); z-index: var(--z-skip); background: var(--color-white); color: var(--color-ink); padding: var(--space-4); transform: translateY(-200%); }
 .skip-link:focus { transform: translateY(0); }
+/* WebKit fixedContainerEdges hit-tests the centre 4px inside each edge, ignoring pointer-events.
+   These guards are TooSmall in both axes, so it never reaches the viewport-sized scene pins.
+   Keep opacity at 1 and a nonzero background alpha: a hidden guard would trigger a second hit-test. */
+.safari-edge-guard { position: fixed; left: 30%; width: 40%; height: 8px; z-index: var(--z-edge-guard); pointer-events: none; background: rgb(0 0 0 / .004); }
+.safari-edge-guard--top { top: 0; }
+.safari-edge-guard--bottom { bottom: 0; }
 /* Safari 26 paints its status bar solid in the colour of a fixed layer at the top edge that is at least 90% as
    wide as the screen (WebKit, LocalFrameView::fixedContainerEdges). Slightly narrower, the header leaves the bar
    see-through; .header-inner spans the full width again, so nothing in it moves. The open menu keeps the solid

@@ -30,7 +30,7 @@ function darkUnder(y: number) {
 function surfaceAt(y: number): 'light' | 'dark' | null {
   const width = window.innerWidth;
   const top = document.elementsFromPoint(width / 2, y)
-    .find((element) => !element.closest('.site-header, .header-backdrop, .catalogue-cta, .preloader'));
+    .find((element) => !element.closest('.site-header, .header-backdrop, .catalogue-cta, .preloader, .safari-edge-guard'));
   if (!top || top.closest(SCENES)) return null;
   // Cards and photographs are not surfaces: only a full-width block with a solid colour counts.
   for (let node: Element | null = top; node; node = node.parentElement) {
