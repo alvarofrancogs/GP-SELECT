@@ -22,7 +22,7 @@ export const es: Dictionary = {
     "priceDesc": "Precio ↓",
     "yearSort": "Año",
     "kmSort": "Kilómetros",
-    "under": "Menos de",
+    "to": "Hasta",
     "from": "Desde",
     "view": "Ver vehículo",
     "onRequest": "Precio bajo consulta",

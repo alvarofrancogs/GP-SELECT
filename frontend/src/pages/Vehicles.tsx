@@ -8,7 +8,6 @@ import { SoldVehicle } from '../components/SoldVehicle';
 import { useLanguage } from '../i18n/useLanguage';
 import { consumeInitialVehicles, getInitialVehicles, lastVehicles, listVehicles } from '../services/vehicles';
 import { filterVehicles, sanitizeParams, sortVehicles, vehicleFilterKeys } from '../lib/vehicleFacets';
-import type { FacetKey } from '../lib/vehicleFacets';
 import type { VehicleSummary } from '../types/vehicle';
 import { qualificationUrl } from '../lib/qualification';
 import { catalogueReturn, rememberCatalogue } from '../lib/catalogueReturn';
@@ -86,11 +85,12 @@ export function Vehicles() {
     vehicleFilterKeys.forEach((key) => next.delete(key));
     setParams(next, { preventScrollReset: true });
   }
-  function change(key: string, value: string) {
+  // Filters combine freely: changing one never removes another. While a range is typed, the URL is replaced.
+  function change(key: string, value: string, typing = false) {
     mainCount.current = 9;
     const next = new URLSearchParams(clean);
     if (value) next.set(key, value); else next.delete(key);
-    setParams(key === 'sort' ? next : sanitizeParams(mainVehicles, next, key as FacetKey), { preventScrollReset: true });
+    setParams(next, { preventScrollReset: true, replace: typing });
   }
   return <article ref={pageRef} className="interior-page vehicles-page">
     <InteriorPageHeader {...text} />
