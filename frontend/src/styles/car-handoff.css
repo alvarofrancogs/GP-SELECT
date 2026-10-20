@@ -47,14 +47,14 @@
   background: linear-gradient(to bottom, var(--color-dark) 80%, transparent); }
 .car-handoff[data-motion='scroll'] .car-handoff__veil { display: block; }
 .car-handoff__grade { position: absolute; inset: 0; z-index: 7; background: #fff; mix-blend-mode: multiply; pointer-events: none; }
-/* Darken the two text lanes and leave the car's centre alone. A wide feather on each side, so the
-   unshaded middle never reads as a lighter column behind the car. */
+/* Darken the whole sky a little and the two text lanes most. A clear middle read as two dark bars beside the car;
+   with part of the shade over it, the frame darkens as one. */
 .car-handoff__contrast {
   position: absolute;
   inset: 0;
   z-index: 7;
   opacity: 0;
-  background: linear-gradient(to right, rgb(16 17 18 / .32) 18%, transparent 38%, transparent 62%, rgb(16 17 18 / .32) 82%);
+  background: linear-gradient(to right, rgb(16 17 18 / .32) 18%, rgb(16 17 18 / .14) 40%, rgb(16 17 18 / .14) 60%, rgb(16 17 18 / .32) 82%);
   pointer-events: none;
 }
 .car-handoff__text, .car-handoff__interlude { z-index: 8; }
