@@ -35,6 +35,10 @@ export function FeaturedVehicle() {
   }, [index, swapping]);
   const vehicle = vehicles[shown] ?? null;
   useFeaturedVehicleScene(sectionRef, vehicle !== null);
+  const notice = state.status === 'loading' ? text.loading : state.status === 'ready' && !vehicle ? text.empty : '';
+  // Mount the live region empty; loading and empty results update the same node.
+  const [statusMessage, setStatusMessage] = useState('');
+  useEffect(() => { setStatusMessage(notice); }, [notice]);
 
   useEffect(() => {
     const request = new AbortController();
@@ -68,9 +72,8 @@ export function FeaturedVehicle() {
             <span className="featured__pause-box" aria-hidden="true" />{text.pause}
           </button>
         </div> : null}
-        {state.status === 'loading' ? <p className="featured__state" role="status">{text.loading}</p> : null}
+        <p className="featured__state" role="status">{statusMessage}</p>
         {state.status === 'error' ? <p className="featured__state" role="alert">{text.error}</p> : null}
-        {state.status === 'ready' && !vehicle ? <p className="featured__state" role="status">{text.empty}</p> : null}
         {vehicle ? (
           <Link className="featured__piece" to={href(`/vehiculos/${encodeURIComponent(vehicle.slug)}`)}>
             <div className="featured__media">

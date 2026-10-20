@@ -1,9 +1,11 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { useLayoutEffect } from 'react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../i18n/LanguageProvider';
 import type { VehicleSummary } from '../types/vehicle';
 import { FeaturedVehicle } from './FeaturedVehicle';
+import { featuredCopy } from '../i18n/featuredCopy';
 
 const motion = vi.hoisted(() => ({
   index: 0,
@@ -49,7 +51,10 @@ const second: VehicleSummary = {
   powerHp: 400, availability: 'sold', images: [{ ...first.images![0], src: '/second.webp' }],
 };
 
-function Page() {
+function Page({ onStatusMount }: { onStatusMount?: (message: string | null) => void } = {}) {
+  useLayoutEffect(() => {
+    onStatusMount?.(document.querySelector('.featured [role="status"]')?.textContent ?? null);
+  }, [onStatusMount]);
   return <MemoryRouter><LanguageProvider><FeaturedVehicle /></LanguageProvider></MemoryRouter>;
 }
 
@@ -62,6 +67,20 @@ beforeEach(() => {
 });
 
 describe('featured vehicle scene lifetime', () => {
+  it.each([false, true])('keeps one status region from loading to results (empty: %s)', async (empty) => {
+    let resolve!: (cars: VehicleSummary[]) => void;
+    vi.mocked(listVehicles).mockReturnValueOnce(new Promise((done) => { resolve = done; }));
+    const mounted = vi.fn();
+    render(<Page onStatusMount={mounted} />);
+    expect(mounted).toHaveBeenCalledWith('');
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe(featuredCopy.es.loading);
+    await act(async () => { resolve(empty ? [] : [first]); });
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe(empty ? featuredCopy.es.empty : '');
+    expect(status.hasAttribute('hidden')).toBe(false);
+  });
+
   it('keeps the reversible entrance and its targets through rotations without refreshing on cover load', async () => {
     const { container, rerender, unmount } = render(<Page />);
     await screen.findByRole('heading', { name: 'M4' });

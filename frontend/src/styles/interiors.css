@@ -73,6 +73,7 @@
 .contact-field :is(input, textarea):focus-visible { outline: 2px solid var(--color-ink); outline-offset: 4px; }
 .contact-field [aria-invalid='true'] { border-bottom: 2px solid var(--color-ink); }
 .interior-page .contact-form-section .contact-field__hint { margin-top: .75rem; color: var(--color-muted); font-size: .875rem; }
+.interior-page .contact-form-section .contact-field__hint:empty { margin: 0; }
 .contact-field__error { margin-top: .75rem; font-size: .8rem; line-height: 1.4; }
 .interior-page .contact-form-section .contact-preview { margin-top: 2rem; font-size: .8rem; color: var(--color-muted); }
 .contact-submit { margin-top: 1.5rem; }

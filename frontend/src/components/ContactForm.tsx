@@ -67,6 +67,9 @@ export function ContactForm({ configuration, intent, vehicle = '', onNewEnquiry,
   const selectedVehicle = stockOptions.some((option) => option.value === draft.vehicle) ? draft.vehicle : '';
   const stockNotice = stockStatus === 'loading' ? text.stockLoading : stockStatus === 'error' ? text.stockError
     : draft.vehicle && !selectedVehicle ? text.stockUnmatched : stockOptions.length === 1 ? text.stockEmpty : '';
+  // Mount the live region empty before inserting its first message.
+  const [stockMessage, setStockMessage] = useState('');
+  useEffect(() => { setStockMessage(stockField ? stockNotice : ''); }, [stockField, stockNotice]);
   const fields: LeadField[] = importing
     ? ['name', 'email', 'phone', 'delivery', 'make', 'model', 'year', 'mileage', 'budget', 'timeframe', 'message']
     : ['name', 'email', 'phone', ...(intent === 'information' ? [] : ['vehicle' as const]), ...(search ? ['budget' as const] : []), 'message'];
@@ -95,8 +98,9 @@ export function ContactForm({ configuration, intent, vehicle = '', onNewEnquiry,
     if (inFlight.current) return;
     const lead: LeadDraft = { ...common, ...draft, intent, vehicle: stockField ? selectedVehicle : draft.vehicle };
     const invalid = validateLead(lead, configuration);
+    pendingErrorFocus.current = fields.find((field) => invalid.includes(field)) ?? invalid[0] ?? null;
     setFeedback({ intent, status: 'idle', errors: invalid });
-    if (invalid.length) { focusField(fields.find((field) => invalid.includes(field)) ?? invalid[0]); return; }
+    if (invalid.length) return;
     inFlight.current = true;
     onBusyChange?.(true);
     setFeedback({ intent, status: 'submitting', errors: [] });
@@ -161,14 +165,14 @@ export function ContactForm({ configuration, intent, vehicle = '', onNewEnquiry,
             {stockField && field === 'vehicle' ? <>
               <Select id={inputId} labelledBy={`${inputId}-label`} value={selectedVehicle} options={stockOptions} onChange={(value) => change('vehicle', value)}
                 disabled={stockStatus === 'loading' || submitting} aria-required aria-describedby={describedBy} aria-invalid={invalid ? true : undefined} />
-              {stockNotice ? <p id={`${inputId}-stock`} className="contact-field__hint type-body" role="status">{stockNotice}</p> : null}
+              <p id={`${inputId}-stock`} className="contact-field__hint type-body" role="status">{stockMessage}</p>
               {stockStatus === 'error' ? <button className="editorial-link type-ui" type="button" disabled={submitting} onClick={() => { setStockStatus('loading'); setAttempt((current) => current + 1); }}>{copy.vehicles.retry}<span aria-hidden="true">→</span></button> : null}
               <button className="editorial-link contact-field__alternative type-ui" type="button" disabled={submitting} onClick={onSearch}>{text.stockAlternative}<span aria-hidden="true">→</span></button>
             </> : field === 'message' ? <textarea {...shared} rows={4} minLength={messageRequired ? 10 : undefined} maxLength={5000} className="type-body" />
               : <input {...shared} className="type-ui" type={field === 'email' ? 'email' : field === 'phone' ? 'tel' : 'text'}
                 placeholder={importing && importField ? importText.placeholders[importField] : undefined}
                 autoComplete={field === 'name' ? 'name' : field === 'phone' ? 'tel' : field === 'email' ? 'email' : 'off'} maxLength={importing && importField ? importLimits[importField] : field === 'budget' ? importing ? 100 : 80 : field === 'phone' ? 30 : 200} />}
-            {invalid ? <p id={`${inputId}-error`} className="contact-field__error type-ui" role="alert">{error}</p> : null}
+            {invalid ? <p id={`${inputId}-error`} className="contact-field__error type-ui">{error}</p> : null}
           </div>;
         })}
       </div>

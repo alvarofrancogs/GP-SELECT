@@ -38,6 +38,7 @@
 @media (prefers-reduced-motion: reduce) { .featured .featured__pause { display: none; } }
 
 .featured__state { padding-block: var(--space-8); border-block: var(--border-width) solid var(--color-line); font-size: var(--text-body); }
+.featured__state:empty { padding: 0; border: 0; }
 
 /* One editorial piece: the photograph leads, the data sits beside it between hairlines. */
 /* The photograph sets the row height from its own ratio (align-self: start); stretching it made the ratio
