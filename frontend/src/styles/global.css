@@ -235,9 +235,10 @@ html:is(.lang-out, .lang-in) :is(a:not(.header-brand, .footer-brand, .catalogue-
 body:has(:is(.contact-page, .import-page, .vehicles-page)) .header-backdrop[data-glass='light'] {
   background: var(--color-paper); backdrop-filter: none;
 }
+/* Keep the brand clear of the language flags on narrow public pages without shrinking tap targets. */
 @media (max-width: 374px) {
-  body:has(:is(.contact-page, .import-page, .vehicles-page)) .header-brand { font-size: 1.1rem; }
-  body:has(:is(.contact-page, .import-page, .vehicles-page)) .header-actions { gap: .5rem; }
+  .site-layout .header-brand { font-size: 1.1rem; }
+  .site-layout .header-actions { gap: .5rem; }
 }
 @media (hover: hover) and (pointer: fine) {
   .language-switcher a:hover { outline: 1px solid currentColor; outline-offset: -4px; }

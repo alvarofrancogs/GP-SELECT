@@ -5,6 +5,8 @@
 
 **Safari 26 · bordes de la Home (20-10-2026, `fix/safari-home-edges`):** guardas de borde en `SiteLayout` para evitar que los pins sean candidatos viewport-sized del hit-test de WebKit, sin cambiar escenas ni pinning. Lint, typecheck y tests 408/408 PASS (Opus). QA de Opus PASS en la réplica: bordes translúcidos en 31 posiciones (antes sólidos en 19), tono de cabecera idéntico con y sin guardas en 9 posiciones y menú abierto con papel sólido en ambos bordes. Sigue pendiente confirmarlo en un iPhone real; detalle en `docs/SAFARI-26.md`.
 
+**Cabecera a 320 px:** ajuste de marca (`1.1rem`) y separación de acciones (`.5rem`) extendido a todas las páginas públicas hasta 374 px, sin cambios por encima ni reducción de las áreas táctiles (`--tap`).
+
 **Estado vivo (16-10-2026): auditoría preproducción sobre `main` @ `1734f12` → NO-GO. Fases 1, 2 y 3 integradas en `main` (PR #22, #24 y #23). Fase 4 (servidor real) en curso: servidor preparado, dominio en traspaso; CSP en `fix/preprod-phase4`.** Detalle abajo, en «PREPROD-AUDIT».
 
 **Anterior (13-10-2026): SEO B4 y B5 integrados en `main` (PR #7 y #8). B6 (encabezados) terminado en `feat/seo-b6-headings`, pendiente de revisión; plan y estado de cada bloque en `docs/SEO-PHASE-B.md`. Posicionamiento confirmado por el usuario: GP SELECT busca, acompaña y gestiona todo el proceso (búsqueda, revisión, negociación, transporte, matriculación y entrega). Según la operación, el coche se compra directamente a nombre del cliente o lo compra la empresa de GP SELECT y se lo vende con factura (confirmado por el cliente el 13-10-2026); la web lo dice y no publica el depósito.** Anterior: FINAL CLOSURE PASS, 3C PASS (01-10-2026). Arquitectura motion 1A–1F completada; no se modifica en B6.
