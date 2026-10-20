@@ -30,7 +30,7 @@ function darkUnder(y: number) {
 function surfaceAt(y: number): 'light' | 'dark' | null {
   const width = window.innerWidth;
   const top = document.elementsFromPoint(width / 2, y)
-    .find((element) => !element.closest('.site-header, .header-backdrop, .catalogue-cta, .preloader'));
+    .find((element) => !element.closest('.site-header, .header-backdrop, .catalogue-cta, .preloader, .safari-edge-guard'));
   if (!top || top.closest(SCENES)) return null;
   // Cards and photographs are not surfaces: only a full-width block with a solid colour counts.
   for (let node: Element | null = top; node; node = node.parentElement) {
@@ -236,7 +236,11 @@ export function Header() {
           <ul className="mobile-nav__list">
             {links.map((link, index) => (
               <li key={link.to} className="mobile-nav__item" style={{ '--i': index } as CSSProperties}>
-                <NavLink className="mobile-nav__link" to={link.to} onClick={() => setMenuOpen(false)}>
+                <NavLink className="mobile-nav__link" to={link.to} onClick={() => {
+                  setMenuOpen(false);
+                  // No new page means ScrollReset will not move focus off the closing link.
+                  if (pageKey(link.to) === page) menuButton.current?.focus({ preventScroll: true });
+                }}>
                   <span className="mobile-nav__mask"><span className="mobile-nav__label">{link.label}</span></span>
                   <span className="mobile-nav__mask" aria-hidden="true">
                     <svg className="mobile-nav__arrow" viewBox="0 0 16 19" xmlns="http://www.w3.org/2000/svg">

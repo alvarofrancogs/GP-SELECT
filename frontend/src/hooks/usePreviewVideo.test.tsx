@@ -39,6 +39,15 @@ function pointer(type: 'pointerover' | 'pointerout', pointerType = 'mouse') {
 const video = () => screen.getByTestId('card-video') as HTMLVideoElement;
 const isActive = () => screen.getByTestId('card-active').textContent;
 
+function visibility(target: Element, ratio: number) {
+  act(() => {
+    observerCallback([{
+      target, intersectionRatio: ratio, boundingClientRect: target.getBoundingClientRect(),
+      intersectionRect: target.getBoundingClientRect(), isIntersecting: ratio > 0, rootBounds: null, time: 0,
+    }], {} as IntersectionObserver);
+  });
+}
+
 beforeEach(() => {
   hover = media(true);
   motion = media(false);
@@ -106,10 +115,15 @@ describe('usePreviewVideo', () => {
     expect(isActive()).toBe('true');
   });
 
-  it('loops at ten seconds or a shorter end and remains active until stopped', () => {
+  it.each(['hover', 'focus'])('loops at ten seconds or a shorter end with %s and remains active until stopped', (input) => {
     render(<Preview />);
-    pointer('pointerover');
+    if (input === 'hover') pointer('pointerover');
+    else fireEvent.focus(screen.getByTestId('card'));
     fireEvent.playing(video());
+    expect(isActive()).toBe('true');
+    video().currentTime = 4.25;
+    fireEvent.timeUpdate(video());
+    expect(video().currentTime).toBe(4.25);
     expect(isActive()).toBe('true');
     video().currentTime = 9.9;
     fireEvent.timeUpdate(video());
@@ -121,8 +135,85 @@ describe('usePreviewVideo', () => {
     fireEvent.ended(video());
     expect(video().currentTime).toBe(0);
     expect(video().play).toHaveBeenCalledTimes(2);
-    pointer('pointerout');
+    if (input === 'hover') pointer('pointerout');
+    else fireEvent.blur(screen.getByTestId('card'), { relatedTarget: document.body });
     expect(isActive()).toBe('false');
+  });
+
+  it('returns to the cover before five seconds and stays stopped while selected', () => {
+    Object.assign(hover, { matches: false });
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', vi.fn((callback: FrameRequestCallback) => { frames.push(callback); return frames.length; }));
+    render(<Preview />);
+    visibility(video(), 1);
+    fireEvent.playing(video());
+    video().currentTime = 3.99;
+    fireEvent.timeUpdate(video());
+    expect(isActive()).toBe('true');
+    expect(video().hasAttribute('src')).toBe(true);
+    video().currentTime = 4.25;
+    fireEvent.timeUpdate(video());
+    expect(isActive()).toBe('false');
+    expect(video().pause).toHaveBeenCalled();
+    expect(video().hasAttribute('src')).toBe(false);
+    expect(video().currentTime).toBe(0);
+    expect(video().load).toHaveBeenCalled();
+
+    fireEvent.ended(video());
+    fireEvent.playing(video());
+    visibility(video(), 0.8);
+    fireEvent.scroll(window);
+    act(() => { frames[0](0); });
+    expect(video().play).toHaveBeenCalledTimes(1);
+    expect(isActive()).toBe('false');
+    expect(video().hasAttribute('src')).toBe(false);
+
+    visibility(video(), 0.5);
+    visibility(video(), 1);
+    expect(video().play).toHaveBeenCalledTimes(2);
+    fireEvent.playing(video());
+    expect(isActive()).toBe('true');
+  });
+
+  it('does not loop a short automatic preview when it ends', () => {
+    Object.assign(hover, { matches: false });
+    render(<Preview />);
+    visibility(video(), 1);
+    fireEvent.playing(video());
+    video().currentTime = 2;
+    fireEvent.ended(video());
+    expect(isActive()).toBe('false');
+    expect(video().hasAttribute('src')).toBe(false);
+    visibility(video(), 1);
+    fireEvent.ended(video());
+    expect(video().play).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets another card take over after the selected preview stops, then replays when selected again', () => {
+    Object.assign(hover, { matches: false });
+    render(<><Preview /><Preview name="other" /></>);
+    const first = video();
+    const other = screen.getByTestId('other-video') as HTMLVideoElement;
+    vi.spyOn(first, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 200, 200));
+    vi.spyOn(other, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, window.innerHeight / 2 - 100, 200, 200));
+    visibility(first, 1);
+    fireEvent.playing(first);
+    first.currentTime = 4.25;
+    fireEvent.timeUpdate(first);
+    expect(first.hasAttribute('src')).toBe(false);
+
+    visibility(other, 1);
+    expect(other.getAttribute('src')).toBe('/preview.mp4');
+    expect(first.hasAttribute('src')).toBe(false);
+    fireEvent.playing(other);
+    expect(screen.getByTestId('other-active').textContent).toBe('true');
+
+    visibility(other, 0);
+    expect(other.hasAttribute('src')).toBe(false);
+    expect(first.getAttribute('src')).toBe('/preview.mp4');
+    fireEvent.playing(first);
+    expect(isActive()).toBe('true');
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(3);
   });
 
   it('ignores touch pointers on hybrid devices and supports keyboard focus within the root', () => {

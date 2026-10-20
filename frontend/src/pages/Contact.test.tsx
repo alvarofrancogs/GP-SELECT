@@ -89,6 +89,32 @@ describe('contact paths', () => {
     expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body)).message).toBe('Hi');
   });
 
+  it.each([false, true])('mounts the first invalid field description before focusing it (name filled: %s)', async (nameFilled) => {
+    renderContact();
+    if (nameFilled) fill(text.fields.name, 'Alex Smith');
+    const field = input(nameFilled ? text.fields.email : text.fields.name);
+    const focused = vi.fn(() => {
+      const error = document.getElementById(`${field.id}-error`);
+      return {
+        invalid: field.getAttribute('aria-invalid'),
+        describedBy: field.getAttribute('aria-describedby'),
+        error: error?.textContent,
+        role: error?.getAttribute('role'),
+      };
+    });
+    field.addEventListener('focus', focused);
+    send();
+    expect(document.activeElement).toBe(field);
+    expect(focused).toHaveBeenCalledOnce();
+    expect(focused.mock.results[0].value).toEqual({
+      invalid: 'true', describedBy: `${field.id}-error`,
+      error: nameFilled ? text.errors.email : text.errors.name, role: null,
+    });
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+    await waitFor(() => expect(listVehicles).toHaveBeenCalled());
+  });
+
   it('requires ten characters only in information and preserves values on rate limiting', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 429 })));
     renderContact('?intent=information'); fillCommon(); fill(text.fields.enquiry, '123456789'); send();
@@ -123,11 +149,28 @@ describe('contact paths', () => {
 
   it('announces empty stock and retries a failed load', async () => {
     vi.mocked(listVehicles).mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce([]);
-    renderContact('?intent=vehicle');
+    const { container } = renderContact('?intent=vehicle');
+    const status = container.querySelector('[id$="-stock"]');
+    expect(status?.getAttribute('role')).toBe('status');
     await screen.findByText(text.stockError);
+    expect(screen.getByText(text.stockError)).toBe(status);
     fireEvent.click(screen.getByRole('button', { name: es.vehicles.retry }));
     await screen.findByText(text.stockEmpty);
+    expect(screen.getByText(text.stockEmpty)).toBe(status);
     expect(screen.getByRole('combobox').textContent).toBe(text.stockPlaceholder);
+  });
+
+  it('keeps the stock status region mounted when its message clears', async () => {
+    let resolve!: (cars: VehicleSummary[]) => void;
+    vi.mocked(listVehicles).mockReturnValueOnce(new Promise((done) => { resolve = done; }));
+    const { container } = renderContact('?intent=vehicle');
+    const status = container.querySelector('[id$="-stock"]');
+    expect(status?.textContent).toBe(text.stockLoading);
+    await act(async () => { resolve([car]); });
+    expect(container.querySelector('[id$="-stock"]')).toBe(status);
+    expect(status?.textContent).toBe('');
+    expect(status?.getAttribute('role')).toBe('status');
+    expect(status?.hasAttribute('hidden')).toBe(false);
   });
 
   it('blocks intent changes and duplicate submissions until the request settles', async () => {

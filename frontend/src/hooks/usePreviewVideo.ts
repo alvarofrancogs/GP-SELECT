@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type FocusEvent, type PointerEvent, type RefObject } from 'react';
-import { PREVIEW_SECONDS, canAutoplay, createCenteredController } from '../lib/previewPlayback';
+import { AUTOPLAY_PREVIEW_SECONDS, PREVIEW_SECONDS, canAutoplay, createCenteredController } from '../lib/previewPlayback';
 
 /** Keep the cover visible until the current playback request actually starts. */
 export function usePreviewVideo(src: string | null) {
@@ -37,16 +37,22 @@ export function usePreviewVideo(src: string | null) {
       if (!disposed) setActive(false);
     }
 
-    function start() {
+    function start(automatic = false) {
       if (disposed || requested || !src || !canAutoplay()) return;
       requested = true;
       const token = ++generation;
       const current = () => !disposed && requested && generation === token;
       const failed = () => { if (current()) stop(); };
       const playing = () => { if (current() && video.getAttribute('src') === src) setActive(true); };
-      const timeupdate = () => { if (current() && video.currentTime >= PREVIEW_SECONDS) video.currentTime = 0; };
+      const timeupdate = () => {
+        if (!current()) return;
+        if (automatic) {
+          if (video.currentTime >= AUTOPLAY_PREVIEW_SECONDS) stop();
+        } else if (video.currentTime >= PREVIEW_SECONDS) video.currentTime = 0;
+      };
       const ended = () => {
         if (!current()) return;
+        if (automatic) { stop(); return; }
         video.currentTime = 0;
         void video.play().catch(failed);
       };
@@ -73,7 +79,8 @@ export function usePreviewVideo(src: string | null) {
       hovered = false;
       focused = false;
       if (!hover.matches && src && canAutoplay()) {
-        unregister = createCenteredController().register(id, video, { play: start, stop });
+        // Keep the selection after stopping: only leaving and re-entering it starts another preview.
+        unregister = createCenteredController().register(id, video, { play: () => start(true), stop });
       }
     }
 

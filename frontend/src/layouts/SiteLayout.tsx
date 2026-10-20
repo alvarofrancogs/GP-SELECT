@@ -74,6 +74,8 @@ export function SiteLayout() {
 
   return (
     <div className="site-layout">
+      <div className="safari-edge-guard safari-edge-guard--top" aria-hidden="true" />
+      <div className="safari-edge-guard safari-edge-guard--bottom" aria-hidden="true" />
       <a className="skip-link" href="#main-content">{copy.common.skipContent}</a>
       <Preloader />
       <ScrollReset />
