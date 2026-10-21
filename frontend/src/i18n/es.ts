@@ -3,7 +3,7 @@ import type { Dictionary } from './types';
 export const es: Dictionary = {
   vehicles: {
     "title": "Vehículos",
-    "lede": "Coches premium y deportivos seleccionados en Europa, con las fotografías y los datos de cada unidad.",
+    "lede": "Coches premium y deportivos de nuestro stock, con las fotografías y los datos de cada unidad.",
     "singular": "vehículo",
     "plural": "vehículos",
     "filters": "Filtros",
@@ -95,10 +95,10 @@ export const es: Dictionary = {
   interiors: {
     about: {
       title: 'Nosotros',
-      lede: "GP SELECT gestiona por encargo la búsqueda, la compra y la importación de coches premium europeos para clientes de toda Europa. Empezamos por cómo vas a usar el coche y qué presupuesto tienes.",
+      lede: "GP SELECT es un negocio familiar con más de 25 años en la compraventa de coches. Tenemos stock propio de coches premium y deportivos. Si el que quieres no está, lo buscamos e importamos por encargo desde Europa.",
       why: {
         title: 'Comprar bien un coche no debería ser una búsqueda a solas.',
-        body: 'Encontrar un vehículo premium en Europa suele empezar con cientos de anuncios y poca información contrastada. GP SELECT existe para cambiar ese punto de partida: alguien que entiende lo que buscas, compara por ti, te explica lo que tienes delante y, cuando decides, se encarga del resto.',
+        body: 'Tanto si te interesa un coche del catálogo como si quieres que lo busquemos, empezamos por cómo vas a usarlo y qué presupuesto tienes. Te explicamos la información de cada unidad y lo que falta por confirmar para que puedas decidir.',
       },
       audience: {
         title: 'Con quién trabajamos',
@@ -123,7 +123,7 @@ export const es: Dictionary = {
         title: "Qué hacemos nosotros y qué coordinamos con terceros.",
         legalLabel: 'aviso legal',
         rows: [
-          { title: "Lo que hace GP SELECT", body: "La búsqueda, la selección y la evaluación de cada unidad, la negociación con el vendedor, la preparación de la documentación y el seguimiento de la operación hasta la entrega." },
+          { title: "Lo que hace GP SELECT", body: "Compramos y vendemos coches, con stock propio. En los encargos, buscamos y evaluamos las unidades y negociamos con el vendedor. En ambos casos, gestionamos la documentación y seguimos la operación hasta la entrega." },
           { title: "Lo que coordina con terceros", body: "El transporte, la inspección técnica que exija tu país para matricular el coche y los trámites ante las administraciones de origen y destino." },
           { title: "Empresa", body: "GP SELECT tiene su base en Murcia (España). Los datos del titular están en el aviso legal. Puedes escribirnos por WhatsApp." },
         ],

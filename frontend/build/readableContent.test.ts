@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 import { readableHead, renderLlmsText, renderReadableContent } from './readableContent';
 import { entityCopy } from '../src/i18n/entityCopy';
+import { footerCopy } from '../src/i18n/footerCopy';
 import { es } from '../src/i18n/es';
 import { en } from '../src/i18n/en';
 import { escapeHtml, legalPageMeta, staticPageMeta } from '../src/lib/pageMeta';
@@ -88,6 +89,22 @@ it('uses the approved entity summary in both languages of llms.txt', () => {
   const llms = renderLlmsText();
   expect(llms).toContain(`> ${entityCopy.es}`);
   expect(llms).toContain(`## English\n\n> ${entityCopy.en}`);
+  expect(llms).toContain('más de 25 años en la compraventa de coches');
+  expect(llms).toContain('more than 25 years of buying and selling cars');
+  expect(llms).toContain('de nuestro stock');
+  expect(llms).toContain('from our own stock');
+});
+
+it.each([['/nosotros', es.interiors.about], ['/en/about', en.interiors.about]])(
+  'keeps the stock and sourcing explanation in %s without JavaScript', (path, text) => {
+    const html = renderReadableContent(path);
+    expect(html).toContain(escapeHtml(text.why.body));
+    for (const row of text.transparency.rows) expect(html).toContain(escapeHtml(row.body.split(text.transparency.legalLabel)[0]));
+  });
+
+it.each(Object.keys(staticPageMeta))('shares the corporate footer with the visible page on %s', (path) => {
+  const locale = path.startsWith('/en') ? 'en' : 'es';
+  expect(renderReadableContent(path)).toContain(`<footer><p>${escapeHtml(footerCopy[locale].description)}</p>`);
 });
 
 it.each([

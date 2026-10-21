@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { Link, useBlocker, useParams } from 'react-router-dom';
+import { Link, useBlocker, useNavigate, useParams } from 'react-router-dom';
 import { adminApi, ApiError } from '../../services/adminApi';
 import type { AdminImage, AdminVehicle, SettableStatus, VehicleSaveRequest } from '../../types/admin';
 import { adminCopy } from '../../i18n/adminCopy';
@@ -13,6 +13,7 @@ import { VideoUploader } from '../../components/admin/VideoUploader';
 import { StatusControl } from '../../components/admin/StatusControl';
 import { RestoreVehicleButton } from '../../components/admin/RestoreVehicleButton';
 import { ArchiveVehicleDialog } from '../../components/admin/ArchiveVehicleDialog';
+import { DeleteVehicleDialog } from '../../components/admin/DeleteVehicleDialog';
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { MonthSelect } from '../../components/admin/MonthSelect';
 import { SuggestInput } from '../../components/SuggestInput';
@@ -48,6 +49,8 @@ const BackLink = () => <Link to="/admin" className="admin-back"><span aria-hidde
 type SaveState = { kind: 'idle' | 'saving' | 'saved' | 'discarding' } | { kind: 'error'; message: string; reference: string | null };
 
 function VehicleEditor({ initial }: { initial: AdminVehicle }) {
+  const navigate = useNavigate();
+  const leaveAfterSuccess = useRef(false);
   const text = adminCopy.editor;
   const f = adminCopy.fields;
   const [vehicle, setVehicle] = useState(initial); // Last server state: the baseline for dirty tracking.
@@ -71,6 +74,7 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
   const reloadSequence = useRef(0);
   const mounted = useRef(true);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const archived = vehicle.status === 'Archived';
 
@@ -101,10 +105,10 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
   const working = save.kind === 'saving' || save.kind === 'discarding';
   const archiveLocked = dirty || uploading || processing || working;
 
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => !archived && (dirty || uploading || processing || working) && (currentLocation.pathname !== nextLocation.pathname || currentLocation.search !== nextLocation.search || currentLocation.hash !== nextLocation.hash));
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => !leaveAfterSuccess.current && !archived && (dirty || uploading || processing || working) && (currentLocation.pathname !== nextLocation.pathname || currentLocation.search !== nextLocation.search || currentLocation.hash !== nextLocation.hash));
   useEffect(() => {
     if (archived || (!dirty && !uploading && !processing && !working)) return;
-    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    const warn = (event: BeforeUnloadEvent) => { if (!leaveAfterSuccess.current) event.preventDefault(); };
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
   }, [archived, dirty, uploading, processing, working]);
@@ -235,6 +239,9 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
       const updated = await adminApi.saveVehicle(vehicle.id, body);
       resetDraft(updated);
       setSave({ kind: 'saved' });
+      // The blocker still sees the previous render's dirty state until React commits this update.
+      leaveAfterSuccess.current = true;
+      void navigate('/admin', { state: { announcement: text.saved, vehicleId: vehicle.id } });
     } catch (failure) {
       const mapped = mapServerErrors(fieldErrors(failure), specKeys);
       const server = failure instanceof ApiError && failure.status === 422 ? {}
@@ -272,7 +279,11 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
           <span className="type-section">{vehicle.make} {vehicle.model}</span>
           {vehicle.variant ? <span className="type-fine">{vehicle.variant}</span> : null}
         </h1>
-        {archived ? null : <Link to={`/admin/vehiculos/${vehicle.id}/vista-previa`} className="admin-link">{text.preview}<span aria-hidden="true">→</span></Link>}
+        <div className="admin-editor__head-actions">
+          {archived ? null : <Link to={`/admin/vehiculos/${vehicle.id}/vista-previa`} className="admin-link">{text.preview}<span aria-hidden="true">→</span></Link>}
+          <button type="button" className="admin-link admin-link--danger" disabled={working || uploading}
+            onClick={() => setDeleteOpen(true)}>{adminCopy.list.delete}</button>
+        </div>
       </div>
       <StatusControl vehicle={archived ? vehicle : { ...vehicle, status }} disabled={working}
         onChanged={(next) => { setStatus(next); setSave({ kind: 'idle' }); }} />
@@ -375,17 +386,29 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
         onRemove={(id) => { setRemoved((current) => [...current, id]); setSave({ kind: 'idle' }); }} />
     </Section>
 
-    {archived ? null : <section className="admin-archive" aria-labelledby="archive-title">
-      <h2 id="archive-title" className="admin-section__title">{adminCopy.archive.title}</h2>
-      <div>
-        <p className="admin-field__hint">{adminCopy.archive.body}</p>
-        {/* Archiving makes the vehicle read-only: an upload or unsaved change would be stranded. */}
-        <button type="button" className="admin-link admin-link--danger" disabled={archiveLocked} aria-describedby={archiveLocked ? 'archive-locked' : undefined}
-          onClick={() => setArchiveOpen(true)}>{text.archiveAction}</button>
-        {archiveLocked ? <p id="archive-locked" className="admin-field__hint">{text.archiveLocked}</p> : null}
+    <section className="admin-archive" aria-labelledby="archive-title">
+      <h2 id="archive-title" className="admin-section__title">{archived ? text.deleteAction : text.lifecycleTitle}</h2>
+      <div className="admin-lifecycle">
+        {archived ? null : <div>
+          <p className="admin-field__hint">{adminCopy.archive.body}</p>
+          {/* Archiving makes the vehicle read-only: an upload or unsaved change would be stranded. */}
+          <button type="button" className="admin-link" disabled={archiveLocked} aria-describedby={archiveLocked ? 'archive-locked' : undefined}
+            onClick={() => setArchiveOpen(true)}>{text.archiveAction}</button>
+          {archiveLocked ? <p id="archive-locked" className="admin-field__hint">{text.archiveLocked}</p> : null}
+        </div>}
+        <div>
+          <p className="admin-field__hint">{text.deleteHint}</p>
+          <button type="button" className="admin-link admin-link--danger" disabled={working || uploading}
+            onClick={() => setDeleteOpen(true)}>{text.deleteAction}</button>
+        </div>
       </div>
-    </section>}
+    </section>
 
+    <DeleteVehicleDialog vehicle={deleteOpen ? vehicle : null} unsaved={dirty} onClose={() => setDeleteOpen(false)}
+      onDeleted={() => {
+        leaveAfterSuccess.current = true;
+        void navigate('/admin', { state: { announcement: adminCopy.delete.done } });
+      }} />
     <ArchiveVehicleDialog vehicleId={archiveOpen ? vehicle.id : null} onClose={() => setArchiveOpen(false)}
       onArchived={() => { setArchiveOpen(false); resetDraft({ ...vehicle, status: 'Archived' }); }} />
     <ConfirmDialog open={blocker.state === 'blocked'} title={adminCopy.unsaved.title} body={adminCopy.unsaved.body}

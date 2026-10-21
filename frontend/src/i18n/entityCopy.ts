@@ -1,6 +1,6 @@
 import type { Locale } from "./types";
 
 export const entityCopy: Record<Locale, string> = {
-  es: "GP SELECT, con base en Murcia (España), gestiona por encargo la búsqueda, la compra y la importación de coches premium y deportivos desde países de la Unión Europea, para clientes de toda Europa. Desde la primera búsqueda hasta la entrega, el cliente delega en nosotros la operación completa.",
-  en: "Based in Murcia, Spain, GP SELECT manages the sourcing, purchase and import of premium and performance cars from across the European Union, for clients throughout Europe. From the first search to delivery, clients hand the whole process over to us.",
+  es: "GP SELECT es un negocio familiar con base en Murcia (España) y más de 25 años en la compraventa de coches. Vendemos coches premium y deportivos de nuestro stock y también los buscamos e importamos por encargo desde Europa, para clientes de España y del resto de Europa.",
+  en: "GP SELECT is a family business based in Murcia, Spain, with more than 25 years of buying and selling cars. We sell premium and performance cars from our own stock and also source and import them to order from Europe, for clients in Spain and across the rest of Europe.",
 };

@@ -3,7 +3,7 @@ import type { Dictionary } from './types';
 export const en: Dictionary = {
   vehicles: {
     "title": "Vehicles",
-    "lede": "Premium and performance cars selected in Europe, with photographs and key details for each one.",
+    "lede": "Premium and performance cars from our own stock, with photographs and key details for each one.",
     "singular": "vehicle",
     "plural": "vehicles",
     "filters": "Filters",
@@ -97,10 +97,10 @@ export const en: Dictionary = {
   interiors: {
     about: {
       title: 'About us',
-      lede: "GP SELECT manages the sourcing, purchase and import of premium European cars for clients across Europe. We start with how you will use the car and what you want to spend.",
+      lede: "GP SELECT is a family business with more than 25 years of buying and selling cars. We have our own stock of premium and performance cars. If the car you want isn’t here, we source and import it to order from Europe.",
       why: {
         title: 'Buying the right car shouldn’t be a search on your own.',
-        body: 'Finding a premium car in Europe usually starts with hundreds of listings and little reliable information. GP SELECT exists to change that starting point: someone who understands what you are looking for, compares options for you, explains what is in front of you and, once you decide, takes care of the rest.',
+        body: 'Whether you are interested in a car from our catalogue or want us to find one, we start with how you will use it and what you want to spend. We explain the information available for each car and what still needs confirming so you can decide.',
       },
       audience: {
         title: 'Who we work with',
@@ -125,7 +125,7 @@ export const en: Dictionary = {
         title: "What we do ourselves, and what we coordinate.",
         legalLabel: 'legal notice',
         rows: [
-          { title: "What GP SELECT does", body: "The search, the selection and evaluation of each car, negotiation with the seller, preparing the paperwork and following the process through to delivery." },
+          { title: "What GP SELECT does", body: "We buy and sell cars, with our own stock. For sourcing requests, we find and evaluate cars and negotiate with the seller. In both cases, we handle the paperwork and follow the process through to delivery." },
           { title: "What we coordinate with third parties", body: "Transport, the roadworthiness inspection your country requires for registration, and the formalities with the authorities in the origin and destination countries." },
           { title: "Company", body: "GP SELECT is based in Murcia, Spain. The owner’s details are in the legal notice. You can reach us on WhatsApp." },
         ],

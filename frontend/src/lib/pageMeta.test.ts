@@ -52,6 +52,10 @@ describe('static structured data', () => {
     const graph = meta.jsonLd!['@graph'] as Record<string, unknown>[];
     expect(graph[0].description).toBe(entityCopy[locale]);
     expect(graph[0].description).not.toBe(meta.description);
+    expect(graph[0]).not.toHaveProperty('foundingDate');
+    expect(graph[0].description).toContain(locale === 'es' ? 'negocio familiar' : 'family business');
+    expect(graph[0].description).toContain(locale === 'es' ? 'más de 25 años' : 'more than 25 years');
+    expect(graph[0].description).toContain(locale === 'es' ? 'de nuestro stock' : 'from our own stock');
   });
 
   it('omits IDs and publisher without siteUrl, but keeps the telephone', () => {
@@ -74,6 +78,24 @@ describe('static structured data', () => {
     contactConfig.phone = null;
     contactConfig.whatsapp = null;
     expect(dealer()).not.toHaveProperty('telephone');
+  });
+});
+
+describe('stock and import positioning', () => {
+  it.each([
+    ['/', 'Stock propio', 'por encargo'],
+    ['/en', 'Our own stock', 'to order'],
+    ['/vehiculos', 'nuestro stock', 'por encargo'],
+    ['/en/vehicles', 'our stock', 'source it in Europe'],
+    ['/nosotros', 'nuestro stock', 'por encargo'],
+    ['/en/about', 'our own stock', 'to order'],
+  ])('describes both ways to buy in the metadata for %s', (path, stock, sourcing) => {
+    const meta = getStaticPageMeta(path);
+    expect(meta.description).toContain(stock);
+    expect(meta.description).toContain(sourcing);
+    const head = renderPageHead(meta);
+    expect(head).toContain(`name="description" content="${meta.description}"`);
+    expect(head).toContain(`property="og:description" content="${meta.description}"`);
   });
 });
 

@@ -10,6 +10,21 @@ beforeEach(() => {
 });
 afterEach(() => { vi.unstubAllGlobals(); });
 
+describe('permanent vehicle deletion', () => {
+  it('sends DELETE with the session cookie and accepts an empty 204', async () => {
+    fetch.mockResolvedValue(new Response(null, { status: 204 }));
+    await expect(adminApi.deleteVehicle('v1')).resolves.toBeUndefined();
+    expect(fetch).toHaveBeenCalledWith('/api/admin/vehicles/v1', {
+      method: 'DELETE', credentials: 'include', headers: { Accept: 'application/json' },
+    });
+  });
+
+  it('preserves a failed deletion for the caller to display', async () => {
+    fetch.mockResolvedValue(new Response(JSON.stringify({ code: 'csrf_failed' }), { status: 403 }));
+    await expect(adminApi.deleteVehicle('v1')).rejects.toMatchObject({ status: 403, code: 'csrf_failed' });
+  });
+});
+
 describe('video upload contracts', () => {
   it('requests a video upload with its MIME type, size and caller-owned idempotency key', async () => {
     const answer = { videoId: 'video1', uploadUrl: 'https://s3/put', expiresInSeconds: 900 };
