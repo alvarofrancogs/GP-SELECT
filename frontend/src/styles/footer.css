@@ -35,6 +35,8 @@
   line-height: 1.55;
 }
 
+.footer-identity > p:not(.footer-location) { text-wrap: pretty; }
+
 .footer-nav {
   font-stretch: var(--type-ui-width);
   font-weight: var(--type-ui-weight);

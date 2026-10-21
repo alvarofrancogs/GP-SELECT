@@ -7,6 +7,7 @@
 }
 
 .interior-page [hidden] { display: none; }
+.interior-page :is(.type-lede, p) { text-wrap: pretty; }
 .interior-page .type-body { font-size: clamp(1rem, 1.15vw, 1.25rem); }
 .interior-page .type-lede { font-size: clamp(1.25rem, 1.85vw, 2rem); }
 .interior-page .type-heading { font-size: clamp(1.4rem, 2.2vw, 2.75rem); }

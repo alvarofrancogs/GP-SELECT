@@ -25,12 +25,12 @@ export interface PageMeta {
 
 export const staticPageMeta: Record<string, PageMeta> = {
   '/': {
-    title: "GP SELECT · Importación de coches premium desde Europa",
-    description: "Coches premium y deportivos de toda la UE, buscados para ti y entregados en tu país. GP SELECT gestiona la compra, los trámites y la matriculación desde Murcia.",
+    title: "GP SELECT · Compraventa e importación de coches premium",
+    description: "Compraventa de coches premium y deportivos en Murcia. Stock propio y búsqueda e importación por encargo desde Europa, para clientes en España y el resto de Europa.",
   },
   '/vehiculos': {
-    title: "Coches premium seleccionados en Europa · GP SELECT",
-    description: "Coches premium y deportivos europeos, con fotos y datos de cada unidad. Si el que buscas no está, lo buscamos por encargo en toda Europa.",
+    title: "Coches premium de nuestro stock · GP SELECT",
+    description: "Consulta nuestro stock de coches premium y deportivos, con fotos y datos de cada unidad. Si el que buscas no está, lo buscamos por encargo en Europa.",
   },
   '/importacion': {
     title: "Importar coche de Alemania o Europa llave en mano · GP SELECT",
@@ -41,20 +41,20 @@ export const staticPageMeta: Record<string, PageMeta> = {
     description: 'Guía para importar un coche desde otro país europeo: IVA de coche nuevo y usado, aduana fuera de la UE, documentos de origen y matriculación en España.',
   },
   '/nosotros': {
-    title: "Sobre GP SELECT · Importación de coches premium desde Murcia",
-    description: "Qué gestiona GP SELECT en cada operación, qué coordina con terceros y cómo elige los coches que te propone. Una empresa de Murcia con clientes en toda Europa.",
+    title: "Sobre GP SELECT · Compraventa familiar de coches en Murcia",
+    description: "Negocio familiar de Murcia con más de 25 años en la compraventa de coches. Conoce cómo trabajamos con nuestro stock y con la búsqueda e importación por encargo.",
   },
   '/contacto': {
     title: 'Contacto · Cuéntanos qué coche buscas · GP SELECT',
     description: 'Pregúntanos por un coche del catálogo o cuéntanos cuál quieres encontrar en Europa. GP SELECT trabaja desde Murcia con clientes de toda Europa.',
   },
   [pagePaths.home.en]: {
-    title: 'GP SELECT · Premium car sourcing and import across Europe',
-    description: 'Premium and performance cars from across the EU, sourced for you and delivered to your country. We manage purchase, paperwork and registration from Murcia, Spain.',
+    title: 'GP SELECT · Buying, selling and importing premium cars',
+    description: 'Buying and selling premium and performance cars in Murcia. Our own stock, plus sourcing and import from Europe to order for clients in Spain and across Europe.',
   },
   [pagePaths.vehicles.en]: {
-    title: 'Premium cars sourced in Europe · GP SELECT',
-    description: 'Premium and performance cars from across Europe, with photos and key details for each one. If yours isn’t here, we’ll source it for you.',
+    title: 'Premium cars from our own stock · GP SELECT',
+    description: 'Browse our stock of premium and performance cars, with photos and details for each one. If the car you want isn’t here, we’ll source it in Europe for you.',
   },
   [pagePaths.import.en]: {
     title: 'Import a car from Germany or elsewhere in Europe · GP SELECT',
@@ -65,8 +65,8 @@ export const staticPageMeta: Record<string, PageMeta> = {
     description: 'Guide to importing a car from another European country: VAT on new and used cars, customs outside the EU, origin documents and registration in Spain.',
   },
   [pagePaths.about.en]: {
-    title: 'About GP SELECT · European car sourcing from Murcia, Spain',
-    description: 'How we work: what we manage on every purchase, what we coordinate with third parties and how we choose the cars we put forward. Based in Murcia, Spain.',
+    title: 'About GP SELECT · Family car business in Murcia, Spain',
+    description: 'A family business in Murcia with more than 25 years of buying and selling cars. Learn how we work with our own stock and with sourcing and import to order.',
   },
   [pagePaths.contact.en]: {
     title: 'Contact · Tell us which car you want · GP SELECT',
