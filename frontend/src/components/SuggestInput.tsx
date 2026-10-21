@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type InputHTMLAttributes, type KeyboardEvent } from 'react';
 import { opensAbove, scrollOptionIntoView } from '../lib/listbox';
+import { useNativeSelect } from '../hooks/useNativeSelect';
 import '../styles/select.css';
 
 const fold = (text: string) => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -14,9 +15,11 @@ interface SuggestInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 /**
  * Expects a visible label with id `${id}-label` (FormField provides it).
  * Free text with suggestions (WAI-ARIA combobox with list autocomplete), drawn like Select: replaces the
- * browser's <datalist> popup. Any text is still valid; the list only helps to keep values consistent.
+ * browser's <datalist> popup on desktop. Touch/small screens keep the native suggestions.
+ * Any text is still valid; the list only helps to keep values consistent.
  */
 export function SuggestInput({ id, value, suggestions, onChange, className = '', disabled, ...rest }: SuggestInputProps) {
+  const native = useNativeSelect();
   const listId = `${id}-suggestions`;
   const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -27,7 +30,7 @@ export function SuggestInput({ id, value, suggestions, onChange, className = '',
   const query = fold(value.trim());
   // While typing, only what matches; on focus with a known value, the whole list to pick another.
   const matches = query && !suggestions.some((s) => fold(s) === query) ? suggestions.filter((s) => fold(s).includes(query)) : suggestions;
-  const shown = open && matches.length > 0;
+  const shown = !native && open && matches.length > 0;
 
   // Like Select: upwards when the list would run past the bottom of the screen. Measured again when typing
   // changes how many suggestions there are.
@@ -67,6 +70,14 @@ export function SuggestInput({ id, value, suggestions, onChange, className = '',
       setOpen(false);
     }
   }
+
+  if (native) return <div className="select select--suggest">
+    <input {...rest} id={id} className={className} value={value} disabled={disabled} autoComplete="off"
+      list={listId} onChange={(event) => onChange(event.target.value)} />
+    <datalist id={listId}>
+      {suggestions.map((text) => <option key={text} value={text} />)}
+    </datalist>
+  </div>;
 
   return <div ref={root} className="select select--suggest" data-open={shown || undefined} data-above={above || undefined}>
     <input {...rest} ref={input} id={id} className={className} value={value} disabled={disabled} autoComplete="off"

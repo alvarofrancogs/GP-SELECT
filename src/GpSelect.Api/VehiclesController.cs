@@ -30,6 +30,29 @@ public class VehiclesController(GpSelectDbContext db, ISlugGenerator slugs, IObj
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id) { var v = await db.Vehicles.FindAsync(id); return v is null ? NotFound() : Ok(await Map(v)); }
 
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        await using var tx = await db.Database.BeginTransactionAsync();
+        var vehicle = await db.LockVehicleAsync(id);
+        if (vehicle is null) return NotFound();
+
+        // Include staged and previously removed media too. The database cascades images, their jobs and videos.
+        var images = await db.Images.AsNoTracking().Where(x => x.VehicleUnitId == id).ToListAsync();
+        var videoKeys = await db.Videos.Where(x => x.VehicleUnitId == id).Select(x => x.Key).ToListAsync();
+        var keys = images.SelectMany(x => new[] { x.OriginalKey, x.CardKey, x.DetailKey })
+            .Concat(videoKeys).OfType<string>().Distinct().ToList();
+        db.Vehicles.Remove(vehicle);
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        // A storage failure must not turn a committed deletion into an error. The orphan sweep retries leftovers.
+        foreach (var key in keys)
+            try { await storage.DeleteAsync(key, HttpContext.RequestAborted); }
+            catch (Exception ex) { HttpContext.RequestServices.GetRequiredService<ILogger<VehiclesController>>().LogWarning(ex, "Media cleanup failed for deleted vehicle {VehicleId}: {Key}", id, key); }
+        return NoContent();
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(CreateVehicleRequest r)
     {

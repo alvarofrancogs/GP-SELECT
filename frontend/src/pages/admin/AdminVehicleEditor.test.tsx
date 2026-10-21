@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
-import { createMemoryRouter, RouterProvider } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider, useLocation } from 'react-router-dom';
 import { AdminVehicleEditor } from './AdminVehicleEditor';
 import { adminApi, ApiError, uploadFile } from '../../services/adminApi';
 import { extractPoster, isFastStart } from '../../lib/videoFile';
@@ -10,7 +10,7 @@ import type { AdminImage, AdminVehicle } from '../../types/admin';
 vi.mock('../../services/adminApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/adminApi')>();
   return { ...actual, uploadFile: vi.fn(), adminApi: {
-    getVehicle: vi.fn(), removeImage: vi.fn(), saveVehicle: vi.fn(),
+    getVehicle: vi.fn(), removeImage: vi.fn(), saveVehicle: vi.fn(), deleteVehicle: vi.fn(),
     videoIntent: vi.fn(), completeVideo: vi.fn(), imageIntent: vi.fn(), completeImage: vi.fn(),
   } };
 });
@@ -22,6 +22,11 @@ vi.mock('../../lib/videoFile', async (importOriginal) => ({
 const getVehicle = vi.mocked(adminApi.getVehicle);
 const removeImage = vi.mocked(adminApi.removeImage);
 const saveVehicle = vi.mocked(adminApi.saveVehicle);
+
+function ReturnedList() {
+  const location = useLocation();
+  return <><h1>Listado</h1><p role="status">{location.state?.announcement}</p></>;
+}
 
 const photo = (state: AdminImage['state'], jobPending: boolean): AdminImage => ({
   id: 'p1', kind: 'Photo', state, jobPending, isStaged: true, isCover: false, sortOrder: 0, failureReason: state === 'Failed' ? 'transient' : null,
@@ -58,7 +63,10 @@ describe('editor video saving', () => {
   async function open(data: AdminVehicle) {
     getVehicle.mockResolvedValue(data);
     saveVehicle.mockResolvedValue(data);
-    const router = createMemoryRouter([{ path: '/admin/vehiculos/:id', element: <AdminVehicleEditor /> }], { initialEntries: ['/admin/vehiculos/v1'] });
+    const router = createMemoryRouter([
+      { path: '/admin/vehiculos/:id', element: <AdminVehicleEditor /> },
+      { path: '/admin', element: <ReturnedList /> },
+    ], { initialEntries: ['/admin/vehiculos/v1'] });
     const view = render(<RouterProvider router={router} />);
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     return view;
@@ -79,7 +87,8 @@ describe('editor video saving', () => {
     saveVehicle.mockResolvedValue({ ...data, status: 'Sold' });
     await saveChanges();
     expect(saveVehicle.mock.calls[0][1].status).toEqual({ status: 'Sold' });
-    expect(saveButton().disabled).toBe(true);
+    expect(screen.getByRole('heading', { name: 'Listado' })).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe(adminCopy.editor.saved);
   }, 10000);
 
   it('poster images are not listed among the photos', async () => {
@@ -138,7 +147,7 @@ describe('editor video saving', () => {
     await wait(1500);
     await saveChanges();
     expect(saveVehicle.mock.calls[0][1]).toEqual({ video: { keep: 'replacement' } });
-    expect(saveButton().disabled).toBe(true);
+    expect(screen.getByRole('heading', { name: 'Listado' })).toBeTruthy();
   });
 
   it.each(['video', 'poster'] as const)('stops asking for the video after its %s upload failed, and keeps the save blocked', async (stage) => {
@@ -235,6 +244,98 @@ async function wait(ms: number) {
   for (let left = ms; left > 0; left -= 1500) await act(async () => { await vi.advanceTimersByTimeAsync(Math.min(1500, left)); });
 }
 const saveButton = () => screen.getByRole('button', { name: adminCopy.editor.save }) as HTMLButtonElement;
+
+describe('editor save and delete navigation', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    getVehicle.mockReset();
+    saveVehicle.mockReset();
+    vi.mocked(adminApi.deleteVehicle).mockReset().mockResolvedValue(undefined);
+    HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+    HTMLDialogElement.prototype.close = function () { this.open = false; };
+  });
+  afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
+
+  async function open(status: AdminVehicle['status'] = 'Draft', image = photo('Ready', false)) {
+    const data = { ...vehicle({ ...image, isStaged: false }), status };
+    getVehicle.mockResolvedValue(data);
+    saveVehicle.mockResolvedValue({ ...data, model: 'M3' });
+    const router = createMemoryRouter([
+      { path: '/admin/vehiculos/:id', element: <AdminVehicleEditor /> },
+      { path: '/admin', element: <ReturnedList /> },
+    ], { initialEntries: ['/admin/vehiculos/v1'] });
+    render(<RouterProvider router={router} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    return router;
+  }
+
+  it('returns only after a successful save with the edited id and announcement, bypassing the old dirty render', async () => {
+    const router = await open();
+    let finish!: (data: AdminVehicle) => void;
+    saveVehicle.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    fireEvent.change(screen.getByLabelText(adminCopy.fields.model), { target: { value: 'M3' } });
+    fireEvent.click(saveButton());
+    expect(router.state.location.pathname).toBe('/admin/vehiculos/v1');
+    expect((screen.getByRole('button', { name: 'Eliminar' }) as HTMLButtonElement).disabled).toBe(true);
+    await act(async () => { finish({ ...vehicle({ ...photo('Ready', false), isStaged: false }), model: 'M3' }); });
+    expect(router.state.location.pathname).toBe('/admin');
+    expect(router.state.location.state).toEqual({ announcement: adminCopy.editor.saved, vehicleId: 'v1' });
+    expect(screen.queryByRole('dialog', { name: adminCopy.unsaved.title })).toBeNull();
+  });
+
+  it('keeps the draft and errors in the editor when saving fails', async () => {
+    const router = await open();
+    saveVehicle.mockRejectedValue(new ApiError(400, { errors: { model: ['required'] } }));
+    fireEvent.change(screen.getByLabelText(adminCopy.fields.model), { target: { value: 'M3' } });
+    await act(async () => { fireEvent.click(saveButton()); });
+    expect(router.state.location.pathname).toBe('/admin/vehiculos/v1');
+    expect((screen.getByLabelText(adminCopy.fields.model) as HTMLInputElement).value).toBe('M3');
+    expect(screen.getByLabelText(adminCopy.fields.model).getAttribute('aria-invalid')).toBe('true');
+    expect(screen.getByRole('alert').textContent).toContain(adminCopy.editor.fixErrors);
+  });
+
+  it('deletes a dirty vehicle with an explicit warning and returns without an unsaved-changes dialog', async () => {
+    const router = await open();
+    fireEvent.change(screen.getByLabelText(adminCopy.fields.model), { target: { value: 'M3' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar' }));
+    const dialog = screen.getByRole('dialog', { name: adminCopy.delete.title });
+    expect(dialog.textContent).toContain('BMW M4');
+    expect(dialog.textContent).toContain(adminCopy.delete.unsaved);
+    await act(async () => { fireEvent.click(within(dialog).getByRole('button', { name: adminCopy.delete.confirm })); });
+    expect(adminApi.deleteVehicle).toHaveBeenCalledWith('v1');
+    expect(router.state.location.pathname).toBe('/admin');
+    expect(router.state.location.state).toEqual({ announcement: adminCopy.delete.done });
+    expect(screen.getByRole('status').textContent).toBe(adminCopy.delete.done);
+    expect(screen.queryByRole('dialog', { name: adminCopy.unsaved.title })).toBeNull();
+  });
+
+  it('retains the unsaved-changes guard after a failed delete', async () => {
+    const router = await open();
+    vi.mocked(adminApi.deleteVehicle).mockRejectedValue(new ApiError(500));
+    fireEvent.change(screen.getByLabelText(adminCopy.fields.model), { target: { value: 'M3' } });
+    fireEvent.click(screen.getByRole('button', { name: adminCopy.editor.deleteAction }));
+    const dialog = screen.getByRole('dialog', { name: adminCopy.delete.title });
+    await act(async () => { fireEvent.click(within(dialog).getByRole('button', { name: adminCopy.delete.confirm })); });
+    expect(within(dialog).getByRole('alert')).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/admin/vehiculos/v1');
+    fireEvent.click(within(dialog).getByRole('button', { name: adminCopy.delete.cancel }));
+    fireEvent.click(screen.getByRole('link', { name: adminCopy.editor.back }));
+    expect(screen.getByRole('dialog', { name: adminCopy.unsaved.title })).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/admin/vehiculos/v1');
+  });
+
+  it.each(['Archived', 'Available'] as const)('offers permanent deletion for a %s vehicle', async (status) => {
+    await open(status);
+    expect((screen.getByRole('button', { name: 'Eliminar' }) as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: adminCopy.editor.deleteAction }));
+    expect(screen.getByRole('dialog', { name: adminCopy.delete.title }).textContent).not.toContain(adminCopy.delete.unsaved);
+  });
+
+  it('allows deletion while the worker processes a photo, with no upload in progress', async () => {
+    await open('Draft', photo('Processing', true));
+    expect((screen.getByRole('button', { name: adminCopy.editor.deleteAction }) as HTMLButtonElement).disabled).toBe(false);
+  });
+});
 
 describe('editor photo tracking after a reload', () => {
   beforeEach(() => {

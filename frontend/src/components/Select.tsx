@@ -1,15 +1,9 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useNativeSelect } from '../hooks/useNativeSelect';
 import { opensAbove, scrollOptionIntoView } from '../lib/listbox';
 import '../styles/select.css';
 
 const fold = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-const nativeQuery = '(pointer: coarse), (max-width: 767px)';
-const usesNativeSelect = () => window.matchMedia?.(nativeQuery).matches ?? false;
-function subscribePointer(onChange: () => void) {
-  const media = window.matchMedia?.(nativeQuery);
-  media?.addEventListener('change', onChange);
-  return () => media?.removeEventListener('change', onChange);
-}
 
 export interface SelectOption { value: string; label: string }
 
@@ -34,7 +28,7 @@ interface SelectProps {
  */
 export function Select({ value, options, onChange, labelledBy, id, className = '', disabled, ...aria }: SelectProps) {
   const ownId = useId();
-  const native = useSyncExternalStore(subscribePointer, usesNativeSelect, () => false);
+  const native = useNativeSelect();
   const baseId = id ?? ownId;
   const listId = `${baseId}-listbox`;
   const root = useRef<HTMLDivElement>(null);

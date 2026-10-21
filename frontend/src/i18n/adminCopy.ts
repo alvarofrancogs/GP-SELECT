@@ -86,6 +86,7 @@ export const adminCopy = {
     edit: 'Editar',
     preview: 'Vista previa',
     archive: 'Archivar',
+    delete: 'Eliminar',
     emptyTitle: 'Todavía no hay vehículos',
     emptyBody: 'Crea la primera ficha con marca, modelo y año. El resto se completa después.',
     noResults: 'Ningún vehículo coincide con la búsqueda.',
@@ -165,6 +166,9 @@ export const adminCopy = {
     fixErrors: 'Revisa los campos marcados.',
     preview: 'Vista previa',
     archiveAction: 'Archivar vehículo',
+    lifecycleTitle: 'Archivar o eliminar',
+    deleteAction: 'Eliminar vehículo',
+    deleteHint: 'Borra para siempre la ficha, las fotos y el vídeo. No se puede recuperar.',
     archiveLocked: 'Guarda o descarta los cambios, y espera a que terminen las fotos, antes de archivar.',
     requiredNote: 'Solo marca, modelo y año son obligatorios.',
     archivedNotice: 'Vehículo archivado: oculto en la web y en el listado. Recupéralo para editarlo o publicarlo.',
@@ -208,7 +212,7 @@ export const adminCopy = {
 
   archive: {
     title: 'Archivar vehículo',
-    body: 'El vehículo desaparece de la web y del listado de trabajo. Puedes recuperarlo cuando quieras desde «Mostrar archivados»; vuelve como borrador.',
+    body: 'Oculta el vehículo de la web y del listado de trabajo, sin borrar la ficha, las fotos ni el vídeo. Puedes recuperarlo desde «Mostrar archivados»; vuelve como borrador.',
     confirm: 'Archivar',
     cancel: 'Cancelar',
     working: 'Archivando…',
@@ -216,6 +220,16 @@ export const adminCopy = {
     restore: 'Recuperar',
     restoring: 'Recuperando…',
     restored: 'Vehículo recuperado como borrador.',
+  },
+
+  delete: {
+    title: '¿Eliminar este vehículo?',
+    body: (name: string) => `Se borrarán para siempre la ficha, las fotos y el vídeo de ${name}, y desaparecerá de la web. No se puede deshacer. Si solo quieres quitarlo de la web, retíralo o archívalo.`,
+    unsaved: 'También se perderán los cambios sin guardar.',
+    confirm: 'Eliminar definitivamente',
+    cancel: 'Cancelar',
+    working: 'Eliminando…',
+    done: 'Vehículo eliminado.',
   },
 
   equipment: {

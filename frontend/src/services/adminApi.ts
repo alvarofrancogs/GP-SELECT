@@ -81,6 +81,7 @@ export const adminApi = {
   changeStatus: (id: string, status: SettableStatus) =>
     request<AdminVehicle>(`/vehicles/${id}/status`, { method: 'POST', body: json({ status }) }),
   archiveVehicle: (id: string) => request<void>(`/vehicles/${id}/archive`, { method: 'POST' }),
+  deleteVehicle: (id: string) => request<void>(`/vehicles/${id}`, { method: 'DELETE' }),
   restoreVehicle: (id: string) => request<AdminVehicle>(`/vehicles/${id}/restore`, { method: 'POST' }),
   previewVehicle: (id: string) => request<VehiclePreview>(`/vehicles/${id}/preview`),
 

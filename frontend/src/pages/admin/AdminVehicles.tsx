@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { adminApi } from '../../services/adminApi';
 import type { AdminVehicleRow } from '../../types/admin';
 import { adminCopy } from '../../i18n/adminCopy';
@@ -9,9 +9,16 @@ import { formatPrice, formatRegistration } from '../../lib/vehicleFormat';
 import { StatusMark } from '../../components/admin/StatusMark';
 import { RestoreVehicleButton } from '../../components/admin/RestoreVehicleButton';
 import { ArchiveVehicleDialog } from '../../components/admin/ArchiveVehicleDialog';
+import { DeleteVehicleDialog } from '../../components/admin/DeleteVehicleDialog';
 import { useProgressiveList } from '../../hooks/useProgressiveList';
 
 export function AdminVehicles() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const returnState = location.state as { announcement?: string; vehicleId?: string } | null;
+  const pendingFocus = useRef<{ vehicleId?: string; search?: boolean } | null>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const search = useRef<HTMLInputElement>(null);
   const text = adminCopy.list;
   const [vehicles, setVehicles] = useState<AdminVehicleRow[] | null>(null);
   const [error, setError] = useState<unknown>(null);
@@ -19,6 +26,7 @@ export function AdminVehicles() {
   const [query, setQuery] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [archiving, setArchiving] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<AdminVehicleRow | null>(null);
   const [announcement, setAnnouncement] = useState('');
   const { containerRef, count, revealMore } = useProgressiveList<HTMLUListElement>(10, JSON.stringify([query, showArchived]), '.admin-row', '.admin-row__name');
 
@@ -36,6 +44,28 @@ export function AdminVehicles() {
       && terms.every((term) => searchable(`${v.make} ${v.model} ${v.variant ?? ''}`).includes(term)));
   }, [vehicles, query, showArchived]);
 
+  useEffect(() => {
+    if (!vehicles || !returnState?.announcement) return;
+    setAnnouncement(returnState.announcement);
+    pendingFocus.current = { vehicleId: returnState.vehicleId };
+    // Consume the router message so Back does not replay a previous save/delete announcement.
+    void navigate(location.pathname, { replace: true, state: null });
+  }, [vehicles, returnState, navigate, location.pathname]);
+
+  useEffect(() => {
+    if (!vehicles || !pendingFocus.current) return;
+    const target = pendingFocus.current;
+    const frame = requestAnimationFrame(() => {
+      const row = Array.from(containerRef.current?.querySelectorAll<HTMLAnchorElement>('.admin-row__name') ?? [])
+        .find((link) => link.dataset.vehicleId === target.vehicleId);
+      const element = row ?? (target.search ? search.current : null) ?? heading.current;
+      element?.focus({ preventScroll: true });
+      element?.scrollIntoView({ block: 'center', behavior: 'instant' });
+      pendingFocus.current = null;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [vehicles, announcement, containerRef]);
+
   if (error && !vehicles) return <div className="admin-state" role="alert">
     <p className="type-ui">{describeError(error)}</p>
     {errorReference(error) ? <p className="admin-reference">{adminCopy.errors.reference}: {errorReference(error)}</p> : null}
@@ -44,21 +74,16 @@ export function AdminVehicles() {
   if (!vehicles) return <p className="admin-state type-ui" role="status">{text.loading}</p>;
 
   const addLink = <Link to="/admin/nuevo" className="button button--dark admin-button"><span>{text.add}</span><span className="button-arrow" aria-hidden="true">→</span></Link>;
-  if (vehicles.length === 0) return <section className="admin-empty" aria-labelledby="admin-empty-title">
-    <h1 id="admin-empty-title" className="admin-title type-section">{text.emptyTitle}</h1>
-    <p className="type-body">{text.emptyBody}</p>
-    {addLink}
-  </section>;
 
   return <section className="admin-list" aria-labelledby="admin-list-title">
     <header className="admin-page-head">
-      <h1 id="admin-list-title" className="admin-title type-section">{text.title}<span className="admin-title__count type-fine">{shown.length}</span></h1>
+      <h1 ref={heading} tabIndex={-1} id="admin-list-title" className="admin-title type-section">{text.title}<span className="admin-title__count type-fine">{shown.length}</span></h1>
       {addLink}
     </header>
     <div className="admin-toolbar">
       <div className="admin-field admin-field--inline">
         <label htmlFor="admin-search">{text.search}</label>
-        <input id="admin-search" type="search" value={query} placeholder={text.searchPlaceholder} onChange={(event) => setQuery(event.target.value)} />
+        <input ref={search} id="admin-search" type="search" value={query} placeholder={text.searchPlaceholder} onChange={(event) => setQuery(event.target.value)} />
       </div>
       {archivedCount > 0 ? <label className="admin-check">
         <input type="checkbox" checked={showArchived} onChange={(event) => setShowArchived(event.target.checked)} />
@@ -66,18 +91,27 @@ export function AdminVehicles() {
       </label> : null}
       <p className="sr-only" role="status">{text.count(shown.length)}{announcement ? `. ${announcement}` : ''}</p>
     </div>
-    {shown.length === 0 ? <p className="admin-state type-ui">{text.noResults}</p> : <>
+    {vehicles.length === 0 ? <div className="admin-empty">
+      <h2 className="type-heading">{text.emptyTitle}</h2><p className="type-body">{text.emptyBody}</p>
+    </div> : shown.length === 0 ? <p className="admin-state type-ui">{text.noResults}</p> : <>
       <div className="admin-rows__head type-ui" aria-hidden="true">
         <span />
         <span>{text.columns.vehicle}</span><span>{text.columns.year}</span><span>{text.columns.mileage}</span>
         <span>{text.columns.power}</span><span className="admin-rows__numeric">{text.columns.price}</span><span>{text.columns.status}</span><span />
       </div>
-      <ul ref={containerRef} id="admin-vehicle-results" className="admin-rows">{shown.slice(0, count).map((v) => <VehicleRow key={v.id} vehicle={v} onArchive={() => setArchiving(v.id)} onRestored={() => {
+      <ul ref={containerRef} id="admin-vehicle-results" className="admin-rows">{shown.slice(0, count).map((v) => <VehicleRow key={v.id} vehicle={v} onDelete={() => setDeleting(v)} onArchive={() => setArchiving(v.id)} onRestored={() => {
         setVehicles((rows) => rows?.map((row) => row.id === v.id ? { ...row, status: 'Draft' } : row) ?? rows);
         setAnnouncement(adminCopy.archive.restored);
       }} />)}</ul>
       {count < shown.length ? <div className="admin-list__more"><button type="button" className="button button--dark admin-button" aria-controls="admin-vehicle-results" onClick={revealMore}>{text.showMore}<span aria-hidden="true">↓</span></button></div> : null}
     </>}
+    <DeleteVehicleDialog vehicle={deleting} onClose={() => setDeleting(null)} onDeleted={(id) => {
+      const index = shown.findIndex((row) => row.id === id);
+      pendingFocus.current = { vehicleId: shown[index + 1]?.id, search: true };
+      setVehicles((rows) => rows?.filter((row) => row.id !== id) ?? rows);
+      setDeleting(null);
+      setAnnouncement(adminCopy.delete.done);
+    }} />
     <ArchiveVehicleDialog vehicleId={archiving} onClose={() => setArchiving(null)} onArchived={(id) => {
       setVehicles((rows) => rows?.map((row) => row.id === id ? { ...row, status: 'Archived' } : row) ?? rows);
       setArchiving(null);
@@ -86,7 +120,7 @@ export function AdminVehicles() {
   </section>;
 }
 
-function VehicleRow({ vehicle: v, onArchive, onRestored }: { vehicle: AdminVehicleRow; onArchive: () => void; onRestored: () => void }) {
+function VehicleRow({ vehicle: v, onArchive, onRestored, onDelete }: { vehicle: AdminVehicleRow; onArchive: () => void; onRestored: () => void; onDelete: () => void }) {
   const text = adminCopy.list;
   const archived = v.status === 'Archived';
   const href = `/admin/vehiculos/${v.id}`;
@@ -96,7 +130,7 @@ function VehicleRow({ vehicle: v, onArchive, onRestored }: { vehicle: AdminVehic
       {v.coverCardUrl ? <img src={v.coverCardUrl} alt="" width={160} height={120} loading="lazy" decoding="async" /> : <span className="type-ui">{text.noPhoto}</span>}
     </Link>
     <div className="admin-row__identity">
-      <Link to={href} className="admin-row__name"><span className="admin-row__model">{v.make} {v.model}</span>{v.variant ? <span className="admin-row__variant">{v.variant}</span> : null}</Link>
+      <Link to={href} className="admin-row__name" data-vehicle-id={v.id}><span className="admin-row__model">{v.make} {v.model}</span>{v.variant ? <span className="admin-row__variant">{v.variant}</span> : null}</Link>
       <p className="admin-row__meta">{v.internalReference ? <span>{v.internalReference}</span> : null}<span>{text.photos(v.readyImageCount)}</span></p>
     </div>
     <div className="admin-row__facts">
@@ -112,6 +146,7 @@ function VehicleRow({ vehicle: v, onArchive, onRestored }: { vehicle: AdminVehic
         <Link to={`${href}/vista-previa`} className="admin-action">{text.preview}{name}</Link>
         <button type="button" className="admin-action" onClick={onArchive}>{text.archive}{name}</button>
       </>}
+      <button type="button" className="admin-action admin-link--danger" onClick={onDelete}>{text.delete}{name}</button>
     </div>
   </li>;
 }
