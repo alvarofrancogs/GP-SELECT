@@ -16,7 +16,8 @@ import { ArchiveVehicleDialog } from '../../components/admin/ArchiveVehicleDialo
 import { DeleteVehicleDialog } from '../../components/admin/DeleteVehicleDialog';
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { MonthSelect } from '../../components/admin/MonthSelect';
-import { SuggestInput } from '../../components/SuggestInput';
+import { Select } from '../../components/Select';
+import { BODY_TYPES, DRIVETRAINS, FUEL_TYPES, TRANSMISSIONS } from '../../lib/vehicleValues';
 import { formatEuros } from '../../lib/adminFormat';
 
 export function AdminVehicleEditor() {
@@ -254,12 +255,19 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
     }
   }
 
-  const textInput = (name: TextField, label: string, options: { hint?: string; suggestions?: readonly string[] } = {}) =>
+  const textInput = (name: TextField, label: string, options: { hint?: string } = {}) =>
     <FormField id={`field-${name}`} label={label} error={errors[name]} hint={options.hint}>
-      {(a11y) => options.suggestions
-        ? <SuggestInput {...a11y} value={form[name]} maxLength={textFields[name].max} suggestions={options.suggestions} onChange={(value) => set(name, value)} />
-        : <input {...a11y} value={form[name]} maxLength={textFields[name].max} onChange={(event) => set(name, event.target.value)} />}
+      {(a11y) => <input {...a11y} value={form[name]} maxLength={textFields[name].max} onChange={(event) => set(name, event.target.value)} />}
     </FormField>;
+  const selectInput = (name: 'fuelType' | 'transmission' | 'bodyType' | 'drivetrain', label: string, values: readonly string[]) => {
+    const options = [{ value: '', label: f.valueNone }, ...values.map((value) => ({ value, label: value }))];
+    // Keep the saved spelling available until saving, even after choosing another option.
+    const saved = vehicle[name];
+    if (saved && !values.includes(saved)) options.push({ value: saved, label: saved });
+    return <FormField id={`field-${name}`} label={label} error={errors[name]}>
+      {(a11y) => <Select {...a11y} labelledBy={`${a11y.id}-label`} value={form[name]} options={options} onChange={(value) => set(name, value)} />}
+    </FormField>;
+  };
   const numberInput = (name: 'mileageKm' | 'priceEur' | 'powerHp', label: string, unit: string, hint?: string) =>
     <FormField id={`field-${name}`} label={label} error={errors[name]} hint={hint} unit={unit}>
       {(a11y) => <input {...a11y} value={form[name]} inputMode={name === 'priceEur' ? 'decimal' : 'numeric'} autoComplete="off" onChange={(event) => set(name, event.target.value)} />}
@@ -326,10 +334,10 @@ function VehicleEditor({ initial }: { initial: AdminVehicle }) {
             {numberInput('mileageKm', f.mileageKm, f.kmUnit)}
             {numberInput('priceEur', f.priceEur, f.eurUnit, priceHint)}
             {numberInput('powerHp', f.powerHp, f.hpUnit)}
-            {textInput('fuelType', f.fuelType, { suggestions: f.suggestions.fuelType })}
-            {textInput('transmission', f.transmission, { suggestions: f.suggestions.transmission })}
-            {textInput('bodyType', f.bodyType, { suggestions: f.suggestions.bodyType })}
-            {textInput('drivetrain', f.drivetrain, { suggestions: f.suggestions.drivetrain })}
+            {selectInput('fuelType', f.fuelType, FUEL_TYPES)}
+            {selectInput('transmission', f.transmission, TRANSMISSIONS)}
+            {selectInput('bodyType', f.bodyType, BODY_TYPES)}
+            {selectInput('drivetrain', f.drivetrain, DRIVETRAINS)}
             {textInput('internalReference', f.internalReference, { hint: f.internalHint })}
           </div>
         </Section>
