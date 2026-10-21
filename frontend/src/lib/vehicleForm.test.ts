@@ -14,6 +14,25 @@ function patchWithPrice(saved: number | null, typed: string) {
   return buildPatch(vehicle(saved), { ...toForm(vehicle(saved)), priceEur: typed });
 }
 
+describe('buildPatch closed lists', () => {
+  const saved: AdminVehicle = {
+    ...vehicle(null), fuelType: 'gasolina', transmission: 'Automático secuencial',
+    bodyType: ' Gran  Turismo ', drivetrain: '4x4 permanente',
+  };
+
+  it('does not normalise or resend untouched legacy values', () => {
+    expect(buildPatch(saved, toForm(saved))).toEqual({ errors: {}, patch: {}, specKeys: [] });
+    expect(buildPatch(saved, { ...toForm(saved), model: 'M3' })).toEqual({ errors: {}, patch: { model: 'M3' }, specKeys: [] });
+  });
+
+  it.each([
+    ['fuelType', 'Gasolina'], ['transmission', 'Manual'], ['bodyType', 'Compacto'], ['drivetrain', 'Delantera'],
+  ] as const)('sends only %s when changed or cleared', (field, value) => {
+    expect(buildPatch(saved, { ...toForm(saved), [field]: value })).toEqual({ errors: {}, patch: { [field]: value }, specKeys: [] });
+    expect(buildPatch(saved, { ...toForm(saved), [field]: '' })).toEqual({ errors: {}, patch: { [field]: null }, specKeys: [] });
+  });
+});
+
 describe('parsePrice', () => {
   it.each([
     ['85000', 85000],

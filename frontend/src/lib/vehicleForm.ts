@@ -129,6 +129,8 @@ export function buildPatch(saved: AdminVehicle, form: VehicleForm): PatchResult 
   else if (price !== saved.priceEur) patch.priceEur = price;
 
   for (const [field, { max, long }] of Object.entries(textFields) as [TextField, { max: number; long: boolean }][]) {
+    // Opening a record must not normalise untouched legacy text.
+    if (form[field] === text(saved[field])) continue;
     const value = (long ? cleanLong : cleanShort)(form[field]) || null;
     if (value !== null && value.length > max) errors[field] = e.tooLong(max);
     else if (value !== saved[field]) patch[field] = value;

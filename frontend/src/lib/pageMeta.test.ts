@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import fixtures from '../../../tests/fixtures/vehicle-seo.json';
 import englishValues from '../../../tests/fixtures/vehicle-values-en.json';
 import { en } from '../i18n/en';
+import { es } from '../i18n/es';
+import { BODY_TYPES, DRIVETRAINS, FUEL_TYPES, TRANSMISSIONS } from './vehicleValues';
 import { entityCopy } from '../i18n/entityCopy';
 import { contactConfig } from '../config/contactChannels';
 import { fromPublicDetail } from '../services/vehicles';
@@ -138,6 +140,11 @@ describe('language versions', () => {
 describe('English vehicle values', () => {
   it('match the table the API uses (tests/fixtures/vehicle-values-en.json)', () => {
     expect(en.vehicles.values).toEqual(englishValues);
+  });
+  it.each([...FUEL_TYPES, ...TRANSMISSIONS, ...BODY_TYPES, ...DRIVETRAINS])('covers the editor option %s in both languages and the API fixture', (value) => {
+    expect(es.vehicles.values[value]).toBe(value);
+    expect(en.vehicles.values[value]).toBeTruthy();
+    expect(englishValues).toHaveProperty(value, en.vehicles.values[value]);
   });
 });
 

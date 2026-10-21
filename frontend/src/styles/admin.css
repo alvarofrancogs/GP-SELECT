@@ -60,7 +60,7 @@
   background: transparent; color: var(--color-ink); font-size: 1rem; font-stretch: var(--type-body-width);
 }
 .admin :is(input, textarea)::placeholder { color: var(--color-muted); opacity: .8; }
-/* Select and SuggestInput (shared, see select.css) take the admin field size. */
+/* Select (shared, see select.css) takes the admin field size. */
 .admin .admin-field .select__trigger { padding: .55rem 0; border-bottom-color: var(--color-muted); font-size: 1rem; font-stretch: var(--type-body-width); }
 .admin .admin-field .select__list { font-size: .9375rem; }
 /* Keep the native hit area over the entire ruled control, above its decorative text and arrow.

@@ -1,4 +1,4 @@
-// Shared by the dropdown lists (Select.tsx, SuggestInput.tsx). 288 px is the list's max-height in select.css.
+// Select.tsx dropdown positioning. 288 px is the list's max-height in select.css.
 const MAX_LIST_HEIGHT = 288;
 
 /** Opens above its trigger when the list would not fit below and there is more room above. */

@@ -1,4 +1,5 @@
 import type { VehicleSummary } from '../types/vehicle';
+import { FUEL_TYPES } from './vehicleValues';
 
 /** Any combination is allowed: AND between filters; an empty result is the page's own empty state. */
 export const choiceKeys = ['make', 'bodyType', 'fuelType'] as const;
@@ -11,9 +12,6 @@ export const rangeParam = (key: RangeKey, bound: 'min' | 'max') => `${key}${boun
 export const vehicleFilterKeys = [...choiceKeys, ...rangeKeys.flatMap((key) => [rangeParam(key, 'min'), rangeParam(key, 'max')])];
 
 export const vehicleSortKeys = ['priceAsc', 'priceDesc', 'year', 'km'] as const;
-
-/** Fuel is offered in full, so a visitor can look for one the catalogue does not have yet (same list as the Admin). */
-export const FUEL_TYPES = ['Gasolina', 'Diésel', 'Híbrido', 'Híbrido enchufable', 'Eléctrico'];
 
 export interface Facet { key: ChoiceKey; options: string[] }
 

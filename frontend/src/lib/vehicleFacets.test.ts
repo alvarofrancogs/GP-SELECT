@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { FUEL_TYPES, filterVehicles, getFacets, sanitizeParams } from './vehicleFacets';
+import { filterVehicles, getFacets, sanitizeParams } from './vehicleFacets';
+import { FUEL_TYPES } from './vehicleValues';
 import type { VehicleSummary } from '../types/vehicle';
 
 const car = (slug: string, make: string, bodyType: string | null, fuelType: string | null, priceEur: number | null, mileageKm: number | null, year: number | null): VehicleSummary => ({

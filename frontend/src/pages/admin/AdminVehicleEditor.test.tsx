@@ -245,6 +245,144 @@ async function wait(ms: number) {
 }
 const saveButton = () => screen.getByRole('button', { name: adminCopy.editor.save }) as HTMLButtonElement;
 
+describe.each([false, true])('editor closed lists (native: %s)', (native) => {
+  const fields = [
+    { key: 'fuelType', values: ['Gasolina', 'Diésel', 'Híbrido', 'Híbrido enchufable', 'Eléctrico'], legacy: 'gasolina' },
+    { key: 'transmission', values: ['Automático', 'Manual'], legacy: 'Automático secuencial' },
+    { key: 'bodyType', values: ['Berlina', 'Compacto', 'Coupé', 'Cabrio', 'Familiar', 'SUV', 'Roadster'], legacy: ' Gran  Turismo ' },
+    { key: 'drivetrain', values: ['Trasera', 'Delantera', 'Integral'], legacy: '4x4 permanente' },
+  ] as const;
+  type Field = typeof fields[number]['key'];
+  const control = (key: Field) => screen.getByRole('combobox', { name: adminCopy.fields[key] });
+  const savedVehicle = (): AdminVehicle => vehicle({ ...photo('Ready', false), isStaged: false });
+  const legacyVehicle = (): AdminVehicle => ({ ...savedVehicle(), ...Object.fromEntries(fields.map(({ key, legacy }) => [key, legacy])) });
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    getVehicle.mockReset();
+    saveVehicle.mockReset();
+    vi.stubGlobal('matchMedia', vi.fn((query: string) => ({
+      matches: native && query === '(pointer: coarse), (max-width: 767px)',
+      addEventListener() {}, removeEventListener() {},
+    })));
+  });
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+
+  async function open(data = savedVehicle()) {
+    getVehicle.mockResolvedValue(data);
+    saveVehicle.mockResolvedValue(data);
+    render(<RouterProvider router={createMemoryRouter([
+      { path: '/admin/vehiculos/:id', element: <AdminVehicleEditor /> },
+      { path: '/admin', element: <ReturnedList /> },
+    ], { initialEntries: ['/admin/vehiculos/v1'] })} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+  }
+
+  function options(key: Field) {
+    if (native) return within(control(key)).getAllByRole('option');
+    fireEvent.click(control(key));
+    const result = within(screen.getByRole('listbox', { name: adminCopy.fields[key] })).getAllByRole('option');
+    fireEvent.keyDown(control(key), { key: 'Escape' });
+    return result;
+  }
+
+  function choose(key: Field, value: string) {
+    if (native) fireEvent.change(control(key), { target: { value } });
+    else {
+      fireEvent.click(control(key));
+      fireEvent.click(within(screen.getByRole('listbox', { name: adminCopy.fields[key] }))
+        .getByRole('option', { name: value || 'Sin indicar' }));
+    }
+  }
+
+  async function save() {
+    expect(saveButton().disabled).toBe(false);
+    await act(async () => { saveButton().click(); await vi.advanceTimersByTimeAsync(0); });
+  }
+
+  it('offers the four ordered closed lists with an optional empty first choice, like Month', async () => {
+    await open();
+    const month = screen.getByRole('combobox', { name: adminCopy.fields.month });
+    for (const { key, values } of fields) {
+      expect(control(key).tagName).toBe(native ? 'SELECT' : 'BUTTON');
+      expect(control(key).tagName).toBe(month.tagName);
+      expect(control(key).getAttribute('aria-labelledby')).toBe(`field-${key}-label`);
+      expect(control(key).hasAttribute('required')).toBe(false);
+      const choices = options(key);
+      expect(choices.map((option) => option.textContent)).toEqual(['Sin indicar', ...values]);
+      if (native) {
+        expect((control(key) as HTMLSelectElement).value).toBe('');
+        expect((choices[0] as HTMLOptionElement).value).toBe('');
+      } else expect(choices[0].getAttribute('aria-selected')).toBe('true');
+    }
+    expect(saveButton().disabled).toBe(true);
+  });
+
+  it('shows exact legacy values as the selected last option and saves only the edited model', async () => {
+    await open(legacyVehicle());
+    for (const { key, values, legacy } of fields) {
+      const choices = options(key);
+      expect(choices.map((option) => option.textContent)).toEqual(['Sin indicar', ...values, legacy]);
+      if (native) expect((control(key) as HTMLSelectElement).value).toBe(legacy);
+      else expect(choices.at(-1)?.getAttribute('aria-selected')).toBe('true');
+    }
+    expect(saveButton().disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText(adminCopy.fields.model), { target: { value: 'M3' } });
+    await save();
+    expect(saveVehicle).toHaveBeenCalledExactlyOnceWith('v1', { changes: { model: 'M3' } });
+  });
+
+  it('replaces legacy values with the chosen standard values', async () => {
+    await open(legacyVehicle());
+    choose('fuelType', 'Híbrido enchufable');
+    choose('transmission', 'Manual');
+    choose('bodyType', 'Compacto');
+    choose('drivetrain', 'Delantera');
+    await save();
+    expect(saveVehicle).toHaveBeenCalledExactlyOnceWith('v1', { changes: {
+      fuelType: 'Híbrido enchufable', transmission: 'Manual', bodyType: 'Compacto', drivetrain: 'Delantera',
+    } });
+  });
+
+  it('clears each optional value as null through Sin indicar', async () => {
+    await open({ ...savedVehicle(), fuelType: 'Gasolina', transmission: 'Automático', bodyType: 'SUV', drivetrain: 'Integral' });
+    for (const { key, values } of fields) {
+      expect(options(key)).toHaveLength(values.length + 1);
+      choose(key, '');
+    }
+    await save();
+    expect(saveVehicle).toHaveBeenCalledExactlyOnceWith('v1', { changes: {
+      fuelType: null, transmission: null, bodyType: null, drivetrain: null,
+    } });
+  });
+
+  it('keeps the saved legacy option available to undo a selection before saving', async () => {
+    await open({ ...savedVehicle(), fuelType: 'gasolina' });
+    choose('fuelType', 'Gasolina');
+    choose('fuelType', 'gasolina');
+    expect(saveButton().disabled).toBe(true);
+    expect(saveVehicle).not.toHaveBeenCalled();
+  });
+
+  it('connects server errors to each labelled control and clears them when corrected', async () => {
+    await open();
+    for (const { key, values } of fields) choose(key, values[0]);
+    saveVehicle.mockRejectedValue(new ApiError(400, {
+      errors: Object.fromEntries(fields.map(({ key }) => [key, [`Revisa ${key}`]])),
+    }));
+    await save();
+    for (const { key, values } of fields) {
+      expect(control(key).getAttribute('aria-invalid')).toBe('true');
+      expect(control(key).getAttribute('aria-describedby')).toBe(`field-${key}-error`);
+      // Binding errors from the server show the Admin's own message (fieldErrors), not the raw text.
+      expect(document.getElementById(`field-${key}-error`)?.textContent).toBe(adminCopy.errors.number);
+      choose(key, values[1]);
+      expect(control(key).hasAttribute('aria-invalid')).toBe(false);
+      expect(control(key).hasAttribute('aria-describedby')).toBe(false);
+    }
+  });
+});
+
 describe('editor save and delete navigation', () => {
   beforeEach(() => {
     vi.useFakeTimers();

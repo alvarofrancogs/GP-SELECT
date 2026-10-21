@@ -126,6 +126,7 @@ export const adminCopy = {
     internalReference: 'Referencia interna',
     optional: 'opcional',
     monthNone: 'Sin mes',
+    valueNone: 'Sin indicar',
     kmUnit: 'km',
     hpUnit: 'CV',
     eurUnit: '€',
@@ -133,13 +134,6 @@ export const adminCopy = {
     internalHint: 'Solo visible en el Admin.',
     provenanceHint: 'País o historia de origen.',
     historyHint: 'Mantenimiento, propietarios, documentación.',
-    /** Suggestions only: consistent wording keeps the future catalogue filters clean. */
-    suggestions: {
-      fuelType: ['Gasolina', 'Diésel', 'Híbrido', 'Híbrido enchufable', 'Eléctrico'],
-      transmission: ['Automático', 'Manual'],
-      bodyType: ['Berlina', 'Coupé', 'Cabrio', 'Familiar', 'SUV', 'Roadster'],
-      drivetrain: ['Trasera', 'Delantera', 'Integral'],
-    },
   },
 
   editor: {
