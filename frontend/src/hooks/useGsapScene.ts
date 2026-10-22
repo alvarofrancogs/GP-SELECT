@@ -26,8 +26,9 @@ const TOUCH_LAG = 0.5;
 // The roll takes 0.92 viewports of scroll on desktop and 0.225 on phones/tablets, where Process starts
 // rising at 0.29 viewports (0.22 of their pin): the car is in by 0.18.
 const HERO_ROLL = { desktop: { start: 0.0466, duration: 0.4026 }, mobile: { start: 0.0097, duration: 0.1744 } };
-// Scrub smoothing for the car alone, in seconds: a little firmer than lag-heavy, so it does not glide.
-const HERO_ROLL_LAG = 1;
+// Scrub smoothing for the car alone, in seconds. Firm on purpose: the user found any glide "soft", so the
+// car stays close to the scroll and stops with it (just enough smoothing to hide wheel notches).
+const HERO_ROLL_LAG = 0.25;
 
 // Change ink and its contrast backing together: the wall's bright and dark patches
 // have no shared AA crossover. Fading a dark backing in under black ink would make it worse.

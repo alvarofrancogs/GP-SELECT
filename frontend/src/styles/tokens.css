@@ -114,6 +114,7 @@
   --z-handoff: 8;
   --z-edge-guard: 18;
   --z-header: 20;
+  --z-scrollbar: 25;
   --z-skip: 30;
   --z-preloader: 40;
 }
