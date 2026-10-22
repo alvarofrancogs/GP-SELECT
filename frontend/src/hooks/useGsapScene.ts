@@ -9,10 +9,10 @@ gsap.registerPlugin(ScrollTrigger);
 export type SceneKind = 'hero' | 'process';
 
 // Scroll per scene, in viewports: 15 % shorter since 17-10-2026 (it took too much scrolling), and on phones
-// shorter again after the user tried it on an iPhone the same day. The hero grew back a little on 22-10-2026
-// so its car could take 20 % more scroll (the user wanted it "harder") without finishing in the dark.
+// shorter again after the user tried it on an iPhone the same day. The hero grew back on 22-10-2026 so its
+// car takes more scroll to advance (the user wanted it "harder") without finishing in the dark.
 const scrollDistance: Record<SceneKind, { desktop: number; mobile: number }> = {
-  hero: { desktop: 2.28, mobile: 1.29 },
+  hero: { desktop: 2.63, mobile: 1.36 },
   process: { desktop: 2.55, mobile: 1.6 },
 };
 
@@ -23,12 +23,11 @@ const TOUCH_LAG = 0.5;
 
 // Rolling entrance: the rear quarter starts outside the right edge, then the whole car
 // centres over a stationary floor. Translation and wheel rotation share this exact interval.
-// The roll takes 0.92 viewports of scroll on desktop and 0.225 on phones/tablets, where Process starts
-// rising at 0.29 viewports (0.22 of their pin): the car is in by 0.18.
-const HERO_ROLL = { desktop: { start: 0.0466, duration: 0.4026 }, mobile: { start: 0.0097, duration: 0.1744 } };
-// Scrub smoothing for the car alone, in seconds. Firm on purpose: the user found any glide "soft", so the
-// car stays close to the scroll and stops with it (just enough smoothing to hide wheel notches).
-const HERO_ROLL_LAG = 0.25;
+// The roll takes 1.19 viewports of scroll on desktop and 0.29 on phones/tablets, where Process starts
+// rising at 0.36 viewports (0.26 of their pin): the car is in by 0.22.
+const HERO_ROLL = { desktop: { start: 0.0404, duration: 0.4538 }, mobile: { start: 0.0092, duration: 0.2151 } };
+// Scrub smoothing for the car alone, in seconds: it trails the scroll a little and settles, as the user likes.
+const HERO_ROLL_LAG = 1.3;
 
 // Change ink and its contrast backing together: the wall's bright and dark patches
 // have no shared AA crossover. Fading a dark backing in under black ink would make it worse.
@@ -42,7 +41,7 @@ function heroHeaderSupport(darkness: number) {
 }
 // The hero is fully darkened by the time Process starts to rise over it (scroll distance, in viewports).
 // Process rises over the hero's last viewport, so this moves with the scene's length (the same share of it on phones).
-const HERO_DARKEN_BY = { desktop: 1.23, mobile: 0.84 };
+const HERO_DARKEN_BY = { desktop: 1.58, mobile: 0.91 };
 // Process lands instead of stopping dead: its lettering rises this much lower (in viewports) and, once
 // pinned, keeps rising and slows to rest over twice that scroll. power1.out starts at twice its average
 // speed, so the lettering leaves the scroll at the scroll's own speed, with no hard stop.
