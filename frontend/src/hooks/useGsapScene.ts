@@ -9,9 +9,10 @@ gsap.registerPlugin(ScrollTrigger);
 export type SceneKind = 'hero' | 'process';
 
 // Scroll per scene, in viewports: 15 % shorter since 17-10-2026 (it took too much scrolling), and on phones
-// shorter again after the user tried it on an iPhone the same day.
+// shorter again after the user tried it on an iPhone the same day. The hero grew back a little on 22-10-2026
+// so its car could take 20 % more scroll (the user wanted it "harder") without finishing in the dark.
 const scrollDistance: Record<SceneKind, { desktop: number; mobile: number }> = {
-  hero: { desktop: 2.125, mobile: 1.25 },
+  hero: { desktop: 2.28, mobile: 1.29 },
   process: { desktop: 2.55, mobile: 1.6 },
 };
 
@@ -22,10 +23,11 @@ const TOUCH_LAG = 0.5;
 
 // Rolling entrance: the rear quarter starts outside the right edge, then the whole car
 // centres over a stationary floor. Translation and wheel rotation share this exact interval.
-// The shorter phone/tablet scene starts Process rising at 0.2 of the pin: the car is in by 0.16.
-const HERO_ROLL = { desktop: { start: 0.05, duration: 0.34 }, mobile: { start: 0.01, duration: 0.15 } };
-// Scrub smoothing for the car alone, in seconds (the rest of the hero uses scrubLag.hero).
-const HERO_ROLL_LAG = 1.2;
+// The roll takes 0.92 viewports of scroll on desktop and 0.225 on phones/tablets, where Process starts
+// rising at 0.29 viewports (0.22 of their pin): the car is in by 0.18.
+const HERO_ROLL = { desktop: { start: 0.0466, duration: 0.4026 }, mobile: { start: 0.0097, duration: 0.1744 } };
+// Scrub smoothing for the car alone, in seconds: a little firmer than lag-heavy, so it does not glide.
+const HERO_ROLL_LAG = 1;
 
 // Change ink and its contrast backing together: the wall's bright and dark patches
 // have no shared AA crossover. Fading a dark backing in under black ink would make it worse.
@@ -39,7 +41,7 @@ function heroHeaderSupport(darkness: number) {
 }
 // The hero is fully darkened by the time Process starts to rise over it (scroll distance, in viewports).
 // Process rises over the hero's last viewport, so this moves with the scene's length (the same share of it on phones).
-const HERO_DARKEN_BY = { desktop: 1.075, mobile: 0.8 };
+const HERO_DARKEN_BY = { desktop: 1.23, mobile: 0.84 };
 // Process lands instead of stopping dead: its lettering rises this much lower (in viewports) and, once
 // pinned, keeps rising and slows to rest over twice that scroll. power1.out starts at twice its average
 // speed, so the lettering leaves the scroll at the scroll's own speed, with no hard stop.

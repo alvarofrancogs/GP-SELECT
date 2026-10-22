@@ -36,10 +36,18 @@
    Tire contact is 36% into that same floor. Container units follow the frozen pin height on iOS,
    including the 640px static layout, rather than the changing browser-toolbar viewport. */
 .hero-scene .scroll-scene__pin {
-  --hero-floor-top: 77%;
-  --hero-floor-height: 23%;
-  --hero-contact-y: calc(var(--hero-floor-top) + var(--hero-floor-height) * .36);
-  --hero-car-width: min(78cqw, 140cqh);
+  /* The car sits low, with little floor below it (the catalogue pill stays away over the hero),
+     but above a phone's toolbar when it is showing. The floor runs on below the pin, cropped. */
+  --hero-contact-y: min(90cqh, 100svh - 2.5rem);
+  --hero-floor-height: 23cqh;
+  --hero-floor-top: calc(var(--hero-contact-y) - var(--hero-floor-height) * .36);
+  /* The headline does not move; the car never comes within 2.5rem of it. Its highest point (the wing)
+     is .2873 of its width above the tires, and the headline's ink ends one font size below its top. */
+  --hero-title-top: 35.5cqh;
+  --hero-title-size: var(--hero-size);
+  --hero-car-cap: min(78cqw, 140cqh);
+  --hero-car-width: min(var(--hero-car-cap),
+    (var(--hero-contact-y) - var(--hero-title-top) - var(--hero-title-size) - 2.5rem) / .2873);
   container-type: size;
   background: #bda995;
 }
@@ -86,7 +94,7 @@
 @media (min-width: 768px) and (max-width: 1199px) {
   .hero-title { top: 33%; }
   .hero-description { top: 47%; max-width: calc(100% - var(--page-gutter) * 2); }
-  .hero-scene .scroll-scene__pin { --hero-car-width: min(96cqw, 140cqh); }
+  .hero-scene .scroll-scene__pin { --hero-title-top: 33cqh; --hero-car-cap: min(96cqw, 140cqh); }
   .process-detail { max-width: 18ch; }
 }
 @media (max-width: 767px) {
@@ -94,6 +102,7 @@
   .hero-title > span:last-child { align-self: flex-end; }
   .hero-description { top: 49%; max-width: calc(100% - var(--page-gutter) * 2); }
   .scene-description { left: var(--page-gutter); }
+  /* Stacked headline high above: on phones the width sets the car's size. */
   .hero-scene .scroll-scene__pin { --hero-car-width: min(100cqw, 140cqh); }
   .asset-slot--background .asset-slot__caption { top: calc(var(--header-height) + var(--space-4)); }
   .process-intro { top: 19%; flex-direction: column; gap: var(--space-4); }
@@ -108,6 +117,8 @@
   .scroll-scene[data-motion='static'] .scroll-scene__pin { min-height: 640px; }
   .hero-title { top: 27%; }
   .hero-description { top: 48%; }
+  /* The static frame is 640px tall, not the screen: it is not bounded by the phone's toolbar. */
+  .hero-scene .scroll-scene__pin { --hero-contact-y: 90cqh; --hero-title-top: 27cqh; --hero-title-size: min(var(--hero-size), 3rem); }
   /* Two mobile title lines still need a clear description lane on a short landscape screen. */
   .hero-scene .hero-title { font-size: min(var(--hero-size), 3rem); }
   .hero-scene .hero-title > span:last-child { font-size: inherit; }
