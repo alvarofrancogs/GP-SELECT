@@ -11,16 +11,16 @@
 .scroll-scene__pin { position: relative; height: 100vh; height: 100lvh; display: flow-root; clip-path: inset(0); isolation: isolate; }
 /* While fixed, a pin's height is frozen in pixels (ScrollTrigger). When a phone's toolbar hides, the screen grows without
    a refresh (GSAP ignores those resizes on touch screens) and the page showed as a paper band under the scene. There the
-   pinned scene paints up to a quarter of its height below itself, over its section, which takes the colour of the
-   Porsche at the foot of the hero (the car itself overflows into that band). */
+   pinned scene paints up to a quarter of its height below itself, over its section, which takes the warm
+   concrete colour at the foot of the garage. */
 @media (max-width: 1023px), (pointer: coarse) {
   .scroll-scene__pin.is-pinned { clip-path: inset(0 0 -25% 0); }
-  .scroll-scene.hero-scene[data-motion='scroll'] { background: rgb(66 55 50); }
+  .scroll-scene.hero-scene[data-motion='scroll'] { background: #bda995; }
   .hero-handoff::after { content: ''; position: absolute; top: 100%; left: 0; right: 0; height: 25%; background: var(--color-handoff-edge); }
 }
 .scene-background { position: absolute; inset: 0; z-index: var(--z-background); }
-.hero-scene .scene-background { bottom: -3%; }
 .asset-slot { position: relative; width: 100%; height: 100%; }
+.asset-slot picture { display: block; width: 100%; height: 100%; }
 .asset-slot img { width: 100%; height: 100%; object-fit: cover; }
 .asset-slot--background .asset-slot__caption { top: calc(var(--header-height) + var(--space-3)); right: var(--page-gutter); bottom: auto; left: auto; opacity: .7; }
 .asset-slot__caption { position: absolute; left: var(--space-5); bottom: var(--space-5); display: flex; align-items: center; gap: var(--space-3); font: 400 var(--text-label)/1.4 var(--font-family); letter-spacing: .025em; color: var(--color-muted); }
@@ -32,11 +32,35 @@
 .hero-title > span:last-child { font-size: var(--hero-size-right); }
 .scene-description { position: absolute; z-index: var(--z-content); left: calc(var(--page-gutter) + var(--space-2)); max-width: 25ch; font-size: var(--text-body); font-weight: var(--weight-body); letter-spacing: var(--tracking-body); line-height: var(--leading-body); }
 .hero-description { top: 52%; max-width: none; white-space: pre-line; font-family: var(--font-family); font-stretch: var(--width-extended); font-size: var(--hero-copy-size); font-weight: var(--weight-extended-copy); line-height: var(--hero-copy-leading); letter-spacing: var(--hero-copy-tracking); }
-/* The asset is the whole car, rear included, cropped to its bounding box, so the box top is the roofline: it
-   sits at 54%, the height of the approved mockup. The left edge stays off screen (it is the cropped nose). */
-.hero-media { position: absolute; z-index: var(--z-media); left: -2%; width: 160%; top: 54%; aspect-ratio: 4236 / 1069; transform-origin: 50.5% 70%; }
-.hero-media .asset-slot img { object-fit: cover; object-position: left bottom; }
-.hero-media .asset-slot__caption { left: auto; right: 22%; bottom: 34%; color: #d5d8d8; }
+/* Wall and floor meet at the cropped baseboard, independent of either photograph's cover crop.
+   Tire contact is 36% into that same floor. Container units follow the frozen pin height on iOS,
+   including the 640px static layout, rather than the changing browser-toolbar viewport. */
+.hero-scene .scroll-scene__pin {
+  --hero-floor-top: 77%;
+  --hero-floor-height: 23%;
+  --hero-contact-y: calc(var(--hero-floor-top) + var(--hero-floor-height) * .36);
+  --hero-car-width: min(78cqw, 140cqh);
+  container-type: size;
+  background: #bda995;
+}
+.hero-wall { position: absolute; z-index: var(--z-background); top: 0; left: -3%; width: 106%; height: var(--hero-floor-top); pointer-events: none; }
+.hero-wall .asset-slot img { object-position: center bottom; }
+.hero-floor { position: absolute; z-index: var(--z-background); top: var(--hero-floor-top); height: var(--hero-floor-height); left: 0; width: 100%; pointer-events: none; }
+/* Separate cover/fill crops keep the wall-floor seam stable at every aspect ratio.
+   Both layers are stationary. The continuation covers retreating mobile browser chrome. */
+.hero-floor .asset-slot img { object-fit: fill; }
+.hero-floor::after { content: ''; position: absolute; top: 100%; left: 0; width: 100%; height: 26lvh; background: #bda995; }
+.hero-media { position: absolute; z-index: var(--z-media); left: calc(100% - var(--hero-car-width) * .75); width: var(--hero-car-width); top: var(--hero-contact-y); aspect-ratio: 4000 / 1333; translate: 0 -94.674%; transform-origin: 50% 94.674%; pointer-events: none; }
+.hero-media .asset-slot img { object-fit: contain; }
+/* Without the roll (reduced motion, short screens) the car rests where the roll ends: whole and centred. */
+.scroll-scene.hero-scene[data-motion='static'] .hero-media { left: calc(50% - var(--hero-car-width) / 2); }
+.hero-contact-shadow { position: absolute; top: 0; left: 0; width: 100%; aspect-ratio: 4000 / 1600; }
+/* Equal source x/y units make circular boxes; both tires meet source y=1262. */
+.hero-wheel { position: absolute; aspect-ratio: 1; }
+.hero-wheel--front { left: 13.3%; top: 47.412%; width: 15.75%; }
+.hero-wheel--rear { left: 67.175%; top: 46.812%; width: 15.95%; }
+.hero-wheel__rotor { width: 100%; height: 100%; transform-origin: 50% 50%; }
+.hero-scene .hero-title, .hero-scene .hero-description { color: #000; }
 .hero-scene .asset-slot--background .asset-slot__caption { display: none; }
 .scene-handoff { position: absolute; inset: 0; z-index: var(--z-handoff); opacity: 0; pointer-events: none; }
 .scene-handoff--dark { background: var(--color-dark); }
@@ -62,7 +86,7 @@
 @media (min-width: 768px) and (max-width: 1199px) {
   .hero-title { top: 33%; }
   .hero-description { top: 47%; max-width: calc(100% - var(--page-gutter) * 2); }
-  .hero-media { left: -15%; width: 234%; top: 64%; }
+  .hero-scene .scroll-scene__pin { --hero-car-width: min(96cqw, 140cqh); }
   .process-detail { max-width: 18ch; }
 }
 @media (max-width: 767px) {
@@ -70,8 +94,7 @@
   .hero-title > span:last-child { align-self: flex-end; }
   .hero-description { top: 49%; max-width: calc(100% - var(--page-gutter) * 2); }
   .scene-description { left: var(--page-gutter); }
-  .hero-media { left: -55%; width: 317%; top: 69%; }
-  .hero-media .asset-slot__caption { right: 37%; bottom: 30%; font-size: .5rem; }
+  .hero-scene .scroll-scene__pin { --hero-car-width: min(100cqw, 140cqh); }
   .asset-slot--background .asset-slot__caption { top: calc(var(--header-height) + var(--space-4)); }
   .process-intro { top: 19%; flex-direction: column; gap: var(--space-4); }
   .process-intro h2 { font-size: .8333rem; }
@@ -85,6 +108,9 @@
   .scroll-scene[data-motion='static'] .scroll-scene__pin { min-height: 640px; }
   .hero-title { top: 27%; }
   .hero-description { top: 48%; }
+  /* Two mobile title lines still need a clear description lane on a short landscape screen. */
+  .hero-scene .hero-title { font-size: min(var(--hero-size), 3rem); }
+  .hero-scene .hero-title > span:last-child { font-size: inherit; }
 }
 @media (prefers-reduced-motion: reduce) {
   .scene-handoff { display: none; }

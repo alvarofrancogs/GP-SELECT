@@ -96,6 +96,12 @@
 
 .catalogue-cta:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 
+/* The garage's floor darkens underneath this fixed control. A paper surface keeps the label,
+   arrow and keyboard focus readable throughout that handoff; other scenes keep their glass. */
+.catalogue-cta[data-hero-surface] { color: #101112; transition: opacity 250ms var(--ease-out); }
+.catalogue-cta[data-hero-surface] .catalogue-cta__body { background: #f5f2ec; transition: box-shadow 350ms var(--ease-out); box-shadow: inset 0 0 0 1px #6b655c; }
+.catalogue-cta[data-hero-surface]:focus-visible { outline-color: #101112; box-shadow: 0 0 0 5px #f5f2ec; }
+
 @media (hover: hover) and (pointer: fine) {
   .catalogue-cta:hover .catalogue-cta__glass::before { opacity: 1; }
   .catalogue-cta:hover .catalogue-cta__glass::after { animation: catalogue-cta-sweep 900ms var(--ease-cinematic) both; }

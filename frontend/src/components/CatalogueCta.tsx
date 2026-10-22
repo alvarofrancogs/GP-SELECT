@@ -73,7 +73,7 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
     return () => media.revert();
   }, [hidden]);
 
-  // The label follows what is under the pill: ink over paper and the bright sky, white elsewhere.
+  // The label follows what is under the pill: ink over paper and the garage, white elsewhere.
   useEffect(() => {
     const link = linkRef.current;
     if (!link) return;
@@ -83,11 +83,15 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
     let light: HTMLElement[] = [];
     let dark: HTMLElement[] = [];
     let away: HTMLElement[] = [];
+    let hero: HTMLElement[] = [];
+    let process: HTMLElement[] = [];
     let offset = 0;
     const collect = () => {
       light = Array.from(document.querySelectorAll<HTMLElement>(LIGHT_SURFACES));
       dark = Array.from(document.querySelectorAll<HTMLElement>(DARK_SURFACES));
       away = Array.from(document.querySelectorAll<HTMLElement>(window.matchMedia('(max-width: 1023px)').matches ? AWAY_STACKED : AWAY));
+      hero = Array.from(document.querySelectorAll<HTMLElement>('.hero-scene .scroll-scene__pin'));
+      process = Array.from(document.querySelectorAll<HTMLElement>('.process-scene'));
       offset = link.offsetHeight / 2 + parseFloat(getComputedStyle(link).bottom);
     };
     const covers = (elements: HTMLElement[], y: number) => elements.some((el) => {
@@ -96,7 +100,9 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
     });
     const measure = () => {
       const y = window.innerHeight - offset;
-      const isLight = covers(light, y) && !covers(dark, y);
+      const overHero = covers(hero, y) && !covers(process, y);
+      const isLight = overHero || (covers(light, y) && !covers(dark, y));
+      if (overHero) link.dataset.heroSurface = ''; else delete link.dataset.heroSurface;
       if (isLight) link.dataset.tone = 'light'; else delete link.dataset.tone;
       if (covers(away, y)) link.dataset.away = ''; else delete link.dataset.away;
     };

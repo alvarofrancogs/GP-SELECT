@@ -67,6 +67,7 @@ export function Header() {
     const scenes = ['hero', 'coches']
       .map((id) => document.getElementById(id))
       .filter((scene): scene is HTMLElement => scene !== null);
+    const heroPin = document.querySelector<HTMLElement>('.hero-scene .scroll-scene__pin');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     function updateContrast() {
@@ -82,6 +83,18 @@ export function Header() {
       // Without the blend, the header takes the colour of whatever is under it when no scene sets its tone.
       if (!source && darkUnder(header.offsetHeight / 2)) header.dataset.surface = 'dark';
       else delete header.dataset.surface;
+      // The garage has an explicit contrast surface, including the unpinned reduced-motion view.
+      // Keep the existing published tone schedule; remove this as soon as Process covers the header.
+      const y = header.offsetHeight / 2;
+      const heroBox = heroPin?.getBoundingClientRect();
+      const overHero = heroBox && heroBox.top <= y && heroBox.bottom > y && !darkUnder(y);
+      if (overHero) header.dataset.heroSurface = source?.id === 'hero' && source.dataset.headerTone === 'dark' ? 'dark' : 'light';
+      else delete header.dataset.heroSurface;
+      if (overHero && source?.id === 'hero' && source.dataset.headerTone === 'dark') {
+        header.style.setProperty('--hero-header-support', source.dataset.headerSupport ?? '0');
+      } else {
+        header.style.removeProperty('--hero-header-support');
+      }
     }
     // Never cancel a pending frame: while a scrubbed scene keeps publishing its tone, that would
     // starve the update and leave the previous contrast on screen.
@@ -91,8 +104,13 @@ export function Header() {
     }
     updateContrast();
     // Scrubbed scenes keep moving after the scroll stops, so follow their tone directly.
-    const observer = new MutationObserver(onScroll);
-    scenes.forEach((scene) => observer.observe(scene, { attributeFilter: ['data-header-tone'] }));
+    const observer = new MutationObserver((records) => {
+      // The hero publishes tone and backing together. Apply both before paint, without a
+      // second RAF of delay behind its veil; other scenes keep their existing schedule.
+      if (records.some((record) => (record.target as HTMLElement).id === 'hero')) updateContrast();
+      else onScroll();
+    });
+    scenes.forEach((scene) => observer.observe(scene, { attributeFilter: ['data-header-tone', 'data-header-support'] }));
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     reducedMotion.addEventListener('change', onScroll);
@@ -108,6 +126,8 @@ export function Header() {
       delete header.dataset.tone;
       delete header.dataset.toneScene;
       delete header.dataset.surface;
+      delete header.dataset.heroSurface;
+      header.style.removeProperty('--hero-header-support');
     };
   }, [page]);
 
