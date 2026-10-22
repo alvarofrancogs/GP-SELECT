@@ -1,3 +1,4 @@
+using System.Globalization;
 using GpSelect.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,11 +8,16 @@ using Microsoft.Extensions.Logging;
 namespace GpSelect.Infrastructure;
 
 /// <summary>The email for one enquiry. Subject and body are plain text; the recipient comes from Enquiries:NotificationEmail.
-/// The email is for GP SELECT, so it stays in Spanish; it says which language to reply in.</summary>
-public sealed record EnquiryNotification(Guid EnquiryId, string Subject, string Body, string ReplyTo)
+/// The email is for GP SELECT, so it stays in Spanish; it says which language to reply in. An appointment may come
+/// without an email: then there is no Reply-To and the body asks for a call.</summary>
+public sealed record EnquiryNotification(Guid EnquiryId, string Subject, string Body, string? ReplyTo)
 {
+    // Own names rather than CultureInfo: the container may run with invariant globalization.
+    private static readonly string[] Weekdays = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
     public static EnquiryNotification For(Enquiry e)
     {
+        if (e.Intent == EnquiryIntent.Appointment) return ForAppointment(e);
         var (subject, type) = e.Intent switch
         {
             EnquiryIntent.Vehicle => ("Consulta sobre un vehículo", "comprar un vehículo en stock"),
@@ -34,6 +40,29 @@ public sealed record EnquiryNotification(Guid EnquiryId, string Subject, string 
                 e.VehicleYear is null ? null : $"Año: {e.VehicleYear}",
                 e.Mileage is null ? null : $"Kilometraje aproximado: {e.Mileage}",
                 e.Timeframe is null ? null : $"Para cuándo: {e.Timeframe}",
+                $"Recibida: {e.CreatedAt:yyyy-MM-dd HH:mm} UTC",
+                $"Referencia: {e.Id}",
+                "",
+                e.Message ?? "(sin mensaje)" }.Where(line => line is not null)),
+            e.Email);
+    }
+
+    private static EnquiryNotification ForAppointment(Enquiry e)
+    {
+        var date = e.AppointmentDate ?? throw new InvalidOperationException("An appointment needs a day.");
+        var time = e.AppointmentTime ?? throw new InvalidOperationException("An appointment needs a time.");
+        var day = date.ToString("dd'/'MM'/'yyyy", CultureInfo.InvariantCulture);
+        var hour = time.ToString("HH':'mm", CultureInfo.InvariantCulture);
+        return new(e.Id,
+            $"GP SELECT · Petición de cita · {day} {hour}{(e.Language == EnquiryLanguage.En ? " · en inglés" : "")} · {e.Name}",
+            string.Join('\n', new string?[] {
+                "Tipo: cita (llamar para confirmar día, hora y lugar)",
+                $"Idioma: {(e.Language == EnquiryLanguage.En ? "inglés (responde en inglés)" : "español")}",
+                $"Día: {Weekdays[(int)date.DayOfWeek]} {day}",
+                $"Hora: {hour}",
+                $"Nombre: {e.Name}",
+                $"Teléfono: {e.Phone}",
+                e.Email is null ? null : $"Email: {e.Email}",
                 $"Recibida: {e.CreatedAt:yyyy-MM-dd HH:mm} UTC",
                 $"Referencia: {e.Id}",
                 "",

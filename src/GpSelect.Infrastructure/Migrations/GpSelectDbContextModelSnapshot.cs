@@ -28,6 +28,12 @@ namespace GpSelect.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateOnly?>("AppointmentDate")
+                        .HasColumnType("date");
+
+                    b.Property<TimeOnly?>("AppointmentTime")
+                        .HasColumnType("time without time zone");
+
                     b.Property<string>("Budget")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -40,7 +46,6 @@ namespace GpSelect.Infrastructure.Migrations
                         .HasColumnType("character varying(120)");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -101,6 +102,32 @@ public sealed class EnquiryApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Null(stored.Message);
     }
 
+    private static string InThreeDays() => DateOnly.FromDateTime(DateTime.UtcNow).AddDays(3).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    [Fact]
+    public async Task Appointment_is_stored_with_its_day_and_time_and_no_email()
+    {
+        var marker = "Cita " + Guid.NewGuid().ToString("N");
+        var body = new { intent = "Appointment", name = "Ana López", phone = "+34 600 000 000", date = InThreeDays(), time = "10:30", message = marker, language = "en" };
+        await Read(await api.Anonymous().SendAsync(Post(body, "198.51.100.73")), HttpStatusCode.Accepted);
+        var stored = await Db(db => db.Enquiries.AsNoTracking().SingleAsync(x => x.Message == marker));
+        Assert.Equal((EnquiryIntent.Appointment, (string?)null, "+34 600 000 000", EnquiryLanguage.En), (stored.Intent, stored.Email, stored.Phone, stored.Language));
+        Assert.Equal(DateOnly.ParseExact(InThreeDays(), "yyyy-MM-dd", CultureInfo.InvariantCulture), stored.AppointmentDate);
+        Assert.Equal(new TimeOnly(10, 30), stored.AppointmentTime);
+    }
+
+    [Theory]
+    [InlineData("phone")]
+    [InlineData("date")]
+    [InlineData("time")]
+    public async Task Appointment_needs_a_phone_a_day_and_a_time(string missing)
+    {
+        var body = new Dictionary<string, object> { ["intent"] = "Appointment", ["name"] = "Ana", ["phone"] = "+34 600 000 000", ["date"] = InThreeDays(), ["time"] = "10:30" };
+        body.Remove(missing);
+        var problem = await Read(await api.Anonymous().SendAsync(Post(body, $"198.51.102.{Interlocked.Increment(ref invalidPeer)}")), HttpStatusCode.BadRequest);
+        Assert.Equal(missing, problem.GetProperty("field").GetString());
+    }
+
     [Theory]
     [InlineData("delivery", Enquiry.DeliveryMax)]
     [InlineData("year", Enquiry.VehicleYearMax)]
@@ -126,6 +153,8 @@ public sealed class EnquiryApiTests(ApiFactory api) : IClassFixture<ApiFactory>
     [InlineData("""{"intent":"Search","name":"Ana","email":"ana@example.test"}""", "vehicle")]
     [InlineData("""{"intent":"Search","name":"Ana\u0000","email":"ana@example.test","message":"Busco un coche familiar."}""", "name")]
     [InlineData("""{"name":"Ana","email":"ana@example.test","message":"Busco un coche familiar."}""", "intent")]
+    [InlineData("""{"intent":"Search","name":"Ana","message":"Busco un coche familiar."}""", "email")]
+    [InlineData("""{"intent":"Appointment","name":"Ana","phone":"600 000 000","date":"2020-01-01","time":"10:30"}""", "date")]
     public async Task Invalid_fields_answer_400_with_code_and_field(string json, string field)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "/api/public/enquiries") { Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json") };

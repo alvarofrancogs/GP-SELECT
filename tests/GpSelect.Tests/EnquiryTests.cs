@@ -1,4 +1,4 @@
-using GpSelect.Domain; using Xunit;
+using System.Globalization; using GpSelect.Domain; using Xunit;
 namespace GpSelect.Tests;
 public class EnquiryTests {
  static readonly DateTimeOffset Now=new(2026,9,30,12,0,0,TimeSpan.Zero);
@@ -47,5 +47,14 @@ public class EnquiryTests {
  [Fact] public void Language_is_spanish_unless_given(){Assert.Equal(EnquiryLanguage.Es,Valid().Language);Assert.Equal(EnquiryLanguage.En,Enquiry.Create(EnquiryIntent.Search,"Ana López","ana@example.test",null,null,"Looking for a family car.",Now,EnquiryLanguage.En).Language);}
  [Fact] public void Unknown_language_is_rejected()=>Assert.Equal("language",Field(()=>Enquiry.Create(EnquiryIntent.Search,"Ana López","ana@example.test",null,null,"Busco un coche familiar.",Now,(EnquiryLanguage)7)));
  [Fact] public void Failed_notifications_back_off_then_stop_without_losing_the_enquiry(){var e=Valid();e.NotificationFailed(Now);Assert.Equal(Now.AddMinutes(1),e.NotificationNextAttemptAt);e.NotificationFailed(Now);Assert.Equal(Now.AddMinutes(5),e.NotificationNextAttemptAt);for(var i=0;i<3;i++)e.NotificationFailed(Now);Assert.Equal(EnquiryNotificationStatus.Pending,e.NotificationStatus);e.NotificationFailed(Now);Assert.Equal((EnquiryNotificationStatus.Failed,Enquiry.MaxNotificationAttempts),(e.NotificationStatus,e.NotificationAttempts));}
+ static Enquiry Appointment(string? date="2026-10-02",string? time="10:30",string? phone="+34 600 000 000",string? email=null)=>Enquiry.Create(EnquiryIntent.Appointment,"Ana López",email,phone,null,null,Now,date:date,time:time);
+ [Fact] public void Appointment_needs_no_email_and_keeps_day_and_time(){var e=Appointment();Assert.Equal(((string?)null,(DateOnly?)new DateOnly(2026,10,2),(TimeOnly?)new TimeOnly(10,30)),(e.Email,e.AppointmentDate,e.AppointmentTime));Assert.Null(e.Vehicle);}
+ [Theory][InlineData(null)][InlineData(" ")] public void Appointment_requires_a_phone(string? phone){var error=Assert.Throws<DomainException>(()=>Appointment(phone:phone));Assert.Equal(("required","phone"),(error.Code,error.Field));}
+ [Theory][InlineData(null)][InlineData("")][InlineData("02/10/2026")][InlineData("2026-10-32")][InlineData("2026-09-28")][InlineData("2027-10-02")] public void Appointment_day_must_be_from_today_to_a_year_ahead(string? date)=>Assert.Equal("date",Field(()=>Appointment(date:date)));
+ [Theory][InlineData("2026-09-29")][InlineData("2027-10-01")] public void Appointment_day_allows_one_day_of_slack_around_utc(string date)=>Assert.Equal(DateOnly.ParseExact(date,"yyyy-MM-dd",CultureInfo.InvariantCulture),Appointment(date:date).AppointmentDate);
+ [Theory][InlineData(null)][InlineData("24:00")][InlineData("10:30:00")][InlineData("diez")] public void Appointment_time_is_hours_and_minutes(string? time)=>Assert.Equal("time",Field(()=>Appointment(time:time)));
+ [Fact] public void Appointment_email_is_optional_but_checked(){Assert.Equal("ana@example.test",Appointment(email:"ana@example.test").Email);Assert.Equal("email",Field(()=>Appointment(email:"ana@example")));}
+ [Theory][InlineData(EnquiryIntent.Vehicle)][InlineData(EnquiryIntent.Search)][InlineData(EnquiryIntent.Information)] public void Other_intents_still_require_an_email(EnquiryIntent intent){var error=Assert.Throws<DomainException>(()=>Valid(intent:intent,email:" ",vehicle:"BMW",message:"Quisiera más información."));Assert.Equal(("required","email"),(error.Code,error.Field));}
+ [Fact] public void Day_and_time_are_ignored_outside_appointments(){var e=Enquiry.Create(EnquiryIntent.Search,"Ana López","ana@example.test",null,"BMW",null,Now,date:"2026-10-02",time:"10:30");Assert.Null(e.AppointmentDate);Assert.Null(e.AppointmentTime);}
  [Fact] public void Sent_notification_is_recorded(){var e=Valid();e.NotificationSent(Now);Assert.Equal((EnquiryNotificationStatus.Sent,Now,1),(e.NotificationStatus,e.NotifiedAt,e.NotificationAttempts));}
 }
