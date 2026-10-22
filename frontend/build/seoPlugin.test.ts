@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { canonicalPagePath } from './seoPlugin';
 
-const pages = ['vehiculos', 'importacion', 'nosotros', 'contacto', 'aviso-legal', 'privacidad', 'cookies'];
+const pages = ['vehiculos', 'importacion', 'nosotros', 'contacto', 'citas', 'aviso-legal', 'privacidad', 'cookies'];
 
 describe('canonicalPagePath', () => {
   it.each(pages)('canonicalizes all case and suffix combinations for /%s in one hop', (page) => {
@@ -46,7 +46,7 @@ describe('canonicalPagePath', () => {
 });
 
 describe('canonicalPagePath · English pages', () => {
-  const english = ['vehicles', 'import', 'about', 'contact', 'legal-notice', 'privacy', 'cookies'];
+  const english = ['vehicles', 'import', 'about', 'contact', 'appointments', 'legal-notice', 'privacy', 'cookies'];
 
   it.each(english)('canonicalizes case and suffix variants of /en/%s in one hop', (page) => {
     for (const name of [page, page.toUpperCase()]) {

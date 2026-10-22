@@ -58,6 +58,7 @@ export function Header() {
     { to: href('/vehiculos'), label: copy.nav.vehicles },
     { to: href('/importacion'), label: copy.nav.import },
     { to: href('/contacto'), label: copy.nav.contact },
+    { to: href('/citas'), label: copy.nav.appointments },
   ];
 
   useEffect(() => {

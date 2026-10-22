@@ -28,8 +28,8 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
   const match = matchPage(pathname);
   const linkRef = useRef<HTMLAnchorElement>(null);
   const bodyRef = useRef<HTMLSpanElement>(null);
-  // Not on the catalogue itself, nor over the contact form it would cover.
-  const hidden = match?.page === 'vehicles' || match?.page === 'vehicle' || match?.page === 'contact' || match?.page === 'import';
+  // Not on the catalogue itself, nor over the contact and appointment forms it would cover.
+  const hidden = match?.page === 'vehicles' || match?.page === 'vehicle' || match?.page === 'contact' || match?.page === 'import' || match?.page === 'appointments';
   const page = pageKey(pathname);
 
   useEffect(() => {

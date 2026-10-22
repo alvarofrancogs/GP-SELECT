@@ -103,7 +103,7 @@ interface LegalUiCopy {
   /** Shown above the Spanish text in other languages. */
   bindingNote: string | null;
   /** First information layer under the contact form (GDPR art. 13). */
-  formNotice: { before: string; purpose: string; link: string; after: string };
+  formNotice: { before: string; purpose: string; appointmentPurpose: string; link: string; after: string };
 }
 
 export const legalUi: Record<Locale, LegalUiCopy> = {
@@ -115,6 +115,7 @@ export const legalUi: Record<Locale, LegalUiCopy> = {
     formNotice: {
       before: 'Responsable: ',
       purpose: '. Finalidad: responder a tu consulta. Legitimación: medidas precontractuales a petición tuya. Destinatarios: no cedemos tus datos salvo obligación legal. Derechos: acceso, rectificación, supresión y otros, como explica la ',
+      appointmentPurpose: '. Finalidad: gestionar tu cita. Legitimación: medidas precontractuales a petición tuya. Destinatarios: no cedemos tus datos salvo obligación legal. Derechos: acceso, rectificación, supresión y otros, como explica la ',
       link: 'política de privacidad',
       after: '.',
     },
@@ -127,6 +128,7 @@ export const legalUi: Record<Locale, LegalUiCopy> = {
     formNotice: {
       before: 'Controller: ',
       purpose: '. Purpose: to answer your enquiry. Legal basis: steps taken at your request before a possible contract. Recipients: we do not share your data unless required by law. Rights: access, rectification, erasure and others, as explained in the ',
+      appointmentPurpose: '. Purpose: to arrange your appointment. Legal basis: steps taken at your request before a possible contract. Recipients: we do not share your data unless required by law. Rights: access, rectification, erasure and others, as explained in the ',
       link: 'privacy policy',
       after: '.',
     },

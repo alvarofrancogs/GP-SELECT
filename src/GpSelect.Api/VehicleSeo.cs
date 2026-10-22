@@ -171,8 +171,8 @@ public static class VehicleSeo
             html.Append($"<p><a href=\"{(english ? "/en/contact" : "/contacto")}?vehiculo={Uri.EscapeDataString($"{v.Make} {v.Model}{(v.Variant is { Length: > 0 } ? $" {v.Variant}" : "")} ({v.Year})")}&amp;intent=vehicle\">{(english ? "Enquire about this car" : "Solicitar información")}</a></p>");
         html.Append($"</main><footer><p>{E(english ? EnglishLocation : SpanishLocation)}</p><nav><ul>");
         var navigation = english
-            ? new[] { ("/en", "GP SELECT"), ("/en/vehicles", "Vehicles"), ("/en/import", "Import"), ("/en/about", "About"), ("/en/contact", "Contact") }
-            : new[] { ("/", "GP SELECT"), ("/vehiculos", "Vehículos"), ("/importacion", "Importación"), ("/nosotros", "Nosotros"), ("/contacto", "Contacto") };
+            ? new[] { ("/en", "GP SELECT"), ("/en/vehicles", "Vehicles"), ("/en/import", "Import"), ("/en/about", "About"), ("/en/contact", "Contact"), ("/en/appointments", "Appointments") }
+            : new[] { ("/", "GP SELECT"), ("/vehiculos", "Vehículos"), ("/importacion", "Importación"), ("/nosotros", "Nosotros"), ("/contacto", "Contacto"), ("/citas", "Citas") };
         foreach (var (href, label) in navigation)
             html.Append($"<li><a href=\"{href}\">{E(label)}</a></li>");
         return html.Append("</ul></nav></footer></div>").ToString();
