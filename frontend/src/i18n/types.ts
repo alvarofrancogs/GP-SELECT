@@ -84,6 +84,23 @@ export interface InteriorCopy {
     phoneLabel: string;
     emailLabel: string;
   };
+  appointments: InteriorHeaderCopy & {
+    /** Short lines beside the form: what an appointment is for and what happens after the request. */
+    points: { title: string; body: string }[];
+    formTitle: string;
+    fields: { date: string; time: string; name: string; phone: string; message: string };
+    messageHint: string;
+    optional: string;
+    required: string;
+    requiredHint: string;
+    submit: string;
+    submitting: string;
+    preview: string;
+    successTitle: string;
+    successBody: string;
+    edit: string;
+    errors: { date: string; time: string; name: string; phone: string; message: string };
+  };
 }
 
 export interface VehicleCopy extends InteriorHeaderCopy {
@@ -170,6 +187,7 @@ export interface Dictionary {
     services: string;
     about: string;
     contact: string;
+    appointments: string;
     admin: string;
   };
   hero: { left: string; right: string; description: string };

@@ -22,6 +22,7 @@ const navigation = (t: Dictionary, locale: Locale) => [
   [pagePath('import', locale), t.nav.import],
   [pagePath('about', locale), t.nav.about],
   [pagePath('contact', locale), t.nav.contact],
+  [pagePath('appointments', locale), t.nav.appointments],
 ] as const;
 
 const paragraph = (text: string) => `<p>${escapeHtml(text)}</p>`;
@@ -111,6 +112,13 @@ function contactContent(t: Dictionary, locale: Locale): string {
       + `<ol>${text.enquirySteps.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}</ol>`);
 }
 
+function appointmentsContent(t: Dictionary): string {
+  const text = t.interiors.appointments;
+  return interiorIntroduction(text.title, text.lede)
+    + `<ul>${text.points.map((point) => `<li><strong>${escapeHtml(point.title)}</strong> ${escapeHtml(point.body)}</li>`).join('')}</ul>`
+    + section(text.formTitle, paragraph(text.preview));
+}
+
 // Same text as the React legal page (src/pages/Legal.tsx): always the Spanish, binding version; a missing detail
 // reads as pending. In English it carries the note that says so, and its internal links stay in English.
 function legalContent(doc: LegalDoc, locale: Locale): string {
@@ -145,6 +153,7 @@ export function renderReadableContent(path: string): string {
     case 'import': content = importContent(t, locale); break;
     case 'guide': content = guideContent(locale); break;
     case 'contact': content = contactContent(t, locale); break;
+    case 'appointments': content = appointmentsContent(t); break;
     case 'vehicles':
       content = interiorIntroduction(t.vehicles.title, t.vehicles.lede)
         + '<!--vehicle-list--><!--/vehicle-list-->'

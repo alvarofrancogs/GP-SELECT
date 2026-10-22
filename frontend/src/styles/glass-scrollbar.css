@@ -1,0 +1,50 @@
+/* Mouse users get the glass bar (GlassScrollbar.tsx) instead of the native one; touch screens keep theirs.
+   :has() hides the native bar in the same render that mounts the glass one, before the scenes measure,
+   so no page width changes under the pins. The Admin, without the glass bar, keeps the native one. */
+.glass-scrollbar { display: none; }
+
+@media (hover: hover) and (pointer: fine) {
+  html:has(.glass-scrollbar) { scrollbar-width: none; }
+  html:has(.glass-scrollbar)::-webkit-scrollbar { display: none; }
+
+  .glass-scrollbar {
+    display: block; position: fixed; z-index: var(--z-scrollbar); top: .5rem; right: 0; bottom: .5rem; width: 1.125rem;
+    opacity: 0; transition: opacity 450ms var(--ease-out);
+  }
+  .glass-scrollbar[data-visible], .glass-scrollbar:hover { opacity: 1; }
+  .glass-scrollbar[data-empty] { display: none; }
+  /* The rail only shows under the pointer. */
+  .glass-scrollbar::before {
+    content: ''; position: absolute; top: 0; bottom: 0; right: .4375rem; width: .125rem; border-radius: 999px;
+    background: rgb(16 17 18 / .1); box-shadow: 0 0 0 1px rgb(255 252 247 / .14);
+    opacity: 0; transition: opacity 300ms var(--ease-out);
+  }
+  .glass-scrollbar:hover::before, .glass-scrollbar[data-dragging]::before { opacity: 1; }
+
+  /* The CTA's glass: blurred, warm white tint, a white inner line and a hairline of ink outside it,
+     so the pill reads over the cream garage and over the dark scenes alike. */
+  .glass-scrollbar__thumb {
+    --glass-y: 30%;
+    position: absolute; top: 0; right: .25rem; width: .375rem; border-radius: 999px;
+    cursor: grab; touch-action: none; will-change: transform;
+    background:
+      radial-gradient(130% 55% at 50% var(--glass-y), rgb(255 255 255 / .6), transparent 70%),
+      linear-gradient(180deg, rgb(255 252 247 / .52), rgb(245 242 236 / .26));
+    -webkit-backdrop-filter: blur(14px) saturate(1.5); backdrop-filter: blur(14px) saturate(1.5);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / .6), 0 0 0 1px rgb(16 17 18 / .3), 0 .25rem .875rem rgb(16 17 18 / .16);
+    transition: width 220ms var(--ease-out), right 220ms var(--ease-out), box-shadow 220ms var(--ease-out);
+  }
+  .glass-scrollbar:hover .glass-scrollbar__thumb, .glass-scrollbar[data-dragging] .glass-scrollbar__thumb {
+    width: .625rem; right: .125rem;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / .75), 0 0 0 1px rgb(16 17 18 / .36), 0 .375rem 1.25rem rgb(16 17 18 / .22);
+  }
+  .glass-scrollbar[data-dragging] .glass-scrollbar__thumb { cursor: grabbing; }
+  html:has(.glass-scrollbar[data-dragging]) { cursor: grabbing; user-select: none; }
+
+  /* Nothing to scroll behind the open menu or a dialog. */
+  html.menu-open .glass-scrollbar, html:has(dialog[open]) .glass-scrollbar { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-scrollbar, .glass-scrollbar::before, .glass-scrollbar__thumb { transition: none; }
+}

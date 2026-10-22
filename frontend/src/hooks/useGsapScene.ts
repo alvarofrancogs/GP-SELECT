@@ -9,9 +9,10 @@ gsap.registerPlugin(ScrollTrigger);
 export type SceneKind = 'hero' | 'process';
 
 // Scroll per scene, in viewports: 15 % shorter since 17-10-2026 (it took too much scrolling), and on phones
-// shorter again after the user tried it on an iPhone the same day.
+// shorter again after the user tried it on an iPhone the same day. The hero grew back on 22-10-2026 so its
+// car takes more scroll to advance (the user wanted it "harder") without finishing in the dark.
 const scrollDistance: Record<SceneKind, { desktop: number; mobile: number }> = {
-  hero: { desktop: 2.125, mobile: 1.25 },
+  hero: { desktop: 2.63, mobile: 1.36 },
   process: { desktop: 2.55, mobile: 1.6 },
 };
 
@@ -20,18 +21,27 @@ const scrubLag: Record<SceneKind, number> = { hero: 0.7, process: 0.5 };
 // A finger's own momentum already smooths the scroll: with the full lag, the lettering kept drifting after it.
 const TOUCH_LAG = 0.5;
 
-// Hero car: the side-on Porsche drives off to the left. Travel is the whole story; the scale
-// only adds a touch of depth and must never read as a camera zoom.
-const HERO_TRAVEL = { desktop: 0.34, mobile: 0.3 }; // of the viewport width
-const HERO_DEPTH = 1.06;
+// Rolling entrance: the rear quarter starts outside the right edge, then the whole car
+// centres over a stationary floor. Translation and wheel rotation share this exact interval.
+// The roll takes 1.19 viewports of scroll on desktop and 0.29 on phones/tablets, where Process starts
+// rising at 0.36 viewports (0.26 of their pin): the car is in by 0.22.
+const HERO_ROLL = { desktop: { start: 0.0404, duration: 0.4538 }, mobile: { start: 0.0092, duration: 0.2151 } };
+// Scrub smoothing for the car alone, in seconds: it trails the scroll a little and settles, as the user likes.
+const HERO_ROLL_LAG = 1.3;
 
-// Over the sky the default (difference) header reads well; ink takes over before the
-// dark handoff turns the sky mid-grey, and white once that dark layer dominates.
-// `dark` is the handoff layer's opacity at which the sky has turned mid-grey (it used to be reached at 0.72 of the pin).
-const HERO_TONE = { light: 0.45, dark: 0.44 };
+// Change ink and its contrast backing together: the wall's bright and dark patches
+// have no shared AA crossover. Fading a dark backing in under black ink would make it worse.
+const HERO_TONE = { light: 0.45, dark: 0.29 };
+const HERO_HEADER_SUPPORT = { opacity: 0.28, end: 0.52 };
+
+function heroHeaderSupport(darkness: number) {
+  if (darkness < HERO_TONE.dark) return 0;
+  return HERO_HEADER_SUPPORT.opacity * Math.max(0,
+    (HERO_HEADER_SUPPORT.end - darkness) / (HERO_HEADER_SUPPORT.end - HERO_TONE.dark));
+}
 // The hero is fully darkened by the time Process starts to rise over it (scroll distance, in viewports).
 // Process rises over the hero's last viewport, so this moves with the scene's length (the same share of it on phones).
-const HERO_DARKEN_BY = { desktop: 1.075, mobile: 0.8 };
+const HERO_DARKEN_BY = { desktop: 1.58, mobile: 0.91 };
 // Process lands instead of stopping dead: its lettering rises this much lower (in viewports) and, once
 // pinned, keeps rising and slows to rest over twice that scroll. power1.out starts at twice its average
 // speed, so the lettering leaves the scroll at the scroll's own speed, with no hard stop.
@@ -68,8 +78,8 @@ export function useGsapScene(kind: SceneKind, id: string) {
       (context) => {
         const { desktop, reducedMotion, enoughHeight, touch } = context.conditions!;
         const select = gsap.utils.selector(section);
-        const backgrounds = select('[data-scene-background]');
         const media = select('[data-scene-media]');
+        const wheels = select('[data-hero-wheel]');
         const titles = select('[data-scene-title]');
         const ui = select('[data-scene-ui]');
         const handoff = select('[data-scene-handoff]');
@@ -77,6 +87,10 @@ export function useGsapScene(kind: SceneKind, id: string) {
 
         section.dataset.motion = reducedMotion || !enoughHeight ? 'static' : 'scroll';
         section.dataset.progress = '0';
+        if (kind === 'hero') {
+          delete section.dataset.headerTone;
+          delete section.dataset.headerSupport;
+        }
 
         // Short landscape viewports also use the readable, unpinned layout.
         if (reducedMotion || !enoughHeight) {
@@ -112,17 +126,33 @@ export function useGsapScene(kind: SceneKind, id: string) {
         // All timings below are fractions of a single, reversible scene.
         timeline.to({ progress: 0 }, { progress: 1, duration: 1 }, 0);
 
-        if (backgrounds.length && kind !== 'process') {
-          timeline.to(backgrounds, { yPercent: kind === 'hero' ? -3 : -2, duration: 1 }, 0);
-        }
-
         if (kind === 'hero') {
           if (media.length) {
-            // Linear travel, with a separate zoom for the camera's approach.
-            const travel = HERO_TRAVEL[desktop ? 'desktop' : 'mobile'];
-            timeline.to(media, { x: () => -window.innerWidth * travel, duration: 1 }, 0);
-            timeline.to(media, { scale: HERO_DEPTH, duration: 1 }, 0);
-            // The car stays in frame to the end; the Process curtain covers it.
+            // Read layout only when GSAP initialises/refreshes, never integrate frame deltas.
+            // CSS supplies the initial left; a centred finish also fits narrow/mobile viewports.
+            const travel = () => {
+              const layout = getComputedStyle(media[0]);
+              return (pin.clientWidth - parseFloat(layout.width)) / 2 - parseFloat(layout.left);
+            };
+            // The car has its own, heavier scrub: it trails the scroll and settles, so it feels weighty.
+            // Car and wheels stay on that one timeline, so the tires never slip.
+            const roll = HERO_ROLL[desktop ? 'desktop' : 'mobile'];
+            const rolling = gsap.timeline({
+              defaults: { ease: 'none' },
+              scrollTrigger: {
+                trigger: section, start: 'top top', invalidateOnRefresh: true,
+                end: () => `+=${stage() * distance}`,
+                scrub: HERO_ROLL_LAG * (touch ? TOUCH_LAG : 1),
+              },
+            });
+            rolling.to({}, { duration: 1 }, 0);
+            rolling.to(media, { x: travel, duration: roll.duration }, roll.start);
+            wheels.forEach((wheel) => {
+              rolling.to(wheel, {
+                rotation: () => travel() / (Math.PI * parseFloat(getComputedStyle(wheel).width)) * 360,
+                duration: roll.duration,
+              }, roll.start);
+            });
           }
           titles.forEach((title, index) => {
             timeline.to(title, {
@@ -134,7 +164,7 @@ export function useGsapScene(kind: SceneKind, id: string) {
             }, 0.12 + index * 0.04);
           });
           if (ui.length) timeline.to(ui, { autoAlpha: 0, y: -24, duration: 0.2 }, 0.15);
-          // The sky is almost dark before the Process curtain reaches it: no bright photo under a dark page.
+          // The garage is almost dark before the Process curtain reaches it: no bright photo under a dark page.
           // One timeline, without scrub lag, owns the dark layer's opacity over the whole pin (positions in
           // viewports of scroll). A second, lagging timeline on the same property used to leave it at 0.88
           // after a fast return to the top.
@@ -161,7 +191,11 @@ export function useGsapScene(kind: SceneKind, id: string) {
           const publishTone = () => {
             const processTop = process?.getBoundingClientRect().top ?? Infinity;
             const headerHalf = (header?.clientHeight ?? 0) / 2;
-            const tone = heroHeaderTone(timeline.progress(), Number(gsap.getProperty(handoff[0] ?? section, 'opacity')), processTop, headerHalf);
+            const darkness = Number(gsap.getProperty(handoff[0] ?? section, 'opacity'));
+            const tone = heroHeaderTone(timeline.progress(), darkness, processTop, headerHalf);
+            const support = (tone === 'dark' ? heroHeaderSupport(darkness) : 0).toFixed(4);
+            // Both writes reach the header in one MutationObserver batch, before the next paint.
+            if (section.dataset.headerSupport !== support) section.dataset.headerSupport = support;
             if (section.dataset.headerTone !== tone) section.dataset.headerTone = tone;
           };
           timeline.eventCallback('onUpdate', publishTone);
@@ -244,6 +278,7 @@ export function useGsapScene(kind: SceneKind, id: string) {
       delete section.dataset.motion;
       delete section.dataset.progress;
       delete section.dataset.headerTone;
+      delete section.dataset.headerSupport;
     };
   }, [id, kind]);
 

@@ -350,3 +350,26 @@
 
 .editorial-disclosure__body .import-stages { list-style: none; padding-left: 0; }
 .contact-field .select__option { overflow-wrap: anywhere; font-size: 1rem; }
+
+/* Citas (Appointments.tsx): a few short lines beside the form, stacked below 1024 px. The form itself is the
+   contact form's (same fields, rules and states). Day and time are short: side by side even on phones. */
+.appointments-content { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 2.5rem; padding-block: 1rem var(--interior-space); }
+.appointments-points { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--interior-rule); }
+.appointments-points li { padding-block: 1.25rem; border-bottom: 1px solid var(--interior-rule); }
+.appointments-points .type-heading { margin-bottom: .5rem; font-size: clamp(1.25rem, 1.6vw, 1.75rem); }
+.appointments-points .type-body { max-width: 34ch; }
+.appointments-page .contact-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+.appointments-page .appointment-field--who { grid-column: 1 / -1; }
+/* Native pickers: iOS centres their value and lets an empty one collapse. */
+.appointments-page .contact-field :is(input[type='date'], input[type='time']) { -webkit-appearance: none; appearance: none; text-align: left; }
+.appointments-page .contact-field ::-webkit-date-and-time-value { text-align: left; }
+/* «Appointments» is the longest interior title: below 768 px it may only shrink, so it never overflows a 320 px screen. */
+@media (max-width: 767px) {
+  .appointments-page .interior-header .interior-header__title { font-size: min(clamp(2.375rem, calc(1.21rem + 5.29vw), 3.75rem), 11vw); }
+}
+@media (min-width: 768px) {
+  .appointments-page .appointment-field--who { grid-column: auto; }
+}
+@media (min-width: 1024px) {
+  .appointments-content { grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr); gap: 5vw; padding-top: 2rem; }
+}

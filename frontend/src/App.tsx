@@ -6,6 +6,7 @@ import { About } from './pages/About';
 import { Import } from './pages/Import';
 import { Guide } from './pages/Guide';
 import { Contact } from './pages/Contact';
+import { Appointments } from './pages/Appointments';
 import { Vehicles } from './pages/Vehicles';
 import { VehicleDetail } from './pages/VehicleDetail';
 import { LegalPage } from './pages/Legal';
@@ -25,6 +26,7 @@ function PublicPage() {
     case 'guide': return <Guide />;
     case 'about': return <About />;
     case 'contact': return <Contact />;
+    case 'appointments': return <Appointments />;
     case 'aviso-legal': case 'privacidad': case 'cookies': return <LegalPage doc={match.page} />;
     default: return <NotFound />;
   }

@@ -38,6 +38,7 @@ export function Footer() {
           <Link to={href('/vehiculos')}>{copy.nav.vehicles}</Link>
           <Link to={href('/importacion')}>{copy.nav.import}</Link>
           <Link to={href(qualificationUrl({ intent: 'information', source: 'home-footer' }))}>{copy.nav.contact}</Link>
+          <Link to={href('/citas')}>{copy.nav.appointments}</Link>
         </nav>
       </div>
       <div className="footer-bottom">

@@ -45,6 +45,7 @@
 		~(?i)^/guias/importar-un-coche-de-europa(?:/index\.html)?/?$ /guias/importar-un-coche-de-europa
 		~(?i)^/nosotros(?:/index\.html)?/?$ /nosotros
 		~(?i)^/contacto(?:/index\.html)?/?$ /contacto
+		~(?i)^/citas(?:/index\.html)?/?$ /citas
 		~(?i)^/aviso-legal(?:/index\.html)?/?$ /aviso-legal
 		~(?i)^/privacidad(?:/index\.html)?/?$ /privacidad
 		~(?i)^/cookies(?:/index\.html)?/?$ /cookies
@@ -56,6 +57,7 @@
 		~(?i)^/en/guides/importing-a-car-from-europe(?:/index\.html)?/?$ /en/guides/importing-a-car-from-europe
 		~(?i)^/en/about(?:/index\.html)?/?$ /en/about
 		~(?i)^/en/contact(?:/index\.html)?/?$ /en/contact
+		~(?i)^/en/appointments(?:/index\.html)?/?$ /en/appointments
 		~(?i)^/en/legal-notice(?:/index\.html)?/?$ /en/legal-notice
 		~(?i)^/en/privacy(?:/index\.html)?/?$ /en/privacy
 		~(?i)^/en/cookies(?:/index\.html)?/?$ /en/cookies

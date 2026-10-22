@@ -48,6 +48,10 @@ export const staticPageMeta: Record<string, PageMeta> = {
     title: 'Contacto · Cuéntanos qué coche buscas · GP SELECT',
     description: 'Pregúntanos por un coche del catálogo o cuéntanos cuál quieres encontrar en Europa. GP SELECT trabaja desde Murcia con clientes de toda Europa.',
   },
+  '/citas': {
+    title: 'Citas · Ven a ver un coche o a hablar con nosotros · GP SELECT',
+    description: 'Pide cita para ver un coche en persona o para hablar con calma de lo que buscas. Elige día y hora y te llamamos para confirmarla. GP SELECT, Murcia.',
+  },
   [pagePaths.home.en]: {
     title: 'GP SELECT · Buying, selling and importing premium cars',
     description: 'Buying and selling premium and performance cars in Murcia. Our own stock, plus sourcing and import from Europe to order for clients in Spain and across Europe.',
@@ -71,6 +75,10 @@ export const staticPageMeta: Record<string, PageMeta> = {
   [pagePaths.contact.en]: {
     title: 'Contact · Tell us which car you want · GP SELECT',
     description: 'Ask about a car in our catalogue or tell us which one you want us to find in Europe. GP SELECT works from Murcia, Spain, with clients across Europe.',
+  },
+  [pagePaths.appointments.en]: {
+    title: 'Appointments · Come and see a car or talk to us · GP SELECT',
+    description: 'Book an appointment to see a car in person or to talk through what you are looking for. Pick a day and a time and we call you to confirm. GP SELECT, Murcia, Spain.',
   },
 };
 

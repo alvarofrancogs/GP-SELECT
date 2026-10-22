@@ -7,12 +7,13 @@ import type { PageMeta } from '../src/lib/pageMeta';
 import { findPendingCopy } from './pendingCopy';
 import { readableHead, renderLlmsText, renderReadableContent } from './readableContent';
 import { pagePaths } from '../src/i18n/routes';
-import { sceneAssets, type SceneAsset } from '../src/assets/sceneAssets';
+import { heroPreloadAssets } from '../src/assets/sceneAssets';
 
 // The home's first view: its photographs download alongside the script instead of after it renders.
 // The hero car is preloaded with its srcset and sizes, so the browser fetches the width the page will use.
-const homePreload = ([sceneAssets.heroBackground, sceneAssets.heroCar] as SceneAsset[])
-  .map(({ src, srcSet, sizes }) => `<link rel="preload" as="image" href="${src}"${srcSet && sizes
+const homePreload = heroPreloadAssets
+  .flatMap((asset) => [...(asset.sources ?? []), asset])
+  .map(({ src, srcSet, sizes, media }) => `<link rel="preload" as="image" href="${src}"${media ? ` media="${media}"` : ''}${srcSet && sizes
     ? ` imagesrcset="${srcSet}" imagesizes="${sizes}"` : ''} fetchpriority="high" />\n  `).join('');
 
 // Page names from the route table: /vehiculos… in Spanish, /en/vehicles… in English.

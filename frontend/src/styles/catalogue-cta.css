@@ -22,7 +22,7 @@
   display: block;
   border-radius: var(--radius-small);
   color: var(--cta-ink);
-  transition: color 350ms var(--ease-out), opacity 250ms var(--ease-out);
+  transition: color 350ms var(--ease-out), opacity 250ms var(--ease-out), translate 250ms var(--ease-out);
   animation: catalogue-cta-in 600ms var(--ease-cinematic) 400ms backwards;
 }
 /* Paper and bright sky: paper glass with ink type. */
@@ -38,8 +38,12 @@
   --cta-fill-ink: var(--color-white);
 }
 .catalogue-cta[aria-disabled='true'] { cursor: progress; }
-/* Over content it would cover (CatalogueCta.tsx) it steps aside; keyboard focus still brings it back. */
-.catalogue-cta[data-away]:not(:focus-visible) { opacity: 0; pointer-events: none; }
+/* Over content it would cover (CatalogueCta.tsx) it steps aside; keyboard focus still brings it back.
+   It returns with a slow fade and a short rise (the load-in animation would flash it while away). */
+.catalogue-cta[data-away]:not(:focus-visible) { opacity: 0; translate: -50% .75rem; pointer-events: none; animation: none; }
+.catalogue-cta:not([data-away]), .catalogue-cta:focus-visible {
+  transition: color 350ms var(--ease-out), opacity 700ms var(--ease-cinematic), translate 700ms var(--ease-cinematic);
+}
 
 .catalogue-cta__body {
   position: relative;
@@ -96,6 +100,12 @@
 
 .catalogue-cta:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 
+/* The garage's floor darkens underneath this fixed control. A paper surface keeps the label,
+   arrow and keyboard focus readable throughout that handoff; other scenes keep their glass. */
+.catalogue-cta[data-hero-surface] { color: #101112; transition: opacity 250ms var(--ease-out); }
+.catalogue-cta[data-hero-surface] .catalogue-cta__body { background: #f5f2ec; transition: box-shadow 350ms var(--ease-out); box-shadow: inset 0 0 0 1px #6b655c; }
+.catalogue-cta[data-hero-surface]:focus-visible { outline-color: #101112; box-shadow: 0 0 0 5px #f5f2ec; }
+
 @media (hover: hover) and (pointer: fine) {
   .catalogue-cta:hover .catalogue-cta__glass::before { opacity: 1; }
   .catalogue-cta:hover .catalogue-cta__glass::after { animation: catalogue-cta-sweep 900ms var(--ease-cinematic) both; }
@@ -131,6 +141,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .catalogue-cta { animation: none; }
+  .catalogue-cta[data-away]:not(:focus-visible) { translate: -50% 0; }
 }
 @media (prefers-reduced-motion: reduce) and (hover: hover) and (pointer: fine) {
   .catalogue-cta:hover .catalogue-cta__glass::after { animation: none; }

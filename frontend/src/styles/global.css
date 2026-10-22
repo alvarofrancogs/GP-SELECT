@@ -7,7 +7,10 @@ body { margin: 0; font-family: var(--font-family); font-stretch: var(--width-bod
    then the footer's once the end is reached, so neither pull uncovers a strip that does not belong. */
 #root { background: var(--color-paper); }
 :root { --page-top: var(--color-paper); }
-:root:has(.hero-scene) { --page-top: #99bce0; } /* the hero's sky */
+:root:has(.hero-scene) { --page-top: #c6b6a4; } /* sampled warm plaster at the garage's upper edge */
+@media (max-width: 767px), (max-width: 1199px) and (max-aspect-ratio: 1/1) {
+  :root:has(.hero-scene) { --page-top: #d6c1ad; }
+}
 body { background-color: var(--page-top); }
 @supports (animation-timeline: scroll()) {
   body { animation: page-ends linear both; animation-timeline: scroll(root); }
@@ -59,8 +62,8 @@ dialog { overscroll-behavior: contain; }
 .site-header[data-surface='dark'] { color: var(--color-white); }
 .site-header[data-tone='light'] { color: var(--color-ink); mix-blend-mode: normal; }
 .site-header[data-tone='dark'] { color: var(--color-white); mix-blend-mode: normal; }
-/* The hero's sky reaches mid-grey around the tone switch: pure black ink before it and a
-   tight halo after it keep AA contrast. */
+/* Pure black ink over the plaster; keep the glyph halo as a supplement to the
+   mid-veil backing below, not as the source of its measured contrast. */
 .site-header[data-tone-scene='hero'][data-tone='light'] { color: #000; }
 .site-header[data-tone-scene='hero'][data-tone='dark'] { text-shadow: 0 0 1px rgb(9 10 12 / calc(.8 * var(--language-alpha, 1))), 0 0 3px rgb(9 10 12 / calc(.5 * var(--language-alpha, 1))), 0 0 .5em rgb(9 10 12 / calc(.3 * var(--language-alpha, 1))); }
 .site-header[data-tone-scene='hero'][data-tone='dark'] button { text-shadow: inherit; }
@@ -80,6 +83,17 @@ dialog { overscroll-behavior: contain; }
 .site-header[data-glass='light'] { mix-blend-mode: normal; color: var(--color-ink); }
 .site-header[data-glass='dark'] { mix-blend-mode: normal; color: var(--color-white); }
 .header-inner { position: relative; height: var(--header-height); margin-inline: calc(-1 * var(--header-inset)); padding-inline: var(--page-gutter); display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
+/* Explicit garage tones follow the scene's veil; the plaster remains visible behind the header. */
+.site-header[data-hero-surface='light']:not(.site-header--menu) { color: #000; mix-blend-mode: normal; }
+.site-header[data-hero-surface='dark']:not(.site-header--menu) { color: #fffcf7; mix-blend-mode: normal; }
+/* Only the mid-veil interval needs a backing. No time-based transition: white ink and
+   backing must switch together, then its opacity follows the actual veil in either direction. */
+.site-header[data-hero-surface='dark']:not(.site-header--menu) .header-inner::before {
+  content: ''; position: absolute; inset: 0 0 -1rem; z-index: -1; pointer-events: none;
+  background: linear-gradient(to bottom, #090a0c 0% 75%, rgb(9 10 12 / 0));
+  opacity: var(--hero-header-support, 0);
+}
+.site-header[data-hero-surface]:not(.site-header--menu) .language-switcher svg { outline: 1px solid currentColor; outline-offset: 1px; }
 .header-nav, .header-actions { display: flex; align-items: center; gap: clamp(1rem, 2.9vw, 3.5rem); }
 .header-nav { font-family: var(--font-family); font-size: var(--header-nav-size); }
 .nav-link { position: relative; padding-block: var(--space-2); white-space: nowrap; }

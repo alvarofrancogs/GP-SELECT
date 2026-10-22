@@ -17,6 +17,9 @@ const DARK_SURFACES = '.interior-band, [data-handoff-veil]';
 // Content the pill would cover: it steps aside over the footer and, on phones, over the featured car's details.
 const AWAY = '.site-footer';
 const AWAY_STACKED = '.site-footer, #seleccion';
+// On the Home it waits for the last step of Process («Entregamos» takes over at about half its pin):
+// away over the hero's car and through the first three steps.
+const PROCESS_DELIVERY = 0.52;
 
 /** The one global conversion: a small editorial glass button, fixed at the bottom centre of the public site. */
 export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElement) => void }) {
@@ -25,8 +28,8 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
   const match = matchPage(pathname);
   const linkRef = useRef<HTMLAnchorElement>(null);
   const bodyRef = useRef<HTMLSpanElement>(null);
-  // Not on the catalogue itself, nor over the contact form it would cover.
-  const hidden = match?.page === 'vehicles' || match?.page === 'vehicle' || match?.page === 'contact' || match?.page === 'import';
+  // Not on the catalogue itself, nor over the contact and appointment forms it would cover.
+  const hidden = match?.page === 'vehicles' || match?.page === 'vehicle' || match?.page === 'contact' || match?.page === 'import' || match?.page === 'appointments';
   const page = pageKey(pathname);
 
   useEffect(() => {
@@ -73,7 +76,7 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
     return () => media.revert();
   }, [hidden]);
 
-  // The label follows what is under the pill: ink over paper and the bright sky, white elsewhere.
+  // The label follows what is under the pill: ink over paper and the garage, white elsewhere.
   useEffect(() => {
     const link = linkRef.current;
     if (!link) return;
@@ -83,11 +86,15 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
     let light: HTMLElement[] = [];
     let dark: HTMLElement[] = [];
     let away: HTMLElement[] = [];
+    let hero: HTMLElement[] = [];
+    let process: HTMLElement[] = [];
     let offset = 0;
     const collect = () => {
       light = Array.from(document.querySelectorAll<HTMLElement>(LIGHT_SURFACES));
       dark = Array.from(document.querySelectorAll<HTMLElement>(DARK_SURFACES));
       away = Array.from(document.querySelectorAll<HTMLElement>(window.matchMedia('(max-width: 1023px)').matches ? AWAY_STACKED : AWAY));
+      hero = Array.from(document.querySelectorAll<HTMLElement>('.hero-scene .scroll-scene__pin'));
+      process = Array.from(document.querySelectorAll<HTMLElement>('.process-scene'));
       offset = link.offsetHeight / 2 + parseFloat(getComputedStyle(link).bottom);
     };
     const covers = (elements: HTMLElement[], y: number) => elements.some((el) => {
@@ -96,9 +103,12 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
     });
     const measure = () => {
       const y = window.innerHeight - offset;
-      const isLight = covers(light, y) && !covers(dark, y);
+      const overHero = covers(hero, y) && !covers(process, y);
+      const isLight = overHero || (covers(light, y) && !covers(dark, y));
+      if (overHero) link.dataset.heroSurface = ''; else delete link.dataset.heroSurface;
       if (isLight) link.dataset.tone = 'light'; else delete link.dataset.tone;
-      if (covers(away, y)) link.dataset.away = ''; else delete link.dataset.away;
+      const beforeDelivery = covers(process, y) && process.some((el) => Number(el.dataset.progress ?? 0) < PROCESS_DELIVERY);
+      if (covers(away, y) || overHero || beforeDelivery) link.dataset.away = ''; else delete link.dataset.away;
     };
     const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(measure); };
     const resize = () => { collect(); schedule(); };
@@ -106,10 +116,14 @@ export function CatalogueCta({ onNavigate }: { onNavigate: (link: HTMLAnchorElem
     schedule();
     window.addEventListener('scroll', schedule, { passive: true });
     window.addEventListener('resize', resize);
+    // Process publishes its progress after the scroll event: measure again when it does.
+    const progress = new MutationObserver(schedule);
+    document.querySelectorAll('.process-scene').forEach((el) => progress.observe(el, { attributeFilter: ['data-progress'] }));
     // Pinned scenes change under a still scroll position when assets and fonts settle.
     const settle = window.setTimeout(resize, 600);
     return () => {
       cancelAnimationFrame(frame);
+      progress.disconnect();
       window.clearTimeout(settle);
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', resize);

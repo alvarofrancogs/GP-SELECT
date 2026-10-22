@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { useLanguage } from '../i18n/useLanguage';
 import { matchPage } from '../i18n/routes';
-import { sceneAssets, type SceneAsset } from '../assets/sceneAssets';
+import { heroPreloadAssets, type SceneAsset } from '../assets/sceneAssets';
 import { prefetchVehicles } from '../services/vehicles';
 import '../styles/preloader.css';
 
@@ -29,7 +29,8 @@ function markSeen() {
 
 /** Downloads and decodes the image so the browser has it ready when the hero first paints.
     The same srcset and sizes as the page, so it picks the same file and nothing downloads twice. */
-function loadImage({ src, srcSet, sizes }: SceneAsset) {
+function loadImage(asset: SceneAsset) {
+  const { src, srcSet, sizes } = asset.sources?.find((source) => window.matchMedia(source.media).matches) ?? asset;
   const image = new Image();
   if (srcSet && sizes) {
     image.sizes = sizes;
@@ -58,7 +59,7 @@ export function Preloader() {
     // list in the page, and Contact or a vehicle page never needs the whole inventory.
     const tasks = [
       document.fonts.ready,
-      ...(onHome ? [prefetchVehicles(), loadImage(sceneAssets.heroBackground), loadImage(sceneAssets.heroCar)] : []),
+      ...(onHome ? [prefetchVehicles(), ...heroPreloadAssets.map(loadImage)] : []),
     ];
     let done = 0;
     tasks.forEach((task) => void Promise.resolve(task).finally(() => { done += 1; }));
