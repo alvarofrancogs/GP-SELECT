@@ -136,7 +136,7 @@ export const adminMeta: PageMeta = {
   robots: 'noindex,nofollow',
 };
 
-// This describes the current og-default.jpg artwork until that image is replaced.
+// The share image (og-garage.jpg): logo and location on paper, the hero's garage and GT3 RS beside them.
 const defaultImageAlt: Record<Locale, string> = {
   es: 'GP SELECT · Murcia · Clientes en España y Europa',
   en: 'GP SELECT · Murcia · Clients in Spain and Europe',
@@ -238,7 +238,7 @@ function guideJsonLd(meta: PageMeta, siteUrl?: string): Record<string, unknown> 
     '@graph': [{
       '@type': 'Article', headline: meta.title.replace(/ · GP SELECT$/, ''), description: meta.description,
       inLanguage: locale, datePublished: text.reviewed.iso, dateModified: text.reviewed.iso,
-      image: assetUrl('/assets/seo/og-default.jpg', siteUrl),
+      image: assetUrl('/assets/seo/og-garage.jpg', siteUrl),
       author: organization, publisher: organization,
       ...(siteUrl ? { mainEntityOfPage: `${siteUrl}${meta.path}`, url: `${siteUrl}${meta.path}` } : {}),
     }, ...(siteUrl ? [{
@@ -332,7 +332,7 @@ export function escapeHtml(value: string): string {
 
 export function renderPageHead(meta: PageMeta, siteUrl?: string): string {
   const canonical = siteUrl && meta.path ? `${siteUrl}${meta.path}` : undefined;
-  const image = assetUrl(meta.image || '/assets/seo/og-default.jpg', siteUrl);
+  const image = assetUrl(meta.image || '/assets/seo/og-garage.jpg', siteUrl);
   const english = meta.locale === 'en';
   const imageAlt = meta.image ? meta.imageAlt || meta.title : defaultImageAlt[english ? 'en' : 'es'];
   const tags: string[] = [];

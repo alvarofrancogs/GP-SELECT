@@ -15,7 +15,7 @@ public static class VehicleSeo
     public const string HeadEnd = "<!--/page-meta-->";
     public const string EmptyRoot = "<div id=\"root\"></div>";
 
-    public const string DefaultImage = "/assets/seo/og-default.jpg";
+    public const string DefaultImage = "/assets/seo/og-garage.jpg";
     private const string SpanishLocation = "Murcia · Clientes en toda Europa";
     private const string EnglishLocation = "Murcia, Spain · Clients across Europe";
     private const string SpanishDefaultImageAlt = "GP SELECT · Murcia · Clientes en España y Europa";
