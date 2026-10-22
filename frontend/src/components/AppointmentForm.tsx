@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { enquiriesEnabled } from '../config/contact';
 import { legalConfig } from '../config/legal';
 import { legalPaths, legalUi } from '../i18n/legalCopy';
 import { useLanguage } from '../i18n/useLanguage';
@@ -11,7 +12,7 @@ import {
 const emptyDraft: AppointmentDraft = { date: '', time: '', name: '', phone: '', message: '' };
 
 /** The Citas form: day, time, name, phone and a free message. It follows the contact form's pattern
-    (validated on submit, first error focused, honest preview while sending is not available). */
+    (validated on submit, first error focused, honest preview while sending is off, data kept on failure). */
 export function AppointmentForm() {
   const { copy, locale, href } = useLanguage();
   const text = copy.interiors.appointments;
@@ -19,10 +20,13 @@ export function AppointmentForm() {
   const id = useId();
   const successRef = useRef<HTMLDivElement>(null);
   const pendingFocus = useRef<AppointmentField | null>(null);
+  const inFlight = useRef(false);
   const [draft, setDraft] = useState(emptyDraft);
   const [errors, setErrors] = useState<AppointmentField[]>([]);
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'prepared' | 'sent' | 'failed' | 'rate_limited'>('idle');
   const submitting = status === 'submitting';
+  const success = status === 'prepared' || status === 'sent';
+  const busyText = enquiriesEnabled ? text.sending : text.submitting;
   // Read once per render: the date picker opens on a day that can be requested.
   const today = localDay();
 
@@ -37,34 +41,51 @@ export function AppointmentForm() {
   function change(field: AppointmentField, value: string) {
     setDraft((current) => ({ ...current, [field]: value }));
     setErrors((current) => current.filter((item) => item !== field));
+    setStatus('idle');
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting) return;
+    if (inFlight.current) return;
     const invalid = validateAppointment(draft);
     pendingFocus.current = invalid[0] ?? null;
     setErrors(invalid);
-    if (invalid.length) return;
+    if (invalid.length) { setStatus('idle'); return; }
+    inFlight.current = true;
     setStatus('submitting');
-    await submitAppointment();
-    setStatus('success');
-    requestAnimationFrame(() => successRef.current?.focus());
+    try {
+      const result = await submitAppointment(draft, enquiriesEnabled, locale);
+      if (result.ok) {
+        setStatus(result.mode === 'sent' ? 'sent' : 'prepared');
+        requestAnimationFrame(() => successRef.current?.focus());
+      } else if (result.reason === 'invalid') {
+        // A field the server refused: the form comes back with it marked and focused.
+        pendingFocus.current = result.fields[0] ?? null;
+        setErrors(result.fields);
+        setStatus('idle');
+      } else setStatus(result.reason);
+    } catch {
+      setStatus('failed');
+    } finally {
+      inFlight.current = false;
+    }
   }
 
   function edit() {
+    // After a real send the next request starts empty; a preview goes back to its data.
+    if (status === 'sent') setDraft(emptyDraft);
     setStatus('idle');
     requestAnimationFrame(() => document.getElementById(`${id}-date`)?.focus());
   }
 
   return <section className="contact-form-section appointment-form" aria-labelledby={`${id}-title`}>
     <h2 id={`${id}-title`} className="type-heading">{text.formTitle}</h2>
-    <div ref={successRef} className="contact-success" hidden={status !== 'success'} tabIndex={-1} role="status">
-      <h3 className="type-section">{text.successTitle}</h3>
-      <p className="type-body">{text.successBody}</p>
-      <button className="editorial-link type-ui" type="button" onClick={edit}>{text.edit}<span aria-hidden="true">→</span></button>
+    <div ref={successRef} className="contact-success" hidden={!success} tabIndex={-1} role="status">
+      <h3 className="type-section">{status === 'sent' ? text.sentTitle : text.successTitle}</h3>
+      <p className="type-body">{status === 'sent' ? text.sentBody : text.successBody}</p>
+      <button className="editorial-link type-ui" type="button" onClick={edit}>{status === 'sent' ? text.another : text.edit}<span aria-hidden="true">→</span></button>
     </div>
-    <form noValidate onSubmit={handleSubmit} hidden={status === 'success'} aria-busy={submitting}>
+    <form noValidate onSubmit={handleSubmit} hidden={success} aria-busy={submitting}>
       <p className="contact-form__hint type-body">{text.requiredHint}</p>
       <div className="contact-fields">
         {appointmentFields.map((field) => {
@@ -94,10 +115,12 @@ export function AppointmentForm() {
           </div>;
         })}
       </div>
-      <p className="contact-preview type-body" id={`${id}-preview`}>{text.preview}</p>
-      <p className="sr-only" role="status">{submitting ? text.submitting : ''}</p>
-      <button className="button button--dark contact-submit" type="submit" disabled={submitting} aria-describedby={`${id}-preview`}>
-        <span>{submitting ? text.submitting : text.submit}</span><span className="button-arrow" aria-hidden="true">→</span>
+      {enquiriesEnabled ? null : <p className="contact-preview type-body" id={`${id}-preview`}>{text.preview}</p>}
+      {status === 'failed' || status === 'rate_limited'
+        ? <p className="contact-failure type-body" role="alert">{status === 'rate_limited' ? text.rateLimited : text.sendFailure}</p> : null}
+      <p className="sr-only" role="status">{submitting ? busyText : ''}</p>
+      <button className="button button--dark contact-submit" type="submit" disabled={submitting} aria-describedby={enquiriesEnabled ? undefined : `${id}-preview`}>
+        <span>{submitting ? busyText : text.submit}</span><span className="button-arrow" aria-hidden="true">→</span>
       </button>
       <p className="contact-privacy type-ui">
         {notice.before}{legalConfig.holder ?? copy.brand}{notice.appointmentPurpose}

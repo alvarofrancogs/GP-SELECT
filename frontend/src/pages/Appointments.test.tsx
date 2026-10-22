@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { LanguageProvider } from '../i18n/LanguageProvider';
@@ -6,6 +6,9 @@ import { es } from '../i18n/es';
 import { en } from '../i18n/en';
 import { localDay, validateAppointment, type AppointmentDraft } from '../lib/appointment';
 import { Appointments } from './Appointments';
+
+// Preview mode, as in a build without the enquiries switch; the real send is in AppointmentForm.send.test.tsx.
+vi.mock('../config/contact', async (original) => ({ ...await original<typeof import('../config/contact')>(), enquiriesEnabled: false }));
 
 const text = es.interiors.appointments;
 const now = new Date(2026, 9, 22, 10, 0); // 22-10-2026, local time
@@ -24,12 +27,15 @@ describe('validateAppointment', () => {
     expect(validateAppointment({ ...valid, date: '22/10/2026' }, now)).toEqual(['date']);
   });
 
-  it('needs a real time, a name and a phone with at least six digits', () => {
+  it('needs a real time, a name and a phone with 7 to 15 digits, as the server does', () => {
     expect(validateAppointment({ ...valid, time: '24:00' }, now)).toEqual(['time']);
     expect(validateAppointment({ ...valid, name: '   ' }, now)).toEqual(['name']);
-    expect(validateAppointment({ ...valid, phone: '12 34' }, now)).toEqual(['phone']);
+    expect(validateAppointment({ ...valid, name: ' A ' }, now)).toEqual(['name']);
+    expect(validateAppointment({ ...valid, phone: '600 000' }, now)).toEqual(['phone']);
+    expect(validateAppointment({ ...valid, phone: '+1234567890123456' }, now)).toEqual(['phone']);
     expect(validateAppointment({ ...valid, phone: 'call me' }, now)).toEqual(['phone']);
-    expect(validateAppointment({ ...valid, phone: '(+34) 968-00.00.00' }, now)).toEqual([]);
+    expect(validateAppointment({ ...valid, phone: '(+34) 968-00.00.00' }, now)).toEqual(['phone']);
+    expect(validateAppointment({ ...valid, phone: '+34 (968) 00-00-00' }, now)).toEqual([]);
   });
 
   it('lists every failing field in form order', () => {

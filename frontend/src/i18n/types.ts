@@ -95,9 +95,15 @@ export interface InteriorCopy {
     requiredHint: string;
     submit: string;
     submitting: string;
+    sending: string;
     preview: string;
     successTitle: string;
     successBody: string;
+    sentTitle: string;
+    sentBody: string;
+    another: string;
+    sendFailure: string;
+    rateLimited: string;
     edit: string;
     errors: { date: string; time: string; name: string; phone: string; message: string };
   };

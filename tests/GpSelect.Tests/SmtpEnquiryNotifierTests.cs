@@ -64,4 +64,31 @@ public sealed class SmtpEnquiryNotifierTests
         Assert.Contains("Presupuesto: —\n", notification.Body);
         Assert.EndsWith("\n(sin mensaje)", notification.Body);
     }
+
+    [Fact]
+    public void Appointment_notification_has_the_weekday_and_asks_for_a_call_without_reply_to()
+    {
+        var notification = EnquiryNotification.For(Enquiry.Create(EnquiryIntent.Appointment, "Ana López", null, "+34 600 000 000", null, null,
+            new DateTimeOffset(2026, 10, 22, 9, 0, 0, TimeSpan.Zero), EnquiryLanguage.En, date: "2026-10-23", time: "10:30"));
+        Assert.Equal("GP SELECT · Petición de cita · 23/10/2026 10:30 · en inglés · Ana López", notification.Subject);
+        Assert.StartsWith("Tipo: cita (llamar para confirmar día, hora y lugar)\nIdioma: inglés (responde en inglés)\nDía: viernes 23/10/2026\nHora: 10:30\n"
+            + "Nombre: Ana López\nTeléfono: +34 600 000 000\nRecibida: 2026-10-22 09:00 UTC\n", notification.Body);
+        Assert.DoesNotContain("Email:", notification.Body);
+        Assert.EndsWith("\n\n(sin mensaje)", notification.Body);
+        Assert.Null(notification.ReplyTo);
+        using var message = SmtpEnquiryNotifier.BuildMessage(notification, "sender@example.test", "recipient@example.test");
+        Assert.Empty(message.ReplyTo);
+    }
+
+    [Fact]
+    public void Appointment_with_an_email_shows_it_and_replies_to_it()
+    {
+        var notification = EnquiryNotification.For(Enquiry.Create(EnquiryIntent.Appointment, "Ana", "ana@example.test", "600 000 000", null,
+            "Quiero ver el M4.", new DateTimeOffset(2026, 10, 22, 9, 0, 0, TimeSpan.Zero), date: "2026-10-25", time: "09:15"));
+        Assert.Equal("GP SELECT · Petición de cita · 25/10/2026 09:15 · Ana", notification.Subject);
+        Assert.Contains("Día: domingo 25/10/2026\nHora: 09:15\nNombre: Ana\nTeléfono: 600 000 000\nEmail: ana@example.test\n", notification.Body);
+        Assert.EndsWith("\n\nQuiero ver el M4.", notification.Body);
+        using var message = SmtpEnquiryNotifier.BuildMessage(notification, "sender@example.test", "recipient@example.test");
+        Assert.Equal("ana@example.test", Assert.Single(message.ReplyTo.Mailboxes).Address);
+    }
 }

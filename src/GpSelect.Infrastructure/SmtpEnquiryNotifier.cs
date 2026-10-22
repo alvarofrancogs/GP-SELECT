@@ -41,7 +41,7 @@ public sealed class SmtpEnquiryNotifier(IConfiguration config) : IEnquiryNotifie
         var message = new MimeMessage { MessageId = $"{notification.EnquiryId:N}@enquiry.gpselect" };
         message.From.Add(new MailboxAddress("GP SELECT", from));
         message.To.Add(MailboxAddress.Parse(recipient));
-        message.ReplyTo.Add(MailboxAddress.Parse(notification.ReplyTo));
+        if (notification.ReplyTo is not null) message.ReplyTo.Add(MailboxAddress.Parse(notification.ReplyTo));
         message.Subject = notification.Subject;
         message.Body = new TextPart("plain") { Text = notification.Body };
         return message;
