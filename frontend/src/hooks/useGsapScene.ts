@@ -28,6 +28,9 @@ const TOUCH_LAG = 0.5;
 const HERO_ROLL = { desktop: { start: 0.0404, duration: 0.4538 }, mobile: { start: 0.0092, duration: 0.2151 } };
 // Scrub smoothing for the car alone, in seconds: it trails the scroll a little and settles, as the user likes.
 const HERO_ROLL_LAG = 1.3;
+// Once centred the car never stands still while the page scrolls: it keeps rolling forward at this share of
+// its entrance speed until the end of the pin, through the darkening and under Process.
+const HERO_DRIFT = 0.4;
 
 // Change ink and its contrast backing together: the wall's bright and dark patches
 // have no shared AA crossover. Fading a dark backing in under black ink would make it worse.
@@ -145,13 +148,16 @@ export function useGsapScene(kind: SceneKind, id: string) {
                 scrub: HERO_ROLL_LAG * (touch ? TOUCH_LAG : 1),
               },
             });
+            const rollEnd = roll.start + roll.duration;
+            const onward = () => travel() * (1 + HERO_DRIFT * (1 - rollEnd) / roll.duration);
+            const spin = (wheel: Element, distance: number) =>
+              distance / (Math.PI * parseFloat(getComputedStyle(wheel).width)) * 360;
             rolling.to({}, { duration: 1 }, 0);
             rolling.to(media, { x: travel, duration: roll.duration }, roll.start);
+            rolling.to(media, { x: onward, duration: 1 - rollEnd }, rollEnd);
             wheels.forEach((wheel) => {
-              rolling.to(wheel, {
-                rotation: () => travel() / (Math.PI * parseFloat(getComputedStyle(wheel).width)) * 360,
-                duration: roll.duration,
-              }, roll.start);
+              rolling.to(wheel, { rotation: () => spin(wheel, travel()), duration: roll.duration }, roll.start);
+              rolling.to(wheel, { rotation: () => spin(wheel, onward()), duration: 1 - rollEnd }, rollEnd);
             });
           }
           titles.forEach((title, index) => {

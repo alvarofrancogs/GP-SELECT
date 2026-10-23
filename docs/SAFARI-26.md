@@ -21,4 +21,4 @@ Reglas leídas en el código de WebKit (`Source/WebCore/page/LocalFrameView.cpp`
   - en el último 1 %, el negro del pie.
 
   En Safari anterior al 26 queda siempre el color de arriba. Con «reducir movimiento» se mantiene, porque no es movimiento.
-- **Pendiente:** confirmarlo en un iPhone real. El WebKit de Playwright en Windows no reproduce las barras de iOS; `webkit-edges.mjs` (scratchpad) solo replica el hit-test.
+- **En un iPhone real (23-10-2026, Safari 26.6.1 y Chrome iOS):** las guardas no funcionan; sobre Hero, Process y CarHandoff las barras siguen sólidas. Una réplica del hit-test decía lo contrario: en el dispositivo Safari parece muestrear dentro de las barras (bajo la hora y sobre la barra inferior), donde las guardas de 8 px no llegan. Probado y descartado: pins fijos con borde transparente hasta 115lvh (23-10, peor en el iPhone) y escenas `sticky` de 115lvh en táctil (23-10; el usuario prefirió dejar la Home como estaba, 24-10). Lo único validado en el iPhone es una capa fija aislada de `calc(100lvh * 1.15)` en una página de laboratorio.

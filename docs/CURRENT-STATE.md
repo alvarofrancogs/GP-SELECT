@@ -3,6 +3,13 @@
 
 ## PHASE
 
+**Transiciones más suaves y coche que no se para (24-10-2026, `fix/hero-process-gradient`, pedido por el usuario tras verlo en su iPhone; en PC y móvil):**
+- **Hero → Process:** el velo del garaje es uniforme (`--color-dark`; antes, negro arriba y al 60 % abajo, que dejaba una franja parda clara contra el telón). El borde del telón de Process (32svh) sigue una curva smoothstep en lugar de un degradado lineal, sin línea de inicio ni de final. Tokens `--color-handoff-mid` y `--color-handoff-edge` eliminados.
+- **Process → BMW:** el velo oscuro que se levanta tiene el mismo borde suave.
+- **Coche del hero:** llega al centro en el mismo momento que antes y ya no se para. Sigue rodando hacia delante al 40 % de su velocidad de entrada (`HERO_DRIFT`), con las ruedas, hasta el final del pin, a través del oscurecimiento y bajo Process. Termina 141 px a la izquierda del centro a 390 y 195 px a 1440 (medido).
+- **Descartado:** escenas `sticky` en táctil para las barras de iOS (ver `docs/SAFARI-26.md`); el usuario prefirió dejar la Home como estaba.
+- **Verificación:** lint, typecheck, Vitest 517/517 y build. Capturas antes/después en Edge a 390 y 1440 de las dos transiciones. Posición del coche y giro de las ruedas medidos a lo largo del pin: idénticos hasta el centro, sin derrape después.
+
 **Citas envía de verdad (22-10-2026, rama `feat/citas-envio`, pedido por el usuario; implementado por Opus porque Astra estaba sin cupo):** la cita va por el mismo camino que Contacto: `POST /api/public/enquiries` con `intent: "Appointment"`, fila en `Enquiries` y aviso por el outbox. Todos los formularios avisan a `Enquiries__NotificationEmail` = info@gpselect.com.
 - **Backend:** `EnquiryIntent.Appointment`; email opcional solo en citas, con el teléfono obligatorio; `AppointmentDate` (`yyyy-MM-dd`, desde ayer en UTC hasta 366 días) y `AppointmentTime` (`HH:mm`). Migración `AddEnquiryAppointment`: email nullable y dos columnas. El aviso dice «Petición de cita · dd/MM/yyyy HH:mm», el día de la semana en español y «llamar para confirmar»; sin email, no hay Reply-To.
 - **Frontend:** `submitAppointment` con la misma llave que Contacto (`ENQUIRIES_ENABLED`); estados enviado («Cita solicitada.», «Pedir otra cita» vacía el formulario), 429, fallo y 400 en su campo. El nombre (≥ 2) y el teléfono (7–15 dígitos, `+` solo al principio) validan como el servidor.

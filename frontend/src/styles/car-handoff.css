@@ -43,8 +43,15 @@
   mask-repeat: no-repeat;
 }
 
+/* Process's dark lifts off the sky. Its soft edge follows the smoothstep curve of Process's own curtain edge
+   (scenes.css), so it has no visible start or end line. */
 .car-handoff__veil { display: none; position: absolute; inset: 0 0 auto; z-index: 9; height: 125%; pointer-events: none;
-  background: linear-gradient(to bottom, var(--color-dark) 80%, transparent); }
+  background: linear-gradient(to bottom, var(--color-dark) 80%,
+    color-mix(in srgb, var(--color-dark) 97%, transparent) 82%, color-mix(in srgb, var(--color-dark) 90%, transparent) 84%,
+    color-mix(in srgb, var(--color-dark) 78%, transparent) 86%, color-mix(in srgb, var(--color-dark) 65%, transparent) 88%,
+    color-mix(in srgb, var(--color-dark) 50%, transparent) 90%, color-mix(in srgb, var(--color-dark) 35%, transparent) 92%,
+    color-mix(in srgb, var(--color-dark) 22%, transparent) 94%, color-mix(in srgb, var(--color-dark) 10%, transparent) 96%,
+    color-mix(in srgb, var(--color-dark) 3%, transparent) 98%, transparent); }
 .car-handoff[data-motion='scroll'] .car-handoff__veil { display: block; }
 .car-handoff__grade { position: absolute; inset: 0; z-index: 7; background: #fff; mix-blend-mode: multiply; pointer-events: none; }
 /* Darken the whole sky a little and the two text lanes most. A clear middle read as two dark bars beside the car;
