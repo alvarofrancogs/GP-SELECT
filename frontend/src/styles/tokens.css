@@ -96,6 +96,14 @@
   /* Brand champagne, from the logo's SELECT (GP Select_v4_8.png). */
   --color-gold: #d5be97;
   --color-placeholder: #e7e9e6;
+  /* Stops from transparent to --color-dark along a smoothstep curve, for soft dark edges with no visible start
+     or end line (a linear ramp showed both). Use as linear-gradient(<direction>, var(--fade-to-dark)). */
+  --fade-to-dark: transparent,
+    color-mix(in srgb, var(--color-dark) 3%, transparent) 10%, color-mix(in srgb, var(--color-dark) 10%, transparent) 20%,
+    color-mix(in srgb, var(--color-dark) 22%, transparent) 30%, color-mix(in srgb, var(--color-dark) 35%, transparent) 40%,
+    color-mix(in srgb, var(--color-dark) 50%, transparent) 50%, color-mix(in srgb, var(--color-dark) 65%, transparent) 60%,
+    color-mix(in srgb, var(--color-dark) 78%, transparent) 70%, color-mix(in srgb, var(--color-dark) 90%, transparent) 80%,
+    color-mix(in srgb, var(--color-dark) 97%, transparent) 90%, var(--color-dark);
   --border-width: 1px;
   --radius-pill: 999px;
   --radius-small: 2px;

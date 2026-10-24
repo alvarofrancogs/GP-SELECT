@@ -5,7 +5,10 @@
 
 **Transiciones más suaves y coche que no se para (24-10-2026, `fix/hero-process-gradient`, pedido por el usuario tras verlo en su iPhone; en PC y móvil):**
 - **Hero → Process:** el velo del garaje es uniforme (`--color-dark`; antes, negro arriba y al 60 % abajo, que dejaba una franja parda clara contra el telón). El borde del telón de Process (32svh) sigue una curva smoothstep en lugar de un degradado lineal, sin línea de inicio ni de final. Tokens `--color-handoff-mid` y `--color-handoff-edge` eliminados.
-- **Process → BMW:** el velo oscuro que se levanta tiene el mismo borde suave.
+- **Process → BMW:**
+  - **Problemas que vio el usuario:** el borde ocupaba el 25 % de la pantalla y parecía una mancha. Además, la pantalla quedaba entera en negro desde que se apagaban las letras hasta que el velo empezaba a subir (de 0,81 a 0,87 del pin).
+  - **Ahora, el borde:** el velo es un bloque de pantalla completa más un borde smoothstep de media pantalla (`--veil-edge: .5`). Las paradas se comparten con el telón de Process en el token `--fade-to-dark`.
+  - **Ahora, el tiempo:** el frame del BMW aparece de 0,76 a 0,82 mientras se apagan las últimas letras (`liftFrom`). El velo sube a velocidad constante desde 0,76 hasta 1. Ya no hay ningún fotograma entero en negro (medido a 390 y 1440).
 - **Coche del hero:** llega al centro en el mismo momento que antes y ya no se para. Sigue rodando hacia delante al 40 % de su velocidad de entrada (`HERO_DRIFT`), con las ruedas, hasta el final del pin, a través del oscurecimiento y bajo Process. Termina 141 px a la izquierda del centro a 390 y 195 px a 1440 (medido).
 - **Descartado:** escenas `sticky` en táctil para las barras de iOS (ver `docs/SAFARI-26.md`); el usuario prefirió dejar la Home como estaba.
 - **Verificación:** lint, typecheck, Vitest 517/517 y build. Capturas antes/después en Edge a 390 y 1440 de las dos transiciones. Posición del coche y giro de las ruedas medidos a lo largo del pin: idénticos hasta el centro, sin derrape después.

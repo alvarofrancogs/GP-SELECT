@@ -4,17 +4,8 @@
 .scroll-scene.process-scene[data-motion='scroll'] { margin-block-end: -175vh; margin-block-end: -175lvh; }
 /* The incoming process reaches the top exactly at the end of the hero pin. */
 .scroll-scene.hero-scene[data-motion='scroll'] { margin-block-end: -100vh; margin-block-end: -100lvh; }
-/* The curtain arrives with a soft, tall edge instead of a hard line: a gradient above the section, over the darkened hero.
-   Its stops follow a smoothstep curve, so the edge has no visible start or end line (a linear ramp showed both). */
-.scroll-scene.process-scene[data-motion='scroll']::before {
-  content: ''; position: absolute; z-index: 1; left: 0; right: 0; bottom: 100%; height: 32svh; pointer-events: none;
-  background: linear-gradient(to bottom, transparent,
-    color-mix(in srgb, var(--color-dark) 3%, transparent) 10%, color-mix(in srgb, var(--color-dark) 10%, transparent) 20%,
-    color-mix(in srgb, var(--color-dark) 22%, transparent) 30%, color-mix(in srgb, var(--color-dark) 35%, transparent) 40%,
-    color-mix(in srgb, var(--color-dark) 50%, transparent) 50%, color-mix(in srgb, var(--color-dark) 65%, transparent) 60%,
-    color-mix(in srgb, var(--color-dark) 78%, transparent) 70%, color-mix(in srgb, var(--color-dark) 90%, transparent) 80%,
-    color-mix(in srgb, var(--color-dark) 97%, transparent) 90%, var(--color-dark));
-}
+/* The curtain arrives with a soft, tall edge instead of a hard line: a gradient above the section, over the darkened hero. */
+.scroll-scene.process-scene[data-motion='scroll']::before { content: ''; position: absolute; z-index: 1; left: 0; right: 0; bottom: 100%; height: 32svh; pointer-events: none; background: linear-gradient(to bottom, var(--fade-to-dark)); }
 /* Avoid overflow: hidden on ScrollTrigger pins: Chrome counts each pin/unpin as a full-screen layout shift.
    The section clips the X axis; clip-path preserves the visual crop and flow-root preserves the BFC. */
 .scroll-scene__pin { position: relative; height: 100vh; height: 100lvh; display: flow-root; clip-path: inset(0); isolation: isolate; }

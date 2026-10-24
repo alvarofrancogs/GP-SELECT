@@ -228,12 +228,14 @@ export function useGsapScene(kind: SceneKind, id: string) {
           });
           timeline.to(words, { y: -18, duration: 1 }, 0);
 
-          // CSS overlaps the pins by 75vh. The next scene owns its motion; Process only
-          // reveals its frame once its own lettering has left, so the two never overlap.
+          // CSS overlaps the pins by 75vh. The next scene owns its motion; Process fades its
+          // lettering out, and its frame starts to show under the veil while the last of the
+          // lettering fades, so the screen never sits fully black between the two.
           // This timeline follows the scroll without lag: the landing must match the scroll's
           // speed, and the incoming frame must be opaque by the time Process unpins, whatever
           // the scroll speed.
           const lettersOut = 0.72;
+          const liftFrom = 0.76;
           const revealAt = 0.82;
           const handoffTimeline = gsap.timeline({
             defaults: { ease: 'none' },
@@ -260,9 +262,9 @@ export function useGsapScene(kind: SceneKind, id: string) {
           if (incoming) {
             const veil = incoming.querySelector('[data-handoff-veil]');
             // Opacity keeps the scene readable by assistive technology before the handoff.
-            handoffTimeline.fromTo(incoming, { opacity: 0 }, { opacity: 1, duration: 0.01 }, revealAt);
+            handoffTimeline.fromTo(incoming, { opacity: 0 }, { opacity: 1, duration: revealAt - liftFrom }, liftFrom);
             if (veil) {
-              handoffTimeline.fromTo(veil, { yPercent: 0 }, { yPercent: -100, duration: 1 - revealAt - 0.01, ease: 'power1.inOut' }, revealAt + 0.01);
+              handoffTimeline.fromTo(veil, { yPercent: 0 }, { yPercent: -100, duration: 1 - liftFrom }, liftFrom);
             }
           }
         }
