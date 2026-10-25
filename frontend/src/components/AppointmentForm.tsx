@@ -4,6 +4,7 @@ import { enquiriesEnabled } from '../config/contact';
 import { legalConfig } from '../config/legal';
 import { legalPaths, legalUi } from '../i18n/legalCopy';
 import { useLanguage } from '../i18n/useLanguage';
+import { trackEvent } from '../lib/analytics';
 import {
   appointmentFields, appointmentLimits, lastBookableDay, localDay, submitAppointment, validateAppointment,
   type AppointmentDraft, type AppointmentField,
@@ -56,6 +57,7 @@ export function AppointmentForm() {
     try {
       const result = await submitAppointment(draft, enquiriesEnabled, locale);
       if (result.ok) {
+        if (result.mode === 'sent') trackEvent('generate_lead', { form: 'appointment' });
         setStatus(result.mode === 'sent' ? 'sent' : 'prepared');
         requestAnimationFrame(() => successRef.current?.focus());
       } else if (result.reason === 'invalid') {

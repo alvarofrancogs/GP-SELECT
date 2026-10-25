@@ -4,6 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { CatalogueCta } from '../components/CatalogueCta';
+import { ConsentBanner } from '../components/ConsentBanner';
 import { GlassScrollbar } from '../components/GlassScrollbar';
 import { Preloader } from '../components/Preloader';
 import { useLanguage } from '../i18n/useLanguage';
@@ -85,6 +86,7 @@ export function SiteLayout() {
       <Footer />
       <CatalogueCta onNavigate={(link) => void openCatalogue(link)} />
       <GlassScrollbar />
+      <ConsentBanner />
     </div>
   );
 }

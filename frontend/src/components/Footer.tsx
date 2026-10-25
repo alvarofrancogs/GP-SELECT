@@ -4,6 +4,7 @@ import { useLanguage } from '../i18n/useLanguage';
 import { footerCopy } from '../i18n/footerCopy';
 import { legalPaths, legalUi } from '../i18n/legalCopy';
 import type { LegalDoc } from '../i18n/legalCopy';
+import { reopenConsent } from '../lib/consent';
 import { qualificationUrl } from '../lib/qualification';
 import { scrollToTop } from '../lib/scrollToTop';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -45,6 +46,7 @@ export function Footer() {
         <p>© {new Date().getFullYear()} {copy.brand}</p>
         <nav className="footer-legal" aria-label={legal.navigation}>
           {(Object.keys(legalPaths) as LegalDoc[]).map((doc) => <Link key={doc} to={href(legalPaths[doc])}>{legal.links[doc]}</Link>)}
+          <button type="button" className="footer-consent" onClick={reopenConsent}>{legal.consent.settings}</button>
         </nav>
         <LanguageSwitcher />
       </div>

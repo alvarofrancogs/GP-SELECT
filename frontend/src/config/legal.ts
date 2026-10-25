@@ -28,7 +28,7 @@ export const legalConfig: LegalConfig = {
   phone: '+34 675 746 041',
   registry: null,
   retention: '12 meses',
-  updated: '22 de octubre de 2026',
+  updated: '25 de octubre de 2026',
 };
 
 export type LegalField = Exclude<keyof LegalConfig, 'updated'>;

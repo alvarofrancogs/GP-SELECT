@@ -1,0 +1,48 @@
+/* Analytics notice: a small paper card with the site's 1 px rule, bottom left. Accept and Reject are the same
+   button on purpose (AEPD). Below 1200 px it would run into the catalogue pill, which steps aside meanwhile. */
+.consent-banner {
+  position: fixed;
+  z-index: var(--z-consent);
+  left: var(--page-gutter);
+  bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + .75rem));
+  width: min(26rem, calc(100vw - 2 * var(--page-gutter)));
+  padding: var(--space-5);
+  border-radius: var(--radius-small);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  box-shadow: inset 0 0 0 var(--border-width) var(--color-ink);
+  font-stretch: var(--type-ui-width);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  animation: consent-in 500ms var(--ease-cinematic) 700ms backwards;
+}
+@keyframes consent-in { from { opacity: 0; translate: 0 .75rem; } }
+@media (prefers-reduced-motion: reduce) { .consent-banner { animation: none; } }
+
+.consent-banner h2 {
+  font-size: var(--text-label);
+  font-stretch: var(--type-label-width);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+.consent-banner p { margin-top: var(--space-3); text-wrap: pretty; }
+.consent-banner a { text-decoration: underline; text-decoration-thickness: var(--border-width); text-underline-offset: .2em; }
+
+.consent-banner__actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-5); }
+.consent-banner button {
+  min-height: 2.75rem;
+  border: var(--border-width) solid currentColor;
+  border-radius: var(--radius-small);
+  font: inherit;
+  font-weight: var(--type-ui-weight);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color var(--duration-ui) var(--ease-out), color var(--duration-ui) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) { .consent-banner button:hover { background: var(--color-ink); color: var(--color-white); } }
+.consent-banner :focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+/* The notice and the catalogue pill share the bottom edge: the pill returns once the visitor chooses. */
+.site-layout:has(.consent-banner) .catalogue-cta:not(:focus-visible) { opacity: 0; pointer-events: none; }

@@ -60,7 +60,7 @@ export const legalPages: Record<LegalDoc, LegalPageCopy> = {
       {
         heading: 'Qué datos tratamos',
         blocks: [
-          { p: ['Solo los que nos facilitas en los formularios de la web:'] },
+          { p: ['Los que nos facilitas en los formularios de la web:'] },
           { list: [
             ['Contacto e importación: nombre y email, obligatorios; teléfono, opcional; el vehículo que te interesa o que buscas, con los detalles que nos des (presupuesto, año, kilometraje, lugar de entrega o plazo), y el mensaje que escribas.'],
             ['Citas: el día y la hora que eliges, nombre y teléfono, obligatorios, y el mensaje que escribas.'],
@@ -69,32 +69,51 @@ export const legalPages: Record<LegalDoc, LegalPageCopy> = {
           { p: ['Además, el servidor puede registrar datos técnicos de la conexión, como la dirección IP, para proteger la web frente a abusos. No te pedimos datos especialmente protegidos: no incluyas en el mensaje información que no necesitemos para tu consulta.'] },
         ],
       },
+      {
+        heading: 'Analítica web',
+        blocks: [
+          { p: ['Solo si aceptas las cookies de análisis, usamos Google Analytics 4 para saber cuántas personas visitan la web, qué páginas ven y cuántas consultas se envían. Google recibe un identificador del navegador, las páginas visitadas, el tipo de dispositivo y navegador y la ubicación aproximada, y no recibe lo que escribes en los formularios. Tenemos desactivadas las señales de Google y la personalización de anuncios.'] },
+          { p: ['La base jurídica es tu consentimiento (artículo 6.1.a del RGPD), que puedes retirar cuando quieras desde «Configurar cookies», en el pie de página. Los datos de análisis se conservan como máximo 14 meses. Más detalles, en la ', { to: legalPaths.cookies, text: 'política de cookies' }, '.'] },
+        ],
+      },
       { heading: 'Para qué los usamos', blocks: [{ p: ['Para responder a tu consulta, gestionar la cita que nos pidas y, si nos lo pides, ayudarte a buscar, valorar o comprar un vehículo. No los usamos para enviarte publicidad ni tomamos decisiones automatizadas sobre ti.'] }] },
       { heading: 'Base jurídica', blocks: [{ p: ['Tratamos tus datos para aplicar, a petición tuya, medidas previas a un posible contrato (artículo 6.1.b del RGPD). Los datos técnicos de conexión se tratan por nuestro interés legítimo en mantener la web segura (artículo 6.1.f del RGPD).'] }] },
       { heading: 'Cuánto tiempo los conservamos', blocks: [{ p: ['Cuando envías un formulario, tu consulta o tu petición de cita se guarda en nuestro servidor un máximo de 30 días, solo para asegurarnos de que nos llega, y después se borra automáticamente. Las copias de seguridad locales se eliminan a los 14 días y las copias externas a los 30 días. Si falla la creación de nuevas copias locales, se conserva la última disponible hasta disponer de una nueva copia válida. Si falla el envío de copias externas, las ya enviadas se conservan hasta que vuelva a funcionar. También nos llega por correo electrónico, donde la conservamos el tiempo necesario para atenderla y, como máximo, ', { field: 'retention' }, '. Si llegamos a formalizar una operación, los datos se conservarán durante los plazos que exija la ley.'] }] },
-      { heading: 'Quién puede acceder a ellos', blocks: [{ p: ['No cedemos tus datos a terceros salvo obligación legal. Los proveedores que nos prestan los servicios de alojamiento web y de correo electrónico pueden acceder a ellos solo para prestarnos ese servicio, como encargados del tratamiento y con las garantías que exige el RGPD. Si alguno estuviera fuera del Espacio Económico Europeo, la transferencia se haría con las garantías previstas en el RGPD.'] }] },
+      { heading: 'Quién puede acceder a ellos', blocks: [{ p: ['No cedemos tus datos a terceros salvo obligación legal. Los proveedores que nos prestan los servicios de alojamiento web y de correo electrónico pueden acceder a ellos solo para prestarnos ese servicio, como encargados del tratamiento y con las garantías que exige el RGPD. Si aceptas las cookies de análisis, Google Ireland Limited recibe los datos de navegación descritos arriba como encargado del tratamiento. Si algún proveedor estuviera fuera del Espacio Económico Europeo, como puede ocurrir con Google, la transferencia se haría con las garantías previstas en el RGPD.'] }] },
       { heading: 'Tus derechos', blocks: [{ p: ['Puedes ejercer tus derechos de acceso, rectificación, supresión, oposición, limitación del tratamiento y portabilidad escribiendo a ', { field: 'email' }, '. Si consideras que no hemos atendido bien tu solicitud, puedes reclamar ante la ', { to: 'https://www.aepd.es', text: 'Agencia Española de Protección de Datos' }, '.'] }] },
       { heading: 'Cambios en esta política', blocks: [{ p: ['Si cambiamos cómo tratamos tus datos, actualizaremos esta página y la fecha de su última revisión.'] }] },
     ],
   },
   cookies: {
     title: 'Política de cookies',
-    lede: 'Esta web no usa cookies de análisis ni de publicidad.',
+    lede: 'Solo usamos cookies de análisis si las aceptas. No usamos cookies de publicidad.',
     sections: [
       {
         heading: 'Qué usamos',
         blocks: [
-          { p: ['Solo almacenamiento técnico en tu navegador, necesario para que la web funcione:'] },
+          { p: ['Almacenamiento técnico en tu navegador, necesario para que la web funcione:'] },
           { list: [
             ['Pantalla de carga (almacenamiento de sesión, «gp-select.preloader.seen»): evita repetir la animación completa al recargar. Se borra al cerrar la pestaña.'],
+            ['Idioma («gp-select.locale.v1») y preferencia de cookies («gp-select.consent.v1»), en el almacenamiento local: recuerdan el idioma que eliges y si aceptaste o rechazaste el análisis, para no preguntarte de nuevo.'],
             ['Sesión y dispositivo del área de administración (cookies técnicas): solo se crean cuando inicia sesión el personal autorizado de GP SELECT. La del dispositivo («gp_admin_device») dura 180 días y evita que los intentos de acceso de terceros bloqueen su entrada.'],
           ] },
         ],
       },
-      { heading: 'Consentimiento', blocks: [{ p: ['Al ser elementos técnicos, están exceptuados del deber de consentimiento (artículo 22.2 de la LSSI). Por eso la web no muestra un aviso de cookies.'] }] },
-      { heading: 'Servicios de terceros', blocks: [{ p: ['La web no carga contenido de terceros que instale cookies: las tipografías y las imágenes se sirven desde nuestro propio servidor. Si abres un enlace externo, como WhatsApp, se aplica la política de ese servicio.'] }] },
-      { heading: 'Cómo eliminarlo', blocks: [{ p: ['Puedes borrar este almacenamiento cuando quieras desde la configuración de tu navegador.'] }] },
-      { heading: 'Cambios', blocks: [{ p: ['Si incorporamos herramientas de análisis u otras que usen cookies, lo indicaremos aquí y te pediremos el consentimiento antes de activarlas.'] }] },
+      {
+        heading: 'Analítica (solo con tu consentimiento)',
+        blocks: [
+          { p: ['Si aceptas, usamos Google Analytics 4, un servicio de Google Ireland Limited, para medir de forma agregada las visitas a la web, las páginas vistas y las consultas enviadas. Instala estas cookies de la propia web:'] },
+          { list: [
+            ['«_ga»: distingue a un visitante de otro. Dura hasta 2 años.'],
+            ['«_ga_EC224ST2HT»: mantiene el estado de la sesión de medición. Dura hasta 2 años.'],
+          ] },
+          { p: ['No activamos las señales de Google ni la personalización de anuncios. Google puede tratar estos datos fuera del Espacio Económico Europeo, con las garantías del RGPD; lo explica la ', { to: legalPaths.privacidad, text: 'política de privacidad' }, '.'] },
+        ],
+      },
+      { heading: 'Consentimiento', blocks: [{ p: ['Los elementos técnicos están exceptuados del deber de consentimiento (artículo 22.2 de la LSSI). Los de análisis no: la web te pregunta al entrar y no los activa hasta que aceptas. Puedes cambiar de opinión cuando quieras desde «Configurar cookies», en el pie de página; al rechazar, dejamos de medir y borramos las cookies de análisis.'] }] },
+      { heading: 'Servicios de terceros', blocks: [{ p: ['Salvo Google Analytics, y solo si lo aceptas, la web no carga contenido de terceros que instale cookies: las tipografías y las imágenes se sirven desde nuestro propio servidor. Si abres un enlace externo, como WhatsApp, se aplica la política de ese servicio.'] }] },
+      { heading: 'Cómo eliminarlo', blocks: [{ p: ['Puedes borrar las cookies y el almacenamiento cuando quieras desde la configuración de tu navegador.'] }] },
+      { heading: 'Cambios', blocks: [{ p: ['Si incorporamos otras herramientas que usen cookies, lo indicaremos aquí y te pediremos el consentimiento antes de activarlas.'] }] },
     ],
   },
 };
@@ -102,6 +121,8 @@ export const legalPages: Record<LegalDoc, LegalPageCopy> = {
 interface LegalUiCopy {
   links: Record<LegalDoc, string>;
   navigation: string;
+  /** The analytics notice (components/ConsentBanner.tsx) and the footer button that reopens it. */
+  consent: { title: string; text: string; more: string; accept: string; reject: string; settings: string };
   updated: string;
   /** Shown above the Spanish text in other languages. */
   bindingNote: string | null;
@@ -113,6 +134,14 @@ export const legalUi: Record<Locale, LegalUiCopy> = {
   es: {
     links: { 'aviso-legal': 'Aviso legal', privacidad: 'Privacidad', cookies: 'Cookies' },
     navigation: 'Información legal',
+    consent: {
+      title: 'Cookies de análisis',
+      text: 'Usamos Google Analytics para saber cuántas personas visitan la web y qué páginas ven. Solo se activa si lo aceptas, y la web funciona igual si lo rechazas.',
+      more: 'Más información',
+      accept: 'Aceptar',
+      reject: 'Rechazar',
+      settings: 'Configurar cookies',
+    },
     updated: 'Última revisión',
     bindingNote: null,
     formNotice: {
@@ -126,6 +155,14 @@ export const legalUi: Record<Locale, LegalUiCopy> = {
   en: {
     links: { 'aviso-legal': 'Legal notice', privacidad: 'Privacy', cookies: 'Cookies' },
     navigation: 'Legal information',
+    consent: {
+      title: 'Analytics cookies',
+      text: 'We use Google Analytics to count how many people visit the site and which pages they view. It only starts if you accept, and the site works the same if you reject it.',
+      more: 'More information',
+      accept: 'Accept',
+      reject: 'Reject',
+      settings: 'Cookie settings',
+    },
     updated: 'Last reviewed',
     bindingNote: 'This legal information is published in Spanish, which is the binding version.',
     formNotice: {

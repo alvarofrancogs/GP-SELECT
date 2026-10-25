@@ -70,8 +70,10 @@
 }
 .footer-bottom p { opacity: .7; }
 .footer-legal { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); margin-right: auto; opacity: .7; }
-.footer-legal a { padding-block: .3rem; margin-block: -.3rem; }
-@media (hover: hover) and (pointer: fine) { .footer-legal a:hover { opacity: 1; text-decoration: underline; text-underline-offset: .3em; } }
+.footer-legal a, .footer-legal button { padding-block: .3rem; margin-block: -.3rem; }
+/* The button that reopens the cookie notice reads as one more legal link. */
+.footer-legal button { padding-inline: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+@media (hover: hover) and (pointer: fine) { .footer-legal a:hover, .footer-legal button:hover { opacity: 1; text-decoration: underline; text-underline-offset: .3em; } }
 
 /* Tap areas (global.css): the nav links (padded) are .3rem apart, the legal links sit just above the language links. */
 .footer-nav { --tap: calc(100% + .3rem); }

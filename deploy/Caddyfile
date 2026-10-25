@@ -14,8 +14,9 @@
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
 		# The two hashes are the inline script and style of readableHead (frontend/build/readableContent.ts); a test
 		# fails if they change. Photos and videos come from the API (blob: is the Admin's preview and poster extraction);
-		# uploads go to the S3 origin.
-		Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-Du+OJKJSbdUgz5nrHeWWINvez6XKDDU/tyj/5c2uvwo='; style-src 'self' 'sha256-RWuQU7Q9ANjzhuofOlyK79BY+DIKy3DzVxMhIgq0wN0='; img-src 'self' blob:; media-src 'self' blob:; connect-src 'self' {$CSP_UPLOAD_ORIGIN}; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		# uploads go to the S3 origin. The googletagmanager and google-analytics hosts are Google Analytics (Google's
+		# documented set), loaded by frontend/src/lib/analytics.ts only after the visitor accepts.
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-Du+OJKJSbdUgz5nrHeWWINvez6XKDDU/tyj/5c2uvwo=' https://*.googletagmanager.com; style-src 'self' 'sha256-RWuQU7Q9ANjzhuofOlyK79BY+DIKy3DzVxMhIgq0wN0='; img-src 'self' blob: https://*.google-analytics.com https://*.googletagmanager.com; media-src 'self' blob:; connect-src 'self' {$CSP_UPLOAD_ORIGIN} https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 		-Server
 	}
 }

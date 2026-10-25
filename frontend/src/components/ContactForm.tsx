@@ -4,6 +4,7 @@ import { enquiriesEnabled } from '../config/contact';
 import { legalConfig } from '../config/legal';
 import { legalPaths, legalUi } from '../i18n/legalCopy';
 import { useLanguage } from '../i18n/useLanguage';
+import { trackEvent } from '../lib/analytics';
 import { importLimits, submitLead, validateLead, type LeadConfiguration, type LeadDraft, type LeadField, type LeadIntent } from '../lib/submitLead';
 import { vehicleLabel } from '../lib/vehicleFormat';
 import { lastVehicles, listVehicles } from '../services/vehicles';
@@ -107,6 +108,7 @@ export function ContactForm({ configuration, intent, vehicle = '', onNewEnquiry,
     try {
       const result = await submitLead(lead, enquiriesEnabled, locale, configuration);
       if (result.ok) {
+        if (result.mode === 'sent') trackEvent('generate_lead', { form: configuration });
         setFeedback({ intent, status: 'success', errors: [], sent: result.mode === 'sent' });
         requestAnimationFrame(() => successRef.current?.focus());
       } else if (result.reason === 'invalid') {

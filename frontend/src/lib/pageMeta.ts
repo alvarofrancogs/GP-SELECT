@@ -97,7 +97,7 @@ export const legalPageMeta: Record<string, PageMeta> = {
   },
   '/cookies': {
     title: 'Política de cookies · GP SELECT',
-    description: 'GP SELECT no usa cookies de análisis ni de publicidad: solo almacenamiento técnico en el navegador.',
+    description: 'Almacenamiento técnico en el navegador y, solo si lo aceptas, cookies de análisis de Google Analytics. GP SELECT no usa cookies de publicidad.',
     robots: 'noindex,follow',
   },
   [pagePaths['aviso-legal'].en]: {
@@ -112,7 +112,7 @@ export const legalPageMeta: Record<string, PageMeta> = {
   },
   [pagePaths.cookies.en]: {
     title: 'Cookie policy · GP SELECT',
-    description: 'GP SELECT uses no analytics or advertising cookies, only technical storage in your browser. Published in Spanish, the binding version.',
+    description: 'Technical storage in your browser and, only if you accept, Google Analytics cookies. GP SELECT uses no advertising cookies. Published in Spanish, the binding version.',
     robots: 'noindex,follow', locale: 'en',
   },
 };
