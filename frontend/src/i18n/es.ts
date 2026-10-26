@@ -137,7 +137,6 @@ export const es: Dictionary = {
       closingNote: 'Es un formulario breve y no te compromete a nada.',
       cta: 'Pedir una búsqueda',
       secondary: 'Cómo funciona la importación',
-      images: { opening: 'Vehículo en contexto · fotografía pendiente', detail: 'Detalle · fotografía pendiente' },
     },
     import: {
       formFields: { delivery: '¿Entrega en?', make: 'Marca', model: 'Modelo', year: 'Año', mileage: 'Kilometraje aproximado', timeframe: 'Para cuándo lo necesitas', budget: 'Presupuesto estimado', message: 'Detalles adicionales' },
@@ -199,11 +198,6 @@ export const es: Dictionary = {
           { title: "¿Trabajáis con clientes fuera de España?", body: "Sí. Trabajamos con clientes de toda Europa y gestionamos la matriculación en el país donde vives, con los requisitos y los impuestos que allí se apliquen." },
           { title: "¿Qué pasa después de enviar el cuestionario?", body: "Leemos tu solicitud y te contactamos para concretar la búsqueda. Enviar el cuestionario no te compromete a nada." },
         ],
-      },
-      "images": {
-        "search": "Búsqueda en el mercado europeo · fotografía pendiente",
-        "inspection": "Información disponible · fotografía pendiente",
-        "delivery": "Acompañamiento · fotografía pendiente"
       },
       "closing": "Empieza por contarnos qué buscas.",
       "closingBody": "No necesitas haber elegido un modelo. Con tus preferencias y tu presupuesto, empezamos a definir la búsqueda.",

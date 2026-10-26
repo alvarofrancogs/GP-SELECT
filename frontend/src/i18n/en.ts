@@ -137,7 +137,6 @@ export const en: Dictionary = {
       closingNote: 'It’s a short form and it commits you to nothing.',
       cta: 'Request a search',
       secondary: 'How import works',
-      images: { opening: 'Vehicle in context · photography pending', detail: 'Detail · photography pending' },
     },
     import: {
       formFields: {"delivery": "Delivery to?", "make": "Make", "model": "Model", "year": "Year", "mileage": "Approximate mileage", "timeframe": "When do you need it?", "budget": "Estimated budget", "message": "Additional details"},
@@ -199,11 +198,6 @@ export const en: Dictionary = {
           { title: "Do you work with clients outside Spain?", body: "Yes. We work with clients across Europe and handle registration in the country where you live, under the rules and taxes that apply there." },
           { title: "What happens after I send the form?", body: "We read your request and get in touch to define the search. Sending the form does not commit you to anything." },
         ],
-      },
-      "images": {
-        "search": "Searching the European market · photography pending",
-        "inspection": "Available information · photography pending",
-        "delivery": "Support · photography pending"
       },
       "closing": "Start by telling us what you're looking for.",
       "closingBody": "You don't need to have chosen a model. With your preferences and budget, we start defining the search.",

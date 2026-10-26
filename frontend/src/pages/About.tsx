@@ -1,7 +1,5 @@
 import { Link } from 'react-router-dom';
-import { sceneAssets } from '../assets/sceneAssets';
 import { InteriorPageHeader } from '../components/InteriorPageHeader';
-import { EditorialMedia } from '../components/EditorialMedia';
 import { useLanguage } from '../i18n/useLanguage';
 import { qualificationUrl } from '../lib/qualification';
 import '../styles/interiors.css';
@@ -13,15 +11,9 @@ export function About() {
   return (
     <article className="interior-page about-page">
       <InteriorPageHeader {...text} />
-      <div className="about-opening-media">
-        <EditorialMedia asset={sceneAssets.aboutSelection} label={text.images.opening} />
-      </div>
       <section className="about-why" aria-labelledby="about-why-title">
-        <div className="about-why__copy">
-          <h2 id="about-why-title" className="type-section">{text.why.title}</h2>
-          <p className="type-body">{text.why.body}</p>
-        </div>
-        <EditorialMedia asset={sceneAssets.aboutDetail} label={text.images.detail} portrait />
+        <h2 id="about-why-title" className="type-section">{text.why.title}</h2>
+        <p className="type-body">{text.why.body}</p>
       </section>
       <section className="about-audience" aria-labelledby="about-audience-title">
         <div className="about-audience__intro">

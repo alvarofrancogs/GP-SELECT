@@ -3,6 +3,14 @@
 
 ## PHASE
 
+**Carrusel de la Home sin vendidos (26-10-2026, pedido por el usuario):** `FeaturedVehicle` descarta los `sold` de la lista pública; el catálogo los sigue mostrando al final. Fuera la etiqueta «Vendido» del carrusel, que ya no puede salir. Si todos están vendidos, se ve el aviso de vacío. Vitest 519/519 (2 nuevos), typecheck y lint limpios.
+
+**Fuera los huecos de foto provisional (26-10-2026, pedido por el usuario; Astra high + QA de Opus):** ya no quedan placas grises «Recurso provisional» en la web pública.
+- **Servicios (Home):** sin la columna de imagen ni sus timelines (`--services-reveal`, `services-travel`). En escritorio, titular y descripción a la izquierda y acordeón a la derecha, con el margen general de la Home; en ≤ 1199 px, una columna. El contenido arranca a una distancia fija bajo el filete (`align-content: start`) y el aire sobrante queda debajo: abrir un servicio no mueve nada de lo que está por encima (con la rejilla centrada se recentraba entre 49 y 72 px, y Safari no tiene scroll anchoring que lo disimule). Telón, entrada, salida y reduced-motion intactos.
+- **Nosotros:** sin la foto ancha de apertura ni la vertical; «Por qué» pasa a dos columnas de texto bajo un filete (una en móvil).
+- **Limpieza:** `servicesAssets.ts`, las entradas `about*`/`import*` de `sceneAssets.ts`, los textos `image`/`images`, el CSS muerto y la carpeta `public/assets/temp/` entera. `EditorialMedia` (ficha) y `AssetSlot` (hero, handoff) siguen.
+- **Verificación:** Vitest 519/519, lint, typecheck y build (sin restos en `dist`). Navegador a 1440, 1920, 768 y 390 (también con reduced-motion): acordeón operativo, reversible, sin desbordamiento ni errores de consola.
+
 **Transiciones más suaves y coche que no se para (24-10-2026, `fix/hero-process-gradient`, pedido por el usuario tras verlo en su iPhone; en PC y móvil):**
 - **Hero → Process:** el velo del garaje es uniforme (`--color-dark`; antes, negro arriba y al 60 % abajo, que dejaba una franja parda clara contra el telón). El borde del telón de Process (32svh) sigue una curva smoothstep en lugar de un degradado lineal, sin línea de inicio ni de final. Tokens `--color-handoff-mid` y `--color-handoff-edge` eliminados.
 - **Process → BMW:**

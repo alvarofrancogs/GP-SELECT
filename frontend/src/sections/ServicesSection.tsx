@@ -1,8 +1,6 @@
 import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { servicesAssets } from '../assets/servicesAssets';
-import { AssetSlot } from '../components/AssetSlot';
 import { servicesCopy, type ServiceId } from '../i18n/servicesCopy';
 import { useLanguage } from '../i18n/useLanguage';
 import { observeResize } from '../lib/scrollRefresh';
@@ -15,13 +13,11 @@ export function ServicesSection() {
   const copy = servicesCopy[locale];
   const [activeService, setActiveService] = useState<ServiceId | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
-  const mediaRef = useRef<HTMLDivElement>(null);
   const instanceId = useId();
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
-    const media = mediaRef.current;
-    if (!section || !media) return;
+    if (!section) return;
 
     const matchMedia = gsap.matchMedia();
     matchMedia.add({
@@ -51,20 +47,6 @@ export function ServicesSection() {
       entrance.fromTo(select('.services-description, .service-item'),
         { opacity: 0, y: 20 },
         { opacity: 1, y: 0, duration: 0.24, stagger: 0.055 }, 0.4);
-      entrance.fromTo(select('.services-visual'),
-        { '--services-reveal': '-15%' },
-        { '--services-reveal': '115%', duration: 0.65 }, 0.1);
-
-      // One timeline owns the media transform throughout entry, reading and exit.
-      const travel = gsap.timeline({
-        defaults: { ease: 'none' },
-        scrollTrigger: {
-          id: 'services-travel', trigger: section,
-          start: 'top bottom', end: 'bottom top', scrub: 0.4,
-          invalidateOnRefresh: true,
-        },
-      });
-      travel.fromTo(media, { yPercent: -2 }, { yPercent: 2, duration: 1 }, 0);
 
       const exit = gsap.timeline({
         defaults: { ease: 'none' },
@@ -98,44 +80,31 @@ export function ServicesSection() {
             <span className="services-title__fine">{copy.titleFine}</span>
           </h2>
           <p className="services-description">{copy.description}</p>
-          <div className="services-accordion">
-            {copy.items.map((item) => {
-              const expanded = activeService === item.id;
-              const buttonId = `${instanceId}-${item.id}-button`;
-              const panelId = `${instanceId}-${item.id}-panel`;
-
-              return (
-                <div className="service-item" key={item.id}>
-                  <h3>
-                    <button id={buttonId} type="button" className="service-toggle" aria-expanded={expanded}
-                      aria-controls={panelId} onClick={() => setActiveService(expanded ? null : item.id)}>
-                      <span>{item.title}</span>
-                      {/* The +/− is drawn by CSS so the heading text is only the service name. */}
-                      <span className="service-toggle__icon" aria-hidden="true" />
-                    </button>
-                  </h3>
-                  {/* Always rendered so it can unfold; `inert` keeps a closed answer out of focus and assistive tech. */}
-                  <div id={panelId} className="service-answer" role="region" aria-labelledby={buttonId}
-                    data-expanded={expanded || undefined} inert={!expanded}>
-                    <div className="service-answer__inner"><p>{item.description}</p></div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
-        <div className="services-visual">
-          <div ref={mediaRef} className="services-media" data-service-asset={activeService ?? 'overview'}>
-            <div className="services-media__layer services-media__overview" aria-hidden={activeService !== null}>
-              <AssetSlot asset={servicesAssets.overview} label={copy.image} />
-            </div>
-            {copy.items.map((item) => (
-              <div key={item.id} className="services-media__layer" data-active={activeService === item.id}
-                aria-hidden={activeService !== item.id}>
-                <AssetSlot asset={servicesAssets[item.id]} label={item.image} />
+        <div className="services-accordion">
+          {copy.items.map((item) => {
+            const expanded = activeService === item.id;
+            const buttonId = `${instanceId}-${item.id}-button`;
+            const panelId = `${instanceId}-${item.id}-panel`;
+
+            return (
+              <div className="service-item" key={item.id}>
+                <h3>
+                  <button id={buttonId} type="button" className="service-toggle" aria-expanded={expanded}
+                    aria-controls={panelId} onClick={() => setActiveService(expanded ? null : item.id)}>
+                    <span>{item.title}</span>
+                    {/* The +/− is drawn by CSS so the heading text is only the service name. */}
+                    <span className="service-toggle__icon" aria-hidden="true" />
+                  </button>
+                </h3>
+                {/* Always rendered so it can unfold; `inert` keeps a closed answer out of focus and assistive tech. */}
+                <div id={panelId} className="service-answer" role="region" aria-labelledby={buttonId}
+                  data-expanded={expanded || undefined} inert={!expanded}>
+                  <div className="service-answer__inner"><p>{item.description}</p></div>
+                </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
     </section>
