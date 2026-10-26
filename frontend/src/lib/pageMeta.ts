@@ -42,7 +42,7 @@ export const staticPageMeta: Record<string, PageMeta> = {
   },
   '/nosotros': {
     title: "Sobre GP SELECT · Compraventa familiar de coches en Murcia",
-    description: "Negocio familiar de Murcia con más de 25 años en la compraventa de coches. Conoce cómo trabajamos con nuestro stock y con la búsqueda e importación por encargo.",
+    description: "Empresa familiar de Murcia con más de 25 años en la compraventa de coches. Conoce cómo trabajamos con nuestro stock y con la búsqueda e importación por encargo.",
   },
   '/contacto': {
     title: 'Contacto · Cuéntanos qué coche buscas · GP SELECT',

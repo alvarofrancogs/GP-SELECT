@@ -55,7 +55,7 @@ describe('static structured data', () => {
     expect(graph[0].description).toBe(entityCopy[locale]);
     expect(graph[0].description).not.toBe(meta.description);
     expect(graph[0]).not.toHaveProperty('foundingDate');
-    expect(graph[0].description).toContain(locale === 'es' ? 'negocio familiar' : 'family business');
+    expect(graph[0].description).toContain(locale === 'es' ? 'empresa familiar' : 'family business');
     expect(graph[0].description).toContain(locale === 'es' ? 'más de 25 años' : 'more than 25 years');
     expect(graph[0].description).toContain(locale === 'es' ? 'de nuestro stock' : 'from our own stock');
   });
