@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Container } from '../components/Container';
 import { useFeaturedVehicleScene } from '../hooks/useFeaturedVehicleScene';
 import { useFeaturedRotation } from '../hooks/useFeaturedRotation';
+import { useDeferredHomeMedia } from '../hooks/useDeferredHomeMedia';
 import { featuredCopy } from '../i18n/featuredCopy';
 import { useLanguage } from '../i18n/useLanguage';
 import { formatKm, formatPower, formatRegistration, translateValue } from '../lib/vehicleFormat';
@@ -23,8 +24,9 @@ export function FeaturedVehicle() {
   const [state, setState] = useState<State>({ status: 'loading' });
   const [failedPhoto, setFailedPhoto] = useState<string | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
+  const mediaReady = useDeferredHomeMedia(sectionRef);
   const vehicles = state.status === 'ready' ? state.vehicles : EMPTY;
-  const { index, paused, togglePaused } = useFeaturedRotation(sectionRef, vehicles);
+  const { index, paused, togglePaused } = useFeaturedRotation(sectionRef, vehicles, mediaReady);
   // The car on screen follows the rotation after a short fade-out, so one car never cuts straight to the next.
   const [shown, setShown] = useState(index);
   const swapping = shown !== index;
@@ -79,7 +81,7 @@ export function FeaturedVehicle() {
             <div className="featured__media">
               <div className="featured__image">
                 {photo
-                  ? <img key={photo.src} src={photo.src} alt="" width={1600} height={1000} loading="lazy" decoding="async" onError={() => setFailedPhoto(vehicle.slug)} />
+                  ? <img key={photo.src} src={mediaReady ? photo.src : undefined} alt="" width={1600} height={1000} fetchPriority="low" decoding="async" onError={() => setFailedPhoto(vehicle.slug)} />
                   : <div className="featured__empty" aria-hidden="true" />}
               </div>
             </div>

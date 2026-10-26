@@ -31,8 +31,12 @@ export const sceneAssets = {
       srcSet: widths('/assets/home/hero-garage-mobile.webp', [480, 800, 1200], 2160), sizes: 'max(106vw, 55.82lvh)' }],
   },
   heroFloor: {
-    src: '/assets/home/hero-garage-floor.webp', temporary: false,
+    src: '/assets/home/hero-garage-floor.webp', temporary: false, media: '(min-aspect-ratio: 10001/10000)',
     srcSet: widths('/assets/home/hero-garage-floor.webp', [768, 1280], 1920), sizes: '100vw',
+    // The same full crop, with enough vertical pixels for the 23cqh floor on portrait screens.
+    sources: [{ media: '(max-aspect-ratio: 1/1)', src: '/assets/home/hero-garage-floor-mobile-1200w.webp',
+      srcSet: [480, 800, 1200, 1600].map((w) => `/assets/home/hero-garage-floor-mobile-${w}w.webp ${w}w`).join(', '),
+      sizes: 'max(100vw, 46lvh)' }],
   },
   // Whole warm-white 992 GT3 RS, nose left, RGBA 4000×1333; tire contact at 94.6% of the canvas.
   // Original silhouette and detail, graded for warm plaster light. Only the car moves.
@@ -55,11 +59,11 @@ export const sceneAssets = {
   // Car scene. Contract: WebP RGBA, top view, nose up, both views on the same
   // 1200×1800 canvas (car in the middle 75 %) with the same footprint, shadow baked in.
   // Swap the sources here; the motion never adjusts per asset.
-  carA: { src: '/assets/home/car-a.webp', temporary: false, srcSet: widths('/assets/home/car-a.webp', [600, 900, 1200], 1800), sizes: carSizes },
+  carA: { src: '/assets/home/car-a.webp', temporary: false, srcSet: widths('/assets/home/car-a.webp', [320, 480, 600, 900, 1200], 1800), sizes: carSizes },
   // The same BMW as a mechanical cutaway, cut to the photograph's exact silhouette.
   carCutaway: {
     src: '/assets/home/car-cutaway.webp', temporary: false,
-    srcSet: widths('/assets/home/car-cutaway.webp', [600, 900, 1200], 1800), sizes: carSizes,
+    srcSet: widths('/assets/home/car-cutaway.webp', [320, 480, 600, 900, 1200], 1800), sizes: carSizes,
   },
   // Handoff world: the same sky seen from above, bright and overcast, aligned to crossfade.
   handoffBright: { src: '/assets/home/sky-bright.webp', temporary: false },

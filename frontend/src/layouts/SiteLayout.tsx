@@ -11,6 +11,7 @@ import { useLanguage } from '../i18n/useLanguage';
 import { siteUrl, usePageMeta } from '../lib/usePageMeta';
 import { getStaticPageMeta, legalPageMeta, notFoundMeta, staticPageMeta } from '../lib/pageMeta';
 import { localeOf, localizeHref, matchPage, pageKey, pagePath } from '../i18n/routes';
+import { preloadPublicPage } from '../lib/publicPages';
 
 /** Resets the scroll before the page below creates its pins. Layout effects run in tree order, so this
     must sit before <main>: otherwise the Home would be built (and painted) at the previous page's scroll. */
@@ -38,6 +39,23 @@ export function SiteLayout() {
   const mainRef = useRef<HTMLElement>(null);
   const exitRef = useRef<Animation[]>([]);
 
+  useEffect(() => {
+    // Delegation covers the header, footer and in-page links, including keyboard and touch intent.
+    const preload = (event: Event) => {
+      const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[href]') : null;
+      if (!link || link.origin !== window.location.origin || link.hasAttribute('download')) return;
+      void preloadPublicPage(link.pathname)?.catch(() => { /* Navigation can retry a failed preload. */ });
+    };
+    document.addEventListener('pointerover', preload, { passive: true });
+    document.addEventListener('focusin', preload);
+    document.addEventListener('touchstart', preload, { passive: true });
+    return () => {
+      document.removeEventListener('pointerover', preload);
+      document.removeEventListener('focusin', preload);
+      document.removeEventListener('touchstart', preload);
+    };
+  }, []);
+
   useLayoutEffect(() => () => {
     exitRef.current.forEach((animation) => animation.cancel());
     exitRef.current = [];
@@ -49,6 +67,12 @@ export function SiteLayout() {
       void navigate(href('/vehiculos'));
       return;
     }
+    // A cold tap can precede pointer intent. Keep the current page visible until the destination is ready,
+    // then play exactly the existing exit; never leave a faded Home waiting for a network response.
+    const from = pageKey(window.location.pathname);
+    try { await preloadPublicPage(href('/vehiculos')); }
+    catch { void navigate(href('/vehiculos')); return; }
+    if (from !== pageKey(window.location.pathname) || exitRef.current.length) return;
     // Opacity never changes the containing block of the Home's fixed pins.
     const elements = [mainRef.current, link].filter((element): element is HTMLElement => element !== null);
     const animations = elements.map((element) => element.animate(

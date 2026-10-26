@@ -62,6 +62,6 @@ describe('ConsentBanner', () => {
   it('speaks English under /en and links the cookie policy', async () => {
     await renderBanner('/en');
     expect(screen.getByRole('region', { name: 'Analytics cookies' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'More information' }).getAttribute('href')).toBe('/en/cookies');
+    expect(screen.getByRole('link', { name: 'More information about cookies' }).getAttribute('href')).toBe('/en/cookies');
   });
 });

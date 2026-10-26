@@ -3,6 +3,20 @@
 
 ## PHASE
 
+**Rendimiento móvil de la Home (26-10-2026, `perf/mobile-home`, pedido por el usuario tras un Lighthouse móvil de 79; Astra high + QA de Opus):** nada cambia a la vista salvo el suelo del hero en móvil, que ahora tiene resolución real.
+- **Diagnóstico:** el preloader no influye (con y sin él, la misma nota). La nota simulada la marca que la Home se pinte con JS: antes de ver nada hay que descargar JS, CSS, la fuente y las imágenes del hero. En Chrome real, en móvil emulado, el LCP es de 0,85 s (1,55 s con la CPU ×4).
+- **Rutas bajo demanda** (`lib/publicPages.tsx`): todas las páginas públicas menos la Home. El router espera al JS y al CSS del destino antes de cambiar (loader en `main.tsx`), y los precarga al pasar el ratón, al enfocar o al tocar un enlace. Sin fotogramas vacíos al navegar en frío. Los datos incrustados (`vehicle-data`, `vehicles-data`) siguen sin pedir nada a la API.
+- **Imágenes de abajo** (`useDeferredHomeMedia`): CarHandoff y el destacado no reciben URL hasta que el hero se ha pintado y el preloader se ha ido, o cuando la escena se acerca. Llegando con scroll rápido, 8/8 imágenes cargadas.
+- **Tamaños:** coches de CarHandoff con `sizes` medido (×1,3 por su escala máxima) y variantes 320/480. GT3 RS y cielos recomprimidos desde los másteres. Suelo móvil (`hero-garage-floor-mobile-*`) con el mismo recorte del máster del garaje, 2:1, que antes era una franja de 101 px estirada. `logo.svg` pasa de 50 a 22 KB con la misma geometría, y los logos del preloader se ajustan a DPR 2. Enlace del aviso de cookies descriptivo.
+- **Medido** (Lighthouse 12, móvil simulado, `vite preview` con gzip, 3 pasadas): Performance de 79–80 a 82–83, FCP de 2,71 a 2,56 s, LCP de 4,06 a 3,61–3,69 s y peso de 657 a 567 KiB. SEO de 92 a 100 y Best Practices de 89 a 93. Escritorio sin cambios (99). Más allá haría falta prerenderizar el hero (fuera de alcance).
+- **Verificación:** Vitest 524/524, lint, typecheck y build. Navegador:
+  - entradas directas a las 15 rutas públicas ES/EN y al 404;
+  - navegación interna y atrás, «Ver catálogo» en frío y el Admin;
+  - imágenes diferidas a 390, 1440 y con reduced-motion;
+  - hero de antes y de después a 390 y 1440.
+
+  Sin errores de consola ni desbordamiento.
+
 **Carrusel de la Home sin vendidos (26-10-2026, pedido por el usuario):** `FeaturedVehicle` descarta los `sold` de la lista pública; el catálogo los sigue mostrando al final. Fuera la etiqueta «Vendido» del carrusel, que ya no puede salir. Si todos están vendidos, se ve el aviso de vacío. Vitest 519/519 (2 nuevos), typecheck y lint limpios.
 
 **Fuera los huecos de foto provisional (26-10-2026, pedido por el usuario; Astra high + QA de Opus):** ya no quedan placas grises «Recurso provisional» en la web pública.

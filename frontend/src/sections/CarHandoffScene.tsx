@@ -1,6 +1,7 @@
 import { sceneAssets } from '../assets/sceneAssets';
 import { AssetSlot } from '../components/AssetSlot';
 import { useCarHandoffScene } from '../hooks/useCarHandoffScene';
+import { useDeferredHomeMedia } from '../hooks/useDeferredHomeMedia';
 import { useLanguage } from '../i18n/useLanguage';
 import '../styles/car-handoff.css';
 
@@ -32,6 +33,7 @@ export function CarHandoffScene() {
   const { copy, locale } = useLanguage();
   const text = copy.carHandoff;
   const { sectionRef, pinRef } = useCarHandoffScene(locale);
+  const mediaReady = useDeferredHomeMedia(sectionRef);
   const [stateA, stateB, stateC] = text.states;
 
   return (
@@ -39,9 +41,9 @@ export function CarHandoffScene() {
       <div ref={pinRef} className="car-handoff__pin" data-handoff-target="process">
         <div className="car-handoff__panel" data-handoff-tone="light">
           <div className="car-handoff__world" data-handoff-world>
-            <AssetSlot asset={sceneAssets.handoffBright} label={copy.common.backgroundAsset} background priority="low" />
+            <AssetSlot asset={sceneAssets.handoffBright} label={copy.common.backgroundAsset} background priority="low" load={mediaReady} />
             <div className="car-handoff__overcast" data-handoff-overcast>
-              <AssetSlot asset={sceneAssets.handoffOvercast} label={copy.common.backgroundAsset} background priority="low" />
+              <AssetSlot asset={sceneAssets.handoffOvercast} label={copy.common.backgroundAsset} background priority="low" load={mediaReady} />
             </div>
           </div>
           {/* The first headline sits under the car, so the car drives over it. */}
@@ -50,31 +52,31 @@ export function CarHandoffScene() {
               and a soft curtain lifts the photograph off from tail to nose. */}
           <div className="car-handoff__car" data-car>
             <div className="car-handoff__layer">
-              <AssetSlot asset={sceneAssets.carCutaway} label={text.carCutaway} priority="low" />
+              <AssetSlot asset={sceneAssets.carCutaway} responsiveScale={1.3} label={text.carCutaway} priority="low" load={mediaReady} />
             </div>
             <div className="car-handoff__layer car-handoff__photo" data-car-photo>
-              <AssetSlot asset={sceneAssets.carA} label={text.carA} priority="low" />
+              <AssetSlot asset={sceneAssets.carA} responsiveScale={1.3} label={text.carA} priority="low" load={mediaReady} />
             </div>
           </div>
         </div>
         <div className="car-handoff__panel" data-handoff-tone="light">
           <div className="car-handoff__world car-handoff__world--static" aria-hidden="true">
-            <AssetSlot asset={sceneAssets.handoffBright} label="" background priority="low" />
+            <AssetSlot asset={sceneAssets.handoffBright} label="" background priority="low" load={mediaReady} />
           </div>
           <div className="car-handoff__car car-handoff__car--static" aria-hidden="true">
             <div className="car-handoff__layer">
-              <AssetSlot asset={sceneAssets.carA} label="" priority="low" />
+              <AssetSlot asset={sceneAssets.carA} responsiveScale={1.3} label="" priority="low" load={mediaReady} />
             </div>
           </div>
           <HandoffText state={stateB} name="b" layout="left" />
         </div>
         <div className="car-handoff__panel car-handoff__panel--overcast" data-handoff-tone="dark">
           <div className="car-handoff__world car-handoff__world--static" aria-hidden="true">
-            <AssetSlot asset={sceneAssets.handoffOvercast} label={copy.common.backgroundAsset} background priority="low" />
+            <AssetSlot asset={sceneAssets.handoffOvercast} label={copy.common.backgroundAsset} background priority="low" load={mediaReady} />
           </div>
           <div className="car-handoff__car car-handoff__car--static" aria-hidden="true">
             <div className="car-handoff__layer">
-              <AssetSlot asset={sceneAssets.carCutaway} label="" priority="low" />
+              <AssetSlot asset={sceneAssets.carCutaway} responsiveScale={1.3} label="" priority="low" load={mediaReady} />
             </div>
           </div>
           <div className="car-handoff__contrast" data-handoff-contrast aria-hidden="true" />

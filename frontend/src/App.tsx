@@ -1,18 +1,21 @@
+import { Suspense } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { SiteLayout } from './layouts/SiteLayout';
 import { Home } from './pages/Home';
-import { NotFound } from './pages/NotFound';
-import { About } from './pages/About';
-import { Import } from './pages/Import';
-import { Guide } from './pages/Guide';
-import { Contact } from './pages/Contact';
-import { Appointments } from './pages/Appointments';
-import { Vehicles } from './pages/Vehicles';
-import { VehicleDetail } from './pages/VehicleDetail';
-import { LegalPage } from './pages/Legal';
+import { publicPages } from './lib/publicPages';
 import { AdminRoute } from './pages/AdminRoute';
 import { LanguageProvider } from './i18n/LanguageProvider';
 import { matchPage } from './i18n/routes';
+
+const About = publicPages.about.Page;
+const Import = publicPages.import.Page;
+const Guide = publicPages.guide.Page;
+const Contact = publicPages.contact.Page;
+const Appointments = publicPages.appointments.Page;
+const Vehicles = publicPages.vehicles.Page;
+const VehicleDetail = publicPages.vehicle.Page;
+const LegalPage = publicPages.legal.Page;
+const NotFound = publicPages.notFound.Page;
 
 /** One route for every public address (src/i18n/routes.ts). The same element renders a page in either
     language, so switching language re-renders the page instead of mounting it again. */
@@ -38,7 +41,7 @@ export function App() {
       <Routes>
         <Route element={<SiteLayout />}>
           <Route path="servicios" element={<Navigate to="/importacion" replace />} />
-          <Route path="*" element={<PublicPage />} />
+          <Route path="*" element={<Suspense fallback={null}><PublicPage /></Suspense>} />
         </Route>
         <Route path="admin/*" element={<AdminRoute />} />
       </Routes>
