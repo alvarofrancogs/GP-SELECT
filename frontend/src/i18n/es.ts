@@ -100,7 +100,7 @@ export const es: Dictionary = {
   interiors: {
     about: {
       title: 'Nosotros',
-      lede: "GP SELECT es un negocio familiar con más de 25 años en la compraventa de coches. Tenemos stock propio de coches premium y deportivos. Si el que quieres no está, lo buscamos e importamos por encargo desde Europa.",
+      lede: "GP SELECT es una empresa familiar con más de 25 años en la compraventa de coches. Tenemos stock propio de coches premium y deportivos. Si el que quieres no está, lo buscamos e importamos por encargo desde Europa.",
       why: {
         title: 'Comprar bien un coche no debería ser una búsqueda a solas.',
         body: 'Tanto si te interesa un coche del catálogo como si quieres que lo busquemos, empezamos por cómo vas a usarlo y qué presupuesto tienes. Te explicamos la información de cada unidad y lo que falta por confirmar para que puedas decidir.',

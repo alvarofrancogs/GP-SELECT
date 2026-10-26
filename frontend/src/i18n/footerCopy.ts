@@ -8,7 +8,7 @@ interface FooterCopy {
 
 export const footerCopy: Record<Locale, FooterCopy> = {
   es: {
-    description: "Negocio familiar con más de 25 años en la compraventa de coches. Coches premium en stock e importación por encargo.",
+    description: "Empresa familiar con más de 25 años en la compraventa de coches. Coches premium en stock e importación por encargo.",
     location: "Murcia · Clientes en toda Europa",
     navigation: 'Explorar GP SELECT',
   },
