@@ -48,7 +48,7 @@ const first: VehicleSummary = {
 };
 const second: VehicleSummary = {
   ...first, slug: 'second', make: 'Audi', model: 'RS 3', variant: 'Sportback',
-  powerHp: 400, availability: 'sold', images: [{ ...first.images![0], src: '/second.webp' }],
+  powerHp: 400, availability: 'reserved', images: [{ ...first.images![0], src: '/second.webp' }],
 };
 
 function Page({ onStatusMount }: { onStatusMount?: (message: string | null) => void } = {}) {
@@ -86,12 +86,10 @@ describe('featured vehicle scene lifetime', () => {
     await screen.findByRole('heading', { name: 'M4' });
     const piece = container.querySelector('.featured__piece');
     const variant = container.querySelector<HTMLElement>('.featured__variant');
-    const availability = container.querySelector<HTMLElement>('.featured__availability');
     const rows = Array.from(container.querySelectorAll('.featured__specs > div'));
     const timelineCount = motion.timeline.mock.calls.length;
     const refreshCount = motion.refresh.mock.calls.length;
     expect(variant?.hidden).toBe(true);
-    expect(availability?.hidden).toBe(true);
     expect(motion.timeline).toHaveBeenCalledWith(expect.objectContaining({
       scrollTrigger: expect.objectContaining({ id: 'featured-piece', toggleActions: 'play none none reverse' }),
     }));
@@ -115,13 +113,28 @@ describe('featured vehicle scene lifetime', () => {
     expect(container.querySelector('.featured__variant')).toBe(variant);
     expect(variant?.hidden).toBe(false);
     expect(variant?.textContent).toBe('Sportback');
-    expect(availability?.hidden).toBe(false);
     expect(Array.from(container.querySelectorAll('.featured__specs > div'))).toEqual(rows);
     expect(rows.every((row) => row.isConnected)).toBe(true);
 
     unmount();
     expect(motion.revert).toHaveBeenCalledTimes(2);
     expect(motion.disconnect).toHaveBeenCalledOnce();
+  });
+
+  it('leaves the sold cars out of the rotation', async () => {
+    const sold: VehicleSummary = { ...first, slug: 'sold', make: 'Porsche', model: '911', availability: 'sold' };
+    vi.mocked(listVehicles).mockResolvedValueOnce([first, sold]);
+    const { container } = render(<Page />);
+    await screen.findByRole('heading', { name: 'M4' });
+    expect(container.querySelector('.featured__rotation')).toBeNull();
+    expect(screen.queryByText('Porsche')).toBeNull();
+  });
+
+  it('shows the empty notice when every car is sold', async () => {
+    vi.mocked(listVehicles).mockResolvedValueOnce([{ ...first, availability: 'sold' }]);
+    render(<Page />);
+    expect(await screen.findByText(featuredCopy.es.empty)).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'M4' })).toBeNull();
   });
 
   it('renders the vehicle without an entrance timeline with reduced motion', async () => {

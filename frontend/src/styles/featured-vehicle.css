@@ -34,7 +34,6 @@
 }
 .featured__pause[aria-pressed='true'] .featured__pause-box { background: currentColor; }
 .featured__pause[aria-pressed='true'] .featured__pause-box::after { transform: translate(-50%, -50%) rotate(45deg) scale(1); }
-.featured__availability { margin-top: var(--space-3); font-size: .875rem; color: var(--color-muted); }
 @media (prefers-reduced-motion: reduce) { .featured .featured__pause { display: none; } }
 
 .featured__state { padding-block: var(--space-8); border-block: var(--border-width) solid var(--color-line); font-size: var(--text-body); }

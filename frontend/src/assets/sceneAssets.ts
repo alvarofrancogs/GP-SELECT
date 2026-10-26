@@ -64,12 +64,6 @@ export const sceneAssets = {
   // Handoff world: the same sky seen from above, bright and overcast, aligned to crossfade.
   handoffBright: { src: '/assets/home/sky-bright.webp', temporary: false },
   handoffOvercast: { src: '/assets/home/sky-overcast.webp', temporary: false },
-  // Neutral reserved photographic spaces for Unit 2F-A. Replace independently.
-  aboutSelection: { src: '/assets/temp/about-selection.svg', temporary: true },
-  aboutDetail: { src: '/assets/temp/about-detail.svg', temporary: true },
-  importSearch: { src: '/assets/temp/import-search.svg', temporary: true },
-  importInspection: { src: '/assets/temp/import-inspection.svg', temporary: true },
-  importDelivery: { src: '/assets/temp/import-delivery.svg', temporary: true },
 };
 
 export type SceneImage = { src: string; srcSet?: string; sizes?: string; media?: string };

@@ -12,7 +12,6 @@ export interface InteriorCopy {
     closingNote: string;
     cta: string;
     secondary: string;
-    images: { opening: string; detail: string };
   };
   import: InteriorHeaderCopy & {
     formFields: { delivery: string; make: string; model: string; year: string; mileage: string; timeframe: string; budget: string; message: string };
@@ -29,7 +28,6 @@ export interface InteriorCopy {
     stages: { title: string; intro: string; rows: EditorialCopy[] };
     taxes: EditorialCopy & { guide: string };
     faq: { title: string; rows: EditorialCopy[] };
-    images: { search: string; inspection: string; delivery: string };
     closing: string;
     closingBody: string;
     cta: string;

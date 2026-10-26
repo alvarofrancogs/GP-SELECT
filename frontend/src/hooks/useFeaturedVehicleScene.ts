@@ -52,7 +52,7 @@ export function useFeaturedVehicleScene(sectionRef: RefObject<HTMLElement | null
       // One composed entrance, played when the piece comes into view and reversed on the way back up:
       // the frame opens upward like a shutter while the photograph settles from a slight over-scale,
       // then the data follows line by line.
-      const lines = piece.querySelectorAll('.featured__make, .featured__identity h3, .featured__variant, .featured__availability, .featured__specs > div, .featured__link');
+      const lines = piece.querySelectorAll('.featured__make, .featured__identity h3, .featured__variant, .featured__specs > div, .featured__link');
       const reveal = gsap.timeline({
         paused: true,
         scrollTrigger: {

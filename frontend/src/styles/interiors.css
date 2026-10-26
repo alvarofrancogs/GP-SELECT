@@ -116,28 +116,24 @@
   max-width: 62ch;
   font-size: clamp(1rem, calc(.96875rem + .13vw), 1.125rem);
 }
-:is(.about-page, .import-page) .type-label,
-:is(.about-page, .import-page) .editorial-media figcaption {
+:is(.about-page, .import-page) .type-label {
   font-size: clamp(.78125rem, .9vw, .875rem);
 }
-:is(.about-page, .import-page) .editorial-media figcaption { flex-wrap: wrap; }
-:is(.about-page, .import-page) .editorial-media figcaption span { flex-shrink: 1; }
 :is(.about-page, .import-page) .interior-closing {
   padding-block: clamp(4rem, 6vw, 7rem);
 }
 :is(.about-page, .import-page) .interior-closing h2 { max-width: 23ch; }
 :is(.about-page, .import-page) .interior-closing__links { margin-top: 2rem; gap: 1.5rem 3rem; }
 
-.about-opening-media img { aspect-ratio: 4 / 1; }
 .about-why {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr);
-  align-items: end;
-  gap: 10vw;
-  padding-block: clamp(3.5rem, 6vw, 7rem);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 5vw;
+  border-top: 1px solid var(--interior-rule);
+  padding-block: clamp(2rem, 3vw, 3.5rem) clamp(3.5rem, 5vw, 6rem);
 }
-.about-why h2 { max-width: 18ch; margin-block: 1.5rem 2rem; }
-.about-why .editorial-media img { aspect-ratio: 1 / 1; }
+.about-why h2 { max-width: 18ch; }
 .about-audience {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
@@ -188,7 +184,7 @@
 @media (min-width: 768px) and (max-width: 1199px) {
   .interior-header .interior-header__line { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }
   .interior-header .interior-header__lede { margin-left: 24%; }
-  .about-why, .about-approach { gap: 5vw; }
+  .about-approach { gap: 5vw; }
 }
 
 
@@ -210,11 +206,7 @@
   :is(.about-page, .import-page) .type-heading { font-size: 1.25rem; }
   :is(.about-page, .import-page) .type-lede { font-size: 1.1875rem; }
   :is(.about-page, .import-page) .type-body { font-size: 1rem; }
-  :is(.about-page, .import-page) .editorial-media figcaption { gap: .35rem; }
-  .about-opening-media img { aspect-ratio: 16 / 9; }
-  .about-why { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
-  .about-why h2 { margin-block: 1.25rem 1.5rem; }
-  .about-why .editorial-media { margin-left: 16%; }
+  .about-why { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
   .about-audience, .about-approach { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
   .about-audience__intro { padding-top: 0; }
   .import-brief { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }

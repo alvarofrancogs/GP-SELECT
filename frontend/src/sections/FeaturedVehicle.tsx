@@ -15,7 +15,7 @@ const EMPTY: VehicleSummary[] = [];
 // Must match the fade-out of .featured--swapping (featured-vehicle.css).
 const SWAP_OUT_MS = 200;
 
-/** The public inventory, starting with the API's first vehicle. No price: curiosity, not a listing. */
+/** The public inventory without the sold cars, starting with the API's first vehicle. No price: curiosity, not a listing. */
 export function FeaturedVehicle() {
   const { copy, locale, href } = useLanguage();
   const text = featuredCopy[locale];
@@ -43,7 +43,7 @@ export function FeaturedVehicle() {
   useEffect(() => {
     const request = new AbortController();
     listVehicles(request.signal).then(
-      (list) => { if (!request.signal.aborted) setState({ status: 'ready', vehicles: list }); },
+      (list) => { if (!request.signal.aborted) setState({ status: 'ready', vehicles: list.filter((car) => car.availability !== 'sold') }); },
       () => { if (!request.signal.aborted) setState({ status: 'error' }); },
     );
     return () => request.abort();
@@ -88,7 +88,6 @@ export function FeaturedVehicle() {
                 <p className="featured__make">{vehicle.make}</p>
                 <h3>{vehicle.model}</h3>
                 <p className="featured__variant" hidden={!vehicle.variant}>{vehicle.variant}</p>
-                <p className="featured__availability type-ui" hidden={vehicle.availability !== 'sold'}>{labels.sold}</p>
               </div>
               <dl className="featured__specs" hidden={!specs.some(([, value]) => Boolean(value))}>
                 {specs.map(([label, value], index) => <div key={index} hidden={!value}><dt>{label}</dt><dd>{value}</dd></div>)}
