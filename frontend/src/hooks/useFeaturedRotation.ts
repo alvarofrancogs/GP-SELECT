@@ -6,13 +6,13 @@ const INTERVAL = 7_000;
 /** Count only visible, uninterrupted reading time; decode the next cover before replacing the piece.
     Keyboard focus inside holds the car; the pointer does not: the section fills the screen, so a resting mouse froze
     the rotation for good, and the focus a click leaves on «Pause» kept it frozen after resuming. */
-export function useFeaturedRotation(sectionRef: RefObject<HTMLElement | null>, vehicles: VehicleSummary[]) {
+export function useFeaturedRotation(sectionRef: RefObject<HTMLElement | null>, vehicles: VehicleSummary[], mediaReady = true) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     const section = sectionRef.current;
-    if (!section || vehicles.length < 2) return;
+    if (!section || vehicles.length < 2 || !mediaReady) return;
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const nextIndex = (index + 1) % vehicles.length;
     const nextPhoto = vehicles[nextIndex].images?.[0]?.src;
@@ -48,6 +48,7 @@ export function useFeaturedRotation(sectionRef: RefObject<HTMLElement | null>, v
     // A failed cover must not stall the cycle; the normal image fallback handles it.
     if (nextPhoto) {
       image = new Image();
+      image.fetchPriority = 'low';
       image.src = nextPhoto;
       void image.decode().catch(() => {}).then(() => { ready = true; sync(); });
     }
@@ -71,7 +72,7 @@ export function useFeaturedRotation(sectionRef: RefObject<HTMLElement | null>, v
       document.removeEventListener('visibilitychange', sync);
       motion.removeEventListener('change', sync);
     };
-  }, [sectionRef, vehicles, index, paused]);
+  }, [sectionRef, vehicles, index, paused, mediaReady]);
 
   return { index, paused, togglePaused: () => setPaused((value) => !value) };
 }

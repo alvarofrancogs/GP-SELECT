@@ -137,7 +137,7 @@ export const legalUi: Record<Locale, LegalUiCopy> = {
     consent: {
       title: 'Cookies de análisis',
       text: 'Usamos Google Analytics para saber cuántas personas visitan la web y qué páginas ven. Solo se activa si lo aceptas, y la web funciona igual si lo rechazas.',
-      more: 'Más información',
+      more: 'Más información sobre las cookies',
       accept: 'Aceptar',
       reject: 'Rechazar',
       settings: 'Configurar cookies',
@@ -158,7 +158,7 @@ export const legalUi: Record<Locale, LegalUiCopy> = {
     consent: {
       title: 'Analytics cookies',
       text: 'We use Google Analytics to count how many people visit the site and which pages they view. It only starts if you accept, and the site works the same if you reject it.',
-      more: 'More information',
+      more: 'More information about cookies',
       accept: 'Accept',
       reject: 'Reject',
       settings: 'Cookie settings',
