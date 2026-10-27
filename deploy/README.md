@@ -143,7 +143,7 @@ Viene desactivado (`ENQUIRIES_ENABLED=false`). Completar los datos legales y con
 | `ENQUIRIES_NOTIFICATION_EMAIL` | buzón receptor; Reply-To será el cliente |
 | `ENQUIRIES_RETENTION_DAYS` | `30` por defecto, mínimo `1`; afecta a PostgreSQL, no al buzón ni a backups |
 
-El correo de gpselect.com está en IONOS: `SMTP_HOST=smtp.ionos.es`, `587` con `StartTls`, y como usuario y remitente el buzón `web@gpselect.com` (IONOS solo envía como el buzón autenticado; web@ redirige a info@ para que los rebotes no se pierdan). `ENQUIRIES_NOTIFICATION_EMAIL=info@gpselect.com` recibe Contacto, Importación y Citas.
+El correo de gpselect.com está en IONOS: `SMTP_HOST=smtp.ionos.es`, `587` con `StartTls`, y como usuario y remitente el buzón `info@gpselect.com` (IONOS solo envía como el buzón autenticado; así los rebotes llegan al mismo buzón). `ENQUIRIES_NOTIFICATION_EMAIL=info@gpselect.com` recibe Contacto, Importación y Citas.
 
 Después poner `ENQUIRIES_ENABLED=true` y ejecutar `./update.sh` para recompilar la web. En Production el API rechaza el arranque del formulario activo sin Host, From o destinatario. El mantenimiento borra consultas caducadas cada hora, incluso si su aviso no se entregó.
 
