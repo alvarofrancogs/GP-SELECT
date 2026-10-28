@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="robots" content="noindex" />
+<title>Laboratorio de bordes</title>
+<style>
+  /* Laboratorio temporal: prueba en un iPhone qué estrategia deja las barras de Safari 26 translúcidas
+     sobre una escena fijada. Borrar tras decidir (ver docs/SAFARI-26.md). */
+  html, body { margin: 0; background: #fff; font: 600 15px/1.3 -apple-system, system-ui, sans-serif; }
+  .track { height: 600vh; height: 600lvh; }
+  /* The scene: fixed, as large as the large viewport, stripes so a see-through bar shows blurred pattern and a solid one is flat. */
+  .pin {
+    position: fixed; left: 0; top: 0; width: 100%; height: 100vh; height: 100lvh; background: #0b0c0d; color: #fff;
+    background-image: repeating-linear-gradient(135deg, #e8743b 0 24px, #0b0c0d 24px 48px);
+  }
+  .pin b { position: absolute; left: 0; right: 0; text-align: center; font-size: 28px; color: #fff; text-shadow: 0 0 6px #000; }
+  b.t { top: 70px; } b.m { top: 28%; } b.bm { bottom: 120px; }
+  /* guards */
+  .g { position: fixed; left: 30%; width: 40%; pointer-events: none; background: rgb(0 0 0 / .004); }
+  .g--top8 { top: 0; height: 8px; } .g--bottom8 { bottom: 0; height: 8px; }
+  .g--topTall { top: 0; height: 140px; }
+  .g--bottomTallLvh { top: calc(100vh - 140px); top: calc(100lvh - 140px); height: 140px; }
+  .g--bottomTallSmall { bottom: 0; height: 140px; }
+  .big { position: fixed; left: 0; top: 0; width: 100%; height: calc(100vh * 1.15); height: calc(100lvh * 1.15);
+    background-image: repeating-linear-gradient(135deg, #e8743b 0 24px, #0b0c0d 24px 48px); background-color: #0b0c0d; }
+  .stick-track { position: relative; height: 600vh; height: 600lvh; }
+  .stick { position: sticky; top: 0; height: 100vh; height: 100lvh; background-color: #0b0c0d;
+    background-image: repeating-linear-gradient(135deg, #e8743b 0 24px, #0b0c0d 24px 48px); color: #fff; }
+  .stick b { position: absolute; left: 0; right: 0; text-align: center; font-size: 28px; color: #fff; text-shadow: 0 0 6px #000; }
+  .abs { position: absolute; left: 0; top: 0; width: 100%; height: 100vh; height: 100lvh; will-change: transform;
+    background-color: #0b0c0d; background-image: repeating-linear-gradient(135deg, #e8743b 0 24px, #0b0c0d 24px 48px); }
+  .abs b { position: absolute; left: 0; right: 0; text-align: center; font-size: 28px; color: #fff; text-shadow: 0 0 6px #000; }
+  /* menu: small, fixed, in the middle (the bars only sample the edges) */
+  .menu { position: fixed; z-index: 10; left: 8px; top: 50%; transform: translateY(-50%); width: 132px; background: #fff; color: #000;
+    border-radius: 12px; padding: 6px; box-shadow: 0 2px 10px rgb(0 0 0 / .4); font-size: 13px; }
+  .menu a { display: block; padding: 7px 8px; border-radius: 8px; color: #000; text-decoration: none; }
+  .menu a[aria-current] { background: #000; color: #fff; }
+</style>
+</head>
+<body>
+<div class="menu" id="menu"></div>
+<div id="stage"></div>
+<script>
+  // Each variant is a list of layers on top of the same striped scene.
+  var variants = {
+    base:   { label: '1 · escena sola', note: 'fija, 100lvh (como ahora)' },
+    g8:     { label: '2 · guardas 8px', note: 'las de la web hoy' },
+    gTall:  { label: '3 · guardas altas', note: '140px arriba y abajo (abajo anclada al lvh)' },
+    gAll:   { label: '4 · guardas altas+', note: 'además otra abajo anclada al bottom:0' },
+    big:    { label: '5 · capa 115lvh', note: 'la que ya funcionó en el laboratorio' },
+    sticky: { label: '6 · sticky', note: 'escena sticky 100lvh, sin fixed' },
+    abs:    { label: '7 · sin fixed', note: 'escena absoluta movida por JS' }
+  };
+  var v = location.hash.slice(1) || 'base';
+  addEventListener('hashchange', function () { location.reload(); });
+  if (!variants[v]) v = 'base';
+  var labels = '<b class="t">ARRIBA</b><b class="m">' + variants[v].label + '</b><b class="bm">ABAJO</b>';
+  var html = '';
+  if (v === 'sticky') html = '<div class="stick-track"><div class="stick">' + labels.replace(/class="/g, 'class="') + '</div></div>';
+  else if (v === 'abs') html = '<div class="track"></div><div class="abs" id="abs">' + labels + '</div>';
+  else if (v === 'big') html = '<div class="track"></div><div class="big"><div class="pin" style="background:none;height:100%;position:absolute">' + labels + '</div></div>';
+  else html = '<div class="track"></div><div class="pin">' + labels + '</div>';
+  if (v === 'g8') html += '<div class="g g--top8"></div><div class="g g--bottom8"></div>';
+  if (v === 'gTall') html += '<div class="g g--topTall"></div><div class="g g--bottomTallLvh"></div>';
+  if (v === 'gAll') html += '<div class="g g--topTall"></div><div class="g g--bottomTallLvh"></div><div class="g g--bottomTallSmall"></div>';
+  document.getElementById('stage').innerHTML = html;
+  document.getElementById('menu').innerHTML = Object.keys(variants).map(function (k) {
+    return '<a href="#' + k + '"' + (k === v ? ' aria-current="page"' : '') + '>' + variants[k].label + '</a>';
+  }).join('') + '<div style="padding:6px 8px;font-size:11px;opacity:.7">' + variants[v].note + '</div>';
+  if (v === 'abs') {
+    var el = document.getElementById('abs');
+    var tick = function () { el.style.transform = 'translate3d(0,' + window.scrollY + 'px,0)'; requestAnimationFrame(tick); };
+    tick();
+  }
+</script>
+</body>
+</html>
